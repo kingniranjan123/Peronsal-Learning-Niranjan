@@ -2970,8 +2970,8 @@ async function fetchDLQ(partId, chapterId, topicId) {
 
     // Split into 10 question blocks by ### Q headings
     const qBlocks = [];
-    // Ignore emojis/garbage before Key Takeaways
-    const qRegex = /###\s+(Q\d+)[:\s]+(.+?)(?=###\s+Q\d+|###\s+.*?Key Takeaways|$)/gs;
+    // Stop at the next ### heading (which will be the next question or Key Takeaways)
+    const qRegex = /###\s+(Q\d+)[:\s]+(.+?)(?=###|$)/gs;
     let m;
     while ((m = qRegex.exec(dlqRaw)) !== null) {
       qBlocks.push({ qnum: m[1].trim(), qtext: m[2].trim(), body: m[0].replace(/###\s+Q\d+[:\s]+.+/, '').trim() });
