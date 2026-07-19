@@ -2949,8 +2949,12 @@ async function fetchDLQ(partId, chapterId, topicId) {
   }
 
   try {
-    const resp = await fetch(mdPath);
-    if (!resp.ok) throw new Error('not found');
+    // Timeout after 10 seconds
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    const resp = await fetch(mdPath, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const raw = await resp.text();
 
     // Extract only the DLQ section
@@ -3022,7 +3026,11 @@ async function fetchDLQ(partId, chapterId, topicId) {
     container.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
 
   } catch(e) {
-    container.innerHTML = `<div class="dlq-not-available">🔬 Deep Learning Questions for this topic are being generated. Check back soon.</div>`;
+    if (e.name === 'AbortError') {
+      container.innerHTML = `<div class="dlq-not-available">⏱️ Loading timed out. Please click another topic and come back, or refresh the page.</div>`;
+    } else {
+      container.innerHTML = `<div class="dlq-not-available">🔬 Deep Learning Questions for this topic are being loaded. If this persists, refresh the page.</div>`;
+    }
   }
 }
 
