@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 :root {
   --bg-deep:    #080E1A;
@@ -388,6 +389,96 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 .pill-orange { background:#F9731620; color:#FB923C; }
 .pill-purple { background:#A855F720; color:#C084FC; }
 .pill-red { background:#EF444420; color:#F87171; }
+
+/* ─── DEEP LEARNING QUESTIONS ──────────────────────────────── */
+.dlq-section {
+  margin-top: 48px;
+  border-top: 2px solid transparent;
+  border-image: linear-gradient(90deg, #3B82F6, #A855F7, #14B8A6) 1;
+  padding-top: 32px;
+}
+.dlq-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+}
+.dlq-header-icon {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(135deg, #3B82F620, #A855F720);
+  border: 1px solid #3B82F640;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.dlq-header-text h3 { font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; background: linear-gradient(135deg,#60A5FA,#C084FC); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.dlq-header-text p  { font-size: .82rem; color: var(--text-3); }
+.dlq-badge { margin-left: auto; padding: 5px 14px; border-radius: 20px; font-size: .72rem; font-weight: 700; background: linear-gradient(135deg,#3B82F630,#A855F730); color: #A78BFA; border: 1px solid #A855F740; letter-spacing: .04em; }
+
+.dlq-accordion { display: flex; flex-direction: column; gap: 10px; }
+.dlq-item {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; transition: border-color .2s;
+}
+.dlq-item:hover { border-color: var(--border-2); }
+.dlq-item.open  { border-color: #3B82F650; box-shadow: 0 0 0 1px #3B82F620; }
+
+.dlq-question {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 18px; cursor: pointer; user-select: none;
+}
+.dlq-q-num {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  background: linear-gradient(135deg, #3B82F6, #6366F1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 800; color: #fff;
+}
+.dlq-item:nth-child(2) .dlq-q-num { background: linear-gradient(135deg,#14B8A6,#3B82F6); }
+.dlq-item:nth-child(3) .dlq-q-num { background: linear-gradient(135deg,#22C55E,#14B8A6); }
+.dlq-item:nth-child(4) .dlq-q-num { background: linear-gradient(135deg,#F97316,#EF4444); }
+.dlq-item:nth-child(5) .dlq-q-num { background: linear-gradient(135deg,#EAB308,#F97316); }
+.dlq-item:nth-child(6) .dlq-q-num { background: linear-gradient(135deg,#A855F7,#6366F1); }
+.dlq-item:nth-child(7) .dlq-q-num { background: linear-gradient(135deg,#EC4899,#A855F7); }
+.dlq-item:nth-child(8) .dlq-q-num { background: linear-gradient(135deg,#EF4444,#EC4899); }
+.dlq-item:nth-child(9) .dlq-q-num { background: linear-gradient(135deg,#3B82F6,#A855F7); }
+.dlq-item:nth-child(10) .dlq-q-num { background: linear-gradient(135deg,#14B8A6,#22C55E); }
+
+.dlq-q-text { font-size: .9rem; font-weight: 600; color: var(--text-1); flex: 1; line-height: 1.4; }
+.dlq-q-tag  { font-size: .68rem; font-weight: 600; padding: 3px 9px; border-radius: 12px; letter-spacing: .04em; flex-shrink: 0; }
+.dlq-q-tag.why    { background:#3B82F620; color:#60A5FA; border:1px solid #3B82F640; }
+.dlq-q-tag.what   { background:#14B8A620; color:#2DD4BF; border:1px solid #14B8A640; }
+.dlq-q-tag.where  { background:#22C55E20; color:#4ADE80; border:1px solid #22C55E40; }
+.dlq-q-tag.anti   { background:#EF444420; color:#F87171; border:1px solid #EF444440; }
+.dlq-q-tag.hadoop { background:#EAB30820; color:#FBBF24; border:1px solid #EAB30840; }
+.dlq-q-tag.sql    { background:#A855F720; color:#C084FC; border:1px solid #A855F740; }
+.dlq-q-tag.bg     { background:#EC489920; color:#F472B6; border:1px solid #EC489940; }
+.dlq-q-tag.perf   { background:#F9731620; color:#FB923C; border:1px solid #F9731640; }
+.dlq-q-tag.intv   { background:#6366F120; color:#818CF8; border:1px solid #6366F140; }
+.dlq-q-tag.rwe    { background:#14B8A620; color:#34D399; border:1px solid #14B8A640; }
+
+.dlq-chevron { font-size: 11px; color: var(--text-3); transition: transform .25s; flex-shrink:0; }
+.dlq-item.open .dlq-chevron { transform: rotate(90deg); color: var(--accent); }
+
+.dlq-answer {
+  display: none; padding: 0 18px 20px 58px;
+  font-size: .86rem; color: var(--text-2); line-height: 1.75;
+  border-top: 1px solid var(--border);
+  animation: fadeIn .2s ease;
+}
+.dlq-item.open .dlq-answer { display: block; }
+.dlq-answer h3, .dlq-answer h4 { color: var(--text-1); margin: 16px 0 8px; font-size: .92rem; }
+.dlq-answer p  { margin-bottom: 12px; }
+.dlq-answer ul, .dlq-answer ol { padding-left: 20px; margin-bottom: 12px; }
+.dlq-answer li { margin-bottom: 5px; }
+.dlq-answer strong { color: var(--text-1); }
+.dlq-answer code { background: #0D111780; color: var(--orange); padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono',monospace; font-size:.8rem; }
+.dlq-answer pre  { background: #0D1117; border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; margin: 12px 0; }
+.dlq-answer pre code { background: none; color: inherit; padding: 0; font-size: .8rem; }
+.dlq-answer table { width:100%; border-collapse:collapse; font-size:.8rem; margin:12px 0; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+.dlq-answer th { background:var(--bg-deep); color:var(--accent-2); padding:9px 14px; text-align:left; font-weight:600; border-bottom:1px solid var(--border-2); }
+.dlq-answer td { padding:9px 14px; border-bottom:1px solid var(--border); color:var(--text-2); vertical-align:top; }
+.dlq-answer tr:last-child td { border-bottom:none; }
+.dlq-answer blockquote { border-left:3px solid var(--accent); padding:10px 16px; background:var(--bg-hover); margin:12px 0; border-radius:0 8px 8px 0; font-style:italic; color:var(--text-2); }
+.dlq-loading { padding: 32px; text-align: center; color: var(--text-3); font-size: .88rem; display:flex; align-items:center; justify-content:center; gap:10px; }
+.dlq-spinner { width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.dlq-not-available { padding:20px 18px; text-align:center; color:var(--text-3); font-size:.82rem; font-style:italic; }
+
 </style>
 </head>
 <body>
@@ -2723,12 +2814,229 @@ function showTopic(partId, chId, topicId) {
     </div>`;
   }
 
+
   html += `<div class="info-box tip">
     <strong>💡 Pro Tip:</strong> Open your spark-shell or PySpark REPL and run these examples as you study each concept. Active coding cements understanding far faster than reading alone.
   </div>`;
 
+  // Inject DLQ placeholder — will be populated by fetchDLQ async
+  html += `<div id="dlq-container" class="dlq-section">
+    <div class="dlq-loading"><div class="dlq-spinner"></div> Loading Deep Learning Questions...</div>
+  </div>`;
+
   render(html);
+
+  // Async fetch Deep Learning Questions from enriched MD file
+  fetchDLQ(partId, chapterId, topicId);
 }
+
+// ─── DLQ Topic File Map ───────────────────────────────────────────────────────
+const DLQ_MAP = {
+  // Part 1 / Chapter 1
+  'spark-revolution':          'concepts/part1-first-steps/chapter1-introduction-to-apache-spark/01_spark_revolution.md',
+  'mapreduce-shortcomings':    'concepts/part1-first-steps/chapter1-introduction-to-apache-spark/02_mapreduce_shortcomings.md',
+  'spark-components':          'concepts/part1-first-steps/chapter1-introduction-to-apache-spark/03_spark_components.md',
+  'spark-ecosystem':           'concepts/part1-first-steps/chapter1-introduction-to-apache-spark/04_spark_ecosystem.md',
+  'spark-vm-setup':            'concepts/part1-first-steps/chapter1-introduction-to-apache-spark/05_spark_vm_setup.md',
+  // Part 1 / Chapter 2
+  'spark-shell':               'concepts/part1-first-steps/chapter2-spark-fundamentals/01_spark_shell.md',
+  'rdds':                      'concepts/part1-first-steps/chapter2-spark-fundamentals/02_rdds.md',
+  'actions':                   'concepts/part1-first-steps/chapter2-spark-fundamentals/03_actions.md',
+  'transformations':           'concepts/part1-first-steps/chapter2-spark-fundamentals/04_transformations.md',
+  'double-rdd-functions':      'concepts/part1-first-steps/chapter2-spark-fundamentals/05_double_rdd_functions.md',
+  // Part 1 / Chapter 3
+  'spark-ide-project-setup':   'concepts/part1-first-steps/chapter3-writing-spark-applications/01_spark_ide_project_setup.md',
+  'loading-json':              'concepts/part1-first-steps/chapter3-writing-spark-applications/02_loading_json.md',
+  'filtering-and-aggregating': 'concepts/part1-first-steps/chapter3-writing-spark-applications/03_filtering_and_aggregating.md',
+  'broadcast-variables':       'concepts/part1-first-steps/chapter3-writing-spark-applications/04_broadcast_variables.md',
+  'spark-submit':              'concepts/part1-first-steps/chapter3-writing-spark-applications/05_spark_submit.md',
+  'uberjars':                  'concepts/part1-first-steps/chapter3-writing-spark-applications/06_uberjars.md',
+  // Part 1 / Chapter 4
+  'pair-rdds':                 'concepts/part1-first-steps/chapter4-spark-api-in-depth/01_pair_rdds.md',
+  'data-partitioning':         'concepts/part1-first-steps/chapter4-spark-api-in-depth/02_data_partitioning.md',
+  'shuffling':                 'concepts/part1-first-steps/chapter4-spark-api-in-depth/03_shuffling.md',
+  'grouping-and-sorting':      'concepts/part1-first-steps/chapter4-spark-api-in-depth/04_grouping_and_sorting.md',
+  'joining-data':              'concepts/part1-first-steps/chapter4-spark-api-in-depth/05_joining_data.md',
+  'rdd-lineage-and-dag':       'concepts/part1-first-steps/chapter4-spark-api-in-depth/06_rdd_lineage_and_dag.md',
+  'spark-stages-and-tasks':    'concepts/part1-first-steps/chapter4-spark-api-in-depth/07_spark_stages_and_tasks.md',
+  'accumulators':              'concepts/part1-first-steps/chapter4-spark-api-in-depth/08_accumulators.md',
+  // Part 2 / Chapter 5
+  'dataframes':                'concepts/part2-spark-family/chapter5-sparkling-queries-spark-sql/01_dataframes.md',
+  'datasets':                  'concepts/part2-spark-family/chapter5-sparkling-queries-spark-sql/02_datasets.md',
+  'sql-queries':               'concepts/part2-spark-family/chapter5-sparkling-queries-spark-sql/03_sql_queries.md',
+  'hive-metastore':            'concepts/part2-spark-family/chapter5-sparkling-queries-spark-sql/04_hive_metastore.md',
+  'catalyst-optimizer':        'concepts/part2-spark-family/chapter5-sparkling-queries-spark-sql/05_catalyst_optimizer.md',
+  'tungsten-performance':      'concepts/part2-spark-family/chapter5-sparkling-queries-spark-sql/06_tungsten_performance.md',
+  // Part 2 / Chapter 6
+  'discretized-streams-dstreams': 'concepts/part2-spark-family/chapter6-ingesting-data-spark-streaming/01_discretized_streams_dstreams.md',
+  'saving-computation-state':  'concepts/part2-spark-family/chapter6-ingesting-data-spark-streaming/02_saving_computation_state.md',
+  'window-operations':         'concepts/part2-spark-family/chapter6-ingesting-data-spark-streaming/03_window_operations.md',
+  'kafka-integration':         'concepts/part2-spark-family/chapter6-ingesting-data-spark-streaming/04_kafka_integration.md',
+  'streaming-performance-tuning': 'concepts/part2-spark-family/chapter6-ingesting-data-spark-streaming/05_performance_tuning.md',
+  // Part 2 / Chapter 7
+  'ml-basics':                 'concepts/part2-spark-family/chapter7-getting-smart-with-mllib/01_ml_basics.md',
+  'linear-algebra':            'concepts/part2-spark-family/chapter7-getting-smart-with-mllib/02_linear_algebra.md',
+  'feature-scaling':           'concepts/part2-spark-family/chapter7-getting-smart-with-mllib/03_feature_scaling.md',
+  'mean-normalization':        'concepts/part2-spark-family/chapter7-getting-smart-with-mllib/04_mean_normalization.md',
+  'linear-regression':         'concepts/part2-spark-family/chapter7-getting-smart-with-mllib/05_linear_regression.md',
+  'regularization':            'concepts/part2-spark-family/chapter7-getting-smart-with-mllib/06_regularization.md',
+  'optimization':              'concepts/part2-spark-family/chapter7-getting-smart-with-mllib/07_optimization.md',
+  // Part 2 / Chapter 8
+  'spark-ml-library':          'concepts/part2-spark-family/chapter8-ml-classification-and-clustering/01_spark_ml_library.md',
+  'logistic-regression':       'concepts/part2-spark-family/chapter8-ml-classification-and-clustering/02_logistic_regression.md',
+  'decision-trees':            'concepts/part2-spark-family/chapter8-ml-classification-and-clustering/03_decision_trees.md',
+  'random-forests':            'concepts/part2-spark-family/chapter8-ml-classification-and-clustering/04_random_forests.md',
+  'kmeans-clustering':         'concepts/part2-spark-family/chapter8-ml-classification-and-clustering/05_kmeans_clustering.md',
+  'cross-validation':          'concepts/part2-spark-family/chapter8-ml-classification-and-clustering/06_cross_validation.md',
+  // Part 2 / Chapter 9
+  'graphx-api':                'concepts/part2-spark-family/chapter9-connecting-dots-graphx/01_graphx_api.md',
+  'transforming-joining-graphs':'concepts/part2-spark-family/chapter9-connecting-dots-graphx/02_transforming_joining_graphs.md',
+  'shortest-paths':            'concepts/part2-spark-family/chapter9-connecting-dots-graphx/03_shortest_paths.md',
+  'pagerank':                  'concepts/part2-spark-family/chapter9-connecting-dots-graphx/04_pagerank.md',
+  'connected-components':      'concepts/part2-spark-family/chapter9-connecting-dots-graphx/05_connected_components.md',
+  'astar-search-algorithm':    'concepts/part2-spark-family/chapter9-connecting-dots-graphx/06_astar_search_algorithm.md',
+  // Part 3 / Chapter 10
+  'spark-runtime-architecture':'concepts/part3-spark-ops/chapter10-running-spark/01_spark_runtime_architecture.md',
+  'spark-cluster-types':       'concepts/part3-spark-ops/chapter10-running-spark/02_spark_cluster_types.md',
+  'job-and-resource-scheduling':'concepts/part3-spark-ops/chapter10-running-spark/03_job_and_resource_scheduling.md',
+  'configuring-spark':         'concepts/part3-spark-ops/chapter10-running-spark/04_configuring_spark.md',
+  'spark-web-ui':              'concepts/part3-spark-ops/chapter10-running-spark/05_spark_web_ui.md',
+  // Part 3 / Chapter 11
+  'standalone-cluster-components':'concepts/part3-spark-ops/chapter11-spark-standalone-cluster/01_standalone_cluster_components.md',
+  'cluster-web-ui':            'concepts/part3-spark-ops/chapter11-spark-standalone-cluster/02_cluster_web_ui.md',
+  'running-applications':      'concepts/part3-spark-ops/chapter11-spark-standalone-cluster/03_running_applications.md',
+  'spark-history-server':      'concepts/part3-spark-ops/chapter11-spark-standalone-cluster/04_spark_history_server.md',
+  'amazon-ec2-deployment':     'concepts/part3-spark-ops/chapter11-spark-standalone-cluster/05_amazon_ec2_deployment.md',
+  // Part 3 / Chapter 12
+  'yarn-architecture':         'concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/01_yarn_architecture.md',
+  'yarn-resource-scheduling':  'concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/02_yarn_resource_scheduling.md',
+  'mesos-architecture':        'concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/03_mesos_architecture.md',
+  'mesos-resource-scheduling': 'concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/04_mesos_resource_scheduling.md',
+  'running-spark-with-docker': 'concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/05_running_spark_with_docker.md',
+  // Part 4 / Chapter 13
+  'realtime-dashboard-architecture':'concepts/part4-bringing-it-together/chapter13-realtime-dashboard/01_realtime_dashboard_architecture.md',
+  'spark-streaming-components':'concepts/part4-bringing-it-together/chapter13-realtime-dashboard/02_spark_streaming_components.md',
+  'websockets':                'concepts/part4-bringing-it-together/chapter13-realtime-dashboard/03_websockets.md',
+  'd3js-visualization':        'concepts/part4-bringing-it-together/chapter13-realtime-dashboard/04_d3js_visualization.md',
+  // Part 4 / Chapter 14
+  'h2o-framework':             'concepts/part4-bringing-it-together/chapter14-deep-learning-spark-h2o/01_h2o_framework.md',
+  'deep-learning-concepts':    'concepts/part4-bringing-it-together/chapter14-deep-learning-spark-h2o/02_deep_learning_concepts.md',
+  'sparkling-water-api':       'concepts/part4-bringing-it-together/chapter14-deep-learning-spark-h2o/03_sparkling_water_api.md',
+  'regression-and-classification-with-deep-learning':'concepts/part4-bringing-it-together/chapter14-deep-learning-spark-h2o/04_regression_and_classification_with_deep_learning.md',
+};
+
+const DLQ_QUESTIONS = [
+  {num:'Q1', label:'Why Introduced?',       tag:'why'},
+  {num:'Q2', label:'How Does It Work?',     tag:'what'},
+  {num:'Q3', label:'Where To Use?',         tag:'where'},
+  {num:'Q4', label:'Where NOT To Use?',     tag:'anti'},
+  {num:'Q5', label:'Spark vs Hadoop',       tag:'hadoop'},
+  {num:'Q6', label:'RDBMS Analogy',         tag:'sql'},
+  {num:'Q7', label:'Behind The Scenes',     tag:'bg'},
+  {num:'Q8', label:'Performance & Best Practices', tag:'perf'},
+  {num:'Q9', label:'Interview Questions',   tag:'intv'},
+  {num:'Q10',label:'Real-World Example',    tag:'rwe'},
+];
+
+async function fetchDLQ(partId, chapterId, topicId) {
+  const container = document.getElementById('dlq-container');
+  if (!container) return;
+
+  const mdPath = DLQ_MAP[topicId];
+  if (!mdPath) {
+    container.innerHTML = `<div class="dlq-not-available">🔬 Deep Learning Questions will be available for this topic after processing.</div>`;
+    return;
+  }
+
+  try {
+    const resp = await fetch(mdPath);
+    if (!resp.ok) throw new Error('not found');
+    const raw = await resp.text();
+
+    // Extract only the DLQ section
+    const dlqMarker = '## 🎓 Deep Learning Questions';
+    const dlqIdx = raw.indexOf(dlqMarker);
+    if (dlqIdx === -1) {
+      container.innerHTML = `<div class="dlq-not-available">🔬 Deep Learning Questions coming soon for this topic.</div>`;
+      return;
+    }
+
+    const dlqRaw = raw.slice(dlqIdx + dlqMarker.length).trim();
+
+    // Split into 10 question blocks by ### Q headings
+    const qBlocks = [];
+    const qRegex = /###\s+(Q\d+)[:\s]+(.+?)(?=###\s+Q\d+|###\s+💡|$)/gs;
+    let m;
+    while ((m = qRegex.exec(dlqRaw)) !== null) {
+      qBlocks.push({ qnum: m[1].trim(), qtext: m[2].trim(), body: m[0].replace(/###\s+Q\d+[:\s]+.+/, '').trim() });
+    }
+
+    // Build accordion HTML
+    let aHtml = `
+      <div class="dlq-header">
+        <div class="dlq-header-icon">🎓</div>
+        <div class="dlq-header-text">
+          <h3>Deep Learning Questions</h3>
+          <p>10 expert-level questions covering beginner → architect → interview perspectives</p>
+        </div>
+        <div class="dlq-badge">10 QUESTIONS</div>
+      </div>
+      <div class="dlq-accordion">`;
+
+    DLQ_QUESTIONS.forEach((def, i) => {
+      const blk = qBlocks[i] || null;
+      const bodyHtml = blk ? (typeof marked !== 'undefined' ? marked.parse(blk.body) : `<p>${escHtml(blk.body)}</p>`) : '<p>Content coming soon.</p>';
+      const qLabel = def.label;
+      aHtml += `
+        <div class="dlq-item" id="dlq-item-${i}">
+          <div class="dlq-question" onclick="toggleDLQ(${i})">
+            <div class="dlq-q-num">${def.num}</div>
+            <div class="dlq-q-text">${qLabel}</div>
+            <span class="dlq-q-tag ${def.tag}">${def.tag.toUpperCase()}</span>
+            <span class="dlq-chevron">▶</span>
+          </div>
+          <div class="dlq-answer">${bodyHtml}</div>
+        </div>`;
+    });
+
+    // Extract metadata block (Key Takeaways, Misconceptions, etc.)
+    const metaMatch = dlqRaw.match(/###\s+💡 Key Takeaways[\s\S]*/);
+    if (metaMatch) {
+      const metaHtml = typeof marked !== 'undefined' ? marked.parse(metaMatch[0]) : `<p>${escHtml(metaMatch[0])}</p>`;
+      aHtml += `
+        <div class="dlq-item" id="dlq-item-meta">
+          <div class="dlq-question" onclick="toggleDLQMeta()">
+            <div class="dlq-q-num" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">📌</div>
+            <div class="dlq-q-text">Key Takeaways, Misconceptions & References</div>
+            <span class="dlq-q-tag rwe">SUMMARY</span>
+            <span class="dlq-chevron">▶</span>
+          </div>
+          <div class="dlq-answer">${metaHtml}</div>
+        </div>`;
+    }
+
+    aHtml += `</div>`;
+    container.innerHTML = aHtml;
+
+    // Re-run highlight.js on new code blocks
+    container.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+
+  } catch(e) {
+    container.innerHTML = `<div class="dlq-not-available">🔬 Deep Learning Questions for this topic are being generated. Check back soon.</div>`;
+  }
+}
+
+function toggleDLQ(idx) {
+  const item = document.getElementById('dlq-item-' + idx);
+  if (!item) return;
+  item.classList.toggle('open');
+}
+function toggleDLQMeta() {
+  const item = document.getElementById('dlq-item-meta');
+  if (!item) return;
+  item.classList.toggle('open');
+}
+
 
 // ─── Infra page ─────────────────────────────────────────────────────────────
 function showInfra(sectionId) {
