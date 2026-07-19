@@ -2952,24 +2952,26 @@ async function fetchDLQ(partId, chapterId, topicId) {
     // Timeout after 10 seconds
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
-    const resp = await fetch(mdPath, { signal: controller.signal });
+    // Add cache buster
+    const resp = await fetch(mdPath + '?v=' + Date.now(), { signal: controller.signal });
     clearTimeout(timer);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const raw = await resp.text();
 
-    // Extract only the DLQ section
-    const dlqMarker = '## 🎓 Deep Learning Questions';
-    const dlqIdx = raw.indexOf(dlqMarker);
-    if (dlqIdx === -1) {
+    // Extract only the DLQ section, using a flexible regex to ignore corrupted emojis
+    const dlqMatch = raw.match(/##[^a-zA-Z0-9]*Deep Learning Questions/i);
+    if (!dlqMatch) {
       container.innerHTML = `<div class="dlq-not-available">🔬 Deep Learning Questions coming soon for this topic.</div>`;
       return;
     }
 
-    const dlqRaw = raw.slice(dlqIdx + dlqMarker.length).trim();
+    const dlqIdx = dlqMatch.index;
+    const dlqRaw = raw.slice(dlqIdx + dlqMatch[0].length).trim();
 
     // Split into 10 question blocks by ### Q headings
     const qBlocks = [];
-    const qRegex = /###\s+(Q\d+)[:\s]+(.+?)(?=###\s+Q\d+|###\s+💡|$)/gs;
+    // Ignore emojis before Key Takeaways
+    const qRegex = /###\s+(Q\d+)[:\s]+(.+?)(?=###\s+Q\d+|###\s+[^a-zA-Z0-9]*Key Takeaways|$)/gs;
     let m;
     while ((m = qRegex.exec(dlqRaw)) !== null) {
       qBlocks.push({ qnum: m[1].trim(), qtext: m[2].trim(), body: m[0].replace(/###\s+Q\d+[:\s]+.+/, '').trim() });
@@ -3004,7 +3006,7 @@ async function fetchDLQ(partId, chapterId, topicId) {
     });
 
     // Extract metadata block (Key Takeaways, Misconceptions, etc.)
-    const metaMatch = dlqRaw.match(/###\s+💡 Key Takeaways[\s\S]*/);
+    const metaMatch = dlqRaw.match(/###\s+[^a-zA-Z0-9]*Key Takeaways[\s\S]*/);
     if (metaMatch) {
       const metaHtml = typeof marked !== 'undefined' ? marked.parse(metaMatch[0]) : `<p>${escHtml(metaMatch[0])}</p>`;
       aHtml += `
