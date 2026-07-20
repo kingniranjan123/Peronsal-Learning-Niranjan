@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Spark In Action — Engineering Study Portal</title>
+<title>Spark In Action â€” Engineering Study Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -42,7 +42,7 @@
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
 html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg-deep); color:var(--text-1); overflow:hidden; }
 
-/* ─── LOGIN ─────────────────────────────────────────────────────── */
+/* â”€â”€â”€ LOGIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 #login-screen {
   position:fixed; inset:0; z-index:1000;
   display:flex; align-items:center; justify-content:center;
@@ -103,7 +103,7 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg-de
 .login-hint { text-align:center; margin-top:20px; color:var(--text-3); font-size:.8rem; }
 .login-hint span { color:var(--accent-2); }
 
-/* ─── MAIN APP ──────────────────────────────────────────────────── */
+/* â”€â”€â”€ MAIN APP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 #app { display:none; height:100vh; flex-direction:column; }
 #app.visible { display:flex; }
 
@@ -186,7 +186,7 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg-de
 }
 .tree-topic:hover { background:var(--bg-hover); color:var(--text-2); }
 .tree-topic.active { background:var(--bg-active); color:var(--accent-2); font-weight:500; }
-.tree-topic::before { content:'•'; color:var(--border-2); flex-shrink:0; }
+.tree-topic::before { content:'â€¢'; color:var(--border-2); flex-shrink:0; }
 .tree-topic.active::before { color:var(--accent); }
 
 /* Content area */
@@ -390,7 +390,7 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 .pill-purple { background:#A855F720; color:#C084FC; }
 .pill-red { background:#EF444420; color:#F87171; }
 
-/* ─── DEEP LEARNING QUESTIONS ──────────────────────────────── */
+/* â”€â”€â”€ DEEP LEARNING QUESTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .dlq-section {
   margin-top: 48px;
   border-top: 2px solid transparent;
@@ -480,18 +480,18 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 .dlq-not-available { padding:20px 18px; text-align:center; color:var(--text-3); font-size:.82rem; font-style:italic; }
 
 </style>
-  <script src="dlq_data.js"></script>
+  <script src="dlq_data.js?v=20260720b"></script>
 </head>
 <body>
 
-<!-- ═══════════ LOGIN ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• LOGIN â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="login-screen">
   <div class="login-bg-orb orb-1"></div>
   <div class="login-bg-orb orb-2"></div>
   <div class="login-bg-orb orb-3"></div>
   <div class="login-card">
     <div class="login-logo">
-      <div class="login-logo-icon">⚡</div>
+      <div class="login-logo-icon">âš¡</div>
       <div>
         <h1>Spark In Action</h1>
         <span>Engineering Study Portal</span>
@@ -507,18 +507,18 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
       <label>Password</label>
       <input type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password"/>
     </div>
-    <button class="login-btn" onclick="doLogin()">Sign In →</button>
-    <div class="login-error" id="login-error">❌ Invalid username or password</div>
+    <button class="login-btn" onclick="doLogin()">Sign In â†’</button>
+    <div class="login-error" id="login-error">âŒ Invalid username or password</div>
     <div class="login-hint">Hint: username <span>admin</span> / password <span>niranjan</span></div>
   </div>
 </div>
 
-<!-- ═══════════ APP ═══════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â• APP â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="app">
   <!-- Header -->
   <header class="app-header">
     <div class="logo">
-      <div class="logo-icon">⚡</div>
+      <div class="logo-icon">âš¡</div>
       <div>
         <div class="logo-text">Spark In Action</div>
         <div class="logo-sub">Data Engineering Bootcamp</div>
@@ -535,10 +535,10 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
   </header>
 
   <div class="app-body">
-    <!-- ── SIDEBAR ── -->
+    <!-- â”€â”€ SIDEBAR â”€â”€ -->
     <nav class="sidebar" id="sidebar"></nav>
 
-    <!-- ── CONTENT ── -->
+    <!-- â”€â”€ CONTENT â”€â”€ -->
     <main class="content-area" id="content-area">
       <div class="content-inner" id="content-inner"></div>
     </main>
@@ -546,35 +546,35 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //  CURRICULUM DATA
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const CURRICULUM = [
   {
-    id:'part1', title:'Part 1: First Steps', icon:'🚀', color:'#3B82F6',
+    id:'part1', title:'Part 1: First Steps', icon:'ðŸš€', color:'#3B82F6',
     chapters:[
       {
         id:'ch1', title:'Ch 1: Introduction to Apache Spark',
         topics:[
           { id:'spark-revolution', title:'The Spark Revolution',
             tag:'critical', part:'Part 1', chapter:'Ch 1',
-            overview:'Apache Spark was created at UC Berkeley AMPLab in 2009 to address the fundamental shortcomings of MapReduce — particularly its inability to handle iterative algorithms efficiently. By keeping intermediate data in memory rather than writing to HDFS between every step, Spark achieves up to 100× faster performance for iterative workloads.',
+            overview:'Apache Spark was created at UC Berkeley AMPLab in 2009 to address the fundamental shortcomings of MapReduce â€” particularly its inability to handle iterative algorithms efficiently. By keeping intermediate data in memory rather than writing to HDFS between every step, Spark achieves up to 100Ã— faster performance for iterative workloads.',
             concepts:[
-              {icon:'⚡',title:'In-Memory Processing',desc:'Data stays in RAM across operations — no disk I/O between steps'},
-              {icon:'📊',title:'Unified Engine',desc:'Batch, streaming, ML, and graph processing in one framework'},
-              {icon:'🔁',title:'Iterative Algorithms',desc:'ML and graph algorithms run in loops — perfect fit for Spark'},
-              {icon:'🌍',title:'Industry Impact',desc:'Used by Netflix, Uber, Airbnb, LinkedIn at petabyte scale'},
+              {icon:'âš¡',title:'In-Memory Processing',desc:'Data stays in RAM across operations â€” no disk I/O between steps'},
+              {icon:'ðŸ“Š',title:'Unified Engine',desc:'Batch, streaming, ML, and graph processing in one framework'},
+              {icon:'ðŸ”',title:'Iterative Algorithms',desc:'ML and graph algorithms run in loops â€” perfect fit for Spark'},
+              {icon:'ðŸŒ',title:'Industry Impact',desc:'Used by Netflix, Uber, Airbnb, LinkedIn at petabyte scale'},
             ],
             tableHeaders:['Aspect','MapReduce','Apache Spark'],
             tableRows:[
               ['Processing Model','Disk-based (write to HDFS each step)','In-memory (keep data in RAM)'],
-              ['Speed','Baseline (1×)','Up to 100× faster'],
+              ['Speed','Baseline (1Ã—)','Up to 100Ã— faster'],
               ['Ease of Use','Java verbose API','Scala/Python/R high-level API'],
               ['Streaming','No (batch only)','Yes (Spark Streaming / Structured Streaming)'],
               ['ML Support','Limited (Mahout)','Built-in MLlib'],
               ['Interactive Queries','No','Yes (spark-shell, Jupyter)'],
             ],
-            code:{lang:'scala',label:'Scala',src:`// Word Count — MapReduce vs Spark
+            code:{lang:'scala',label:'Scala',src:`// Word Count â€” MapReduce vs Spark
 // MapReduce: 50+ lines of Java boilerplate
 // Spark: 3 lines!
 
@@ -605,27 +605,27 @@ counts.show(10)`},
           },
           { id:'mapreduce-shortcomings', title:'MapReduce Shortcomings',
             tag:'essential', part:'Part 1', chapter:'Ch 1',
-            overview:'MapReduce was revolutionary when introduced but has critical architectural flaws that make it unsuitable for iterative ML algorithms, interactive queries, and real-time streaming. Every Map→Reduce cycle writes output to HDFS disk and the next cycle reads it back — for ML with 100 iterations, this means 200 disk reads/writes.',
+            overview:'MapReduce was revolutionary when introduced but has critical architectural flaws that make it unsuitable for iterative ML algorithms, interactive queries, and real-time streaming. Every Mapâ†’Reduce cycle writes output to HDFS disk and the next cycle reads it back â€” for ML with 100 iterations, this means 200 disk reads/writes.',
             concepts:[
-              {icon:'💾',title:'Disk I/O at Every Step',desc:'Map output → HDFS write → Reduce reads from HDFS → next Map reads HDFS again'},
-              {icon:'🔒',title:'Rigid 2-Stage Model',desc:'Only Map then Reduce — no DAG of arbitrary operations'},
-              {icon:'⏱️',title:'High Latency',desc:'Even tiny queries take minutes due to job startup and disk overhead'},
-              {icon:'🚫',title:'No Streaming',desc:'Pure batch system — cannot process real-time event streams'},
+              {icon:'ðŸ’¾',title:'Disk I/O at Every Step',desc:'Map output â†’ HDFS write â†’ Reduce reads from HDFS â†’ next Map reads HDFS again'},
+              {icon:'ðŸ”’',title:'Rigid 2-Stage Model',desc:'Only Map then Reduce â€” no DAG of arbitrary operations'},
+              {icon:'â±ï¸',title:'High Latency',desc:'Even tiny queries take minutes due to job startup and disk overhead'},
+              {icon:'ðŸš«',title:'No Streaming',desc:'Pure batch system â€” cannot process real-time event streams'},
             ],
             tableHeaders:['Iteration','MapReduce Disk Ops','Spark Memory Ops'],
             tableRows:[
               ['Iteration 1','2 HDFS reads + 2 writes','1 memory read (first only)'],
-              ['Iteration 10','20 HDFS reads + 20 writes','10 memory reads (10× faster each)'],
+              ['Iteration 10','20 HDFS reads + 20 writes','10 memory reads (10Ã— faster each)'],
               ['Iteration 100','200 HDFS reads + 200 writes','100 memory reads (no disk)'],
               ['k-means (10 iter)','~45 minutes','~20 seconds'],
               ['PageRank (10 iter)','~180 minutes','~3 minutes'],
             ],
-            code:{lang:'bash',label:'Bash',src:`# MapReduce k-means — pseudocode of the pain:
-# Iteration 1: Read HDFS → Map → Write HDFS temp → Read HDFS temp → Reduce → Write HDFS
-# Iteration 2: Read HDFS → Map → Write HDFS temp → Read HDFS temp → Reduce → Write HDFS
+            code:{lang:'bash',label:'Bash',src:`# MapReduce k-means â€” pseudocode of the pain:
+# Iteration 1: Read HDFS â†’ Map â†’ Write HDFS temp â†’ Read HDFS temp â†’ Reduce â†’ Write HDFS
+# Iteration 2: Read HDFS â†’ Map â†’ Write HDFS temp â†’ Read HDFS temp â†’ Reduce â†’ Write HDFS
 # ... repeat 100 times for ML convergence
 
-# Spark k-means — data stays in memory:
+# Spark k-means â€” data stays in memory:
 from pyspark.ml.clustering import KMeans
 from pyspark.ml.feature import VectorAssembler
 
@@ -634,13 +634,13 @@ model  = kmeans.fit(dataset)       # Runs in seconds, not hours`},
           },
           { id:'spark-components', title:'Spark Components',
             tag:'critical', part:'Part 1', chapter:'Ch 1',
-            overview:'Apache Spark is not just one thing — it is an ecosystem of five tightly integrated components, all built on top of Spark Core. Understanding this layered architecture is fundamental to choosing the right tool for each use case.',
+            overview:'Apache Spark is not just one thing â€” it is an ecosystem of five tightly integrated components, all built on top of Spark Core. Understanding this layered architecture is fundamental to choosing the right tool for each use case.',
             concepts:[
-              {icon:'🏗️',title:'Spark Core',desc:'Foundation: RDD API, task scheduling, memory management, fault tolerance'},
-              {icon:'🗄️',title:'Spark SQL',desc:'DataFrames, Datasets, SQL queries, Hive integration, Catalyst optimizer'},
-              {icon:'🌊',title:'Spark Streaming',desc:'DStreams and Structured Streaming for real-time data processing'},
-              {icon:'🤖',title:'MLlib',desc:'Distributed machine learning: classification, regression, clustering, NLP'},
-              {icon:'🕸️',title:'GraphX',desc:'Graph computation: PageRank, connected components, shortest paths'},
+              {icon:'ðŸ—ï¸',title:'Spark Core',desc:'Foundation: RDD API, task scheduling, memory management, fault tolerance'},
+              {icon:'ðŸ—„ï¸',title:'Spark SQL',desc:'DataFrames, Datasets, SQL queries, Hive integration, Catalyst optimizer'},
+              {icon:'ðŸŒŠ',title:'Spark Streaming',desc:'DStreams and Structured Streaming for real-time data processing'},
+              {icon:'ðŸ¤–',title:'MLlib',desc:'Distributed machine learning: classification, regression, clustering, NLP'},
+              {icon:'ðŸ•¸ï¸',title:'GraphX',desc:'Graph computation: PageRank, connected components, shortest paths'},
             ],
             tableHeaders:['Component','API Level','Use Case','Key Classes'],
             tableRows:[
@@ -651,36 +651,36 @@ model  = kmeans.fit(dataset)       # Runs in seconds, not hours`},
               ['MLlib','High','Machine learning pipelines','Pipeline, Estimator, Transformer'],
               ['GraphX','Low-Mid','Graph analytics','Graph, VertexRDD, EdgeRDD'],
             ],
-            code:{lang:'scala',label:'Scala',src:`// Spark Core — RDD API
+            code:{lang:'scala',label:'Scala',src:`// Spark Core â€” RDD API
 val rdd = sc.textFile("data.txt").filter(_.contains("ERROR"))
 
-// Spark SQL — DataFrame API (preferred for most ETL)
+// Spark SQL â€” DataFrame API (preferred for most ETL)
 val df = spark.read.json("events.json")
 df.groupBy("user_id").agg(count("*").as("events")).show()
 
-// Spark SQL — SQL syntax
+// Spark SQL â€” SQL syntax
 spark.sql("SELECT user_id, COUNT(*) as events FROM events GROUP BY user_id")
 
-// Spark Streaming — DStream
+// Spark Streaming â€” DStream
 val stream = ssc.socketTextStream("localhost", 9999)
 stream.flatMap(_.split(" ")).map((_,1)).reduceByKey(_+_).print()
 
-// MLlib — ML Pipeline
+// MLlib â€” ML Pipeline
 val pipeline = new Pipeline().setStages(Array(tokenizer, hashingTF, lr))
 val model = pipeline.fit(trainingData)
 
-// GraphX — Graph operations
+// GraphX â€” Graph operations
 val pageRanks = graph.pageRank(0.0001).vertices`},
           },
           { id:'spark-ecosystem', title:'The Spark Ecosystem', tag:'essential', part:'Part 1', chapter:'Ch 1',
             overview:'Spark does not exist in isolation. It integrates with a rich ecosystem of storage systems, messaging platforms, cluster managers, and data formats. Understanding these integrations is critical for building production data pipelines.',
             concepts:[
-              {icon:'🗂️',title:'HDFS',desc:'Hadoop Distributed File System — primary storage for on-premise Spark clusters'},
-              {icon:'☁️',title:'AWS S3 / GCS / ADLS',desc:'Cloud object storage — standard for cloud-native Spark deployments'},
-              {icon:'📨',title:'Apache Kafka',desc:'Distributed event streaming — the standard source/sink for Spark Streaming'},
-              {icon:'🗃️',title:'Apache Hive',desc:'Metastore for table definitions used by Spark SQL'},
-              {icon:'🕰️',title:'Apache Cassandra',desc:'Wide-column NoSQL — used as a low-latency sink for Spark output'},
-              {icon:'🔄',title:'YARN / Kubernetes',desc:'Cluster resource managers — allocate CPU/memory to Spark executors'},
+              {icon:'ðŸ—‚ï¸',title:'HDFS',desc:'Hadoop Distributed File System â€” primary storage for on-premise Spark clusters'},
+              {icon:'â˜ï¸',title:'AWS S3 / GCS / ADLS',desc:'Cloud object storage â€” standard for cloud-native Spark deployments'},
+              {icon:'ðŸ“¨',title:'Apache Kafka',desc:'Distributed event streaming â€” the standard source/sink for Spark Streaming'},
+              {icon:'ðŸ—ƒï¸',title:'Apache Hive',desc:'Metastore for table definitions used by Spark SQL'},
+              {icon:'ðŸ•°ï¸',title:'Apache Cassandra',desc:'Wide-column NoSQL â€” used as a low-latency sink for Spark output'},
+              {icon:'ðŸ”„',title:'YARN / Kubernetes',desc:'Cluster resource managers â€” allocate CPU/memory to Spark executors'},
             ],
             code:{lang:'python',label:'PySpark',src:`# Reading from multiple sources
 spark = SparkSession.builder.getOrCreate()
@@ -710,29 +710,29 @@ df_pg = spark.read.jdbc(
           },
           { id:'vm-setup', title:'VM & Local Setup', tag:'good', part:'Part 1', chapter:'Ch 1',
             overview:'Setting up a local Spark environment is the first hands-on step. You can run Spark locally using local[*] mode which simulates a cluster on your machine using all available CPU cores.',
-            code:{lang:'bash',label:'Bash',src:`# ── Step 1: Install Java 11
+            code:{lang:'bash',label:'Bash',src:`# â”€â”€ Step 1: Install Java 11
 # Windows: Download from adoptium.net
 # Set JAVA_HOME=C:\\Program Files\\Eclipse Adoptium\\jdk-11
 
-# ── Step 2: Download Spark
+# â”€â”€ Step 2: Download Spark
 # https://spark.apache.org/downloads.html
 # Choose: Spark 3.5.x, Pre-built for Apache Hadoop 3.x
 
-# ── Step 3: Extract and configure
+# â”€â”€ Step 3: Extract and configure
 # Windows: Extract to C:\\spark
 # Set SPARK_HOME=C:\\spark
 # Add to PATH: %SPARK_HOME%\\bin
 
-# ── Step 4: Windows only — winutils.exe
+# â”€â”€ Step 4: Windows only â€” winutils.exe
 # Download from: https://github.com/cdarlint/winutils
 # Place in C:\\hadoop\\bin\\winutils.exe
 # Set HADOOP_HOME=C:\\hadoop
 
-# ── Step 5: Launch Spark shell
+# â”€â”€ Step 5: Launch Spark shell
 spark-shell              # Scala REPL
 pyspark                  # Python REPL
 
-# ── Step 6: Verify
+# â”€â”€ Step 6: Verify
 sc.version               # Should print "3.5.x"
 spark.sql("SELECT 1+1").show()  # Should print 2`},
           },
@@ -744,10 +744,10 @@ spark.sql("SELECT 1+1").show()  # Should print 2`},
           { id:'spark-shell', title:'The Spark Shell (REPL)', tag:'critical', part:'Part 1', chapter:'Ch 2',
             overview:'The Spark Shell is an interactive REPL (Read-Eval-Print-Loop) that lets you explore data, prototype transformations, and learn the API without writing a full application. It auto-creates SparkContext (sc) and SparkSession (spark) objects for you.',
             concepts:[
-              {icon:'🖥️',title:'spark-shell',desc:'Scala REPL — full Spark Scala API available, tab completion works'},
-              {icon:'🐍',title:'pyspark',desc:'Python REPL — same power as Scala, preferred by data scientists'},
-              {icon:'🔗',title:'SparkContext (sc)',desc:'Entry point to Spark Core — use to create RDDs and access cluster'},
-              {icon:'🌟',title:'SparkSession (spark)',desc:'Unified entry point for Spark SQL, DataFrames, Datasets'},
+              {icon:'ðŸ–¥ï¸',title:'spark-shell',desc:'Scala REPL â€” full Spark Scala API available, tab completion works'},
+              {icon:'ðŸ',title:'pyspark',desc:'Python REPL â€” same power as Scala, preferred by data scientists'},
+              {icon:'ðŸ”—',title:'SparkContext (sc)',desc:'Entry point to Spark Core â€” use to create RDDs and access cluster'},
+              {icon:'ðŸŒŸ',title:'SparkSession (spark)',desc:'Unified entry point for Spark SQL, DataFrames, Datasets'},
             ],
             code:{lang:'scala',label:'Scala',src:`// spark-shell auto-creates these for you:
 // sc:    SparkContext
@@ -773,22 +773,22 @@ df.filter("age > 21").select("name","age").show()`},
           { id:'rdds', title:'Resilient Distributed Datasets (RDDs)', tag:'critical', part:'Part 1', chapter:'Ch 2',
             overview:'The RDD is the fundamental data abstraction in Apache Spark. Every piece of data in Spark is an RDD at its core. Understanding RDDs is essential because DataFrames are built on top of them, and they explain WHY Spark behaves the way it does.',
             concepts:[
-              {icon:'🔧',title:'Resilient',desc:'Fault-tolerant via lineage — can recompute lost partitions from parent RDDs'},
-              {icon:'🌐',title:'Distributed',desc:'Data is split into partitions spread across multiple executor nodes'},
-              {icon:'📦',title:'Dataset',desc:'A collection of elements of any type (String, Row, Tuple, etc.)'},
-              {icon:'💤',title:'Lazy Evaluation',desc:'Transformations are NOT computed until an action triggers execution'},
-              {icon:'🔒',title:'Immutable',desc:'RDDs cannot be changed — transformations create new RDDs'},
-              {icon:'📋',title:'Typed',desc:'RDD[Int], RDD[String], RDD[(String,Int)] — compile-time type safety'},
+              {icon:'ðŸ”§',title:'Resilient',desc:'Fault-tolerant via lineage â€” can recompute lost partitions from parent RDDs'},
+              {icon:'ðŸŒ',title:'Distributed',desc:'Data is split into partitions spread across multiple executor nodes'},
+              {icon:'ðŸ“¦',title:'Dataset',desc:'A collection of elements of any type (String, Row, Tuple, etc.)'},
+              {icon:'ðŸ’¤',title:'Lazy Evaluation',desc:'Transformations are NOT computed until an action triggers execution'},
+              {icon:'ðŸ”’',title:'Immutable',desc:'RDDs cannot be changed â€” transformations create new RDDs'},
+              {icon:'ðŸ“‹',title:'Typed',desc:'RDD[Int], RDD[String], RDD[(String,Int)] â€” compile-time type safety'},
             ],
             tableHeaders:['Property','Description','Example'],
             tableRows:[
-              ['Resilient','Fault-tolerant via lineage','Partition lost → recompute from textFile()'],
-              ['Distributed','Spread across N partitions','1TB file → 8000 partitions → 8000 tasks'],
+              ['Resilient','Fault-tolerant via lineage','Partition lost â†’ recompute from textFile()'],
+              ['Distributed','Spread across N partitions','1TB file â†’ 8000 partitions â†’ 8000 tasks'],
               ['Dataset','Collection of typed elements','RDD[String], RDD[(String,Int)]'],
-              ['Lazy','No computation until action','map().filter().count() — only count() triggers work'],
+              ['Lazy','No computation until action','map().filter().count() â€” only count() triggers work'],
               ['Immutable','Transforms produce new RDDs','val rdd2 = rdd1.map(_ * 2) // rdd1 unchanged'],
             ],
-            code:{lang:'scala',label:'Scala',src:`// ── Creating RDDs ────────────────────────
+            code:{lang:'scala',label:'Scala',src:`// â”€â”€ Creating RDDs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 1. Parallelizing a collection
 val local = sc.parallelize(Seq(1,2,3,4,5,6,7,8), numSlices=4)
 
@@ -798,7 +798,7 @@ val lines = sc.textFile("hdfs://data/access.log")
 // 3. From multiple files
 val logs = sc.textFile("hdfs://logs/2024/01/*.log")
 
-// ── RDD lineage (toDebugString) ───────────
+// â”€â”€ RDD lineage (toDebugString) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 val result = sc.textFile("data.txt")
   .filter(_.nonEmpty)
   .map(_.split(","))
@@ -810,18 +810,18 @@ println(result.toDebugString)
 //  |  MapPartitionsRDD[1] at filter
 //  |  data.txt MapPartitionsRDD[0] at textFile
 
-// ── Fault tolerance example ───────────────
+// â”€â”€ Fault tolerance example â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // If partition 3 is lost, Spark replays:
-// textFile → filter → map → filter for that partition only
+// textFile â†’ filter â†’ map â†’ filter for that partition only
 // No need for replication!`},
           },
           { id:'actions', title:'Actions', tag:'critical', part:'Part 1', chapter:'Ch 2',
-            overview:'Actions are RDD operations that TRIGGER computation and return a result to the Driver program (or write to external storage). Without an action, Spark does absolutely nothing — it just builds a computation graph (DAG).',
+            overview:'Actions are RDD operations that TRIGGER computation and return a result to the Driver program (or write to external storage). Without an action, Spark does absolutely nothing â€” it just builds a computation graph (DAG).',
             tableHeaders:['Action','Returns','Description','Performance Note'],
             tableRows:[
-              ['collect()','Array[T]','All elements to driver','⚠️ OOM risk for large RDDs'],
-              ['count()','Long','Number of elements','Safe — just a number'],
-              ['first()','T','First element','Very fast — stops after 1'],
+              ['collect()','Array[T]','All elements to driver','âš ï¸ OOM risk for large RDDs'],
+              ['count()','Long','Number of elements','Safe â€” just a number'],
+              ['first()','T','First element','Very fast â€” stops after 1'],
               ['take(n)','Array[T]','First n elements','Avoids full shuffle'],
               ['reduce(f)','T','Aggregate all elements','Must be commutative & associative'],
               ['saveAsTextFile(path)','Unit','Write to HDFS/S3','Writes one file per partition'],
@@ -831,7 +831,7 @@ println(result.toDebugString)
             ],
             code:{lang:'scala',label:'Scala',src:`val rdd = sc.parallelize(1 to 1000000)
 
-// ── Safe actions ──────────────────────────
+// â”€â”€ Safe actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 rdd.count()           // 1000000
 rdd.first()           // 1
 rdd.take(5)           // Array(1, 2, 3, 4, 5)
@@ -840,18 +840,18 @@ rdd.max()             // 1000000
 rdd.sum()             // 5.0000005E11
 rdd.mean()            // 500000.5
 
-// ── Aggregate actions ─────────────────────
+// â”€â”€ Aggregate actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 rdd.reduce(_ + _)     // Sum = 500000500000
 rdd.fold(0)(_ + _)    // Same as reduce but with zero value
 
-// ── Writing actions ───────────────────────
+// â”€â”€ Writing actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 rdd.saveAsTextFile("hdfs://output/result/")
 // Creates: part-00000, part-00001, ... (one per partition)
 
 // Coalesce before saving to control output files
 rdd.coalesce(1).saveAsTextFile("hdfs://output/single/")
 
-// ── Side effect action ────────────────────
+// â”€â”€ Side effect action â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 rdd.take(100).foreach { n =>
   dbConnection.insert("results", n)  // Write to external DB
 }`},
@@ -859,41 +859,41 @@ rdd.take(100).foreach { n =>
           { id:'transformations', title:'Transformations', tag:'critical', part:'Part 1', chapter:'Ch 2',
             overview:'Transformations are lazy operations that define a new RDD from an existing one. They build the computation graph (DAG) but do NOT execute until an action is called. There are two types: narrow (no shuffle) and wide (shuffle).',
             concepts:[
-              {icon:'➡️',title:'Narrow Transformations',desc:'Each output partition depends on ONE input partition. No network transfer. Fast. Examples: map, filter, flatMap'},
-              {icon:'↔️',title:'Wide Transformations',desc:'Output partition depends on MULTIPLE input partitions. Causes SHUFFLE (network). Expensive. Examples: groupByKey, reduceByKey, join'},
+              {icon:'âž¡ï¸',title:'Narrow Transformations',desc:'Each output partition depends on ONE input partition. No network transfer. Fast. Examples: map, filter, flatMap'},
+              {icon:'â†”ï¸',title:'Wide Transformations',desc:'Output partition depends on MULTIPLE input partitions. Causes SHUFFLE (network). Expensive. Examples: groupByKey, reduceByKey, join'},
             ],
-            tableHeaders:['Transformation','Input → Output','Type','Example'],
+            tableHeaders:['Transformation','Input â†’ Output','Type','Example'],
             tableRows:[
-              ['map(f)','RDD[A] → RDD[B]','Narrow','rdd.map(_ * 2)'],
-              ['filter(f)','RDD[A] → RDD[A]','Narrow','rdd.filter(_ > 0)'],
-              ['flatMap(f)','RDD[A] → RDD[B]','Narrow','rdd.flatMap(_.split(" "))'],
-              ['distinct()','RDD[A] → RDD[A]','Wide (shuffle)','rdd.distinct()'],
-              ['sample(f,r)','RDD[A] → RDD[A]','Narrow','rdd.sample(false, 0.1)'],
-              ['union(other)','RDD+RDD → RDD','Narrow','rdd1.union(rdd2)'],
-              ['intersection(other)','RDD+RDD → RDD','Wide (shuffle)','rdd1.intersection(rdd2)'],
-              ['groupByKey()','RDD[(K,V)] → RDD[(K,Iter[V])]','Wide (shuffle)','pairs.groupByKey()'],
-              ['reduceByKey(f)','RDD[(K,V)] → RDD[(K,V)]','Wide (shuffle)','pairs.reduceByKey(_+_)'],
+              ['map(f)','RDD[A] â†’ RDD[B]','Narrow','rdd.map(_ * 2)'],
+              ['filter(f)','RDD[A] â†’ RDD[A]','Narrow','rdd.filter(_ > 0)'],
+              ['flatMap(f)','RDD[A] â†’ RDD[B]','Narrow','rdd.flatMap(_.split(" "))'],
+              ['distinct()','RDD[A] â†’ RDD[A]','Wide (shuffle)','rdd.distinct()'],
+              ['sample(f,r)','RDD[A] â†’ RDD[A]','Narrow','rdd.sample(false, 0.1)'],
+              ['union(other)','RDD+RDD â†’ RDD','Narrow','rdd1.union(rdd2)'],
+              ['intersection(other)','RDD+RDD â†’ RDD','Wide (shuffle)','rdd1.intersection(rdd2)'],
+              ['groupByKey()','RDD[(K,V)] â†’ RDD[(K,Iter[V])]','Wide (shuffle)','pairs.groupByKey()'],
+              ['reduceByKey(f)','RDD[(K,V)] â†’ RDD[(K,V)]','Wide (shuffle)','pairs.reduceByKey(_+_)'],
             ],
             code:{lang:'scala',label:'Scala',src:`val nums = sc.parallelize(1 to 20)
 
-// map — transform each element
+// map â€” transform each element
 val doubled = nums.map(_ * 2)     // 2,4,6,8,...40
 
-// filter — keep elements matching predicate
+// filter â€” keep elements matching predicate
 val evens = nums.filter(_ % 2 == 0)  // 2,4,6,8,...20
 
-// flatMap — one element can produce many
+// flatMap â€” one element can produce many
 val words = sc.parallelize(Seq("hello world", "spark is fast"))
 val split = words.flatMap(_.split(" "))  // "hello","world","spark","is","fast"
 
-// distinct — remove duplicates (causes shuffle!)
+// distinct â€” remove duplicates (causes shuffle!)
 val dupes = sc.parallelize(Seq(1,2,2,3,3,3,4))
 dupes.distinct().collect()  // Array(1,2,3,4)
 
-// sample — random subset
+// sample â€” random subset
 val sampled = nums.sample(withReplacement=false, fraction=0.3, seed=42)
 
-// Word count — classic Spark example
+// Word count â€” classic Spark example
 val wc = sc.textFile("book.txt")
   .flatMap(_.split("\\\\s+"))        // Split lines to words
   .map(w => (w.toLowerCase, 1))   // Pair each word with 1
@@ -920,7 +920,7 @@ temps.variance()  // 30.67...
 temps.stdev()     // 5.538...
 temps.sum()       // 167.6
 
-// Histogram — distribute into buckets
+// Histogram â€” distribute into buckets
 val (buckets, counts) = temps.histogram(3)
 // buckets: Array(15.1, 20.366, 25.633, 31.0)
 // counts:  Array(2, 2, 3)`},
@@ -932,7 +932,7 @@ val (buckets, counts) = temps.histogram(3)
         topics:[
           { id:'project-setup', title:'IDE & Project Setup', tag:'essential', part:'Part 1', chapter:'Ch 3',
             overview:'Moving from the Spark Shell to a proper application requires setting up a build tool (Maven or SBT) with the right Spark dependencies. This is the foundation of every production Spark project.',
-            code:{lang:'bash',label:'Maven pom.xml',src:`<!-- Maven dependency — add to your pom.xml -->
+            code:{lang:'bash',label:'Maven pom.xml',src:`<!-- Maven dependency â€” add to your pom.xml -->
 <dependencies>
   <dependency>
     <groupId>org.apache.spark</groupId>
@@ -957,7 +957,7 @@ libraryDependencies ++= Seq(
             code2:{lang:'scala',label:'Scala App',src:`// src/main/scala/com/example/MySparkApp.scala
 object MySparkApp {
   def main(args: Array[String]): Unit = {
-    // Always use SparkSession — it includes SparkContext
+    // Always use SparkSession â€” it includes SparkContext
     val spark = SparkSession.builder()
       .appName("My First Spark App")
       .config("spark.sql.shuffle.partitions", "200")
@@ -977,11 +977,11 @@ object MySparkApp {
           },
           { id:'loading-json', title:'Loading JSON Data', tag:'essential', part:'Part 1', chapter:'Ch 3',
             overview:'JSON is one of the most common data formats in modern data engineering. Spark can load JSON with automatic schema inference or with a user-defined schema for better performance and reliability.',
-            code:{lang:'scala',label:'Scala',src:`// ── Schema inference (convenient but slow for large files)
+            code:{lang:'scala',label:'Scala',src:`// â”€â”€ Schema inference (convenient but slow for large files)
 val df = spark.read.json("hdfs://data/github-archive/*.json")
 df.printSchema()   // Spark infers types automatically
 
-// ── Defined schema (production best practice)
+// â”€â”€ Defined schema (production best practice)
 import org.apache.spark.sql.types._
 val schema = StructType(Array(
   StructField("id",         StringType,  nullable=true),
@@ -999,32 +999,32 @@ val schema = StructType(Array(
 
 val df = spark.read.schema(schema).json("hdfs://data/github-archive/*.json")
 
-// ── Handle malformed records
+// â”€â”€ Handle malformed records
 val df = spark.read
   .option("mode", "DROPMALFORMED")  // or PERMISSIVE, FAILFAST
   .json("data.json")`},
           },
           { id:'broadcast-variables', title:'Broadcast Variables', tag:'critical', part:'Part 1', chapter:'Ch 3',
             overview:'Broadcast variables solve a critical performance problem: when a large lookup table (e.g., country codes, product catalogue) is needed in a distributed task, without broadcast it gets serialized and sent with EVERY task. With broadcast, it is sent ONCE per executor and cached in memory.',
-            code:{lang:'scala',label:'Scala',src:`// ❌ WITHOUT broadcast — country map serialized per task!
+            code:{lang:'scala',label:'Scala',src:`// âŒ WITHOUT broadcast â€” country map serialized per task!
 val countryMap = Map("US"->"United States","IN"->"India","UK"->"United Kingdom")
 val events = sc.textFile("events.csv")
 val enriched = events.map { line =>
   val parts = line.split(",")
-  val country = countryMap.getOrElse(parts(3), "Unknown")  // ← copy per task!
+  val country = countryMap.getOrElse(parts(3), "Unknown")  // â† copy per task!
   (parts(0), country)
 }
 
-// ✅ WITH broadcast — sent once per executor, shared by all tasks
+// âœ… WITH broadcast â€” sent once per executor, shared by all tasks
 val bcMap = sc.broadcast(countryMap)  // Broadcast it!
 val enriched = events.map { line =>
   val parts = line.split(",")
-  val country = bcMap.value.getOrElse(parts(3), "Unknown")  // ← single copy
+  val country = bcMap.value.getOrElse(parts(3), "Unknown")  // â† single copy
   (parts(0), country)
 }
 
-// Performance: 10MB map × 1000 tasks = 10GB without broadcast
-//              10MB map × 50 executors = 500MB WITH broadcast (20× reduction)
+// Performance: 10MB map Ã— 1000 tasks = 10GB without broadcast
+//              10MB map Ã— 50 executors = 500MB WITH broadcast (20Ã— reduction)
 
 // Cleanup when done
 bcMap.unpersist()
@@ -1032,7 +1032,7 @@ bcMap.destroy()`},
           },
           { id:'spark-submit', title:'spark-submit', tag:'critical', part:'Part 1', chapter:'Ch 3',
             overview:'spark-submit is the command-line tool to submit compiled Spark applications to a cluster. Understanding all its flags is essential for production deployments.',
-            code:{lang:'bash',label:'Bash',src:`# ── Basic syntax
+            code:{lang:'bash',label:'Bash',src:`# â”€â”€ Basic syntax
 spark-submit \\
   --class com.example.MyApp \\   # Main class
   --master yarn \\               # Cluster manager
@@ -1048,19 +1048,19 @@ spark-submit \\
   hdfs://input/data \\           # App argument 1
   hdfs://output/result           # App argument 2
 
-# ── Local mode (development)
+# â”€â”€ Local mode (development)
 spark-submit --master local[4] --class com.example.MyApp app.jar
 
-# ── Standalone mode
+# â”€â”€ Standalone mode
 spark-submit --master spark://master-host:7077 \\
   --deploy-mode client --class com.example.MyApp app.jar
 
-# ── View running apps
+# â”€â”€ View running apps
 yarn application -list`},
           },
           { id:'uberjars', title:'Uber/Fat JARs', tag:'essential', part:'Part 1', chapter:'Ch 3',
             overview:'An Uber JAR (also called a Fat JAR or Assembly JAR) bundles your application code AND all its dependencies into a single JAR file. This is how you ship your Spark app to a cluster that may not have your libraries installed.',
-            code:{lang:'bash',label:'SBT Assembly',src:`# ── SBT: add sbt-assembly plugin
+            code:{lang:'bash',label:'SBT Assembly',src:`# â”€â”€ SBT: add sbt-assembly plugin
 # project/plugins.sbt:
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.1.0")
 
@@ -1075,11 +1075,11 @@ assembly / assemblyMergeStrategy := {
 sbt assembly
 # Creates: target/scala-2.12/myapp-1.0-assembly.jar  (~200MB)
 
-# ── Maven: add assembly plugin to pom.xml
+# â”€â”€ Maven: add assembly plugin to pom.xml
 mvn clean package -DskipTests
 # Creates: target/myapp-1.0-jar-with-dependencies.jar
 
-# ── Verify JAR contents
+# â”€â”€ Verify JAR contents
 jar tf myapp-assembly.jar | head -20
 # You should see your classes AND all dependency classes`},
           },
@@ -1089,7 +1089,7 @@ jar tf myapp-assembly.jar | head -20
         id:'ch4', title:'Ch 4: The Spark API in Depth',
         topics:[
           { id:'pair-rdds', title:'Pair RDDs', tag:'critical', part:'Part 1', chapter:'Ch 4',
-            overview:'Pair RDDs are RDDs where each element is a key-value pair (K, V). They unlock a rich set of operations for grouping, joining, and aggregating data by key — the backbone of distributed data processing.',
+            overview:'Pair RDDs are RDDs where each element is a key-value pair (K, V). They unlock a rich set of operations for grouping, joining, and aggregating data by key â€” the backbone of distributed data processing.',
             code:{lang:'scala',label:'Scala',src:`// Create a Pair RDD
 val sales = sc.textFile("sales.csv")
   .map { line =>
@@ -1097,7 +1097,7 @@ val sales = sc.textFile("sales.csv")
     (parts(0), parts(1).toDouble)  // (product, revenue)
   }
 
-// ── Key operations ──────────────────────────
+// â”€â”€ Key operations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Count per key
 sales.countByKey()  // Map(productA -> 42, productB -> 38, ...)
 
@@ -1123,25 +1123,25 @@ products.join(prices).collect()
           { id:'shuffling', title:'Shuffling', tag:'critical', part:'Part 1', chapter:'Ch 4',
             overview:'The Shuffle is the most expensive operation in Spark. It happens when data must be moved between executors (e.g., to group all values with the same key together). Understanding when and why shuffles happen is key to Spark performance optimization.',
             concepts:[
-              {icon:'📤',title:'Map Side',desc:'Each partition sorts its output by key and writes "shuffle files" to local disk'},
-              {icon:'🌐',title:'Network Transfer',desc:'Reduce-side tasks fetch their relevant partitions across the network'},
-              {icon:'📥',title:'Reduce Side',desc:'Data is merged and sorted, then passed to the next operation'},
-              {icon:'💾',title:'Disk Spill',desc:'If buffer fills up during shuffle, data spills to disk — very slow'},
+              {icon:'ðŸ“¤',title:'Map Side',desc:'Each partition sorts its output by key and writes "shuffle files" to local disk'},
+              {icon:'ðŸŒ',title:'Network Transfer',desc:'Reduce-side tasks fetch their relevant partitions across the network'},
+              {icon:'ðŸ“¥',title:'Reduce Side',desc:'Data is merged and sorted, then passed to the next operation'},
+              {icon:'ðŸ’¾',title:'Disk Spill',desc:'If buffer fills up during shuffle, data spills to disk â€” very slow'},
             ],
             code:{lang:'scala',label:'Scala',src:`// Operations that cause shuffles:
-rdd.groupByKey()         // ← SHUFFLE (and dangerous — all values per key in memory!)
-rdd.reduceByKey(_ + _)   // ← SHUFFLE (but pre-aggregates locally first — much better)
-rdd.join(other)          // ← SHUFFLE (both RDDs)
-rdd.distinct()           // ← SHUFFLE
-rdd.repartition(n)       // ← SHUFFLE
-rdd.sortByKey()          // ← SHUFFLE
+rdd.groupByKey()         // â† SHUFFLE (and dangerous â€” all values per key in memory!)
+rdd.reduceByKey(_ + _)   // â† SHUFFLE (but pre-aggregates locally first â€” much better)
+rdd.join(other)          // â† SHUFFLE (both RDDs)
+rdd.distinct()           // â† SHUFFLE
+rdd.repartition(n)       // â† SHUFFLE
+rdd.sortByKey()          // â† SHUFFLE
 
-// groupByKey vs reduceByKey — ALWAYS prefer reduceByKey!
+// groupByKey vs reduceByKey â€” ALWAYS prefer reduceByKey!
 // groupByKey: sends ALL values to reduce side, then aggregates
 // reduceByKey: aggregates locally first, sends only partial sums
 
 // Check shuffle bytes in Spark UI:
-// Jobs → Stages → "Shuffle Read" and "Shuffle Write" columns
+// Jobs â†’ Stages â†’ "Shuffle Read" and "Shuffle Write" columns
 
 // Minimize shuffles with:
 // 1. Pre-partition data before joins
@@ -1164,12 +1164,12 @@ val result = sc.textFile("access.log")           // Stage boundary: disk read
 
 // View the DAG
 println(result.toDebugString)
-// (4) ShuffledRDD[5] at reduceByKey       ← Stage 1 result
-//  +-(4) MapPartitionsRDD[4] at map       ─┐
-//      | MapPartitionsRDD[3] at filter      │ Stage 0
-//      | MapPartitionsRDD[2] at map         │ (pipelined,
-//      | MapPartitionsRDD[1] at filter      │  no shuffle)
-//      | access.log                        ─┘
+// (4) ShuffledRDD[5] at reduceByKey       â† Stage 1 result
+//  +-(4) MapPartitionsRDD[4] at map       â”€â”
+//      | MapPartitionsRDD[3] at filter      â”‚ Stage 0
+//      | MapPartitionsRDD[2] at map         â”‚ (pipelined,
+//      | MapPartitionsRDD[1] at filter      â”‚  no shuffle)
+//      | access.log                        â”€â”˜
 
 // Stages are separated at shuffle boundaries
 // Within a stage, all transformations are pipelined
@@ -1198,10 +1198,10 @@ println(s"Errors:    \${errorCount.value}")
 println(s"Malformed: \${malformedCount.value}")
 println(s"Bytes:     \${totalBytes.value}")
 
-// ⚠️ PITFALL: Do NOT use accumulators in transformations
+// âš ï¸ PITFALL: Do NOT use accumulators in transformations
 // They may be executed multiple times on re-computation!
 val bad = rdd.map { x =>
-  counter.add(1)  // ← WRONG! May count twice if task is retried
+  counter.add(1)  // â† WRONG! May count twice if task is retried
   x * 2
 }`},
           },
@@ -1210,18 +1210,18 @@ val bad = rdd.map { x =>
     ]
   },
   {
-    id:'part2', title:'Part 2: Spark Family', icon:'👨‍👩‍👧‍👦', color:'#14B8A6',
+    id:'part2', title:'Part 2: Spark Family', icon:'ðŸ‘¨â€ðŸ‘©â€ðŸ‘§â€ðŸ‘¦', color:'#14B8A6',
     chapters:[
       {
         id:'ch5', title:'Ch 5: Sparkling Queries with Spark SQL',
         topics:[
           { id:'dataframes', title:'DataFrames', tag:'critical', part:'Part 2', chapter:'Ch 5',
-            overview:'DataFrames are the primary API for modern Spark development. A DataFrame is a distributed collection of data organized into named columns — like a database table or a pandas DataFrame, but distributed across a cluster.',
+            overview:'DataFrames are the primary API for modern Spark development. A DataFrame is a distributed collection of data organized into named columns â€” like a database table or a pandas DataFrame, but distributed across a cluster.',
             concepts:[
-              {icon:'📊',title:'Named Columns',desc:'Each column has a name and type — query by name not index'},
-              {icon:'🔍',title:'Schema',desc:'StructType defines column names and types — enables optimization'},
-              {icon:'⚡',title:'Catalyst Optimized',desc:'Queries are optimized by the Catalyst engine before execution'},
-              {icon:'🔄',title:'Lazy',desc:'Like RDDs — nothing executes until an action is called'},
+              {icon:'ðŸ“Š',title:'Named Columns',desc:'Each column has a name and type â€” query by name not index'},
+              {icon:'ðŸ”',title:'Schema',desc:'StructType defines column names and types â€” enables optimization'},
+              {icon:'âš¡',title:'Catalyst Optimized',desc:'Queries are optimized by the Catalyst engine before execution'},
+              {icon:'ðŸ”„',title:'Lazy',desc:'Like RDDs â€” nothing executes until an action is called'},
             ],
             code:{lang:'python',label:'PySpark',src:`from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, count, avg, sum, when, lit, to_date
@@ -1229,7 +1229,7 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 spark = SparkSession.builder.appName("DataFrames").getOrCreate()
 
-# ── Load data ──────────────────────────────
+# â”€â”€ Load data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 df = spark.read \\
     .option("header", True) \\
     .option("inferSchema", True) \\
@@ -1243,14 +1243,14 @@ df.printSchema()
 #  |-- price: double (nullable = true)
 #  |-- date: string (nullable = true)
 
-# ── Transformations ───────────────────────
+# â”€â”€ Transformations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 df2 = df \\
     .filter(col("quantity") > 0) \\
     .withColumn("revenue", col("quantity") * col("price")) \\
     .withColumn("date", to_date(col("date"), "yyyy-MM-dd")) \\
     .withColumnRenamed("order_id", "id")
 
-# ── Aggregation ───────────────────────────
+# â”€â”€ Aggregation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 summary = df2.groupBy("product") \\
     .agg(
         count("id").alias("orders"),
@@ -1295,11 +1295,11 @@ df_with_lag = df.withColumn("prev_revenue", lag("revenue", 1).over(windowSpec)) 
           { id:'catalyst-optimizer', title:'Catalyst Optimizer', tag:'essential', part:'Part 2', chapter:'Ch 5',
             overview:'The Catalyst Optimizer is Spark SQL\'s query optimizer. It transforms your SQL/DataFrame code through multiple optimization phases before execution, often making your code run faster without any manual tuning.',
             concepts:[
-              {icon:'📝',title:'Parsing',desc:'SQL string or DataFrame API code → Unresolved Logical Plan (AST)'},
-              {icon:'🔍',title:'Analysis',desc:'Resolve column names, check schema → Resolved Logical Plan'},
-              {icon:'⚡',title:'Optimization',desc:'Predicate pushdown, constant folding, column pruning → Optimized Plan'},
-              {icon:'🎯',title:'Physical Planning',desc:'Choose join strategy, partition strategy → Physical Plan'},
-              {icon:'⚙️',title:'Code Generation',desc:'Tungsten generates JVM bytecode for tight inner loops'},
+              {icon:'ðŸ“',title:'Parsing',desc:'SQL string or DataFrame API code â†’ Unresolved Logical Plan (AST)'},
+              {icon:'ðŸ”',title:'Analysis',desc:'Resolve column names, check schema â†’ Resolved Logical Plan'},
+              {icon:'âš¡',title:'Optimization',desc:'Predicate pushdown, constant folding, column pruning â†’ Optimized Plan'},
+              {icon:'ðŸŽ¯',title:'Physical Planning',desc:'Choose join strategy, partition strategy â†’ Physical Plan'},
+              {icon:'âš™ï¸',title:'Code Generation',desc:'Tungsten generates JVM bytecode for tight inner loops'},
             ],
             code:{lang:'python',label:'PySpark',src:`# View the query plan
 df.filter(col("price") > 100).select("product","price").explain(extended=True)
@@ -1313,9 +1313,9 @@ df.filter(col("price") > 100).select("product","price").explain(extended=True)
 # Project [product, price]
 # +- Filter (price > 100.0)
 
-# == Optimized Logical Plan ==    ← Catalyst applied: column pruning
-# Project [product, price]        ← Only reads product+price columns from Parquet
-# +- Filter (price > 100.0)       ← Pushed down to data source level
+# == Optimized Logical Plan ==    â† Catalyst applied: column pruning
+# Project [product, price]        â† Only reads product+price columns from Parquet
+# +- Filter (price > 100.0)       â† Pushed down to data source level
 
 # == Physical Plan ==
 # *(1) Project [product, price]
@@ -1326,7 +1326,7 @@ df.filter(col("price") > 100).select("product","price").explain(extended=True)
 # - Predicate pushdown: filter applied at file read time
 # - Column pruning: only needed columns read from Parquet
 # - Broadcast join: small table automatically broadcast
-# - Constant folding: 2*3+1 → 7 at compile time`},
+# - Constant folding: 2*3+1 â†’ 7 at compile time`},
           },
         ]
       },
@@ -1334,17 +1334,17 @@ df.filter(col("price") > 100).select("product","price").explain(extended=True)
         id:'ch6', title:'Ch 6: Spark Streaming',
         topics:[
           { id:'dstreams', title:'DStreams (Discretized Streams)', tag:'critical', part:'Part 2', chapter:'Ch 6',
-            overview:'DStreams are Spark\'s original streaming abstraction. A DStream is a sequence of RDDs where each RDD contains data from a time window (batch interval). Processing is micro-batch — not truly real-time, but provides strong fault tolerance.',
+            overview:'DStreams are Spark\'s original streaming abstraction. A DStream is a sequence of RDDs where each RDD contains data from a time window (batch interval). Processing is micro-batch â€” not truly real-time, but provides strong fault tolerance.',
             code:{lang:'scala',label:'Scala',src:`import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka010._
 
 val sc  = new SparkContext("yarn", "StreamingApp")
 val ssc = new StreamingContext(sc, Seconds(5))  // 5-second batches
 
-// ── Socket stream (development)
+// â”€â”€ Socket stream (development)
 val lines = ssc.socketTextStream("localhost", 9999)
 
-// ── Kafka Direct Stream (production)
+// â”€â”€ Kafka Direct Stream (production)
 val kafkaParams = Map(
   "bootstrap.servers" -> "kafka:9092",
   "group.id" -> "spark-streaming-app",
@@ -1423,7 +1423,7 @@ from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler, St
 from pyspark.ml.classification import LogisticRegression
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 
-# ── Build pipeline stages ──────────────────
+# â”€â”€ Build pipeline stages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Stage 1: Encode categorical
 indexer = StringIndexer(inputCol="category", outputCol="categoryIndex")
 encoder = OneHotEncoder(inputCol="categoryIndex", outputCol="categoryVec")
@@ -1440,19 +1440,19 @@ scaler = StandardScaler(inputCol="features", outputCol="scaledFeatures")
 # Stage 4: Train model
 lr = LogisticRegression(featuresCol="scaledFeatures", labelCol="label", maxIter=100)
 
-# ── Create and train pipeline ──────────────
+# â”€â”€ Create and train pipeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 pipeline = Pipeline(stages=[indexer, encoder, assembler, scaler, lr])
 
 train, test = data.randomSplit([0.8, 0.2], seed=42)
 model = pipeline.fit(train)  # Fits all stages in sequence
 
-# ── Evaluate ───────────────────────────────
+# â”€â”€ Evaluate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 predictions = model.transform(test)
 evaluator = BinaryClassificationEvaluator()
 auc = evaluator.evaluate(predictions)
 print(f"AUC: {auc:.4f}")
 
-# ── Save and load model ────────────────────
+# â”€â”€ Save and load model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 model.save("hdfs://models/churn-model-v1")
 from pyspark.ml import PipelineModel
 loaded = PipelineModel.load("hdfs://models/churn-model-v1")`},
@@ -1492,7 +1492,7 @@ predictions = model.transform(test)
 evaluator = RegressionEvaluator(labelCol="price", predictionCol="prediction")
 rmse = evaluator.evaluate(predictions, {evaluator.metricName: "rmse"})
 r2   = evaluator.evaluate(predictions, {evaluator.metricName: "r2"})
-print(f"RMSE: {rmse:.2f}, R²: {r2:.4f}")`},
+print(f"RMSE: {rmse:.2f}, RÂ²: {r2:.4f}")`},
           },
           { id:'kmeans', title:'K-Means Clustering', tag:'essential', part:'Part 2', chapter:'Ch 7',
             overview:'K-Means is an unsupervised learning algorithm that groups data points into K clusters based on feature similarity. Spark MLlib\'s distributed K-Means can cluster billions of points across a cluster.',
@@ -1507,7 +1507,7 @@ scaler    = StandardScaler(inputCol="raw_features", outputCol="features")
 data_scaled = scaler.fit(assembler.transform(transactions)).transform(
     assembler.transform(transactions))
 
-# Elbow method — find optimal K
+# Elbow method â€” find optimal K
 costs = []
 for k in range(2, 12):
     km = KMeans(k=k, seed=42, maxIter=100)
@@ -1546,17 +1546,17 @@ rf = RandomForestClassifier(
 )
 model = rf.fit(train)
 
-# Feature importances — which features matter most?
+# Feature importances â€” which features matter most?
 importances = model.featureImportances
 feature_names = ["age","income","credit_score","debt_ratio","employment_years"]
 for name, imp in sorted(zip(feature_names, importances), key=lambda x:-x[1]):
-    print(f"{name:20s}: {imp:.4f} {'█'*int(imp*50)}")
+    print(f"{name:20s}: {imp:.4f} {'â–ˆ'*int(imp*50)}")
 
-# credit_score        : 0.4231 █████████████████████
-# income              : 0.2847 ██████████████
-# debt_ratio          : 0.1523 ████████
-# age                 : 0.0991 ████
-# employment_years    : 0.0408 ██
+# credit_score        : 0.4231 â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆ
+# income              : 0.2847 â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆ
+# debt_ratio          : 0.1523 â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆ
+# age                 : 0.0991 â–ˆâ–ˆâ–ˆâ–ˆ
+# employment_years    : 0.0408 â–ˆâ–ˆ
 
 # Evaluate
 predictions = model.transform(test)
@@ -1574,7 +1574,7 @@ paramGrid = ParamGridBuilder() \\
     .addGrid(gbt.maxIter,  [50, 100, 200]) \\
     .addGrid(gbt.maxDepth, [3, 5, 8]) \\
     .addGrid(gbt.stepSize, [0.01, 0.1, 0.3]) \\
-    .build()  # 3×3×3 = 27 combinations
+    .build()  # 3Ã—3Ã—3 = 27 combinations
 
 evaluator = BinaryClassificationEvaluator(metricName="areaUnderROC")
 
@@ -1583,7 +1583,7 @@ cv = CrossValidator(
     estimator=gbt,
     estimatorParamMaps=paramGrid,
     evaluator=evaluator,
-    numFolds=5,         # 5×27 = 135 models trained in parallel!
+    numFolds=5,         # 5Ã—27 = 135 models trained in parallel!
     parallelism=4       # Train 4 models concurrently
 )
 cv_model = cv.fit(train)
@@ -1624,13 +1624,13 @@ graph.degrees.collect().foreach { case (id, deg) =>
   println(s"User \$id: degree=\$deg")
 }
 
-// PageRank — who is most influential?
+// PageRank â€” who is most influential?
 val ranks = graph.pageRank(tol=0.001)
 ranks.vertices.sortBy(-_._2).take(3).foreach { case (id, rank) =>
   println(s"User \$id: PageRank=\${rank.formatted("%.4f")}")
 }
 
-// Connected components — which users are in the same group?
+// Connected components â€” which users are in the same group?
 val components = graph.connectedComponents()
 components.vertices.collect().foreach { case (id, comp) =>
   println(s"User \$id belongs to component \$comp")
@@ -1641,7 +1641,7 @@ components.vertices.collect().foreach { case (id, comp) =>
     ]
   },
   {
-    id:'part3', title:'Part 3: Spark Ops', icon:'⚙️', color:'#F97316',
+    id:'part3', title:'Part 3: Spark Ops', icon:'âš™ï¸', color:'#F97316',
     chapters:[
       {
         id:'ch10', title:'Ch 10: Running Spark',
@@ -1656,7 +1656,7 @@ components.vertices.collect().foreach { case (id, comp) =>
               ['Mesos','mesos://host:5050','Mixed workloads','Fine-grained / Less common'],
               ['Kubernetes','k8s://https://...','Cloud native','Scalable / Container overhead'],
             ],
-            code:{lang:'bash',label:'Bash',src:`# Local — use all CPU cores (development)
+            code:{lang:'bash',label:'Bash',src:`# Local â€” use all CPU cores (development)
 spark-submit --master local[*] ...
 
 # Local with 4 threads
@@ -1682,12 +1682,12 @@ spark-submit --master k8s://https://k8s-api:6443 \\
 # http://localhost:4040   (default, or 4041, 4042 if multiple apps)
 
 # Key tabs to master:
-# ─ Jobs Tab ──────────────────────────────────
+# â”€ Jobs Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Shows all Jobs (triggered by actions)
 # Color: Green=Success, Red=Failed, Yellow=Running
 # Click a job to see its stages
 
-# ─ Stages Tab ────────────────────────────────
+# â”€ Stages Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Shows all stages within all jobs
 # Key metrics per stage:
 # - Input: data read from disk/HDFS
@@ -1696,17 +1696,17 @@ spark-submit --master k8s://https://k8s-api:6443 \\
 # - Shuffle Write: data sent to other executors
 # - Duration: how long this stage took
 
-# ─ Storage Tab ───────────────────────────────
+# â”€ Storage Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Shows cached RDDs and DataFrames
 # Shows % cached in memory vs disk
 rdd.persist()   # Or rdd.cache()
 rdd.unpersist() # Free memory
 
-# ─ Executors Tab ─────────────────────────────
-# GC time > 10% of task time → memory pressure, tune executor memory
-# Spill to disk → increase spark.executor.memory
+# â”€ Executors Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# GC time > 10% of task time â†’ memory pressure, tune executor memory
+# Spill to disk â†’ increase spark.executor.memory
 
-# ─ History Server (post-completion) ──────────
+# â”€ History Server (post-completion) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 start-history-server.sh  # Runs on port 18080
 # Configure: spark.eventLog.enabled=true
 #            spark.eventLog.dir=hdfs://spark-logs`},
@@ -1720,7 +1720,7 @@ start-history-server.sh  # Runs on port 18080
             overview:'Spark\'s Standalone cluster manager is the simplest way to set up a multi-node Spark cluster. It includes a built-in Master and Worker daemon and is perfect for dedicated Spark clusters.',
             code:{lang:'bash',label:'Bash',src:`# On ALL nodes: install Spark, set JAVA_HOME, SPARK_HOME
 
-# ── Master node ───────────────────────────────
+# â”€â”€ Master node â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Edit conf/spark-env.sh:
 export SPARK_MASTER_HOST=master.company.com
 export SPARK_MASTER_PORT=7077
@@ -1729,7 +1729,7 @@ export SPARK_MASTER_WEBUI_PORT=8080
 # Start master
 $SPARK_HOME/sbin/start-master.sh
 
-# ── Worker nodes ──────────────────────────────
+# â”€â”€ Worker nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Edit conf/workers (formerly conf/slaves):
 echo "worker1.company.com" >> conf/workers
 echo "worker2.company.com" >> conf/workers
@@ -1741,16 +1741,16 @@ $SPARK_HOME/sbin/start-workers.sh spark://master.company.com:7077
 # Or start individual worker:
 $SPARK_HOME/sbin/start-worker.sh spark://master.company.com:7077
 
-# ── Submit a job ──────────────────────────────
+# â”€â”€ Submit a job â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 spark-submit \\
   --master spark://master.company.com:7077 \\
   --deploy-mode cluster \\
   --executor-memory 4G \\
   --executor-cores 4 \\
-  --total-executor-cores 32 \\  # 8 executors × 4 cores
+  --total-executor-cores 32 \\  # 8 executors Ã— 4 cores
   myapp-assembly.jar
 
-# ── Stop everything ───────────────────────────
+# â”€â”€ Stop everything â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $SPARK_HOME/sbin/stop-all.sh`},
           },
         ]
@@ -1767,7 +1767,7 @@ $SPARK_HOME/sbin/stop-all.sh`},
             ],
             code:{lang:'bash',label:'Bash',src:`export HADOOP_CONF_DIR=/etc/hadoop/conf  # Point to Hadoop cluster config
 
-# ── Client mode (driver on submitter) ─────
+# â”€â”€ Client mode (driver on submitter) â”€â”€â”€â”€â”€
 spark-submit \\
   --master yarn \\
   --deploy-mode client \\
@@ -1776,7 +1776,7 @@ spark-submit \\
   --num-executors 20 \\
   myapp.jar
 
-# ── Cluster mode (driver on YARN worker) ──
+# â”€â”€ Cluster mode (driver on YARN worker) â”€â”€
 spark-submit \\
   --master yarn \\
   --deploy-mode cluster \\
@@ -1788,12 +1788,12 @@ spark-submit \\
   --conf spark.yarn.maxAppAttempts=3 \\
   myapp.jar
 
-# ── Monitor on YARN ───────────────────────
+# â”€â”€ Monitor on YARN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 yarn application -list
 yarn application -status application_1234567_0001
 yarn logs -applicationId application_1234567_0001
 
-# ── Dynamic allocation (auto-scale executors) ─
+# â”€â”€ Dynamic allocation (auto-scale executors) â”€
 --conf spark.dynamicAllocation.enabled=true \\
 --conf spark.dynamicAllocation.minExecutors=5 \\
 --conf spark.dynamicAllocation.maxExecutors=100 \\
@@ -1804,20 +1804,20 @@ yarn logs -applicationId application_1234567_0001
     ]
   },
   {
-    id:'part4', title:'Part 4: Bringing it Together', icon:'🏆', color:'#A855F7',
+    id:'part4', title:'Part 4: Bringing it Together', icon:'ðŸ†', color:'#A855F7',
     chapters:[
       {
         id:'ch13', title:'Ch 13: Real-Time Dashboard',
         topics:[
           { id:'realtime-arch', title:'Real-Time Dashboard Architecture', tag:'critical', part:'Part 4', chapter:'Ch 13',
-            overview:'The capstone project connects Kafka → Spark Streaming → WebSockets → D3.js to build a live analytics dashboard. This demonstrates how all Spark components work together in a production system.',
+            overview:'The capstone project connects Kafka â†’ Spark Streaming â†’ WebSockets â†’ D3.js to build a live analytics dashboard. This demonstrates how all Spark components work together in a production system.',
             concepts:[
-              {icon:'🖥️',title:'Log Simulator',desc:'Java app generating fake HTTP access logs published to Kafka topic "weblogs"'},
-              {icon:'⚡',title:'Spark Streaming',desc:'Reads from Kafka, computes metrics every 5 seconds, publishes to "stats" topic'},
-              {icon:'🔌',title:'WebSocket Server',desc:'Node.js server consuming "stats" topic and pushing to browser clients'},
-              {icon:'📊',title:'D3.js Dashboard',desc:'Browser renders live line charts and bar charts from WebSocket JSON updates'},
+              {icon:'ðŸ–¥ï¸',title:'Log Simulator',desc:'Java app generating fake HTTP access logs published to Kafka topic "weblogs"'},
+              {icon:'âš¡',title:'Spark Streaming',desc:'Reads from Kafka, computes metrics every 5 seconds, publishes to "stats" topic'},
+              {icon:'ðŸ”Œ',title:'WebSocket Server',desc:'Node.js server consuming "stats" topic and pushing to browser clients'},
+              {icon:'ðŸ“Š',title:'D3.js Dashboard',desc:'Browser renders live line charts and bar charts from WebSocket JSON updates'},
             ],
-            code:{lang:'scala',label:'Spark Streaming App',src:`// Real-Time Dashboard — Spark Streaming Component
+            code:{lang:'scala',label:'Spark Streaming App',src:`// Real-Time Dashboard â€” Spark Streaming Component
 import org.apache.spark.streaming.kafka010._
 
 val ssc = new StreamingContext(sc, Seconds(5))
@@ -1872,7 +1872,7 @@ hc = H2OContext.getOrCreate()
 df = spark.read.parquet("housing_data.parquet")
 train, test = df.randomSplit([0.8, 0.2], seed=42)
 
-# ── Deep Learning regression ─────────────
+# â”€â”€ Deep Learning regression â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 dl = H2ODeepLearning(
     featuresCols=["rooms","sqft","age","location_score"],
     labelCol="price",
@@ -1886,7 +1886,7 @@ dl = H2ODeepLearning(
 dl_model = dl.fit(train)
 predictions = dl_model.transform(test)
 
-# ── AutoML — let H2O try everything ──────
+# â”€â”€ AutoML â€” let H2O try everything â”€â”€â”€â”€â”€â”€
 automl = H2OAutoML(
     labelCol="price",
     maxModels=20,
@@ -1897,7 +1897,7 @@ automl_model = automl.fit(train)
 # H2O tries GBM, XGBoost, GLM, RF, Stacked Ensembles...
 print("Best model:", automl_model.getBestModel())
 
-# ── Predictions back in Spark ─────────────
+# â”€â”€ Predictions back in Spark â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 final_predictions = automl_model.transform(test)
 final_predictions.select("price", "prediction").show(10)`},
           },
@@ -1907,10 +1907,10 @@ final_predictions.select("price", "prediction").show(10)`},
   },
 ];
 
-// ─── INFRA SETUP DATA ───────────────────────────────────────────────────────
+// â”€â”€â”€ INFRA SETUP DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const INFRA_SECTIONS = [
   {
-    id:'local-setup', title:'Local Machine Setup', icon:'💻',
+    id:'local-setup', title:'Local Machine Setup', icon:'ðŸ’»',
     desc:'Setup Apache Spark on your Windows/Mac/Linux machine for development',
     steps:[
       {title:'Install Java 11 (Temurin)', desc:'Download Eclipse Temurin JDK 11 from adoptium.net. Set JAVA_HOME environment variable. Verify: java -version', code:{lang:'bash',src:`# Windows PowerShell
@@ -1959,12 +1959,12 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-sql"  % "3.5.0" % "provided",
   "org.apache.spark" %% "spark-mllib"% "3.5.0" % "provided"
 )
-// Open in IntelliJ → File → Open → select this folder`}},
+// Open in IntelliJ â†’ File â†’ Open â†’ select this folder`}},
     ]
   },
   {
-    id:'cloud-aws', title:'AWS Cloud Setup (EMR)', icon:'☁️',
-    desc:'Run Spark at scale on Amazon EMR — managed Hadoop cluster with Spark pre-installed',
+    id:'cloud-aws', title:'AWS Cloud Setup (EMR)', icon:'â˜ï¸',
+    desc:'Run Spark at scale on Amazon EMR â€” managed Hadoop cluster with Spark pre-installed',
     steps:[
       {title:'Create EMR Cluster', desc:'Use AWS Console or CLI to launch an EMR cluster with Spark installed.', code:{lang:'bash',src:`# Create EMR cluster via AWS CLI
 aws emr create-cluster \\
@@ -1976,8 +1976,8 @@ aws emr create-cluster \\
   --ec2-attributes KeyName=my-key-pair \\
   --use-default-roles
 
-# Master: 1 × m5.xlarge (4 vCPU, 16GB)
-# Core  : 2 × m5.xlarge (total 8 vCPU, 32GB)`}},
+# Master: 1 Ã— m5.xlarge (4 vCPU, 16GB)
+# Core  : 2 Ã— m5.xlarge (total 8 vCPU, 32GB)`}},
       {title:'Submit Spark Job to EMR', desc:'Upload your JAR to S3 and submit via EMR Steps.', code:{lang:'bash',src:`# Upload app JAR to S3
 aws s3 cp target/myapp-1.0-assembly.jar s3://my-bucket/jars/
 
@@ -1993,7 +1993,7 @@ aws emr add-steps \\
     ]
   },
   {
-    id:'kafka-setup', title:'Apache Kafka Setup', icon:'📨',
+    id:'kafka-setup', title:'Apache Kafka Setup', icon:'ðŸ“¨',
     desc:'Set up Kafka for Spark Streaming integration and real-time pipelines',
     steps:[
       {title:'Install Kafka with Docker', desc:'The fastest way to run Kafka locally is with Docker Compose.', code:{lang:'bash',src:`# kafka-docker-compose.yml
@@ -2026,14 +2026,14 @@ kafka-console-consumer.sh --topic weblogs --bootstrap-server localhost:9092 --fr
   },
 ];
 
-// ─── 10 REAL-WORLD PROJECTS ──────────────────────────────────────────────────
+// â”€â”€â”€ 10 REAL-WORLD PROJECTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PROJECTS = [
   {
     id:'p1', num:1, title:'Netflix Content Recommendation Engine',
-    icon:'🎬', company:'Netflix Scale', difficulty:'Advanced',
+    icon:'ðŸŽ¬', company:'Netflix Scale', difficulty:'Advanced',
     dataset:'MovieLens 25M (grouplens.org/datasets/movielens/)',
     cloud:'AWS EMR + S3',
-    desc:'Build a collaborative filtering recommendation system using Spark MLlib ALS (Alternating Least Squares) — the same algorithm Netflix uses to power recommendations for 238M subscribers.',
+    desc:'Build a collaborative filtering recommendation system using Spark MLlib ALS (Alternating Least Squares) â€” the same algorithm Netflix uses to power recommendations for 238M subscribers.',
     arch:['HDFS / S3\n(ratings CSV)','Spark ETL\n(clean data)','ALS Model\n(MLlib)','Serve\n(Cassandra)','API\n(REST)'],
     useCase:'Predict ratings a user would give to movies they haven\'t seen. Recommend top N movies per user. Cold start: recommend popular items for new users.',
     metrics:['RMSE < 0.85 on test set','Generate top-10 recommendations per user in < 2s','Process 25M ratings in < 5 minutes'],
@@ -2076,17 +2076,17 @@ movieFactors = model.itemFactors  # Latent vectors per movie
   },
   {
     id:'p2', num:2, title:'Uber Surge Pricing Analytics',
-    icon:'🚗', company:'Uber Scale', difficulty:'Intermediate',
-    dataset:'NYC Taxi & Limousine Commission (TLC) data — tlc.nyc.gov',
+    icon:'ðŸš—', company:'Uber Scale', difficulty:'Intermediate',
+    dataset:'NYC Taxi & Limousine Commission (TLC) data â€” tlc.nyc.gov',
     cloud:'Google Cloud Dataproc + BigQuery',
-    desc:'Analyze real NYC taxi trip data to build a surge pricing prediction model — identify time/location patterns that indicate high demand and predict price multipliers.',
+    desc:'Analyze real NYC taxi trip data to build a surge pricing prediction model â€” identify time/location patterns that indicate high demand and predict price multipliers.',
     arch:['TLC CSV\n(~150GB)','Spark ETL\n(clean,enrich)','Feature Eng\n(time,geo)','GBT Model\n(regression)','Output\n(Parquet)'],
     code:{lang:'python',src:`# NYC Taxi Surge Price Predictor
 from pyspark.ml.regression import GBTRegressor
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.functions import hour, dayofweek, month, col, when
 
-# Load NYC TLC data (2022 — ~50M trips)
+# Load NYC TLC data (2022 â€” ~50M trips)
 df = spark.read.parquet("nyc-taxi-2022/yellow_tripdata_2022-*.parquet")
 
 # Feature Engineering
@@ -2131,7 +2131,7 @@ predictions.select("hour_of_day","day_of_week","PULocationID","surge_multiplier"
   },
   {
     id:'p3', num:3, title:'Twitter/X Real-Time Sentiment Dashboard',
-    icon:'🐦', company:'Social Media Scale', difficulty:'Advanced',
+    icon:'ðŸ¦', company:'Social Media Scale', difficulty:'Advanced',
     dataset:'Twitter API v2 (developer.twitter.com) or Kaggle Twitter datasets',
     cloud:'AWS EMR + Kinesis + ElasticSearch',
     desc:'Stream tweets in real-time, perform sentiment analysis using Spark ML, and visualize trending topics and sentiment on a live dashboard.',
@@ -2178,7 +2178,7 @@ query = predictions \\
   },
   {
     id:'p4', num:4, title:'E-Commerce Clickstream Analytics',
-    icon:'🛒', company:'Amazon Scale', difficulty:'Intermediate',
+    icon:'ðŸ›’', company:'Amazon Scale', difficulty:'Intermediate',
     dataset:'eCommerce behavior data from Kaggle (5M+ sessions)',
     cloud:'AWS EMR + Redshift',
     desc:'Process web clickstream data to understand user journeys, funnel conversion rates, session analytics, and product page performance at scale.',
@@ -2201,7 +2201,7 @@ events = events \\
         concat(col("user_id"), lit("_"), 
                sum("new_session").over(w.rowsBetween(Window.unboundedPreceding, 0))))
 
-# Funnel analysis: Home → Product → Cart → Checkout → Purchase
+# Funnel analysis: Home â†’ Product â†’ Cart â†’ Checkout â†’ Purchase
 funnel_steps = ["home","product_page","add_to_cart","checkout","purchase"]
 funnel = events.groupBy("session_id") \\
     .agg(*[max(when(col("page") == step, 1).otherwise(0)).alias(step) 
@@ -2215,7 +2215,7 @@ for step in funnel_steps:
   },
   {
     id:'p5', num:5, title:'Financial Fraud Detection Pipeline',
-    icon:'🏦', company:'Banking Scale', difficulty:'Advanced',
+    icon:'ðŸ¦', company:'Banking Scale', difficulty:'Advanced',
     dataset:'IEEE-CIS Fraud Detection (Kaggle) or PaySim synthetic dataset',
     cloud:'Azure HDInsight + Synapse Analytics',
     desc:'Build a real-time fraud detection system that processes financial transactions and flags suspicious patterns using an ML model trained on historical fraud data.',
@@ -2232,7 +2232,7 @@ identity     = spark.read.parquet("fraud-data/identity.parquet")
 # Join transaction + identity features
 df = transactions.join(identity, "TransactionID", "left")
 
-# ── Feature Engineering ──────────────────────
+# â”€â”€ Feature Engineering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 w_card = Window.partitionBy("card1").orderBy("TransactionDT")
 w_email = Window.partitionBy("P_emaildomain").orderBy("TransactionDT")
 
@@ -2263,8 +2263,8 @@ print(f"AUC-ROC: {auc:.4f}")  # Target: > 0.92`},
   },
   {
     id:'p6', num:6, title:'IoT Sensor Data Analytics (Smart City)',
-    icon:'🏙️', company:'Smart City Scale', difficulty:'Intermediate',
-    dataset:'Chicago City Open Data (data.cityofchicago.org) — Air Quality sensors',
+    icon:'ðŸ™ï¸', company:'Smart City Scale', difficulty:'Intermediate',
+    dataset:'Chicago City Open Data (data.cityofchicago.org) â€” Air Quality sensors',
     cloud:'AWS IoT Core + EMR + QuickSight',
     desc:'Process real-time sensor data from thousands of IoT devices (air quality, traffic, weather) to detect anomalies and generate city-wide dashboards.',
     arch:['IoT Sensors\n(MQTT)','AWS IoT\nCore','Kafka\n(buffer)','Spark Streaming\n(anomaly)','QuickSight\n(dashboard)'],
@@ -2315,20 +2315,20 @@ rolling = aqi.withWatermark("timestamp","10 minutes") \\
   },
   {
     id:'p7', num:7, title:'GitHub Activity Analytics Pipeline',
-    icon:'🐙', company:'GitHub Scale', difficulty:'Beginner',
-    dataset:'GitHub Archive (gharchive.org) — free hourly JSON dumps',
+    icon:'ðŸ™', company:'GitHub Scale', difficulty:'Beginner',
+    dataset:'GitHub Archive (gharchive.org) â€” free hourly JSON dumps',
     cloud:'Local Spark or AWS EMR',
     desc:'The book\'s own project! Analyze GitHub Archive data to find most active developers, trending repositories, and language trends. Perfect starter project.',
     arch:['GitHub Archive\n(JSON/GZ)','Spark SQL\n(parse,filter)','Aggregation\n(groupBy)','Parquet\n(output)','Visualization'],
-    code:{lang:'python',src:`# GitHub Archive Analysis — starter project from the book!
+    code:{lang:'python',src:`# GitHub Archive Analysis â€” starter project from the book!
 from pyspark.sql.functions import col, count, desc, explode
 
 # Load GitHub Archive (1 hour = ~100MB compressed JSON)
 df = spark.read.json("hdfs://data/github-archive/2024-01-01-*.json.gz")
 
-df.printSchema()  # Complex nested JSON — Spark infers all types!
+df.printSchema()  # Complex nested JSON â€” Spark infers all types!
 
-# ── Most active developers ─────────────────────────────────────────
+# â”€â”€ Most active developers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 top_devs = df.filter(col("type") == "PushEvent") \\
     .groupBy("actor.login") \\
     .agg(count("*").alias("push_count")) \\
@@ -2336,7 +2336,7 @@ top_devs = df.filter(col("type") == "PushEvent") \\
     .limit(20)
 top_devs.show()
 
-# ── Trending repositories by star events ───────────────────────────
+# â”€â”€ Trending repositories by star events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 trending = df.filter(col("type") == "WatchEvent") \\
     .groupBy("repo.name") \\
     .agg(count("*").alias("stars_today")) \\
@@ -2344,7 +2344,7 @@ trending = df.filter(col("type") == "WatchEvent") \\
     .limit(20)
 trending.show()
 
-# ── Language trends ───────────────────────────────────────────────
+# â”€â”€ Language trends â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 lang_events = df.filter(col("type") == "PushEvent") \\
     .filter(col("payload.commits").isNotNull()) \\
     .select("repo.name", explode("payload.commits").alias("commit")) \\
@@ -2363,7 +2363,7 @@ trending.write.mode("overwrite").parquet("output/trending-repos/")`},
   },
   {
     id:'p8', num:8, title:'Healthcare Patient Readmission Predictor',
-    icon:'🏥', company:'Healthcare Scale', difficulty:'Intermediate',
+    icon:'ðŸ¥', company:'Healthcare Scale', difficulty:'Intermediate',
     dataset:'MIMIC-III Clinical Database or Diabetic Patient Dataset (UCI)',
     cloud:'HIPAA-compliant AWS (US-East-1) + EMR',
     desc:'Predict which hospital patients are at high risk of readmission within 30 days using clinical data. Helps hospitals allocate resources and provide proactive care.',
@@ -2412,13 +2412,13 @@ pipeline = Pipeline(stages=[imputer] + indexers + [assembler, gbt])
 model = pipeline.fit(train)
 predictions = model.transform(test)
 
-# Clinical threshold — higher recall to catch more readmissions
+# Clinical threshold â€” higher recall to catch more readmissions
 predictions.filter(col("probability[1]") > 0.3) \\
     .select("patient_nbr","probability","label").show()`},
   },
   {
     id:'p9', num:9, title:'Log Analytics & APM Platform',
-    icon:'📊', company:'Datadog / Splunk Scale', difficulty:'Intermediate',
+    icon:'ðŸ“Š', company:'Datadog / Splunk Scale', difficulty:'Intermediate',
     dataset:'Apache/Nginx log files, or generate with Apache JMeter',
     cloud:'ELK Stack (Elasticsearch + Logstash + Kibana) + Spark',
     desc:'Build a production-grade log analytics platform that processes billions of log lines, detects anomalies in error rates, and provides performance dashboards.',
@@ -2475,7 +2475,7 @@ error_rates = logs \\
   },
   {
     id:'p10', num:10, title:'Supply Chain Demand Forecasting',
-    icon:'📦', company:'Walmart / Amazon Supply Chain Scale', difficulty:'Advanced',
+    icon:'ðŸ“¦', company:'Walmart / Amazon Supply Chain Scale', difficulty:'Advanced',
     dataset:'Walmart Store Sales (Kaggle) or M5 Forecasting Competition data',
     cloud:'Azure Databricks + Azure ML + Synapse',
     desc:'Forecast product demand across thousands of stores and SKUs using time-series analysis and ML. Spark enables training one model per product at massive scale using Spark\'s distributed pandas UDFs.',
@@ -2485,7 +2485,7 @@ import pandas as pd
 from prophet import Prophet  # Facebook Prophet
 from pyspark.sql.types import *
 
-# M5 Forecasting Dataset — 30,000 item-store combinations!
+# M5 Forecasting Dataset â€” 30,000 item-store combinations!
 sales = spark.read.csv("m5-forecasting-accuracy/sales_train_evaluation.csv", 
                         header=True, inferSchema=True)
 
@@ -2500,7 +2500,7 @@ sales_long = sales.selectExpr(
       ") as (day, sales)" ]
 )
 
-# Add calendar (day → actual date)
+# Add calendar (day â†’ actual date)
 calendar = spark.read.csv("calendar.csv", header=True, inferSchema=True)
 df = sales_long.join(calendar.select("d","date"), on="d")
 
@@ -2533,9 +2533,9 @@ print("Trained 30,000 models in parallel using Spark + Pandas UDFs")`},
   },
 ];
 
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //  LOGIN
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function doLogin() {
   const u = document.getElementById('login-user').value.trim();
   const p = document.getElementById('login-pass').value.trim();
@@ -2559,9 +2559,9 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
 });
 
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //  SIDEBAR BUILDER
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function buildSidebar() {
   const sb = document.getElementById('sidebar');
   let html = '<div class="sidebar-section"><div class="sidebar-section-label">Curriculum</div>';
@@ -2572,7 +2572,7 @@ function buildSidebar() {
         <div class="tree-part-header" onclick="togglePart('${part.id}')">
           <span class="tree-part-icon">${part.icon}</span>
           <span>${part.title}</span>
-          <span class="tree-part-arrow" id="arr-${part.id}">›</span>
+          <span class="tree-part-arrow" id="arr-${part.id}">â€º</span>
         </div>
         <div class="tree-part-children" id="children-${part.id}">`;
 
@@ -2580,9 +2580,9 @@ function buildSidebar() {
       html += `
           <div class="tree-chapter">
             <div class="tree-chapter-header" onclick="toggleChapter('${ch.id}')">
-              <span>📖</span>
+              <span>ðŸ“–</span>
               <span>${ch.title}</span>
-              <span class="tree-chapter-arrow" id="arr-${ch.id}">›</span>
+              <span class="tree-chapter-arrow" id="arr-${ch.id}">â€º</span>
             </div>
             <div class="tree-chapter-children" id="children-${ch.id}">`;
 
@@ -2601,9 +2601,9 @@ function buildSidebar() {
     <div class="sidebar-section-label">Setup & Projects</div>
     <div class="tree-part">
       <div class="tree-part-header" onclick="togglePart('infra')">
-        <span class="tree-part-icon">🏗️</span>
+        <span class="tree-part-icon">ðŸ—ï¸</span>
         <span>Infrastructure Setup</span>
-        <span class="tree-part-arrow" id="arr-infra">›</span>
+        <span class="tree-part-arrow" id="arr-infra">â€º</span>
       </div>
       <div class="tree-part-children" id="children-infra">`;
   INFRA_SECTIONS.forEach(s => {
@@ -2612,9 +2612,9 @@ function buildSidebar() {
   html += `</div></div>
     <div class="tree-part">
       <div class="tree-part-header" onclick="togglePart('projects')">
-        <span class="tree-part-icon">🚀</span>
+        <span class="tree-part-icon">ðŸš€</span>
         <span>10 Real-World Projects</span>
-        <span class="tree-part-arrow" id="arr-projects">›</span>
+        <span class="tree-part-arrow" id="arr-projects">â€º</span>
       </div>
       <div class="tree-part-children" id="children-projects">`;
   PROJECTS.forEach(p => {
@@ -2644,9 +2644,9 @@ function setActiveTopicEl(el) {
   if (el) el.classList.add('active');
 }
 
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //  CONTENT RENDERERS
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function render(html) {
   const ci = document.getElementById('content-inner');
   ci.innerHTML = `<div class="fade-in">${html}</div>`;
@@ -2673,7 +2673,7 @@ function codeBlock(code) {
 function copyCode(id, btn) {
   const code = document.getElementById(id)?.innerText || '';
   navigator.clipboard.writeText(code).then(() => {
-    btn.textContent = '✓ Copied!';
+    btn.textContent = 'âœ“ Copied!';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
   });
@@ -2685,67 +2685,67 @@ function escHtml(str) {
 
 function tagBadge(tag) {
   const map = {critical:'tag-critical',essential:'tag-essential',good:'tag-good'};
-  const labels = {critical:'⚡ Critical','essential':'✅ Essential','good':'💡 Good-to-Know'};
+  const labels = {critical:'âš¡ Critical','essential':'âœ… Essential','good':'ðŸ’¡ Good-to-Know'};
   return `<span class="tag ${map[tag]||'tag-good'}">${labels[tag]||tag}</span>`;
 }
 
-// ─── Welcome ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Welcome â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function showWelcome() {
   const totalTopics = CURRICULUM.reduce((s,p)=>s+p.chapters.reduce((s2,c)=>s2+c.topics.length,0),0);
   render(`
     <div style="margin-bottom:32px;">
-      <div style="font-size:.85rem;color:var(--text-3);margin-bottom:10px;">Welcome back 👋</div>
+      <div style="font-size:.85rem;color:var(--text-3);margin-bottom:10px;">Welcome back ðŸ‘‹</div>
       <h1 style="font-size:2.2rem;font-weight:800;margin-bottom:8px;">
         Spark In Action <span style="background:linear-gradient(135deg,#3B82F6,#A855F7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Study Portal</span>
       </h1>
       <p style="color:var(--text-2);font-size:1rem;max-width:640px;line-height:1.7;">
         Your complete 100-day engineering bootcamp companion. Study all 14 chapters of <em>Spark in Action</em>, 
-        run the 10 real-world projects, and set up your full local infrastructure — all in one place.
+        run the 10 real-world projects, and set up your full local infrastructure â€” all in one place.
       </p>
     </div>
     <div class="welcome-grid">
-      <div class="stat-card"><div class="stat-num">14</div><div class="stat-label">Chapters across 4 Parts</div><div class="stat-icon">📚</div></div>
-      <div class="stat-card"><div class="stat-num">${totalTopics}</div><div class="stat-label">Detailed Topics</div><div class="stat-icon">📝</div></div>
-      <div class="stat-card"><div class="stat-num">10</div><div class="stat-label">Real-World Projects</div><div class="stat-icon">🚀</div></div>
-      <div class="stat-card"><div class="stat-num">100</div><div class="stat-label">Day Bootcamp</div><div class="stat-icon">🎯</div></div>
+      <div class="stat-card"><div class="stat-num">14</div><div class="stat-label">Chapters across 4 Parts</div><div class="stat-icon">ðŸ“š</div></div>
+      <div class="stat-card"><div class="stat-num">${totalTopics}</div><div class="stat-label">Detailed Topics</div><div class="stat-icon">ðŸ“</div></div>
+      <div class="stat-card"><div class="stat-num">10</div><div class="stat-label">Real-World Projects</div><div class="stat-icon">ðŸš€</div></div>
+      <div class="stat-card"><div class="stat-num">100</div><div class="stat-label">Day Bootcamp</div><div class="stat-icon">ðŸŽ¯</div></div>
     </div>
     <div style="margin-top:28px;">
-      <div class="section-title"><span class="s-icon">⚡</span> Quick Start</div>
+      <div class="section-title"><span class="s-icon">âš¡</span> Quick Start</div>
       <div class="quick-links">
         <div class="quick-link" onclick="showTopic('part1','ch1','spark-revolution')">
-          <span class="ql-icon">🚀</span><span>Start: Spark Revolution</span>
+          <span class="ql-icon">ðŸš€</span><span>Start: Spark Revolution</span>
         </div>
         <div class="quick-link" onclick="showTopic('part1','ch2','rdds')">
-          <span class="ql-icon">🔧</span><span>RDDs Deep Dive</span>
+          <span class="ql-icon">ðŸ”§</span><span>RDDs Deep Dive</span>
         </div>
         <div class="quick-link" onclick="showTopic('part2','ch5','dataframes')">
-          <span class="ql-icon">📊</span><span>DataFrames & SQL</span>
+          <span class="ql-icon">ðŸ“Š</span><span>DataFrames & SQL</span>
         </div>
         <div class="quick-link" onclick="showInfra('local-setup')">
-          <span class="ql-icon">💻</span><span>Setup Local Spark</span>
+          <span class="ql-icon">ðŸ’»</span><span>Setup Local Spark</span>
         </div>
         <div class="quick-link" onclick="showProject('p1')">
-          <span class="ql-icon">🎬</span><span>Project: Netflix Recs</span>
+          <span class="ql-icon">ðŸŽ¬</span><span>Project: Netflix Recs</span>
         </div>
         <div class="quick-link" onclick="showProject('p5')">
-          <span class="ql-icon">🏦</span><span>Project: Fraud Detection</span>
+          <span class="ql-icon">ðŸ¦</span><span>Project: Fraud Detection</span>
         </div>
       </div>
     </div>
     <div style="margin-top:32px;">
-      <div class="section-title"><span class="s-icon">📅</span> 100-Day Roadmap</div>
+      <div class="section-title"><span class="s-icon">ðŸ“…</span> 100-Day Roadmap</div>
       <div class="info-box">
-        <strong>Days 1–25 (Part 1):</strong> Spark Core, RDDs, Actions, Transformations, Pair RDDs, DAG<br/>
-        <strong>Days 26–50 (Part 2):</strong> Spark SQL, DataFrames, Streaming, MLlib, GraphX<br/>
-        <strong>Days 51–65 (Part 3):</strong> Cluster Ops, YARN, Mesos, Performance Tuning<br/>
-        <strong>Days 66–80 (Part 4):</strong> Capstone Projects — Real-Time Dashboard + H2O Deep Learning<br/>
-        <strong>Days 81–100 (Projects):</strong> Build all 10 real-world projects from Netflix to Supply Chain
+        <strong>Days 1â€“25 (Part 1):</strong> Spark Core, RDDs, Actions, Transformations, Pair RDDs, DAG<br/>
+        <strong>Days 26â€“50 (Part 2):</strong> Spark SQL, DataFrames, Streaming, MLlib, GraphX<br/>
+        <strong>Days 51â€“65 (Part 3):</strong> Cluster Ops, YARN, Mesos, Performance Tuning<br/>
+        <strong>Days 66â€“80 (Part 4):</strong> Capstone Projects â€” Real-Time Dashboard + H2O Deep Learning<br/>
+        <strong>Days 81â€“100 (Projects):</strong> Build all 10 real-world projects from Netflix to Supply Chain
       </div>
     </div>
   `);
 }
 
-// ─── Topic page ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Topic page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function showTopic(partId, chId, topicId) {
   const part    = CURRICULUM.find(p=>p.id===partId);
   const chapter = part?.chapters.find(c=>c.id===chId);
@@ -2763,9 +2763,9 @@ function showTopic(partId, chId, topicId) {
     <div class="topic-header">
       <div class="topic-breadcrumb">
         <span>${part.icon} ${part.title}</span>
-        <span class="bc-sep">›</span>
+        <span class="bc-sep">â€º</span>
         <span>${chapter.title}</span>
-        <span class="bc-sep">›</span>
+        <span class="bc-sep">â€º</span>
         <span class="bc-current">${topic.title}</span>
       </div>
       <h1 class="topic-title"><span class="title-accent">${topic.title}</span></h1>
@@ -2780,7 +2780,7 @@ function showTopic(partId, chId, topicId) {
 
   if (topic.concepts?.length) {
     html += `<div class="section">
-      <div class="section-title"><span class="s-icon">💡</span> Key Concepts</div>
+      <div class="section-title"><span class="s-icon">ðŸ’¡</span> Key Concepts</div>
       <div class="concepts-grid">
         ${topic.concepts.map(c=>`
           <div class="concept-card">
@@ -2794,7 +2794,7 @@ function showTopic(partId, chId, topicId) {
 
   if (topic.tableHeaders) {
     html += `<div class="section">
-      <div class="section-title"><span class="s-icon">📊</span> Comparison Table</div>
+      <div class="section-title"><span class="s-icon">ðŸ“Š</span> Comparison Table</div>
       <div class="data-table-wrap"><table class="data-table">
         <thead><tr>${topic.tableHeaders.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
         <tbody>${topic.tableRows.map(row=>`<tr>${row.map((c,i)=>`<td${i===0?` class="mono"`:``}>${escHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody>
@@ -2804,23 +2804,23 @@ function showTopic(partId, chId, topicId) {
 
   if (topic.code) {
     html += `<div class="section">
-      <div class="section-title"><span class="s-icon">💻</span> Code Example</div>
+      <div class="section-title"><span class="s-icon">ðŸ’»</span> Code Example</div>
       ${codeBlock(topic.code)}
     </div>`;
   }
   if (topic.code2) {
     html += `<div class="section">
-      <div class="section-title"><span class="s-icon">💻</span> Alternative Code Example</div>
+      <div class="section-title"><span class="s-icon">ðŸ’»</span> Alternative Code Example</div>
       ${codeBlock(topic.code2)}
     </div>`;
   }
 
 
   html += `<div class="info-box tip">
-    <strong>💡 Pro Tip:</strong> Open your spark-shell or PySpark REPL and run these examples as you study each concept. Active coding cements understanding far faster than reading alone.
+    <strong>ðŸ’¡ Pro Tip:</strong> Open your spark-shell or PySpark REPL and run these examples as you study each concept. Active coding cements understanding far faster than reading alone.
   </div>`;
 
-  // Inject DLQ placeholder — will be populated by fetchDLQ async
+  // Inject DLQ placeholder â€” will be populated by fetchDLQ async
   html += `<div id="dlq-container" class="dlq-section">
     <div class="dlq-loading"><div class="dlq-spinner"></div> Loading Deep Learning Questions...</div>
   </div>`;
@@ -2831,7 +2831,7 @@ function showTopic(partId, chId, topicId) {
   fetchDLQ(partId, chapterId, topicId);
 }
 
-// ─── DLQ Topic File Map ───────────────────────────────────────────────────────
+// â”€â”€â”€ DLQ Topic File Map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const DLQ_MAP = {
   // Part 1 / Chapter 1
   'spark-revolution':          'concepts/part1-first-steps/chapter1-introduction-to-apache-spark/01_spark_revolution.md',
@@ -2942,64 +2942,58 @@ async function fetchDLQ(partId, chapterId, topicId) {
   const container = document.getElementById('dlq-container');
   if (!container) return;
 
-  // Use embedded data - no network request needed
-  const data = DLQ_DATA[topicId];
-  if (!data || !data.questions || data.questions.length === 0) {
-    container.innerHTML = `<div class="dlq-not-available">🔬 Deep Learning Questions will be available for this topic soon.</div>`;
-    return;
-  }
+  try {
+    if (typeof DLQ_DATA === 'undefined') {
+      container.innerHTML = '<div class="dlq-not-available">ERROR: dlq_data.js did not load. Please hard refresh (Ctrl+Shift+R).</div>';
+      return;
+    }
 
-  const qBlocks = data.questions;
+    const data = DLQ_DATA[topicId];
+    if (!data || !data.questions || data.questions.length === 0) {
+      container.innerHTML = '<div class="dlq-not-available">Deep Learning Questions coming soon for this topic.</div>';
+      return;
+    }
 
-  // Build accordion HTML
-  let aHtml = `
-    <div class="dlq-header">
-      <div class="dlq-header-icon">🎓</div>
-      <div class="dlq-header-text">
-        <h3>Deep Learning Questions</h3>
-        <p>10 expert-level questions covering beginner → architect → interview perspectives</p>
-      </div>
-      <div class="dlq-badge">${qBlocks.length} QUESTIONS</div>
-    </div>
-    <div class="dlq-accordion">`;
+    const qBlocks = data.questions;
 
-  DLQ_QUESTIONS.forEach((def, i) => {
-    const blk = qBlocks[i] || null;
-    const bodyHtml = blk ? (typeof marked !== 'undefined' ? marked.parse(blk.body) : `<p>${escHtml(blk.body)}</p>`) : '<p>Content coming soon.</p>';
-    const qLabel = def.label;
-    aHtml += `
-      <div class="dlq-item" id="dlq-item-${i}">
-        <div class="dlq-question" onclick="toggleDLQ(${i})">
-          <div class="dlq-q-num">${def.num}</div>
-          <div class="dlq-q-text">${qLabel}</div>
-          <span class="dlq-q-tag ${def.tag}">${def.tag.toUpperCase()}</span>
-          <span class="dlq-chevron">▶</span>
-        </div>
-        <div class="dlq-answer">${bodyHtml}</div>
-      </div>`;
-  });
+    let aHtml = '<div class="dlq-header"><div class="dlq-header-icon">\uD83C\uDF93</div><div class="dlq-header-text"><h3>Deep Learning Questions</h3><p>10 expert-level questions covering beginner to architect to interview perspectives</p></div><div class="dlq-badge">' + qBlocks.length + ' QUESTIONS</div></div><div class="dlq-accordion">';
 
-  // Add Key Takeaways block if available
-  if (data.takeaways) {
-    const metaHtml = typeof marked !== 'undefined' ? marked.parse(data.takeaways) : `<p>${escHtml(data.takeaways)}</p>`;
-    aHtml += `
-      <div class="dlq-item" id="dlq-item-meta">
-        <div class="dlq-question" onclick="toggleDLQMeta()">
-          <div class="dlq-q-num" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">📌</div>
-          <div class="dlq-q-text">Key Takeaways, Misconceptions &amp; References</div>
-          <span class="dlq-q-tag rwe">SUMMARY</span>
-          <span class="dlq-chevron">▶</span>
-        </div>
-        <div class="dlq-answer">${metaHtml}</div>
-      </div>`;
-  }
+    DLQ_QUESTIONS.forEach(function(def, i) {
+      const blk = qBlocks[i] || null;
+      const bodyText = blk ? blk.body : 'Content coming soon.';
+      const bodyHtml = (typeof marked !== 'undefined') ? marked.parse(bodyText) : '<p>' + escHtml(bodyText) + '</p>';
+      aHtml += '<div class="dlq-item" id="dlq-item-' + i + '">';
+      aHtml += '<div class="dlq-question" onclick="toggleDLQ(' + i + ')">';
+      aHtml += '<div class="dlq-q-num">' + def.num + '</div>';
+      aHtml += '<div class="dlq-q-text">' + def.label + '</div>';
+      aHtml += '<span class="dlq-q-tag ' + def.tag + '">' + def.tag.toUpperCase() + '</span>';
+      aHtml += '<span class="dlq-chevron">&#9654;</span>';
+      aHtml += '</div>';
+      aHtml += '<div class="dlq-answer">' + bodyHtml + '</div>';
+      aHtml += '</div>';
+    });
 
-  aHtml += `</div></div>`;
-  container.innerHTML = aHtml;
+    if (data.takeaways) {
+      const metaHtml = (typeof marked !== 'undefined') ? marked.parse(data.takeaways) : '<p>' + escHtml(data.takeaways) + '</p>';
+      aHtml += '<div class="dlq-item" id="dlq-item-meta">';
+      aHtml += '<div class="dlq-question" onclick="toggleDLQMeta()">';
+      aHtml += '<div class="dlq-q-num" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">&#128204;</div>';
+      aHtml += '<div class="dlq-q-text">Key Takeaways, Misconceptions &amp; References</div>';
+      aHtml += '<span class="dlq-q-tag rwe">SUMMARY</span>';
+      aHtml += '<span class="dlq-chevron">&#9654;</span>';
+      aHtml += '</div>';
+      aHtml += '<div class="dlq-answer">' + metaHtml + '</div>';
+      aHtml += '</div>';
+    }
 
-  // Re-run highlight.js on new code blocks
-  if (window.hljs) {
-    container.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+    aHtml += '</div></div>';
+    container.innerHTML = aHtml;
+
+    if (window.hljs) {
+      container.querySelectorAll('pre code').forEach(function(el) { hljs.highlightElement(el); });
+    }
+  } catch(e) {
+    container.innerHTML = '<div class="dlq-not-available">Error loading questions: ' + e.message + '. Please hard refresh (Ctrl+Shift+R).</div>';
   }
 }
 
@@ -3016,7 +3010,7 @@ function toggleDLQMeta() {
 }
 
 
-// ─── Infra page ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Infra page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function showInfra(sectionId) {
   const section = INFRA_SECTIONS.find(s=>s.id===sectionId);
   if (!section) return;
@@ -3025,8 +3019,8 @@ function showInfra(sectionId) {
   let html = `
     <div class="topic-header">
       <div class="topic-breadcrumb">
-        <span>🏗️ Infrastructure Setup</span>
-        <span class="bc-sep">›</span>
+        <span>ðŸ—ï¸ Infrastructure Setup</span>
+        <span class="bc-sep">â€º</span>
         <span class="bc-current">${section.title}</span>
       </div>
       <h1 class="topic-title"><span class="title-accent">${section.icon} ${section.title}</span></h1>
@@ -3034,7 +3028,7 @@ function showInfra(sectionId) {
     </div>
     <div class="section-divider"></div>
     <div class="section">
-      <div class="section-title"><span class="s-icon">📋</span> Step-by-Step Setup</div>
+      <div class="section-title"><span class="s-icon">ðŸ“‹</span> Step-by-Step Setup</div>
   `;
 
   section.steps.forEach((step, i) => {
@@ -3052,7 +3046,7 @@ function showInfra(sectionId) {
   render(html);
 }
 
-// ─── Project page ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Project page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function showProject(projId) {
   const p = PROJECTS.find(x=>x.id===projId);
   if (!p) return;
@@ -3060,27 +3054,27 @@ function showProject(projId) {
 
   const archNodes = p.arch.map((n,i) => {
     const hl = i === Math.floor(p.arch.length/2);
-    return `<div class="arch-node${hl?' highlight':''}">${n}</div>${i<p.arch.length-1?'<div class="arch-arrow">→</div>':''}`;
+    return `<div class="arch-node${hl?' highlight':''}">${n}</div>${i<p.arch.length-1?'<div class="arch-arrow">â†’</div>':''}`;
   }).join('');
 
   let html = `
     <div class="topic-header">
       <div class="topic-breadcrumb">
-        <span>🚀 Real-World Projects</span>
-        <span class="bc-sep">›</span>
+        <span>ðŸš€ Real-World Projects</span>
+        <span class="bc-sep">â€º</span>
         <span class="bc-current">Project ${p.num}: ${p.title}</span>
       </div>
       <h1 class="topic-title"><span class="title-accent">${p.icon} ${p.title}</span></h1>
       <p class="topic-tagline">${p.desc}</p>
       <div class="topic-tags">
         <span class="tag tag-critical">${p.difficulty}</span>
-        <span class="tag tag-part">☁️ ${p.cloud}</span>
+        <span class="tag tag-part">â˜ï¸ ${p.cloud}</span>
       </div>
     </div>
     <div class="section-divider"></div>
 
     <div class="section">
-      <div class="section-title"><span class="s-icon">🏗️</span> Architecture Pipeline</div>
+      <div class="section-title"><span class="s-icon">ðŸ—ï¸</span> Architecture Pipeline</div>
       <div class="project-card">
         <div class="project-card-header">
           <div class="project-card-icon">${p.icon}</div>
@@ -3093,27 +3087,27 @@ function showProject(projId) {
         <div class="project-card-body">
           <div class="arch-flow">${archNodes}</div>
           <div class="info-box" style="margin-top:16px;">
-            <strong>📦 Dataset:</strong> ${p.dataset}<br/>
-            <strong>☁️ Cloud Platform:</strong> ${p.cloud}
+            <strong>ðŸ“¦ Dataset:</strong> ${p.dataset}<br/>
+            <strong>â˜ï¸ Cloud Platform:</strong> ${p.cloud}
           </div>
-          ${p.useCase ? `<div class="info-box success"><strong>✅ Use Case:</strong> ${p.useCase}</div>` : ''}
-          ${p.metrics ? `<div class="info-box tip"><strong>🎯 Success Metrics:</strong><br/>
-            ${p.metrics.map(m=>`• ${m}`).join('<br/>')}
+          ${p.useCase ? `<div class="info-box success"><strong>âœ… Use Case:</strong> ${p.useCase}</div>` : ''}
+          ${p.metrics ? `<div class="info-box tip"><strong>ðŸŽ¯ Success Metrics:</strong><br/>
+            ${p.metrics.map(m=>`â€¢ ${m}`).join('<br/>')}
           </div>` : ''}
         </div>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="s-icon">💻</span> Implementation Code</div>
+      <div class="section-title"><span class="s-icon">ðŸ’»</span> Implementation Code</div>
       ${codeBlock(p.code)}
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="s-icon">📋</span> Project Setup Steps</div>
+      <div class="section-title"><span class="s-icon">ðŸ“‹</span> Project Setup Steps</div>
       <ol class="steps">
         <li><div class="step-num">1</div><div class="step-content"><div class="step-title">Get the Dataset</div><div class="step-desc">Download from <code style="color:var(--accent)">${p.dataset}</code></div></div></li>
-        <li><div class="step-num">2</div><div class="step-content"><div class="step-title">Upload to Cloud Storage</div><div class="step-desc">For ${p.cloud} — upload raw data to S3/ADLS/GCS bucket</div></div></li>
+        <li><div class="step-num">2</div><div class="step-content"><div class="step-title">Upload to Cloud Storage</div><div class="step-desc">For ${p.cloud} â€” upload raw data to S3/ADLS/GCS bucket</div></div></li>
         <li><div class="step-num">3</div><div class="step-content"><div class="step-title">Launch Cluster</div><div class="step-desc">Configure ${p.cloud} cluster with appropriate instance types</div></div></li>
         <li><div class="step-num">4</div><div class="step-content"><div class="step-title">Run EDA</div><div class="step-desc">Explore the dataset schema, distributions, and quality before modeling</div></div></li>
         <li><div class="step-num">5</div><div class="step-content"><div class="step-title">Implement the Pipeline</div><div class="step-desc">Code the full pipeline using the template above</div></div></li>
@@ -3124,7 +3118,7 @@ function showProject(projId) {
   render(html);
 }
 
-// ─── Search ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function searchTopics(q) {
   if (!q || q.length < 2) return;
   q = q.toLowerCase();
@@ -3158,7 +3152,7 @@ function searchTopics(q) {
   results.forEach(r => {
     if (r.type==='topic') {
       html += `<div class="concept-card" style="cursor:pointer" onclick="showTopic('${r.part.id}','${r.ch.id}','${r.t.id}')">
-        <div style="font-size:.75rem;color:var(--text-3);margin-bottom:6px;">${r.part.title} › ${r.ch.title}</div>
+        <div style="font-size:.75rem;color:var(--text-3);margin-bottom:6px;">${r.part.title} â€º ${r.ch.title}</div>
         <div class="cc-title">${r.t.title}</div>
         <div class="cc-desc">${(r.t.overview||'').substring(0,120)}...</div>
       </div>`;
