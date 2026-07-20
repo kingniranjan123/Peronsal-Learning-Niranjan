@@ -480,7 +480,7 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 .dlq-not-available { padding:20px 18px; text-align:center; color:var(--text-3); font-size:.82rem; font-style:italic; }
 
 </style>
-  <script src="dlq_data.js?v=20260720c"></script>
+  <script src="dlq_data.js?v=20260720d"></script>
 </head>
 <body>
 
@@ -2820,15 +2820,9 @@ function showTopic(partId, chId, topicId) {
     <strong>💡 Pro Tip:</strong> Open your spark-shell or PySpark REPL and run these examples as you study each concept. Active coding cements understanding far faster than reading alone.
   </div>`;
 
-  // Inject DLQ placeholder — will be populated by fetchDLQ async
-  html += `<div id="dlq-container" class="dlq-section">
-    <div class="dlq-loading"><div class="dlq-spinner"></div> Loading Deep Learning Questions...</div>
-  </div>`;
-
+  // Build DLQ section synchronously (data already loaded in dlq_data.js)
+  html += buildDLQSection(topicId);
   render(html);
-
-  // Async fetch Deep Learning Questions from enriched MD file
-  fetchDLQ(partId, chapterId, topicId);
 }
 
 // ─── DLQ Topic File Map ───────────────────────────────────────────────────────
@@ -2939,43 +2933,34 @@ const DLQ_QUESTIONS = [
   {num:'Q10',label:'Real-World Example',    tag:'rwe'},
 ];
 
-async function fetchDLQ(partId, chapterId, topicId) {
-  var container = document.getElementById('dlq-container');
-  if (!container) return;
-  try {
-    if (typeof DLQ_DATA === 'undefined') {
-      container.innerHTML = '<div class="dlq-not-available">dlq_data.js did not load. Press Ctrl+Shift+R to hard refresh.</div>';
-      return;
-    }
-    var data = DLQ_DATA[topicId];
-    if (!data || !data.questions || data.questions.length === 0) {
-      container.innerHTML = '<div class="dlq-not-available">Deep Learning Questions coming soon for this topic.</div>';
-      return;
-    }
-    var qBlocks = data.questions;
-    var aHtml = '<div class="dlq-header"><div class="dlq-header-icon">&#127891;</div><div class="dlq-header-text"><h3>Deep Learning Questions</h3><p>10 expert-level questions: beginner to architect to interview</p></div><div class="dlq-badge">' + qBlocks.length + ' QUESTIONS</div></div><div class="dlq-accordion">';
-    DLQ_QUESTIONS.forEach(function(def, i) {
-      var blk = qBlocks[i] || null;
-      var bodyText = blk ? blk.body : 'Content coming soon.';
-      var bodyHtml = (typeof marked !== 'undefined') ? marked.parse(bodyText) : '<p>' + escHtml(bodyText) + '</p>';
-      aHtml += '<div class="dlq-item" id="dlq-item-' + i + '">';
-      aHtml += '<div class="dlq-question" onclick="toggleDLQ(' + i + ')">';
-      aHtml += '<div class="dlq-q-num">' + def.num + '</div>';
-      aHtml += '<div class="dlq-q-text">' + def.label + '</div>';
-      aHtml += '<span class="dlq-q-tag ' + def.tag + '">' + def.tag.toUpperCase() + '</span>';
-      aHtml += '<span class="dlq-chevron">&#9654;</span>';
-      aHtml += '</div><div class="dlq-answer">' + bodyHtml + '</div></div>';
-    });
-    if (data.takeaways) {
-      var metaHtml = (typeof marked !== 'undefined') ? marked.parse(data.takeaways) : '<p>' + escHtml(data.takeaways) + '</p>';
-      aHtml += '<div class="dlq-item" id="dlq-item-meta"><div class="dlq-question" onclick="toggleDLQMeta()"><div class="dlq-q-num" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">&#128204;</div><div class="dlq-q-text">Key Takeaways &amp; References</div><span class="dlq-q-tag rwe">SUMMARY</span><span class="dlq-chevron">&#9654;</span></div><div class="dlq-answer">' + metaHtml + '</div></div>';
-    }
-    aHtml += '</div></div>';
-    container.innerHTML = aHtml;
-    if (window.hljs) { container.querySelectorAll('pre code').forEach(function(el) { hljs.highlightElement(el); }); }
-  } catch(err) {
-    container.innerHTML = '<div class="dlq-not-available">Error: ' + err.message + '</div>';
+function buildDLQSection(topicId) {
+  if (typeof DLQ_DATA === 'undefined') {
+    return '<div class="dlq-section"><div class="dlq-not-available">Questions data not loaded. Press Ctrl+Shift+R.</div></div>';
   }
+  var data = DLQ_DATA[topicId];
+  if (!data || !data.questions || data.questions.length === 0) {
+    return '<div class="dlq-section"><div class="dlq-not-available">Deep Learning Questions coming soon for this topic.</div></div>';
+  }
+  var qBlocks = data.questions;
+  var aHtml = '<div class="dlq-section"><div class="dlq-header"><div class="dlq-header-icon">&#127891;</div><div class="dlq-header-text"><h3>Deep Learning Questions</h3><p>10 expert-level questions: beginner to architect to interview</p></div><div class="dlq-badge">' + qBlocks.length + ' QUESTIONS</div></div><div class="dlq-accordion">';
+  DLQ_QUESTIONS.forEach(function(def, i) {
+    var blk = qBlocks[i] || null;
+    var bodyText = blk ? blk.body : 'Content coming soon.';
+    var bodyHtml = (typeof marked !== 'undefined') ? marked.parse(bodyText) : '<pre>' + bodyText.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</pre>';
+    aHtml += '<div class="dlq-item" id="dlq-item-' + i + '">';
+    aHtml += '<div class="dlq-question" onclick="toggleDLQ(' + i + ')">';
+    aHtml += '<div class="dlq-q-num">' + def.num + '</div>';
+    aHtml += '<div class="dlq-q-text">' + def.label + '</div>';
+    aHtml += '<span class="dlq-q-tag ' + def.tag + '">' + def.tag.toUpperCase() + '</span>';
+    aHtml += '<span class="dlq-chevron">&#9654;</span>';
+    aHtml += '</div><div class="dlq-answer">' + bodyHtml + '</div></div>';
+  });
+  if (data.takeaways) {
+    var metaHtml = (typeof marked !== 'undefined') ? marked.parse(data.takeaways) : '<pre>' + data.takeaways.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</pre>';
+    aHtml += '<div class="dlq-item" id="dlq-item-meta"><div class="dlq-question" onclick="toggleDLQMeta()"><div class="dlq-q-num" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">&#128204;</div><div class="dlq-q-text">Key Takeaways &amp; References</div><span class="dlq-q-tag rwe">SUMMARY</span><span class="dlq-chevron">&#9654;</span></div><div class="dlq-answer">' + metaHtml + '</div></div>';
+  }
+  aHtml += '</div></div>';
+  return aHtml;
 }
 
 
