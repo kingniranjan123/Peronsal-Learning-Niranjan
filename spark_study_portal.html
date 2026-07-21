@@ -554,6 +554,21 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 // ═══════════════════════════════════════════════════════════
 const CURRICULUM = [
   {
+    id:'part-pre', title:'Pre-requisites', icon:'📚', color:'#8B5CF6',
+    chapters:[
+      {
+        id:'pre-reqs', title:'Essential Big Data Concepts',
+        topics:[
+          { id:'pre-hdfs', title:'HDFS (Hadoop Distributed File System)', tag:'critical', part:'Pre-requisites', chapter:'Essential Concepts', overview:'Before understanding Spark, one must understand distributed storage. HDFS forms the backbone of data persistence in many clusters.', concepts:[] },
+          { id:'pre-distributed', title:'Master-Worker Architecture', tag:'essential', part:'Pre-requisites', chapter:'Essential Concepts', overview:'Distributed computing requires a central coordinator and many workers. This architecture is fundamental to Spark.', concepts:[] },
+          { id:'pre-sparksession', title:'SparkSession & SparkContext', tag:'critical', part:'Pre-requisites', chapter:'Essential Concepts', overview:'The SparkSession and SparkContext are the entry points to the Spark engine, bridging your application code to the cluster.', concepts:[] },
+          { id:'pre-functional', title:'Functional Programming Paradigms', tag:'essential', part:'Pre-requisites', chapter:'Essential Concepts', overview:'Spark relies heavily on functional programming concepts like lambdas, immutability, and higher-order functions.', concepts:[] },
+          { id:'pre-formats', title:'Big Data File Formats', tag:'useful', part:'Pre-requisites', chapter:'Essential Concepts', overview:'Understanding columnar versus row-based storage (Parquet vs JSON) is critical for performance tuning.', concepts:[] }
+        ]
+      }
+    ]
+  },
+  {
     id:'part1', title:'Part 1: First Steps', icon:'🚀', color:'#3B82F6',
     chapters:[
       {
