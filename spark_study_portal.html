@@ -481,6 +481,9 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 
 </style>
   <script src="dlq_data.js?v=20260720d"></script>
+  <script src="fundamentals_data.js?v=20260721"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad:false});</script>
 </head>
 <body>
 
@@ -2777,6 +2780,20 @@ function showTopic(partId, chId, topicId) {
     </div>
     <div class="section-divider"></div>
   `;
+
+  // Inject Core Fundamentals if available
+  if (typeof FUNDAMENTALS_DATA !== 'undefined' && FUNDAMENTALS_DATA[topicId]) {
+    let rawMd = FUNDAMENTALS_DATA[topicId];
+    // parse with marked
+    let parsedHtml = (typeof marked !== 'undefined') ? marked.parse(rawMd) : '<pre>' + rawMd + '</pre>';
+    html += `<div class="section">
+      <div class="section-title"><span class="s-icon">&#128214;</span> Core Fundamentals Deep Dive</div>
+      <div class="fundamentals-content" style="line-height: 1.7; font-size: 1.05rem; color: var(--text-2); padding: 15px; background: var(--surface-2); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
+        ${parsedHtml}
+      </div>
+    </div>`;
+  }
+
 
   if (topic.concepts?.length) {
     html += `<div class="section">
