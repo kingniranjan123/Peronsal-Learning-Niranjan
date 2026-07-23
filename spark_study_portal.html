@@ -554,6 +554,24 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 // ═══════════════════════════════════════════════════════════
 const CURRICULUM = [
   {
+    id:'part-book', title:'Part 0: The Book', icon:'📖', color:'#F59E0B',
+    chapters:[
+      {
+        id:'book-ch1', title:'Spark in Action Book',
+        topics:[
+          { id:'book-cover', title:'Cover & Intro', pdfPage: 1 },
+          { id:'book-ch1', title:'Chapter 1: Introducing Spark', pdfPage: 17 },
+          { id:'book-ch2', title:'Chapter 2: Spark Fundamentals', pdfPage: 43 },
+          { id:'book-ch3', title:'Chapter 3: Writing Spark Applications', pdfPage: 73 },
+          { id:'book-ch4', title:'Chapter 4: The Spark API in Depth', pdfPage: 97 },
+          { id:'book-ch5', title:'Chapter 5: Spark SQL', pdfPage: 125 },
+          { id:'book-ch6', title:'Chapter 6: Spark Streaming', pdfPage: 161 },
+          { id:'book-ch7', title:'Chapter 7: Spark MLlib', pdfPage: 199 }
+        ]
+      }
+    ]
+  },
+  {
     id:'part-pre', title:'Pre-requisites', icon:'📚', color:'#8B5CF6',
     chapters:[
       {
@@ -2776,6 +2794,19 @@ function showTopic(partId, chId, topicId) {
   const cc = document.getElementById('children-'+chId);
   if (pc && !pc.classList.contains('open')) togglePart(partId);
   if (cc && !cc.classList.contains('open')) toggleChapter(chId);
+
+  // If this is a PDF topic, render the PDF viewer and return immediately
+  if (topic.pdfPage !== undefined) {
+    document.getElementById('contentPanel').innerHTML = `
+      <div style="height: 100%; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="topic-header" style="margin-bottom: 0; padding-bottom: 10px;">
+          <h1 class="topic-title" style="margin: 0;"><span class="title-accent">📘 ${topic.title}</span></h1>
+        </div>
+        <iframe src="spark_book.pdf#page=${topic.pdfPage}" width="100%" style="flex: 1; border: none; min-height: 85vh; border-radius: 8px;" title="Book PDF Viewer"></iframe>
+      </div>
+    `;
+    return;
+  }
 
   let html = `
     <div class="topic-header">
