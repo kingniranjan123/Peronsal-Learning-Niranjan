@@ -557,16 +557,118 @@ const CURRICULUM = [
     id:'part-book', title:'Part 0: The Book', icon:'📖', color:'#F59E0B',
     chapters:[
       {
-        id:'book-ch1', title:'Spark in Action Book',
+        id:'book-front', title:'Prefaces & Contents',
         topics:[
-          { id:'book-cover', title:'Cover & Intro', pdfPage: 1 },
-          { id:'book-ch1', title:'Chapter 1: Introducing Spark', pdfPage: 17 },
-          { id:'book-ch2', title:'Chapter 2: Spark Fundamentals', pdfPage: 43 },
-          { id:'book-ch3', title:'Chapter 3: Writing Spark Applications', pdfPage: 73 },
-          { id:'book-ch4', title:'Chapter 4: The Spark API in Depth', pdfPage: 97 },
-          { id:'book-ch5', title:'Chapter 5: Spark SQL', pdfPage: 125 },
-          { id:'book-ch6', title:'Chapter 6: Spark Streaming', pdfPage: 161 },
-          { id:'book-ch7', title:'Chapter 7: Spark MLlib', pdfPage: 199 }
+          { id:'book-f-cover', title:'Cover', pdfPage: 1 },
+          { id:'book-f-toc', title:'Table of Contents', pdfPage: 9 },
+          { id:'book-f-pref', title:'Preface', pdfPage: 19 },
+          { id:'book-f-about', title:'About this book', pdfPage: 23 }
+        ]
+      },
+      {
+        id:'book-ch1', title:'Chapter 1: Introducing Spark',
+        topics:[
+          { id:'book-c1-intro', title:'1.1 What is Spark?', pdfPage: 31 },
+          { id:'book-c1-comp', title:'1.2 Spark components', pdfPage: 34 },
+          { id:'book-c1-flow', title:'1.3 Spark program flow', pdfPage: 38 },
+          { id:'book-c1-ecosystem', title:'1.4 Spark ecosystem', pdfPage: 40 },
+          { id:'book-c1-setup', title:'1.5 Setting up the VM', pdfPage: 43 }
+        ]
+      },
+      {
+        id:'book-ch2', title:'Chapter 2: Spark Fundamentals',
+        topics:[
+          { id:'book-c2-vm', title:'2.1 Using the spark-in-action VM', pdfPage: 46 },
+          { id:'book-c2-shell', title:'2.2 Using Spark shell', pdfPage: 49 },
+          { id:'book-c2-rdd', title:'2.3 Writing first program', pdfPage: 54 }
+        ]
+      },
+      {
+        id:'book-ch3', title:'Chapter 3: Writing Spark Applications',
+        topics:[
+          { id:'book-c3-ide', title:'3.1 Eclipse/IntelliJ setup', pdfPage: 66 },
+          { id:'book-c3-app', title:'3.2 Writing a standalone app', pdfPage: 70 },
+          { id:'book-c3-submit', title:'3.3 Submitting apps', pdfPage: 75 }
+        ]
+      },
+      {
+        id:'book-ch4', title:'Chapter 4: The Spark API in Depth',
+        topics:[
+          { id:'book-c4-pair', title:'4.1 Pair RDDs', pdfPage: 90 },
+          { id:'book-c4-part', title:'4.2 Data partitioning', pdfPage: 97 },
+          { id:'book-c4-join', title:'4.3 Joining, grouping & sorting', pdfPage: 105 },
+          { id:'book-c4-acc', title:'4.4 Accumulators', pdfPage: 115 }
+        ]
+      },
+      {
+        id:'book-ch5', title:'Chapter 5: Spark SQL',
+        topics:[
+          { id:'book-c5-intro', title:'5.1 Intro to Spark SQL', pdfPage: 129 },
+          { id:'book-c5-df', title:'5.2 DataFrames & Datasets', pdfPage: 135 },
+          { id:'book-c5-sql', title:'5.3 Running SQL queries', pdfPage: 145 },
+          { id:'book-c5-udf', title:'5.4 UDFs (User-Defined Functions)', pdfPage: 155 }
+        ]
+      },
+      {
+        id:'book-ch6', title:'Chapter 6: Spark Streaming',
+        topics:[
+          { id:'book-c6-intro', title:'6.1 Streaming Architecture', pdfPage: 166 },
+          { id:'book-c6-dstream', title:'6.2 DStreams', pdfPage: 170 },
+          { id:'book-c6-state', title:'6.3 Stateful transformations', pdfPage: 180 },
+          { id:'book-c6-window', title:'6.4 Window operations', pdfPage: 188 }
+        ]
+      },
+      {
+        id:'book-ch7', title:'Chapter 7: Spark MLlib',
+        topics:[
+          { id:'book-c7-intro', title:'7.1 Machine Learning with Spark', pdfPage: 200 },
+          { id:'book-c7-linalg', title:'7.2 Linear algebra basics', pdfPage: 205 },
+          { id:'book-c7-reg', title:'7.3 Linear regression', pdfPage: 215 },
+          { id:'book-c7-eval', title:'7.4 Evaluating models', pdfPage: 225 }
+        ]
+      },
+      {
+        id:'book-ch8', title:'Chapter 8: Spark GraphX',
+        topics:[
+          { id:'book-c8-intro', title:'8.1 Graph processing', pdfPage: 240 },
+          { id:'book-c8-api', title:'8.2 GraphX API', pdfPage: 245 },
+          { id:'book-c8-algo', title:'8.3 PageRank & algorithms', pdfPage: 255 }
+        ]
+      },
+      {
+        id:'book-ch10', title:'Chapter 10: Running Spark',
+        topics:[
+          { id:'book-c10-intro', title:'10.1 Spark cluster architecture', pdfPage: 269 },
+          { id:'book-c10-submit', title:'10.2 Spark-submit', pdfPage: 275 }
+        ]
+      },
+      {
+        id:'book-ch11', title:'Chapter 11: Standalone Cluster',
+        topics:[
+          { id:'book-c11-setup', title:'11.1 Setting up standalone', pdfPage: 285 },
+          { id:'book-c11-deploy', title:'11.2 Deploying applications', pdfPage: 295 }
+        ]
+      },
+      {
+        id:'book-ch12', title:'Chapter 12: YARN & Mesos',
+        topics:[
+          { id:'book-c12-yarn', title:'12.1 Running on YARN', pdfPage: 310 },
+          { id:'book-c12-mesos', title:'12.2 Running on Mesos', pdfPage: 373 }
+        ]
+      },
+      {
+        id:'book-ch13', title:'Chapter 13: Case Study - Real-time Dashboard',
+        topics:[
+          { id:'book-c13-case', title:'13.1 Understanding the use case', pdfPage: 392 },
+          { id:'book-c13-run', title:'13.2 Running the application', pdfPage: 395 },
+          { id:'book-c13-code', title:'13.3 Understanding the source code', pdfPage: 402 }
+        ]
+      },
+      {
+        id:'book-ch14', title:'Chapter 14: Deep learning on Spark with H2O',
+        topics:[
+          { id:'book-c14-dl', title:'14.1 What is deep learning?', pdfPage: 412 },
+          { id:'book-c14-h2o', title:'14.2 Deep learning with H2O', pdfPage: 420 }
         ]
       }
     ]
