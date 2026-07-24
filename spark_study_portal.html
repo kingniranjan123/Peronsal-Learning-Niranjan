@@ -2797,14 +2797,15 @@ function showTopic(partId, chId, topicId) {
 
   // If this is a PDF topic, render the PDF viewer and return immediately
   if (topic.pdfPage !== undefined) {
-    document.getElementById('contentPanel').innerHTML = `
+    const pdfHtml = `
       <div style="height: 100%; display: flex; flex-direction: column; overflow: hidden;">
         <div class="topic-header" style="margin-bottom: 0; padding-bottom: 10px;">
           <h1 class="topic-title" style="margin: 0;"><span class="title-accent">📘 ${topic.title}</span></h1>
         </div>
-        <iframe src="spark_book.pdf#page=${topic.pdfPage}" width="100%" style="flex: 1; border: none; min-height: 85vh; border-radius: 8px;" title="Book PDF Viewer"></iframe>
+        <iframe src="spark_book.pdf#page=${topic.pdfPage}" width="100%" style="flex: 1; border: none; min-height: 80vh; border-radius: 8px;" title="Book PDF Viewer"></iframe>
       </div>
     `;
+    render(pdfHtml);
     return;
   }
 
