@@ -482,6 +482,7 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 </style>
   <script src="dlq_data.js?v=20260720d"></script>
   <script src="fundamentals_data.js?v=20260721"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({startOnLoad:false});</script>
 </head>
@@ -2930,18 +2931,14 @@ function showTopic(partId, chId, topicId) {
     <div class="section-divider"></div>
   `;
 
-  // Inject Core Fundamentals if available
-  if (typeof FUNDAMENTALS_DATA !== 'undefined' && FUNDAMENTALS_DATA[topicId]) {
-    let rawMd = FUNDAMENTALS_DATA[topicId];
-    // parse with marked
-    let parsedHtml = (typeof marked !== 'undefined') ? marked.parse(rawMd) : '<pre>' + rawMd + '</pre>';
-    html += `<div class="section">
-      <div class="section-title"><span class="s-icon">&#128214;</span> Core Fundamentals Deep Dive</div>
-      <div class="fundamentals-content" style="line-height: 1.7; font-size: 1.05rem; color: var(--text-2); padding: 15px; background: var(--surface-2); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
-        ${parsedHtml}
-      </div>
-    </div>`;
-  }
+  // Fetch Mastery Deep Dive if available
+  html += `<div class="section" id="deep-dive-section" style="display:none;">
+    <div class="section-title"><span class="s-icon">&#128214;</span> Mastery Architecture Deep Dive</div>
+    <div id="deep-dive-content" class="fundamentals-content" style="line-height: 1.7; font-size: 1.05rem; color: var(--text-2); padding: 15px; background: var(--surface-2); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
+      <div class="dlq-loading"><div class="dlq-spinner"></div> Loading Mastery Content...</div>
+    </div>
+  </div>`;
+
 
 
   if (topic.concepts?.length) {
@@ -2989,6 +2986,31 @@ function showTopic(partId, chId, topicId) {
   // Build DLQ section synchronously (data already loaded in dlq_data.js)
   html += buildDLQSection(topicId);
   render(html);
+
+  // Trigger async fetch for deep dive
+  const deepDiveUrl = `Curriculum_DeepDives/${topicId}.md`;
+  fetch(deepDiveUrl)
+    .then(res => {
+      if (!res.ok) {
+        // Fallback to legacy FUNDAMENTALS_DATA if exists
+        if (typeof FUNDAMENTALS_DATA !== 'undefined' && FUNDAMENTALS_DATA[topicId]) {
+          let rawMd = FUNDAMENTALS_DATA[topicId];
+          let parsedHtml = (typeof marked !== 'undefined') ? marked.parse(rawMd) : '<pre>' + rawMd + '</pre>';
+          document.getElementById('deep-dive-content').innerHTML = parsedHtml;
+          document.getElementById('deep-dive-section').style.display = 'block';
+        } else {
+          document.getElementById('deep-dive-section').style.display = 'none';
+        }
+        return Promise.reject('No deep dive file found.');
+      }
+      return res.text();
+    })
+    .then(md => {
+      let parsedHtml = (typeof marked !== 'undefined') ? marked.parse(md) : '<pre>' + md + '</pre>';
+      document.getElementById('deep-dive-content').innerHTML = parsedHtml;
+      document.getElementById('deep-dive-section').style.display = 'block';
+    })
+    .catch(err => console.log('Deep dive fetch failed:', err));
 }
 
 // ─── DLQ Topic File Map ───────────────────────────────────────────────────────
