@@ -379,3 +379,25 @@ Pair RDDs are the foundational abstraction for distributed keyed aggregation in 
 The single most impactful decision in any Pair RDD pipeline is operator selection. `groupByKey` ships every raw record across the network and materializes entire value iterables in heap memory — it is appropriate only when the full ordered value list is a genuine requirement. `reduceByKey` and `aggregateByKey` apply partial aggregation on the map side, dramatically reducing shuffle volume. `combineByKey` exposes all three aggregation hooks directly and is the primitive from which the others derive. For pipelines involving multiple joins against the same RDD, `partitionBy` amortizes the shuffle cost to a single upfront operation, converting all subsequent joins from shuffle-heavy to narrow-dependency.
 
 Production Spark engineering with Pair RDDs ultimately requires fluency with three diagnostic tools: the Spark UI's **Stage Detail** view (for identifying shuffle write/read imbalance and straggler tasks caused by key skew), the **RDD `toDebugString`** lineage (for confirming that map-side combiners are active and that `partitionBy` has not been inadvertently discarded by a `map` call), and the **Executor Memory** tab (for detecting shuffle spill to disk, signaled by non-zero "Shuffle Spill (Disk)" values, which indicate that executor memory is insufficient for the current aggregation's working set and that either heap size or `spark.memory.fraction` must be increased).
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [Y (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [V (Page 470)](spark_book.pdf#page=470)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

@@ -373,3 +373,19 @@ The Hive Metastore is the invisible backbone of every production Spark SQL deplo
 The Derby vs. external metastore decision is not a configuration preference — it is a hard architectural constraint. Derby's embedded file lock means a second Spark application connecting to the same warehouse directory will fail with `ERROR XJ040: Failed to start database 'metastore_db'`. The moment your platform has more than one concurrent Spark session (which is immediately, in any real environment), you need MySQL or PostgreSQL behind the HMS Thrift service, with connection pooling tuned for your concurrency profile. The shift from `InMemoryCatalog` to `HiveExternalCatalog` via `enableHiveSupport()` is a one-line change with profound architectural implications for the Driver JVM's `SessionStateBuilder`, Catalyst's Analysis phase, and the TaskScheduler's ability to make data-locality decisions.
 
 Partition management and statistics collection are ongoing operational disciplines, not one-time setup tasks. Every ETL pipeline that writes new partitions must register them explicitly and run `ANALYZE TABLE` before the next consumer query executes — failing to do so produces stale partition lists that cause missing data, and absent column statistics that force the CBO into heuristic mode, systematically choosing sort-merge joins over broadcast joins and adding unnecessary shuffle stages to every analytical query. Instrumenting these steps into the final task of every Airflow DAG or Dagster job is the hallmark of a production-grade Spark data platform.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [V (Page 470)](spark_book.pdf#page=470)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [C (Page 452)](spark_book.pdf#page=452)

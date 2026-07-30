@@ -165,3 +165,22 @@ aggregated_trust.explain()
 ```
 
 This final example showcases a deep, structural multi-hop join. The query `(a)-[ab]->(b); (b)-[bc]->(c)` forces Spark to perform two large-scale joins between the vertex and edge tables. Because some vertices act as "hubs" (high-degree nodes), this operation is highly susceptible to data skew. By explicitly enabling Adaptive Query Execution and skew join optimization, we instruct the Catalyst optimizer to monitor the shuffle file sizes at runtime. If it detects that a specific user ID has an abnormally large number of connections, it will dynamically split that partition. This prevents OutOfMemory errors and straggler tasks, ensuring the stability and performance of complex multi-hop graph aggregations.
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [J (Page 458)](spark_book.pdf#page=458)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

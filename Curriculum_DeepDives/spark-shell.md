@@ -213,3 +213,17 @@ To master the Spark Shell is to master the boundary between local memory and dis
 
 Ultimately, the Spark Shell is not merely a scratchpad; it is a real-time diagnostic command center. Whether inspecting the Catalyst physical plan with `explain()`, programmatically managing the Hive metastore via the Catalog API, or dynamically manipulating task scheduling pools, true mastery of the REPL unlocks unprecedented agility in big data engineering. It remains one of the most powerful interactive data tools ever built, provided the engineer respects the architectural complexity lurking just beneath the command prompt.
 </🔥 Master Class: Spark Shell>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [C (Page 452)](spark_book.pdf#page=452)

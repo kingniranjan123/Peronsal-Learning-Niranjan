@@ -162,3 +162,19 @@ predictions.select("user_id", "prediction", "detailed_prediction").show()
 
 When `transform` is called, Catalyst generates Java bytecode that executes the `VectorAssembler` and the `H2OMOJOModel` within the same UnsafeRow iteration loop. The MOJO scores raw data byte-by-byte using purely generated Java code, bypassing Spark MLlib's vector instantiations. This eliminates object creation overhead and network hops, yielding microsecond latency suitable for structured streaming applications.
 </Master Class: H2O Framework>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [W (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [C (Page 452)](spark_book.pdf#page=452)

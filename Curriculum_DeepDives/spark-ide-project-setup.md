@@ -178,3 +178,21 @@ def test_pyspark_closure_serialization(spark_session):
 ```
 This PySpark example highlights the paramount importance of testing closure boundaries inside the IDE. The fixture intelligently configures PyArrow (`spark.sql.execution.arrow.pyspark.enabled`), a crucial setting for performance. PyArrow facilitates zero-copy memory transfer between the JVM (where Catalyst actually runs) and the Python worker processes, drastically reducing the IPC (Inter-Process Communication) serialization overhead compared to standard Python Pickle. Validating these configurations in your local IDE tests ensures your data pipelines are fundamentally robust and highly performant before cluster deployment.
 </Master Class: Spark IDE Project Setup>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [J (Page 458)](spark_book.pdf#page=458)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [C (Page 452)](spark_book.pdf#page=452)

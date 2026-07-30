@@ -364,3 +364,20 @@ RDDs are the immutable, fault-tolerant distributed collection abstraction that s
 The performance gap between naively written and expertly written RDD code is enormous. Choosing `groupByKey` over `aggregateByKey` can increase shuffle data by 100x for skewed key distributions. Failing to apply a custom `HashPartitioner` to both sides of a repeated join forces a full shuffle on every iteration, turning a 10-iteration algorithm from seconds to minutes. Selecting the wrong `StorageLevel` for a cached RDD can cause cascading LRU evictions that force full pipeline recomputation, negating the entire benefit of caching.
 
 While the DataFrame and Dataset APIs are preferred for structured data because they unlock Catalyst optimization (predicate pushdown, projection pruning) and Tungsten's columnar off-heap execution, RDDs remain indispensable for unstructured data, custom partitioning logic, fine-grained fault tolerance control, and performance-critical iterative graph algorithms. Every production Spark engineer must be fluent in RDD internals because the DataFrame API compiles to RDDs — when the optimizer produces a suboptimal physical plan, dropping to the RDD layer and applying manual optimizations is always available as the escape hatch.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [B (Page 452)](spark_book.pdf#page=452)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [C (Page 452)](spark_book.pdf#page=452)

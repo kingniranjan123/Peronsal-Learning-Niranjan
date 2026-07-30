@@ -212,3 +212,17 @@ Understanding the internal mechanics of actions is what separates junior develop
 
 Mastering actions requires a deep mental model of data locality. You must constantly evaluate whether your final dataset is remaining distributed across the Executor JVMs (via storage writes) or coalescing into the single Driver JVM. By carefully orchestrating actions alongside caching strategies and concurrency controls, engineers can build robust, highly optimized pipelines capable of processing infinite data streams with minimal resource overhead.
 </🔥 Master Class: Actions>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [C (Page 452)](spark_book.pdf#page=452)

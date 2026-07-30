@@ -237,3 +237,18 @@ However, this distributed power introduces unique configuration paradigms that s
 
 Ultimately, mastering Spark's decision trees requires treating the algorithm not as a black box, but as a distributed MapReduce application. Every parameter tweak directly influences network serialization, JVM memory allocation, and Catalyst query planning. With this architectural mental model, you can architect robust, petabyte-scale pipelines, paving the way for advanced ensembles like Random Forests and Gradient-Boosted Trees while avoiding the pitfalls of naive implementations.
 </🔥 Master Class: Decision Trees>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [C (Page 452)](spark_book.pdf#page=452)

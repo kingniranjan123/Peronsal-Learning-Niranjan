@@ -213,3 +213,20 @@ The conceptual and physical framework of Stages and Tasks is the beating heart o
 Understanding this deep architecture separates junior developers who write code that merely "works" on laptops from senior data engineers who write robust code that scales reliably in the cloud. When jobs inevitably fail at petabyte scale, they rarely fail because of bad SQL syntax or logical errors; they fail critically because a skewed partition caused a single straggler Task to completely overwhelm an executor's heap memory, or because unnecessary shuffles caused Stage bloat, bringing the entire cluster network to a standstill. The Spark UI exposes these realities plainly—tracing long-running tasks, spilled disk metrics, and shuffle read/write statistics directly back to Catalyst's physical plan. 
 
 Ultimately, mastering Stages and Tasks means truly mastering the JVM, the cluster network, and the underlying disk I/O. It allows engineers to proactively structure their DAGs—using advanced techniques like broadcast joins, explicit salting, and smart partition management—to keep data tightly localized, CPU pipelines completely saturated, and cluster utilization at its absolute theoretical peak.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

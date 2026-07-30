@@ -165,3 +165,20 @@ Standard logging often obscures performance bottlenecks until after an applicati
 
 In this example, the custom `TaskMetricsListener` evaluates the exact Garbage Collection time of every single task as it finishes. If GC time exceeds 10% of the total runtime, it flags a warning, indicating a potential necessity to increase executor heap size or tweak the Tungsten storage fraction. Additionally, it identifies "fat tasks"—tasks writing disproportionately large shuffle files, which is the hallmark of data skew. By piping these events to a time-series database or an alerting system, data engineers can proactively detect and resolve data skews and memory leaks before they metastasize into cluster-wide outages.
 </Master Class: Running Applications>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

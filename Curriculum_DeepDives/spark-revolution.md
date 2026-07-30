@@ -419,3 +419,28 @@ The Spark Revolution is, at its foundation, a rejection of the assumption that d
 The Catalyst optimizer extends this revolution to the declarative query layer. Rather than requiring engineers to hand-tune every join strategy and aggregation plan, Catalyst applies over 50 rule-based rewrites, cost-based join reordering, and predicate pushdown to columnar storage formats — automatically. The result is that a naive SQL query written by a data analyst often executes with the same physical plan as a hand-optimized Scala job written by a Spark core contributor.
 
 Production Spark engineering, however, demands understanding where the abstractions break down: when shuffle data volume overwhelms network bandwidth, when lineage graphs grow deep enough to cause Driver JVM stack overflows, when broadcast tables exceed executor heap capacity, and when Python UDFs silently disable Whole-Stage Code Generation. The engineers who master Spark are those who can look at a Spark UI Stage summary and reconstruct exactly which line of application code created the performance cliff — and that requires understanding the full stack from `LogicalPlan` trees to JVM bytecode generation to HDFS block placement.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [C (Page 452)](spark_book.pdf#page=452)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [W (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [B (Page 452)](spark_book.pdf#page=452)
+> - [V (Page 470)](spark_book.pdf#page=470)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)

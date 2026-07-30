@@ -363,3 +363,21 @@ Spark's runtime architecture is a precisely engineered contract between the Driv
 The `UnifiedMemoryManager` is the most operationally significant internal component — its dynamic boundary between Execution and Storage Memory means that a heavy aggregation job and a cached reference dataset compete for the same pool of bytes, and the aggregation always wins (Execution can evict Storage; Storage cannot evict Execution). Understanding this asymmetry explains a class of production failures where cached DataFrames silently disappear under load, causing re-computation that looks like query regression. The Tungsten engine's off-heap binary format severs the link between dataset size and GC pause duration, which is why off-heap caching is the correct solution when both high-throughput aggregation and stable caching are required simultaneously.
 
 Network topology awareness and shuffle architecture are the final pillars. Every shuffle write produces exactly one sorted file + one index file per mapper (SortShuffleManager), and the `MapOutputTracker` must hold location records for every `(mapper, reducer)` pair in Driver heap. At 2,000 map tasks × 1,000 shuffle partitions, this is 2 million records — 200MB of Driver heap minimum. Designing Spark jobs means designing for memory at every layer: Driver metadata memory, Executor Execution Memory, Executor Storage Memory, off-heap Tungsten buffers, and the network shuffle — each with its own failure mode and its own configuration lever.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [C (Page 452)](spark_book.pdf#page=452)

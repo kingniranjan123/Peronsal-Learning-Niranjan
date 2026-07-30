@@ -230,3 +230,19 @@ Mastery of this architecture requires a deep understanding of its unforgiving de
 
 Ultimately, knowing how Spark natively allocates memory, schedules JVMs, and recovers from network partitions at the bare-metal level makes you a vastly superior engineer. Whether you are debugging complex Spark UI metrics, optimizing shuffle mechanics, or eventually migrating pipelines to Kubernetes, the internal JVM dynamics and Catalyst scheduling patterns you learn from the Standalone architecture apply universally across all Spark deployments.
 </🔥 Master Class: Standalone Cluster Components>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [Y (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

@@ -248,3 +248,20 @@ When a shuffle occurs, it strains every resource available: the JVM heap is bomb
 By writing code that minimizes data movement, leverages map-side combinations, and gracefully manages execution memory, an elite engineer transforms a fragile, crash-prone job into a resilient, high-performance pipeline. The difference between a failed Spark job and a successful one almost always comes down to how effectively the shuffle is managed.
 
 </🔥 Master Class: Shuffling>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

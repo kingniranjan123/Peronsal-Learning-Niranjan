@@ -272,3 +272,20 @@ Mastering partitioning requires recognizing that Spark is fundamentally a networ
 
 Ultimately, modern Spark relies on Adaptive Query Execution to handle dynamic partition sizing, but AQE cannot fix fundamentally flawed logical plans. The engineer must still architect the data layout—both in memory and on disk—to ensure that the physical execution limits cross-node traffic and maximizes the throughput of Tungsten's vectorized processing engine. True Spark mastery is achieved when the engineer controls the partitions, rather than the partitions controlling the cluster.
 </🔥 Master Class: Data Partitioning>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

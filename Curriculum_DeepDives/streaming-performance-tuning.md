@@ -492,3 +492,22 @@ Structured Streaming performance tuning is a multi-layered discipline that spans
 At the state store layer, migrating from `HDFSBackedStateStore` to `RocksDBStateStoreProvider` is the most impactful architectural change available for stateful streaming jobs. It transforms state management from a heap-exhausting JVM problem into a well-understood LSM storage problem, at the cost of requiring careful RocksDB configuration: block cache sizing, write buffer tuning, and compaction thread allocation must all be sized against the actual state cardinality and write throughput of the specific workload. Changelog checkpointing then makes the checkpoint upload cost proportional to write volume rather than total state size, unlocking the ability to maintain terabytes of state while still committing checkpoints within the trigger interval.
 
 At the join and aggregation layer, watermark precision is the master control variable. Every stateful operator's memory footprint is directly proportional to the watermark delay: a 2-hour watermark in a stream-stream join buffers 2 hours of left-side events per partition. Instrumenting `inputRowsPerSecond`, `processedRowsPerSecond`, `triggerExecution` duration, and RocksDB compaction metrics via the `StreamingQueryListener` API transforms streaming performance from reactive firefighting into proactive, data-driven capacity management — which is the defining characteristic of production-grade Spark streaming engineering.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

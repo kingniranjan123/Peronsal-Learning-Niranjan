@@ -517,3 +517,22 @@ The Spark History Server is a purpose-built observability system whose correctne
 The two most common production failure modes — KVStore heap exhaustion and S3 listing latency — both have well-defined solutions: the LevelDB KVStore backend and rolling event logs, respectively. These are not optional optimizations; they are prerequisites for operating SHS in any environment with more than a few hundred completed applications per day. Failing to configure them produces a system that appears functional under load testing but degrades catastrophically in production, either through `OutOfMemoryError` in the SHS JVM or through multi-minute listing delays that cause the SHS UI to show stale or empty application lists.
 
 The SHS REST API elevates the History Server from a human-facing UI to a machine-queryable metrics store. Integrating it into CI/CD pipelines enables regression detection — an automated job can compare the shuffle bytes written by the current build against the 7-day median and flag a 2x regression before it reaches production. This is the mental model that separates reactive Spark debugging from proactive Spark performance engineering: the History Server is not a post-mortem tool, it is an always-on performance database.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [Y (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [V (Page 470)](spark_book.pdf#page=470)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [C (Page 452)](spark_book.pdf#page=452)

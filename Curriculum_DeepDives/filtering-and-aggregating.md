@@ -205,3 +205,19 @@ The Catalyst optimizer and Tungsten execution engine have elegantly abstracted a
 
 By strategically leveraging predicate pushdown at the storage layer, intimately understanding the network mechanics of two-phase hashing, and proactively salting skewed keys, data engineers can craft production pipelines that are both highly performant and incredibly resilient. Mastering filtering and aggregating is not simply about writing functional syntax; it is fundamentally about writing sympathetic code that aligns perfectly with Spark’s internal architectural realities.
 </🔥 Master Class: Filtering And Aggregating>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

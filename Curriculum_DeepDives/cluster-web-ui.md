@@ -266,3 +266,18 @@ True mastery requires moving completely beyond the visual HTML interface. Whethe
 
 Ultimately, the Cluster Web UI is the absolute arbiter of truth in distributed computing. Code may compile cleanly, and logical plans may look elegant on paper, but the UI exposes the harsh physical limitations of network shuffles, memory spilling, and JVM garbage collection. Learning to read its intricate metrics natively—and reacting to the constraints of distributed physics it highlights—is the defining characteristic of a senior distributed systems engineer.
 </🔥 Master Class: Cluster Web UI>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [B (Page 452)](spark_book.pdf#page=452)
+> - [W (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [C (Page 452)](spark_book.pdf#page=452)

@@ -401,3 +401,21 @@ Sparkling Water's core value proposition is collapsing the Spark–H2O data pipe
 The `H2OAutoML` estimator's integration into Spark's `Pipeline` API provides MLOps-friendly model training: the same `Pipeline.fit()` / `Pipeline.transform()` interface used for Spark ML models now trains and selects from up to hundreds of H2O models, returning a `H2OMOJOModel` transformer that works in both batch and streaming contexts. The MOJO export format is the linchpin of production deployment: it decouples the scoring runtime from both Spark and H2O, requiring only `h2o-genmodel.jar` and enabling sub-millisecond per-row inference inside Structured Streaming micro-batches.
 
 The two most consequential engineering decisions in any Sparkling Water deployment are backend selection (internal vs. external, driven by memory budget) and the filter-before-convert discipline (ensuring Catalyst optimizations run before `asH2OFrame()` is called). Both decisions are invisible at the API level—the code compiles and runs either way—but the performance difference between the anti-pattern and the correct pattern at production scale (hundreds of millions of rows, dozens of executors) is the difference between a 10-minute conversion and a 90-minute conversion, and between a stable cluster and one that OOMKills executors hourly.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [W (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

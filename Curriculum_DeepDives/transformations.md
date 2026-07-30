@@ -337,3 +337,26 @@ Transformations are the vocabulary of Spark computation, but their power comes e
 The narrow-vs-wide boundary is the most consequential architectural concept for production engineering. Narrow transformations compose for free: Tungsten fuses them into single-pass, off-heap binary loops with GC pauses measured in milliseconds. Wide transformations impose hard costs: shuffle write, network transfer, shuffle read, and a full stage barrier during which the DAGScheduler holds the downstream stage until every upstream task completes. Every `groupBy`, `join`, and `repartition` is a deliberate engineering cost that must be justified by the correctness or aggregation requirement it serves.
 
 Mastering transformations means developing an instinct for the physical reality behind the logical API. When you write `.groupBy("category").agg(sum("revenue"))`, you should mentally see the SortShuffleManager writing sort-ordered shuffle blocks to local disk, the `MapOutputTracker` broadcasting block locations, and the reduce tasks fetching blocks over Netty. When you write `.filter(col("date") > "2024-01-01")`, you should see Catalyst's `PushDownPredicate` rule moving that filter into the Parquet scan's row-group statistics check, skipping entire 128 MB blocks without reading them. That mental model — the gap between the API and the silicon — is what separates a Spark user from a Spark engineer.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [C (Page 452)](spark_book.pdf#page=452)
+> - [Z (Page 471)](spark_book.pdf#page=471)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [W (Page 470)](spark_book.pdf#page=470)
+> - [Y (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [V (Page 470)](spark_book.pdf#page=470)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)

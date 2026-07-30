@@ -208,3 +208,20 @@ Furthermore, the physical execution model bypasses the driver entirely for data 
 
 Ultimately, mastering this integration is not merely about writing a `.format("kafka")` statement. It requires a profound understanding of the JVM heap, Catalyst's physical task assignment, and Kafka's retention mechanics. Engineers who internalize this architecture do not just build pipelines; they build invincible, real-time data ingestion nervous systems capable of surviving cluster outages, network partitions, and massive data spikes without a single lost byte.
 </🔥 Master Class: Kafka Integration>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

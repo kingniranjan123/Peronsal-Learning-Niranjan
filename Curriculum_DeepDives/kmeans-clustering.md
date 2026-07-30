@@ -415,3 +415,22 @@ Apache Spark's K-Means implementation is a masterclass in distributed algorithm 
 The two most common production failure modes are silent empty clusters (detectable only via `model.summary.clusterSizes`) and convergence to a poor local minimum (mitigated by running 3+ random seeds and selecting minimum WCSS). `BisectingKMeans` is the preferred algorithm when k > 30 and the 5–20× runtime advantage outweighs the ~5% WCSS penalty relative to fully converged Lloyd's iteration. The distributed silhouette score from `ClusteringEvaluator` — running in O(n·k·d) rather than the naive O(n²) — makes programmatic k-selection feasible even at billion-row scale.
 
 At the intersection of all these components lies a critical engineering insight: K-Means in Spark is not a single algorithm but a choreography of broadcast variables, treeReduce rounds, BLAS-accelerated inner loops, and JVM heap accumulators, coordinated by the DAGScheduler across a pipeline of sequentially dependent Spark Jobs. Understanding this choreography — not just the mathematical algorithm — is what separates a practitioner who can run K-Means from one who can tune, debug, and scale it in production.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

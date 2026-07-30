@@ -93,3 +93,18 @@ joinedDF.explain("cost")
 
 A primary reason for establishing a robust local VM setup is to test and analyze Catalyst optimizer plans before deploying to production. This Scala snippet demonstrates how to programmatically extract and inspect the physical execution plan of a DataFrame transformation. We create a query involving a broadcast join. By explicitly configuring `spark.sql.autoBroadcastJoinThreshold` and using the `broadcast()` hint, we force a `BroadcastHashJoin`. Invoking `queryExecution.executedPlan` and `explain("cost")` allows developers to inspect the exact physical operators and cost statistics Catalyst has chosen. This is critical for local testing; developers can simulate cluster behaviors by manipulating memory thresholds to observe transitions from a `BroadcastHashJoin` to a `SortMergeJoin`. Analyzing these plans locally ensures that the code deployed to the distributed cluster is highly optimized and resilient.
 </Master Class: VM & Local Setup>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [V (Page 470)](spark_book.pdf#page=470)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [C (Page 452)](spark_book.pdf#page=452)

@@ -483,3 +483,20 @@ The `spark.ml` Pipeline API fundamentally changes how machine learning is operat
 Persistence via `MLWriter`/`MLReader` elevates Spark ML to a production-grade ML platform by storing models as structured Parquet artifacts rather than opaque Java serialized blobs. This makes models introspectable, version-diffable, and loadable across Spark versions — critical properties for regulated industries requiring model audits. The integration with MLflow closes the experiment lifecycle loop: `autolog()` captures the full parameter space of a `ParamGridBuilder` sweep, enabling reproducibility and rollback through the MLflow Model Registry, while the multi-flavor model format (`spark`, `pyfunc`, `mleap`) supports everything from batch PySpark scoring to low-latency REST serving without retraining.
 
 The performance failure modes in production Spark ML are almost always rooted in one of three causes: data leakage through incorrect pipeline construction order, executor OOM during `CrossValidator` parallel fit due to over-aggressive `parallelism` settings, or first-batch latency spikes after `MLReader.load()` due to lazy Parquet deserialization. Mastering the Spark UI's job timeline, executor memory tab, and SQL plan visualization tools is the non-negotiable path to diagnosing and eliminating these issues in real deployments.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [B (Page 452)](spark_book.pdf#page=452)
+> - [Y (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [C (Page 452)](spark_book.pdf#page=452)

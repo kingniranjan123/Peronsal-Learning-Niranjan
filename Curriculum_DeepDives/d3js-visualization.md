@@ -298,3 +298,22 @@ By proactively pushing the heavy computational geometry, hierarchical object nes
 
 Ultimately, passing only this aggressively reduced, pre-formatted data to the web frontend unleashes the absolute full potential of D3.js. It allows the Data-Driven Documents framework to do exactly what it does best: seamlessly executing intelligent data joins (`enter`, `update`, `exit`) and rendering fluid, 60-frames-per-second interactive graphics that visually captivate users. A senior data engineer fundamentally understands that the most beautiful, highly performant web visualization is entirely dependent on the brutal computational efficiency of the underlying Apache Spark pipeline reliably feeding it.
 </🔥 Master Class: D3.js Visualization>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [J (Page 458)](spark_book.pdf#page=458)
+> - [V (Page 470)](spark_book.pdf#page=470)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [C (Page 452)](spark_book.pdf#page=452)
+> - [Z (Page 471)](spark_book.pdf#page=471)

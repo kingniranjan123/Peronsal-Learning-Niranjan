@@ -219,3 +219,18 @@ Beneath Catalyst lies the Tungsten execution engine, the true workhorse of the e
 
 Ultimately, mastering the Spark Ecosystem requires a deep understanding of this underlying machinery. When engineers comprehend how Catalyst evaluates join costs, how Tungsten manages off-heap memory, and how Kryo serialization directly impacts network transfer, they transcend basic API usage. They gain the ability to preemptively eliminate data skew, minimize expensive cluster-wide shuffles, and craft robust, massively parallel architectures that squeeze every ounce of performance out of their distributed infrastructure.
 </🔥 Master Class: Spark Ecosystem>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [Y (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [C (Page 452)](spark_book.pdf#page=452)

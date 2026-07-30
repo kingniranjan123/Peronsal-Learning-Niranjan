@@ -159,3 +159,17 @@ processed_df.select("customer", "premium_order_totals", "product_names").show()
 Processing complex nested data structures like JSON or Parquet arrays historically required exploding the arrays into separate rows, performing aggregations, and grouping them back together—a highly expensive operation triggering massive data shuffles. This code utilizes Spark's High-Order Functions (HOFs) to manipulate nested arrays directly without exploding them. Using a SQL-like expression, we apply `filter` to keep only expensive items and `aggregate` (a reduce operation) to sum their total costs directly within the array's context. We also use the DataFrame API's `transform` function to extract an array of product names natively. HOFs keep the data tightly packed in its original row structure, minimizing shuffle read/write operations and fully exploiting Tungsten’s optimized memory layouts for nested types, resulting in exponentially faster processing pipelines.
 
 </Master Class: DataFrames>
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [C (Page 452)](spark_book.pdf#page=452)

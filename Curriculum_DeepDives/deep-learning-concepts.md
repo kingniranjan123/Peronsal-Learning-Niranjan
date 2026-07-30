@@ -280,3 +280,20 @@ Furthermore, we dissected the indispensable role of Apache Arrow in bypassing th
 
 Ultimately, integrating these two distinct computational paradigms demands rigorous attention to memory management across the JVM heap, off-heap buffers, and Python worker processes. By internalizing these architectural intricacies—from iterator-based Pandas UDFs to the nuances of barrier scheduling—senior engineers can build highly scalable, unified pipelines that perform both exabyte-scale data engineering and state-of-the-art deep learning within a single, cohesive Spark ecosystem.
 </🔥 Master Class: Deep Learning Concepts>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

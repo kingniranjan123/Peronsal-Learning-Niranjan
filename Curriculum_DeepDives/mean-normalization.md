@@ -230,3 +230,18 @@ The primary danger of mean normalization in Spark lies in memory management, par
 
 Ultimately, mastering mean normalization is about bridging the gap between abstract mathematical transformations and raw JVM execution. By leveraging Kryo serialization, monitoring BlockManager overhead, and understanding Tungsten’s code-generation patterns, elite Spark practitioners ensure that even the most massive normalization tasks execute with bare-metal efficiency, preserving cluster resources for the intensive model training phases that follow.
 </🔥 Master Class: Mean Normalization>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [C (Page 452)](spark_book.pdf#page=452)
+> - [Z (Page 471)](spark_book.pdf#page=471)

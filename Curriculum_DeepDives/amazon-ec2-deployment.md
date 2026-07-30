@@ -563,3 +563,24 @@ Apache Spark on Amazon EC2 is a multi-dimensional optimization problem where the
 The Spot Instances and Instance Fleet pairing is the highest-leverage cost optimization available in EC2 deployments, but it requires application-level fault tolerance that goes beyond Spark's default task retry. The `ExternalShuffleService`, `FetchFailed`-aware stage retry limits, S3-backed stage checkpoints, and speculative execution must all be configured as a coherent system. Each component addresses a different failure mode: ExternalShuffleService protects against single-executor loss, checkpoint patterns protect against multi-executor wave failures, and speculation protects against performance heterogeneity on mixed instance fleets.
 
 Graviton3 instances represent a structural cost-performance improvement for memory bandwidth-bound Spark workloads — the dominant category in production ETL and analytics. The 25% memory bandwidth increase directly accelerates Tungsten's UnsafeRow operations, and the 20% lower On-Demand price compounds to a 40–45% cost-per-query reduction on shuffle-heavy aggregation pipelines. Combined with CAPACITY_OPTIMIZED Spot targeting, the Magic Committer eliminating S3 commit latency, and AQE's runtime partition coalescing, a fully-tuned EC2 Spark deployment delivers production-grade reliability at 20–30% of the cost of naive On-Demand deployments.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [Y (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [C (Page 452)](spark_book.pdf#page=452)
+> - [Z (Page 471)](spark_book.pdf#page=471)

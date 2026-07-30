@@ -227,3 +227,20 @@ Furthermore, a deep understanding of the Hadoop `TextInputFormat` and the Jackso
 
 Ultimately, mastering JSON in Spark is an exercise in defensive engineering. It requires anticipating schema drift, explicitly trapping malformed records via the `_corrupt_record` column, and understanding that Catalyst's optimization capabilities are severely limited by the necessity of character-by-character text parsing. By implementing these rigorous, low-level optimizations, you ensure that your JSON ingestion pipelines are not only highly performant, but resilient against the inevitable chaos of unstructured data at scale.
 </🔥 Master Class: Loading Json>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [J (Page 458)](spark_book.pdf#page=458)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

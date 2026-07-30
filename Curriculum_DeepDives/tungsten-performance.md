@@ -164,3 +164,20 @@ object VectorizedReadTuning {
 }
 ```
 This Scala snippet emphasizes the configuration and validation of vectorized Parquet reading. When `spark.sql.parquet.enableVectorizedReader` is true, the `FileScan` node in the execution plan will display `Batched: true`. Instead of decoding Parquet files row-by-row into `InternalRow` objects, Spark decodes entire columns into `ColumnarBatch` structures within Tungsten's memory. This alignment allows the CPU to process entire arrays of primitives using SIMD instructions, drastically reducing CPU cycles per row during decompression and decoding. Tuning the batch size can further optimize L1/L2 cache locality depending on the CPU architecture, making it a critical, yet often overlooked, aspect of Tungsten tuning.
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [F (Page 456)](spark_book.pdf#page=456)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

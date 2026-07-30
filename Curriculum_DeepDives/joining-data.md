@@ -117,3 +117,20 @@ optimized_range_join = events.join(
 ```
 Range joins, or Theta joins (involving non-equi conditions like `<`, `>`), fundamentally disrupt Spark's ability to use hash-partitioning, as matching records cannot be algorithmically routed to the same partition using a hash function. By default, Catalyst degrades to a Broadcast Nested Loop Join (BNLJ), comparing every row in partition A with every row in the broadcasted partition B. This is an O(N*M) operation. The code above demonstrates combining an equi-join (`product_id`) with a non-equi condition. The Catalyst optimizer leverages the equality condition to perform a highly efficient Sort Merge Join or Broadcast Hash Join, and only applies the non-equi range filter subsequently during the merge or probe phase. Failing to provide at least one equality condition in a massive range join will severely degrade cluster performance.
 </Master Class: Joining Data>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [J (Page 458)](spark_book.pdf#page=458)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

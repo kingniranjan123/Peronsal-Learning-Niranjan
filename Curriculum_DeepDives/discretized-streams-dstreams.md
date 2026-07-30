@@ -228,3 +228,17 @@ However, operating DStreams in a high-scale production environment requires a de
 
 While Structured Streaming serves as the modern standard for new Spark applications, DStreams remain deeply embedded in countless massive enterprise architectures. Mastering DStreams is not simply an exercise in maintaining legacy code; it is a rigorous exercise in understanding the absolute fundamentals of distributed micro-batch execution, complex state management, and the intricate, time-bound dance between the Driver's `JobGenerator` and the Executor's thread pools. This deep knowledge translates directly into a broader comprehension of how distributed systems achieve genuine resilience at scale.
 </🔥 Master Class: Discretized Streams DStreams>
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [C (Page 452)](spark_book.pdf#page=452)
+> - [Z (Page 471)](spark_book.pdf#page=471)

@@ -1,0 +1,1682 @@
+[
+    {
+        "level": 1,
+        "title": "Spark in Action",
+        "page": 1
+    },
+    {
+        "level": 1,
+        "title": "brief contents",
+        "page": 9
+    },
+    {
+        "level": 1,
+        "title": "contents",
+        "page": 11
+    },
+    {
+        "level": 1,
+        "title": "preface",
+        "page": 19
+    },
+    {
+        "level": 1,
+        "title": "acknowledgments",
+        "page": 21
+    },
+    {
+        "level": 1,
+        "title": "about this book",
+        "page": 22
+    },
+    {
+        "level": 2,
+        "title": "Who should read this book",
+        "page": 22
+    },
+    {
+        "level": 2,
+        "title": "How this book is organized",
+        "page": 23
+    },
+    {
+        "level": 2,
+        "title": "About the code",
+        "page": 25
+    },
+    {
+        "level": 2,
+        "title": "Author Online",
+        "page": 25
+    },
+    {
+        "level": 1,
+        "title": "about the authors",
+        "page": 26
+    },
+    {
+        "level": 1,
+        "title": "about the cover",
+        "page": 27
+    },
+    {
+        "level": 1,
+        "title": "Part 1: First steps",
+        "page": 29
+    },
+    {
+        "level": 2,
+        "title": "Chapter 1: Introduction to Apache Spark",
+        "page": 31
+    },
+    {
+        "level": 3,
+        "title": "1.1 What is Spark?",
+        "page": 32
+    },
+    {
+        "level": 4,
+        "title": "1.1.1 The Spark revolution",
+        "page": 33
+    },
+    {
+        "level": 4,
+        "title": "1.1.2 MapReduce\u2019s shortcomings",
+        "page": 33
+    },
+    {
+        "level": 4,
+        "title": "1.1.3 What Spark brings to the table",
+        "page": 34
+    },
+    {
+        "level": 3,
+        "title": "1.2 Spark components",
+        "page": 36
+    },
+    {
+        "level": 4,
+        "title": "1.2.1 Spark Core",
+        "page": 36
+    },
+    {
+        "level": 4,
+        "title": "1.2.2 Spark SQL",
+        "page": 37
+    },
+    {
+        "level": 4,
+        "title": "1.2.3 Spark Streaming",
+        "page": 38
+    },
+    {
+        "level": 4,
+        "title": "1.2.4 Spark MLlib",
+        "page": 38
+    },
+    {
+        "level": 4,
+        "title": "1.2.5 Spark GraphX",
+        "page": 38
+    },
+    {
+        "level": 3,
+        "title": "1.3 Spark program flow",
+        "page": 38
+    },
+    {
+        "level": 3,
+        "title": "1.4 Spark ecosystem",
+        "page": 41
+    },
+    {
+        "level": 3,
+        "title": "1.5 Setting up the spark-in-action VM",
+        "page": 42
+    },
+    {
+        "level": 4,
+        "title": "1.5.1 Downloading and starting the virtual machine",
+        "page": 43
+    },
+    {
+        "level": 4,
+        "title": "1.5.2 Stopping the virtual machine",
+        "page": 44
+    },
+    {
+        "level": 3,
+        "title": "1.6 Summary",
+        "page": 44
+    },
+    {
+        "level": 2,
+        "title": "Chapter 2: Spark fundamentals",
+        "page": 46
+    },
+    {
+        "level": 3,
+        "title": "2.1 Using the spark-in-action VM",
+        "page": 47
+    },
+    {
+        "level": 4,
+        "title": "2.1.1 Cloning the Spark in Action GitHub repository",
+        "page": 48
+    },
+    {
+        "level": 4,
+        "title": "2.1.2 Finding Java",
+        "page": 48
+    },
+    {
+        "level": 4,
+        "title": "2.1.3 Using the VM\u2019s Hadoop installation",
+        "page": 49
+    },
+    {
+        "level": 4,
+        "title": "2.1.4 Examining the VM\u2019s Spark installation",
+        "page": 50
+    },
+    {
+        "level": 3,
+        "title": "2.2 Using Spark shell and writing your first Spark program",
+        "page": 51
+    },
+    {
+        "level": 4,
+        "title": "2.2.1 Starting the Spark shell",
+        "page": 51
+    },
+    {
+        "level": 4,
+        "title": "2.2.2 The first Spark code example",
+        "page": 53
+    },
+    {
+        "level": 4,
+        "title": "2.2.3 The notion of a resilient distributed dataset",
+        "page": 55
+    },
+    {
+        "level": 3,
+        "title": "2.3 Basic RDD actions and transformations",
+        "page": 56
+    },
+    {
+        "level": 4,
+        "title": "2.3.1 Using the map transformation",
+        "page": 56
+    },
+    {
+        "level": 4,
+        "title": "2.3.2 Using the distinct and flatMap transformations",
+        "page": 58
+    },
+    {
+        "level": 4,
+        "title": "2.3.3 Obtaining RDD\u2019s elements with the sample, take, and takeSample operations",
+        "page": 62
+    },
+    {
+        "level": 3,
+        "title": "2.4 Double RDD functions",
+        "page": 64
+    },
+    {
+        "level": 4,
+        "title": "2.4.1 Basic statistics with double RDD functions",
+        "page": 65
+    },
+    {
+        "level": 4,
+        "title": "2.4.2 Visualizing data distribution with histograms",
+        "page": 66
+    },
+    {
+        "level": 4,
+        "title": "2.4.3 Approximate sum and mean",
+        "page": 66
+    },
+    {
+        "level": 3,
+        "title": "2.5 Summary",
+        "page": 67
+    },
+    {
+        "level": 2,
+        "title": "Chapter 3: Writing Spark applications",
+        "page": 68
+    },
+    {
+        "level": 3,
+        "title": "3.1 Generating a new Spark project in Eclipse",
+        "page": 69
+    },
+    {
+        "level": 3,
+        "title": "3.2 Developing the application",
+        "page": 74
+    },
+    {
+        "level": 4,
+        "title": "3.2.1 Preparing the GitHub archive dataset",
+        "page": 74
+    },
+    {
+        "level": 4,
+        "title": "3.2.2 Loading JSON",
+        "page": 76
+    },
+    {
+        "level": 4,
+        "title": "3.2.3 Running the application from Eclipse",
+        "page": 78
+    },
+    {
+        "level": 4,
+        "title": "3.2.4 Aggregating the data",
+        "page": 80
+    },
+    {
+        "level": 4,
+        "title": "3.2.5 Excluding non-employees",
+        "page": 81
+    },
+    {
+        "level": 4,
+        "title": "3.2.6 Broadcast variables",
+        "page": 83
+    },
+    {
+        "level": 4,
+        "title": "3.2.7 Using the entire dataset",
+        "page": 85
+    },
+    {
+        "level": 3,
+        "title": "3.3 Submitting the application",
+        "page": 86
+    },
+    {
+        "level": 4,
+        "title": "3.3.1 Building the uberjar",
+        "page": 87
+    },
+    {
+        "level": 4,
+        "title": "3.3.2 Adapting the application",
+        "page": 88
+    },
+    {
+        "level": 4,
+        "title": "3.3.3 Using spark-submit",
+        "page": 90
+    },
+    {
+        "level": 3,
+        "title": "3.4 Summary",
+        "page": 92
+    },
+    {
+        "level": 2,
+        "title": "Chapter 4: The Spark API in depth",
+        "page": 94
+    },
+    {
+        "level": 3,
+        "title": "4.1 Working with pair RDDs",
+        "page": 95
+    },
+    {
+        "level": 4,
+        "title": "4.1.1 Creating pair RDDs",
+        "page": 95
+    },
+    {
+        "level": 4,
+        "title": "4.1.2 Basic pair RDD functions",
+        "page": 96
+    },
+    {
+        "level": 3,
+        "title": "4.2 Understanding data partitioning and reducing data shuffling",
+        "page": 102
+    },
+    {
+        "level": 4,
+        "title": "4.2.1 Using Spark\u2019s data partitioners",
+        "page": 102
+    },
+    {
+        "level": 4,
+        "title": "4.2.2 Understanding and avoiding unnecessary shuffling",
+        "page": 104
+    },
+    {
+        "level": 4,
+        "title": "4.2.3 Repartitioning RDDs",
+        "page": 108
+    },
+    {
+        "level": 4,
+        "title": "4.2.4 Mapping data in partitions",
+        "page": 109
+    },
+    {
+        "level": 3,
+        "title": "4.3 Joining, sorting, and grouping data",
+        "page": 110
+    },
+    {
+        "level": 4,
+        "title": "4.3.1 Joining data",
+        "page": 110
+    },
+    {
+        "level": 4,
+        "title": "4.3.2 Sorting data",
+        "page": 116
+    },
+    {
+        "level": 4,
+        "title": "4.3.3 Grouping data",
+        "page": 119
+    },
+    {
+        "level": 3,
+        "title": "4.4 Understanding RDD dependencies",
+        "page": 122
+    },
+    {
+        "level": 4,
+        "title": "4.4.1 RDD dependencies and Spark execution",
+        "page": 122
+    },
+    {
+        "level": 4,
+        "title": "4.4.2 Spark stages and tasks",
+        "page": 124
+    },
+    {
+        "level": 4,
+        "title": "4.4.3 Saving the RDD lineage with checkpointing",
+        "page": 125
+    },
+    {
+        "level": 3,
+        "title": "4.5 Using accumulators and broadcast variables to communicate with Spark executors",
+        "page": 125
+    },
+    {
+        "level": 4,
+        "title": "4.5.1 Obtaining data from executors with accumulators",
+        "page": 125
+    },
+    {
+        "level": 4,
+        "title": "4.5.2 Sending data to executors using broadcast variables",
+        "page": 127
+    },
+    {
+        "level": 3,
+        "title": "4.6 Summary",
+        "page": 129
+    },
+    {
+        "level": 1,
+        "title": "Part 2: Meet the Spark family",
+        "page": 131
+    },
+    {
+        "level": 2,
+        "title": "Chapter 5: Sparkling queries with Spark SQL",
+        "page": 133
+    },
+    {
+        "level": 3,
+        "title": "5.1 Working with DataFrames",
+        "page": 134
+    },
+    {
+        "level": 4,
+        "title": "5.1.1 Creating DataFrames from RDDs",
+        "page": 136
+    },
+    {
+        "level": 4,
+        "title": "5.1.2 DataFrame API basics",
+        "page": 143
+    },
+    {
+        "level": 4,
+        "title": "5.1.3 Using SQL functions to perform calculations on data",
+        "page": 146
+    },
+    {
+        "level": 4,
+        "title": "5.1.4 Working with missing values",
+        "page": 151
+    },
+    {
+        "level": 4,
+        "title": "5.1.5 Converting DataFrames to RDDs",
+        "page": 152
+    },
+    {
+        "level": 4,
+        "title": "5.1.6 Grouping and joining data",
+        "page": 153
+    },
+    {
+        "level": 4,
+        "title": "5.1.7 Performing joins",
+        "page": 156
+    },
+    {
+        "level": 3,
+        "title": "5.2 Beyond DataFrames: introducing DataSets",
+        "page": 157
+    },
+    {
+        "level": 3,
+        "title": "5.3 Using SQL commands",
+        "page": 158
+    },
+    {
+        "level": 4,
+        "title": "5.3.1 Table catalog and Hive metastore",
+        "page": 159
+    },
+    {
+        "level": 4,
+        "title": "5.3.2 Executing SQL queries",
+        "page": 161
+    },
+    {
+        "level": 4,
+        "title": "5.3.3 Connecting to Spark SQL through the Thrift server",
+        "page": 162
+    },
+    {
+        "level": 3,
+        "title": "5.4 Saving and loading DataFrame data",
+        "page": 165
+    },
+    {
+        "level": 4,
+        "title": "5.4.1 Built-in data sources",
+        "page": 165
+    },
+    {
+        "level": 4,
+        "title": "5.4.2 Saving data",
+        "page": 167
+    },
+    {
+        "level": 4,
+        "title": "5.4.3 Loading data",
+        "page": 169
+    },
+    {
+        "level": 3,
+        "title": "5.5 Catalyst optimizer",
+        "page": 170
+    },
+    {
+        "level": 3,
+        "title": "5.6 Performance improvements with Tungsten",
+        "page": 172
+    },
+    {
+        "level": 3,
+        "title": "5.7 Summary",
+        "page": 173
+    },
+    {
+        "level": 2,
+        "title": "Chapter 6: Ingesting data with Spark Streaming",
+        "page": 175
+    },
+    {
+        "level": 3,
+        "title": "6.1 Writing Spark Streaming applications",
+        "page": 176
+    },
+    {
+        "level": 4,
+        "title": "6.1.1 Introducing the example application",
+        "page": 176
+    },
+    {
+        "level": 4,
+        "title": "6.1.2 Creating a streaming context",
+        "page": 178
+    },
+    {
+        "level": 4,
+        "title": "6.1.3 Creating a discretized stream",
+        "page": 178
+    },
+    {
+        "level": 4,
+        "title": "6.1.4 Using discretized streams",
+        "page": 180
+    },
+    {
+        "level": 4,
+        "title": "6.1.5 Saving the results to a file",
+        "page": 181
+    },
+    {
+        "level": 4,
+        "title": "6.1.6 Starting and stopping the streaming computation",
+        "page": 182
+    },
+    {
+        "level": 4,
+        "title": "6.1.7 Saving the computation state over time",
+        "page": 183
+    },
+    {
+        "level": 4,
+        "title": "6.1.8 Using window operations for time-limited calculations",
+        "page": 190
+    },
+    {
+        "level": 4,
+        "title": "6.1.9 Examining the other built-in input streams",
+        "page": 192
+    },
+    {
+        "level": 3,
+        "title": "6.2 Using external data sources",
+        "page": 193
+    },
+    {
+        "level": 4,
+        "title": "6.2.1 Setting up Kafka",
+        "page": 194
+    },
+    {
+        "level": 4,
+        "title": "6.2.2 Changing the streaming application to use Kafka",
+        "page": 195
+    },
+    {
+        "level": 3,
+        "title": "6.3 Performance of Spark Streaming jobs",
+        "page": 200
+    },
+    {
+        "level": 4,
+        "title": "6.3.1 Obtaining good performance",
+        "page": 201
+    },
+    {
+        "level": 4,
+        "title": "6.3.2 Achieving fault-tolerance",
+        "page": 203
+    },
+    {
+        "level": 3,
+        "title": "6.4 Structured Streaming",
+        "page": 204
+    },
+    {
+        "level": 4,
+        "title": "6.4.1 Creating a streaming DataFrame",
+        "page": 204
+    },
+    {
+        "level": 4,
+        "title": "6.4.2 Outputting streaming data",
+        "page": 205
+    },
+    {
+        "level": 4,
+        "title": "6.4.3 Examining streaming executions",
+        "page": 206
+    },
+    {
+        "level": 4,
+        "title": "6.4.4 Future direction of structured streaming",
+        "page": 206
+    },
+    {
+        "level": 3,
+        "title": "6.5 Summary",
+        "page": 206
+    },
+    {
+        "level": 2,
+        "title": "Chapter 7: Getting smart with MLlib",
+        "page": 208
+    },
+    {
+        "level": 3,
+        "title": "7.1 Introduction to machine learning",
+        "page": 209
+    },
+    {
+        "level": 4,
+        "title": "7.1.1 Definition of machine learning",
+        "page": 212
+    },
+    {
+        "level": 4,
+        "title": "7.1.2 Classification of machine-learning algorithms",
+        "page": 212
+    },
+    {
+        "level": 4,
+        "title": "7.1.3 Machine learning with Spark",
+        "page": 215
+    },
+    {
+        "level": 3,
+        "title": "7.2 Linear algebra in Spark",
+        "page": 215
+    },
+    {
+        "level": 4,
+        "title": "7.2.1 Local vector and matrix implementations",
+        "page": 216
+    },
+    {
+        "level": 4,
+        "title": "7.2.2 Distributed matrices",
+        "page": 220
+    },
+    {
+        "level": 3,
+        "title": "7.3 Linear regression",
+        "page": 221
+    },
+    {
+        "level": 4,
+        "title": "7.3.1 About linear regression",
+        "page": 221
+    },
+    {
+        "level": 4,
+        "title": "7.3.2 Simple linear regression",
+        "page": 222
+    },
+    {
+        "level": 4,
+        "title": "7.3.3 Expanding the model to multiple linear regression",
+        "page": 224
+    },
+    {
+        "level": 3,
+        "title": "7.4 Analyzing and preparing the data",
+        "page": 226
+    },
+    {
+        "level": 4,
+        "title": "7.4.1 Analyzing data distribution",
+        "page": 227
+    },
+    {
+        "level": 4,
+        "title": "7.4.2 Analyzing column cosine similarities",
+        "page": 228
+    },
+    {
+        "level": 4,
+        "title": "7.4.3 Computing the covariance matrix",
+        "page": 228
+    },
+    {
+        "level": 4,
+        "title": "7.4.4 Transforming to labeled points",
+        "page": 229
+    },
+    {
+        "level": 4,
+        "title": "7.4.5 Splitting the data",
+        "page": 229
+    },
+    {
+        "level": 4,
+        "title": "7.4.6 Feature scaling and mean normalization",
+        "page": 230
+    },
+    {
+        "level": 3,
+        "title": "7.5 Fitting and using a linear regression model",
+        "page": 230
+    },
+    {
+        "level": 4,
+        "title": "7.5.1 Predicting the target values",
+        "page": 231
+    },
+    {
+        "level": 4,
+        "title": "7.5.2 Evaluating the model\u2019s performance",
+        "page": 232
+    },
+    {
+        "level": 4,
+        "title": "7.5.3 Interpreting the model parameters",
+        "page": 232
+    },
+    {
+        "level": 4,
+        "title": "7.5.4 Loading and saving the model",
+        "page": 233
+    },
+    {
+        "level": 3,
+        "title": "7.6 Tweaking the algorithm",
+        "page": 233
+    },
+    {
+        "level": 4,
+        "title": "7.6.1 Finding the right step size and number of iterations",
+        "page": 234
+    },
+    {
+        "level": 4,
+        "title": "7.6.2 Adding higher-order polynomials",
+        "page": 235
+    },
+    {
+        "level": 4,
+        "title": "7.6.3 Bias-variance tradeoff and model complexity",
+        "page": 237
+    },
+    {
+        "level": 4,
+        "title": "7.6.4 Plotting residual plots",
+        "page": 239
+    },
+    {
+        "level": 4,
+        "title": "7.6.5 Avoiding overfitting by using regularization",
+        "page": 240
+    },
+    {
+        "level": 4,
+        "title": "7.6.6 K-fold cross-validation",
+        "page": 241
+    },
+    {
+        "level": 3,
+        "title": "7.7 Optimizing linear regression",
+        "page": 242
+    },
+    {
+        "level": 4,
+        "title": "7.7.1 Mini-batch stochastic gradient descent",
+        "page": 242
+    },
+    {
+        "level": 4,
+        "title": "7.7.2 LBFGS optimizer",
+        "page": 244
+    },
+    {
+        "level": 3,
+        "title": "7.8 Summary",
+        "page": 245
+    },
+    {
+        "level": 2,
+        "title": "Chapter 8: ML: classification and clustering",
+        "page": 246
+    },
+    {
+        "level": 3,
+        "title": "8.1 Spark ML library",
+        "page": 247
+    },
+    {
+        "level": 4,
+        "title": "8.1.1 Estimators, transformers, and evaluators",
+        "page": 248
+    },
+    {
+        "level": 4,
+        "title": "8.1.2 ML parameters",
+        "page": 248
+    },
+    {
+        "level": 4,
+        "title": "8.1.3 ML pipelines",
+        "page": 249
+    },
+    {
+        "level": 3,
+        "title": "8.2 Logistic regression",
+        "page": 249
+    },
+    {
+        "level": 4,
+        "title": "8.2.1 Binary logistic regression model",
+        "page": 250
+    },
+    {
+        "level": 4,
+        "title": "8.2.2 Preparing data to use logistic regression in Spark",
+        "page": 252
+    },
+    {
+        "level": 4,
+        "title": "8.2.3 Training the model",
+        "page": 257
+    },
+    {
+        "level": 4,
+        "title": "8.2.4 Evaluating classification models",
+        "page": 259
+    },
+    {
+        "level": 4,
+        "title": "8.2.5 Performing k-fold cross-validation",
+        "page": 262
+    },
+    {
+        "level": 4,
+        "title": "8.2.6 Multiclass logistic regression",
+        "page": 264
+    },
+    {
+        "level": 3,
+        "title": "8.3 Decision trees and random forests",
+        "page": 266
+    },
+    {
+        "level": 4,
+        "title": "8.3.1 Decision trees",
+        "page": 267
+    },
+    {
+        "level": 4,
+        "title": "8.3.2 Random forests",
+        "page": 272
+    },
+    {
+        "level": 3,
+        "title": "8.4 Using k-means clustering",
+        "page": 274
+    },
+    {
+        "level": 4,
+        "title": "8.4.1 K-means clustering",
+        "page": 275
+    },
+    {
+        "level": 3,
+        "title": "8.5 Summary",
+        "page": 280
+    },
+    {
+        "level": 2,
+        "title": "Chapter 9: Connecting the dots with GraphX",
+        "page": 282
+    },
+    {
+        "level": 3,
+        "title": "9.1 Graph processing with Spark",
+        "page": 283
+    },
+    {
+        "level": 4,
+        "title": "9.1.1 Constructing graphs using GraphX API",
+        "page": 284
+    },
+    {
+        "level": 4,
+        "title": "9.1.2 Transforming graphs",
+        "page": 285
+    },
+    {
+        "level": 3,
+        "title": "9.2 Graph algorithms",
+        "page": 291
+    },
+    {
+        "level": 4,
+        "title": "9.2.1 Presentation of the dataset",
+        "page": 291
+    },
+    {
+        "level": 4,
+        "title": "9.2.2 Shortest-paths algorithm",
+        "page": 292
+    },
+    {
+        "level": 4,
+        "title": "9.2.3 Page rank",
+        "page": 293
+    },
+    {
+        "level": 4,
+        "title": "9.2.4 Connected components",
+        "page": 294
+    },
+    {
+        "level": 4,
+        "title": "9.2.5 Strongly connected components",
+        "page": 296
+    },
+    {
+        "level": 3,
+        "title": "9.3 Implementing the A* search algorithm",
+        "page": 297
+    },
+    {
+        "level": 4,
+        "title": "9.3.1 Understanding the A* algorithm",
+        "page": 298
+    },
+    {
+        "level": 4,
+        "title": "9.3.2 Implementing the A* algorithm",
+        "page": 300
+    },
+    {
+        "level": 4,
+        "title": "9.3.3 Testing the implementation",
+        "page": 307
+    },
+    {
+        "level": 3,
+        "title": "9.4 Summary",
+        "page": 308
+    },
+    {
+        "level": 1,
+        "title": "Part 3: Spark ops",
+        "page": 311
+    },
+    {
+        "level": 2,
+        "title": "Chapter 10: Running Spark",
+        "page": 313
+    },
+    {
+        "level": 3,
+        "title": "10.1 An overview of Spark\u2019s runtime architecture",
+        "page": 314
+    },
+    {
+        "level": 4,
+        "title": "10.1.1 Spark runtime components",
+        "page": 314
+    },
+    {
+        "level": 4,
+        "title": "10.1.2 Spark cluster types",
+        "page": 316
+    },
+    {
+        "level": 3,
+        "title": "10.2 Job and resource scheduling",
+        "page": 317
+    },
+    {
+        "level": 4,
+        "title": "10.2.1 Cluster resource scheduling",
+        "page": 318
+    },
+    {
+        "level": 4,
+        "title": "10.2.2 Spark job scheduling",
+        "page": 318
+    },
+    {
+        "level": 4,
+        "title": "10.2.3 Data-locality considerations",
+        "page": 321
+    },
+    {
+        "level": 4,
+        "title": "10.2.4 Spark memory scheduling",
+        "page": 322
+    },
+    {
+        "level": 3,
+        "title": "10.3 Configuring Spark",
+        "page": 323
+    },
+    {
+        "level": 4,
+        "title": "10.3.1 Spark configuration file",
+        "page": 323
+    },
+    {
+        "level": 4,
+        "title": "10.3.2 Command-line parameters",
+        "page": 323
+    },
+    {
+        "level": 4,
+        "title": "10.3.3 System environment variables",
+        "page": 324
+    },
+    {
+        "level": 4,
+        "title": "10.3.4 Setting configuration programmatically",
+        "page": 324
+    },
+    {
+        "level": 4,
+        "title": "10.3.5 The master parameter",
+        "page": 325
+    },
+    {
+        "level": 4,
+        "title": "10.3.6 Viewing all configured parameters",
+        "page": 325
+    },
+    {
+        "level": 3,
+        "title": "10.4 Spark web UI",
+        "page": 325
+    },
+    {
+        "level": 4,
+        "title": "10.4.1 Jobs page",
+        "page": 326
+    },
+    {
+        "level": 4,
+        "title": "10.4.2 Stages page",
+        "page": 328
+    },
+    {
+        "level": 4,
+        "title": "10.4.3 Storage page",
+        "page": 330
+    },
+    {
+        "level": 4,
+        "title": "10.4.4 Environment page",
+        "page": 330
+    },
+    {
+        "level": 4,
+        "title": "10.4.5 Executors page",
+        "page": 331
+    },
+    {
+        "level": 3,
+        "title": "10.5 Running Spark on the local machine",
+        "page": 331
+    },
+    {
+        "level": 4,
+        "title": "10.5.1 Local mode",
+        "page": 332
+    },
+    {
+        "level": 4,
+        "title": "10.5.2 Local cluster mode",
+        "page": 333
+    },
+    {
+        "level": 3,
+        "title": "10.6 Summary",
+        "page": 333
+    },
+    {
+        "level": 2,
+        "title": "Chapter 11: Running on a Spark standalone cluster",
+        "page": 334
+    },
+    {
+        "level": 3,
+        "title": "11.1 Spark standalone cluster components",
+        "page": 335
+    },
+    {
+        "level": 3,
+        "title": "11.2 Starting the standalone cluster",
+        "page": 336
+    },
+    {
+        "level": 4,
+        "title": "11.2.1 Starting the cluster with shell scripts",
+        "page": 337
+    },
+    {
+        "level": 4,
+        "title": "11.2.2 Starting the cluster manually",
+        "page": 340
+    },
+    {
+        "level": 4,
+        "title": "11.2.3 Viewing Spark processes",
+        "page": 341
+    },
+    {
+        "level": 4,
+        "title": "11.2.4 Standalone master high availability and recovery",
+        "page": 341
+    },
+    {
+        "level": 3,
+        "title": "11.3 Standalone cluster web UI",
+        "page": 343
+    },
+    {
+        "level": 3,
+        "title": "11.4 Running applications in a standalone cluster",
+        "page": 345
+    },
+    {
+        "level": 4,
+        "title": "11.4.1 Location of the driver",
+        "page": 345
+    },
+    {
+        "level": 4,
+        "title": "11.4.2 Specifying the number of executors",
+        "page": 346
+    },
+    {
+        "level": 4,
+        "title": "11.4.3 Specifying extra classpath entries and files",
+        "page": 347
+    },
+    {
+        "level": 4,
+        "title": "11.4.4 Killing applications",
+        "page": 348
+    },
+    {
+        "level": 4,
+        "title": "11.4.5 Application automatic restart",
+        "page": 348
+    },
+    {
+        "level": 3,
+        "title": "11.5 Spark History Server and event logging",
+        "page": 349
+    },
+    {
+        "level": 3,
+        "title": "11.6 Running on Amazon EC2",
+        "page": 350
+    },
+    {
+        "level": 4,
+        "title": "11.6.1 Prerequisites",
+        "page": 351
+    },
+    {
+        "level": 4,
+        "title": "11.6.2 Creating an EC2 standalone cluster",
+        "page": 352
+    },
+    {
+        "level": 4,
+        "title": "11.6.3 Using the EC2 cluster",
+        "page": 354
+    },
+    {
+        "level": 4,
+        "title": "11.6.4 Destroying the cluster",
+        "page": 357
+    },
+    {
+        "level": 3,
+        "title": "11.7 Summary",
+        "page": 357
+    },
+    {
+        "level": 2,
+        "title": "Chapter 12: Running on YARN and Mesos",
+        "page": 359
+    },
+    {
+        "level": 3,
+        "title": "12.1 Running Spark on YARN",
+        "page": 360
+    },
+    {
+        "level": 4,
+        "title": "12.1.1 YARN architecture",
+        "page": 360
+    },
+    {
+        "level": 4,
+        "title": "12.1.2 Installing, configuring, and starting YARN",
+        "page": 362
+    },
+    {
+        "level": 4,
+        "title": "12.1.3 Resource scheduling in YARN",
+        "page": 363
+    },
+    {
+        "level": 4,
+        "title": "12.1.4 Submitting Spark applications to YARN",
+        "page": 364
+    },
+    {
+        "level": 4,
+        "title": "12.1.5 Configuring Spark on YARN",
+        "page": 366
+    },
+    {
+        "level": 4,
+        "title": "12.1.6 Configuring resources for Spark jobs",
+        "page": 367
+    },
+    {
+        "level": 4,
+        "title": "12.1.7 YARN UI",
+        "page": 369
+    },
+    {
+        "level": 4,
+        "title": "12.1.8 Finding logs on YARN",
+        "page": 371
+    },
+    {
+        "level": 4,
+        "title": "12.1.9 Security considerations",
+        "page": 372
+    },
+    {
+        "level": 4,
+        "title": "12.1.10 Dynamic resource allocation",
+        "page": 372
+    },
+    {
+        "level": 3,
+        "title": "12.2 Running Spark on Mesos",
+        "page": 373
+    },
+    {
+        "level": 4,
+        "title": "12.2.1 Mesos architecture",
+        "page": 374
+    },
+    {
+        "level": 4,
+        "title": "12.2.2 Installing and configuring Mesos",
+        "page": 377
+    },
+    {
+        "level": 4,
+        "title": "12.2.3 Mesos web UI",
+        "page": 379
+    },
+    {
+        "level": 4,
+        "title": "12.2.4 Mesos resource scheduling",
+        "page": 381
+    },
+    {
+        "level": 4,
+        "title": "12.2.5 Submitting Spark applications to Mesos",
+        "page": 382
+    },
+    {
+        "level": 4,
+        "title": "12.2.6 Running Spark with Docker",
+        "page": 384
+    },
+    {
+        "level": 3,
+        "title": "12.3 Summary",
+        "page": 387
+    },
+    {
+        "level": 1,
+        "title": "Part 4: Bringing it together",
+        "page": 389
+    },
+    {
+        "level": 2,
+        "title": "Chapter 13: Case study: real-time dashboard",
+        "page": 391
+    },
+    {
+        "level": 3,
+        "title": "13.1 Understanding the use case",
+        "page": 392
+    },
+    {
+        "level": 4,
+        "title": "13.1.1 The overall picture",
+        "page": 392
+    },
+    {
+        "level": 4,
+        "title": "13.1.2 Understanding the application\u2019s components",
+        "page": 394
+    },
+    {
+        "level": 3,
+        "title": "13.2 Running the application",
+        "page": 395
+    },
+    {
+        "level": 4,
+        "title": "13.2.1 Starting the application in the spark-in-action VM",
+        "page": 396
+    },
+    {
+        "level": 4,
+        "title": "13.2.2 Starting the application manually",
+        "page": 400
+    },
+    {
+        "level": 3,
+        "title": "13.3 Understanding the source code",
+        "page": 402
+    },
+    {
+        "level": 4,
+        "title": "13.3.1 The KafkaLogsSimulator project",
+        "page": 402
+    },
+    {
+        "level": 4,
+        "title": "13.3.2 The StreamingLogAnalyzer project",
+        "page": 402
+    },
+    {
+        "level": 4,
+        "title": "13.3.3 The WebStatsDashboard project",
+        "page": 409
+    },
+    {
+        "level": 4,
+        "title": "13.3.4 Building the projects",
+        "page": 410
+    },
+    {
+        "level": 3,
+        "title": "13.4 Summary",
+        "page": 410
+    },
+    {
+        "level": 2,
+        "title": "Chapter 14: Deep learning on Spark with H2O",
+        "page": 411
+    },
+    {
+        "level": 3,
+        "title": "14.1 What is deep learning?",
+        "page": 412
+    },
+    {
+        "level": 3,
+        "title": "14.2 Using H2O with Spark",
+        "page": 413
+    },
+    {
+        "level": 4,
+        "title": "14.2.1 What is H2O?",
+        "page": 414
+    },
+    {
+        "level": 4,
+        "title": "14.2.2 Starting Sparkling Water on Spark",
+        "page": 414
+    },
+    {
+        "level": 4,
+        "title": "14.2.3 Starting the H2O cluster",
+        "page": 417
+    },
+    {
+        "level": 4,
+        "title": "14.2.4 Accessing the Flow UI",
+        "page": 418
+    },
+    {
+        "level": 3,
+        "title": "14.3 Performing regression with H2O\u2019s deep learning",
+        "page": 419
+    },
+    {
+        "level": 4,
+        "title": "14.3.1 Loading data into an H2O frame",
+        "page": 419
+    },
+    {
+        "level": 4,
+        "title": "14.3.2 Building and evaluating a deep-learning model using the Flow UI",
+        "page": 422
+    },
+    {
+        "level": 4,
+        "title": "14.3.3 Building and evaluating a deep-learning model using the Sparkling Water API",
+        "page": 426
+    },
+    {
+        "level": 3,
+        "title": "14.4 Performing classification with H2O\u2019s deep learning",
+        "page": 430
+    },
+    {
+        "level": 4,
+        "title": "14.4.1 Loading and splitting the data",
+        "page": 430
+    },
+    {
+        "level": 4,
+        "title": "14.4.2 Building the model through the Flow UI",
+        "page": 431
+    },
+    {
+        "level": 4,
+        "title": "14.4.3 Building the model with the Sparkling Water API",
+        "page": 434
+    },
+    {
+        "level": 4,
+        "title": "14.4.4 Stopping the H2O cluster",
+        "page": 434
+    },
+    {
+        "level": 3,
+        "title": "14.5 Summary",
+        "page": 435
+    },
+    {
+        "level": 1,
+        "title": "appendix A: Installing Apache Spark",
+        "page": 437
+    },
+    {
+        "level": 2,
+        "title": "Prerequisites: installing the JDK",
+        "page": 437
+    },
+    {
+        "level": 2,
+        "title": "Downloading, installing, and configuring Spark",
+        "page": 439
+    },
+    {
+        "level": 1,
+        "title": "appendix B: Understanding MapReduce",
+        "page": 443
+    },
+    {
+        "level": 1,
+        "title": "appendix C: A primer on linear algebra",
+        "page": 446
+    },
+    {
+        "level": 2,
+        "title": "Matrices and vectors",
+        "page": 446
+    },
+    {
+        "level": 2,
+        "title": "Matrix addition",
+        "page": 447
+    },
+    {
+        "level": 2,
+        "title": "Scalar multiplication",
+        "page": 447
+    },
+    {
+        "level": 2,
+        "title": "Matrix multiplication",
+        "page": 448
+    },
+    {
+        "level": 2,
+        "title": "Identity matrix",
+        "page": 448
+    },
+    {
+        "level": 2,
+        "title": "Matrix inverse",
+        "page": 449
+    },
+    {
+        "level": 1,
+        "title": "index",
+        "page": 451
+    },
+    {
+        "level": 2,
+        "title": "Symbols",
+        "page": 451
+    },
+    {
+        "level": 2,
+        "title": "A",
+        "page": 451
+    },
+    {
+        "level": 2,
+        "title": "B",
+        "page": 452
+    },
+    {
+        "level": 2,
+        "title": "C",
+        "page": 452
+    },
+    {
+        "level": 2,
+        "title": "D",
+        "page": 453
+    },
+    {
+        "level": 2,
+        "title": "E",
+        "page": 455
+    },
+    {
+        "level": 2,
+        "title": "F",
+        "page": 456
+    },
+    {
+        "level": 2,
+        "title": "G",
+        "page": 456
+    },
+    {
+        "level": 2,
+        "title": "H",
+        "page": 457
+    },
+    {
+        "level": 2,
+        "title": "I",
+        "page": 457
+    },
+    {
+        "level": 2,
+        "title": "J",
+        "page": 458
+    },
+    {
+        "level": 2,
+        "title": "K",
+        "page": 458
+    },
+    {
+        "level": 2,
+        "title": "L",
+        "page": 458
+    },
+    {
+        "level": 2,
+        "title": "M",
+        "page": 459
+    },
+    {
+        "level": 2,
+        "title": "N",
+        "page": 461
+    },
+    {
+        "level": 2,
+        "title": "O",
+        "page": 461
+    },
+    {
+        "level": 2,
+        "title": "P",
+        "page": 462
+    },
+    {
+        "level": 2,
+        "title": "Q",
+        "page": 463
+    },
+    {
+        "level": 2,
+        "title": "R",
+        "page": 463
+    },
+    {
+        "level": 2,
+        "title": "S",
+        "page": 464
+    },
+    {
+        "level": 2,
+        "title": "T",
+        "page": 469
+    },
+    {
+        "level": 2,
+        "title": "U",
+        "page": 470
+    },
+    {
+        "level": 2,
+        "title": "V",
+        "page": 470
+    },
+    {
+        "level": 2,
+        "title": "W",
+        "page": 470
+    },
+    {
+        "level": 2,
+        "title": "X",
+        "page": 470
+    },
+    {
+        "level": 2,
+        "title": "Y",
+        "page": 470
+    },
+    {
+        "level": 2,
+        "title": "Z",
+        "page": 471
+    }
+]

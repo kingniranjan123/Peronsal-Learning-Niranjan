@@ -428,3 +428,21 @@ Spark Streaming's architecture is a masterclass in pragmatic engineering: rather
 The most consequential architectural insight is the `blockInterval`-to-`partitionCount` relationship: every performance tuning decision in Spark Streaming ultimately traces back to how many partitions each micro-batch RDD has, because that determines task-level parallelism within a batch. Too few partitions leave executor cores idle; too many create scheduler overhead that inflates batch processing time beyond the batch interval, triggering the backlog spiral. The sweet spot is `numPartitions ≈ numExecutorCores`, achieved by setting `blockInterval = batchInterval / numExecutorCores`.
 
 Production Spark Streaming engineering requires holding two mental models simultaneously: the streaming model (DStream graph, batch intervals, receiver lifecycle) and the underlying batch model (RDD lineage, DAGScheduler job submission, BlockManager read path). Failures almost always manifest at the boundary between these two models — a receiver that silently dies, a lineage chain that grows unbounded, a WAL that protects inputs but not outputs. Engineers who master both layers can diagnose, tune, and recover any Spark Streaming application with confidence.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

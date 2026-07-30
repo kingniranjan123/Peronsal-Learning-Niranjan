@@ -467,3 +467,25 @@ Running Apache Spark inside Docker is not a matter of wrapping `spark-submit` in
 Image layering strategy determines operational velocity. A monolithic Dockerfile image that bundles the JDK, Spark distribution, and application JAR into a single layer means every code change triggers a multi-gigabyte image pull on every worker node, serializing the cluster startup. The multi-stage build pattern — frozen base layer, frozen Spark layer, hot-swappable application JAR layer — reduces deployment-time image distribution to tens of megabytes and cold-start times from ten minutes to under thirty seconds on a typical ten-node cluster.
 
 Kubernetes via Docker Desktop adds a third dimension of complexity: the Kubernetes scheduler, cgroup v2 enforcement, and Spark's dynamic executor allocation must all agree on memory and CPU accounting. `UseContainerSupport` and `MaxRAMPercentage` are the bridge between the Kubernetes resource model and JVM ergonomics. The diagnostic patterns — reading `/sys/fs/cgroup/memory.max` from within executors, checking `/proc/mounts` for OverlayFS on shuffle directories, verifying `SPARK_LOCAL_IP` resolves across the Docker network — are the production debugging toolkit that separates an engineer who deploys Spark in Docker from one who operates it reliably at scale.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [D (Page 453)](spark_book.pdf#page=453)
+> - [K (Page 458)](spark_book.pdf#page=458)
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [O (Page 461)](spark_book.pdf#page=461)
+> - [W (Page 470)](spark_book.pdf#page=470)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [P (Page 462)](spark_book.pdf#page=462)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [U (Page 470)](spark_book.pdf#page=470)
+> - [H (Page 457)](spark_book.pdf#page=457)
+> - [N (Page 461)](spark_book.pdf#page=461)
+> - [G (Page 456)](spark_book.pdf#page=456)
+> - [C (Page 452)](spark_book.pdf#page=452)

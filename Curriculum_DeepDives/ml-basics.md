@@ -240,3 +240,17 @@ Spark MLlib is much more than a distributed clone of scikit-learn; it is a profo
 However, treating Spark ML as a black box is a recipe for disaster. Production-grade machine learning at the petabyte scale requires a deep understanding of JVM memory management, particularly the catastrophic differences in RAM footprint between sparse and dense vectors. Engineers must actively manage DAG lineages through checkpointing for iterative algorithms, prevent Driver network bottlenecking via hierarchical tree aggregations, and understand the hardware-level Native BLAS bindings that actually execute the math.
 
 Ultimately, mastering Spark MLlib means bridging the gap between data science and distributed systems architecture. When configured correctly—with parallelized cross-validation, proper memory tuning, and native math acceleration—it provides an unmatched capability to train massive, complex models across thousands of commodity nodes efficiently and reliably.
+
+
+## Book References
+> **📖 Spark In Action (2nd Edition) References:**
+> - [E (Page 455)](spark_book.pdf#page=455)
+> - [L (Page 458)](spark_book.pdf#page=458)
+> - [S (Page 464)](spark_book.pdf#page=464)
+> - [B (Page 452)](spark_book.pdf#page=452)
+> - [M (Page 459)](spark_book.pdf#page=459)
+> - [A (Page 451)](spark_book.pdf#page=451)
+> - [R (Page 463)](spark_book.pdf#page=463)
+> - [T (Page 469)](spark_book.pdf#page=469)
+> - [I (Page 457)](spark_book.pdf#page=457)
+> - [C (Page 452)](spark_book.pdf#page=452)
