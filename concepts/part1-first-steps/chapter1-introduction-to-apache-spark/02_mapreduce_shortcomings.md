@@ -157,13 +157,6 @@ When a chained task runs in MapReduce versus Spark, the underlying execution flo
 3. Multiple `map`, `filter`, and `project` operations are fused into a single **Stage**.
 4. Data remains in the Executor's RAM. It only traverses the network during a **Shuffle** and is only written to disk if explicitly cached or memory is exhausted.
 
-```plaintext
-[Hadoop MapReduce Flow]
-Disk -> MAP -> Network Shuffle -> REDUCE -> Disk -> (Wait) -> Disk -> MAP -> ...
-
-[Apache Spark Flow]
-Disk -> [ Stage 1: MAP -> FILTER -> MAP ] -> Network Shuffle -> [ Stage 2: REDUCE -> FILTER ] -> RAM/Disk
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -261,14 +254,6 @@ error_counts.show()
 5. **Stage 2 (Reduce):** The counts are aggregated in memory. No intermediate data is ever written to HDFS.
 
 **Expected Output:**
-```plaintext
-+-------------+-----+
-|   ip_address|count|
-+-------------+-----+
-|192.168.1.100|    2|
-|   172.16.0.2|    1|
-+-------------+-----+
-```
 
 **Performance Notes:**
 Unlike MapReduce, this Spark job executes in milliseconds after JVM initialization because it avoids physical disk persistence. 

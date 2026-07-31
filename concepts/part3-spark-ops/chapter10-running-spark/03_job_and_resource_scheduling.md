@@ -15,20 +15,6 @@ To support concurrency, Spark offers **FAIR Scheduling**. When `spark.scheduler.
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A["Multiple Spark Jobs"] --> B{"Scheduler Mode"}
-    B -->|"FIFO default"| C["Job 1 gets all resources
-Job 2 waits"]
-    B -->|"FAIR"| D["Job 1 and Job 2
-share resources equally"]
-    D --> E["Fair Pools
-configure weight and minShare"]
-    E --> F["Dynamic Allocation
-auto scale executors"]
-    style B fill:#1F497D,color:#fff
-    style D fill:#27ae60,color:#fff
-```
 
 ## Data Visualization
 

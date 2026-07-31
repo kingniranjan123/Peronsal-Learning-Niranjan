@@ -14,21 +14,6 @@ To tune this complex system, engineers use extensive Spark Configurations. These
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A[Spark Application Code] --> B("SparkConf / SparkSession")
-    B --> C{Cluster Manager}
-    C -->|Local| D[Local JVM]
-    C -->|Standalone| E["Spark Master/Worker"]
-    C -->|YARN| F[Hadoop ResourceManager]
-    C -->|Kubernetes| G[K8s API Server]
-    D --> H[Driver & Executors]
-    E --> H
-    F --> H
-    G --> H
-    H --> I[Task Execution]
-    I --> J[Spark Web UI for Monitoring]
-```
 
 ## Data Visualization
 
@@ -128,26 +113,6 @@ While Spark's robust operational architecture is powerful, it is overkill for sm
 6. **Execution:** Executors run the tasks, reading data into memory, processing it, and potentially writing shuffle files.
 7. **Monitoring:** Throughout execution, Executors send heartbeats and metrics back to the Driver, updating the Spark Web UI in real-time.
 
-```plaintext
-[Spark Code] --> (Driver Program)
-                     |
-                     v
-             (DAG Scheduler) --> Creates Stages
-                     |
-                     v
-            (Task Scheduler) --> Creates Tasks
-                     |
-                     +---------------------------------------+
-                     |                                       |
-                     v                                       v
-        [Cluster Manager (YARN/K8s)]               (Spark Web UI)
-                     |                                (Monitoring)
-      +--------------+--------------+
-      |                             |
-      v                             v
- [Executor 1]                  [Executor 2]
- (Tasks in Memory)             (Tasks in Memory)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

@@ -20,39 +20,6 @@ When an action is called, the **DAGScheduler** (running on the Driver JVM) trave
 
 Shuffle data is serialized using either Java serialization or **Kryo** (configured via `spark.serializer`), written to the local disk of the map-side executor via the **SortShuffleManager**, and then fetched over the network by reduce-side tasks. The shuffle write files are tracked by the **BlockManager** and the **MapOutputTracker** on the Driver. If a reduce-side task fails to fetch a block because the map-side executor died, Spark re-submits the **entire upstream stage** — not just the failed partition — because the shuffle files are gone. This is precisely why long lineage chains and un-persisted shuffled RDDs are dangerous at scale.
 
-```text
-Driver JVM
-┌──────────────────────────────────────────────────────────┐
-│ SparkContext │
-│ ┌─────────────────┐ ┌──────────────────────────┐ │
-│ │ RDD DAG Graph │────▶│ DAGScheduler │ │
-│ │ (Lineage Tree) │ │ ┌──────────────────┐ │ │
-│ │ RDD_A │ │ │ Stage 0 (narrow) │ │ │
-│ │ └─▶ RDD_B │ │ │ map ─▶ filter │ │ │
-│ │ └─▶ RDD_C │ │ └────────┬─────────┘ │ │
-│ │ └─▶ RDD_D│ │ │ ShuffleDep │ │
-│ └─────────────────┘ │ ┌────────▼─────────┐ │ │
-│ │ │ Stage 1 (reduce) │ │ │
-│ MapOutputTracker ◀──────│ │ reduceByKey │ │ │
-│ BlockManagerMaster │ └──────────────────┘ │ │
-└───────────────┬──────────└──────────────────────────┘ │
- │ TaskScheduler dispatches Tasks │
- ▼ │
- Executor JVM (Worker Node) │
- ┌────────────────────────────────────────────────────┐ │
- │ Task Thread Pool │ │
- │ ┌──────────────┐ ┌──────────────┐ │ │
- │ │ Task(Part.0) │ │ Task(Part.1) │ ... │ │
- │ │ Tungsten WSCG│ │ Tungsten WSCG│ │ │
- │ │ (fused loop) │ │ (fused loop) │ │ │
- │ └──────┬───────┘ └──────┬───────┘ │ │
- │ │ Shuffle Write │ │ │
- │ ┌──────▼─────────────────▼───────┐ │ │
- │ │ SortShuffleManager (disk) │ │ │
- │ │ BlockManager (tracks blocks) │ │ │
- │ └────────────────────────────────┘ │ │
- └────────────────────────────────────────────────────┘ │ 
-```
 
 ### Key Internal Components
 
@@ -98,7 +65,7 @@ The precise error is `java.lang.StackOverflowError` in `DAGScheduler.getShuffleD
 
 > **What this demonstrates:** `toDebugString` is the primary diagnostic tool for understanding the structure of an RDD's lineage. This example shows how to read the indentation levels, identify ShuffleDependencies, and locate stage boundaries without opening the Spark UI.
 
-```plaintext
+```python
 from pyspark import SparkContext, SparkConf
 
 conf = SparkConf().setAppName("DAGInspection").setMaster("local[4]")
@@ -187,7 +154,7 @@ per_user_totals.unpersist()
 
 > **What this demonstrates:** How to use `rdd.checkpoint()` inside an iterative loop to prevent unbounded lineage growth, which otherwise causes `StackOverflowError` in the DAGScheduler during stage planning in long-running algorithms.
 
-```plaintext
+```python
 from pyspark import SparkContext, SparkConf, StorageLevel
 
 conf = SparkConf() \
@@ -334,8 +301,11 @@ RDD Lineage and the DAG are not implementation details — they are the cognitiv
 
 The two most impactful interventions available to a Spark engineer are strategic `persist()` placement and disciplined checkpointing. Persist at the output of expensive shuffle stages that feed multiple downstream computations; checkpoint in iterative algorithms every 10-20 iterations to prevent `StackOverflowError` from recursive lineage traversal in the Driver JVM. Both operations interact directly with the BlockManager and the Tungsten memory subsystem, so understanding storage levels — particularly the heap vs. off-heap tradeoffs between `MEMORY_ONLY`, `MEMORY_AND_DISK_SER`, and `OFF_HEAP` — is prerequisite knowledge for sizing executors correctly. 
 
-Finally, the `toDebugString` output and the Spark UI's DAG visualization are the two most underused diagnostic tools in the Spark ecosystem. An engineer who can look at a DAG and immediately identify skipped stages (cache hits), unexpected shuffles (missing co-partitioning), and abnormal partition counts (accidental `coalesce(1)`) will outperform peers who tune by intuition alone. The DAG is Spark's full declarative description of its intent — learning to read it fluently is the highest-leverage skill in production Spark engineering. 
+Finally, the `toDebugString` output and the Spark UI's DAG visualization are the two most underused diagnostic tools in the Spark ecosystem. An engineer who can look at a DAG and immediately identify skipped stages (cache hits), unexpected shuffles (missing co-partitioning), and abnormal partition counts (accidental `coalesce(1)`) will outperform peers who tune by intuition alone. The DAG is Spark's full declarative description of its intent — learning to read it fluently is the highest-leverage skill in production Spark engineering.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=32" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Lineage Graph">p.32</a> <a href="spark_book.pdf#page=36" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="DAG Construction">p.36</a> <a href="spark_book.pdf#page=42" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Stage Splitting">p.42</a> <a href="spark_book.pdf#page=46" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Fault Recovery via Lineage">p.46</a>
+</div>

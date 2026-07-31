@@ -22,43 +22,6 @@ At the end of every batch interval, the **JobGenerator** fires a `GenerateJobs` 
 
 Checkpoint metadata (batch timestamps, DStream graph, configuration) is serialized via Java serialization (not Kryo, notably) and written to the configured checkpoint directory at every batch interval. This metadata enables Driver recovery: a crashed Driver can reconstruct the entire DStreamGraph, re-query which batches were incomplete, and reprocess them using blocks retrieved from the WAL, achieving exactly-once guarantees end-to-end.
 
-```text
-Driver JVM
-┌──────────────────────────────────────────────────────────────────┐
-│ StreamingContext │
-│ ┌─────────────────────┐ ┌──────────────────────────────────┐ │
-│ │ JobGenerator │ │ ReceiverTracker │ │
-│ │ (timer thread) │ │ (block metadata registry) │ │
-│ │ │ │ │ │
-│ │ every batchInterval│───▶│ getBlocksOfBatch(time) │ │
-│ │ ──────────────────▶│ │ returns List[BlockId] │ │
-│ │ GenerateJobs event │ └──────────┬───────────────────────┘ │
-│ │ │ │ │ RPC heartbeats │
-│ │ ▼ │ │ (block reports) │
-│ │ DStreamGraph │ │ │
-│ │ .generateJobs(t) │ ┌──────────▼───────────────────────┐ │
-│ │ ──────────────────▶│ │ DAGScheduler │ │
-│ │ RDD DAG built │───▶│ submits standard Spark job │ │
-│ └─────────────────────┘ └──────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────────┘
- │ │
- │ Receiver tasks (long-running) │ Compute tasks (per batch)
- ▼ ▼
-Executor JVM (Receiver) Executor JVM (Compute)
-┌──────────────────────┐ ┌──────────────────────────────┐
-│ ReceiverSupervisor │ │ BlockRDD partition reader │
-│ ┌────────────────┐ │ │ (reads from BlockManager │
-│ │ Receiver │ │ │ or WAL if evicted) │
-│ │ (e.g. Kafka) │ │ └──────────────────────────────┘
-│ └───────┬────────┘ │
-│ │ store() │
-│ ┌───────▼────────┐ │
-│ │ BlockManager │ │◀── WAL writes (HDFS/S3) if enabled
-│ │ (sealed every │ │
-│ │ blockInterval)│ │
-│ └────────────────┘ │
-└──────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -427,8 +390,11 @@ Spark Streaming's architecture is a masterclass in pragmatic engineering: rather
 
 The most consequential architectural insight is the `blockInterval`-to-`partitionCount` relationship: every performance tuning decision in Spark Streaming ultimately traces back to how many partitions each micro-batch RDD has, because that determines task-level parallelism within a batch. Too few partitions leave executor cores idle; too many create scheduler overhead that inflates batch processing time beyond the batch interval, triggering the backlog spiral. The sweet spot is `numPartitions ≈ numExecutorCores`, achieved by setting `blockInterval = batchInterval / numExecutorCores`. 
 
-Production Spark Streaming engineering requires holding two mental models simultaneously: the streaming model (DStream graph, batch intervals, receiver lifecycle) and the underlying batch model (RDD lineage, DAGScheduler job submission, BlockManager read path). Failures almost always manifest at the boundary between these two models — a receiver that silently dies, a lineage chain that grows unbounded, a WAL that protects inputs but not outputs. Engineers who master both layers can diagnose, tune, and recover any Spark Streaming application with confidence. 
+Production Spark Streaming engineering requires holding two mental models simultaneously: the streaming model (DStream graph, batch intervals, receiver lifecycle) and the underlying batch model (RDD lineage, DAGScheduler job submission, BlockManager read path). Failures almost always manifest at the boundary between these two models — a receiver that silently dies, a lineage chain that grows unbounded, a WAL that protects inputs but not outputs. Engineers who master both layers can diagnose, tune, and recover any Spark Streaming application with confidence.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

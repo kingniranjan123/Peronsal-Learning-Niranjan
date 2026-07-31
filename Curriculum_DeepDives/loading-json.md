@@ -16,26 +16,6 @@ If schema inference is enabled (which is the default behavior if no schema is pr
 
 Once the global schema is finalized, the actual data loading job begins. The Catalyst physical plan generates a `FileSourceScanExec` node that streams the text data into the Jackson parser once again. This time, as Jackson emits tokens, Spark immediately attempts to cast them into the Catalyst internal data types (like `UTF8String`, `IntegerData`, or `ArrayData`). These parsed values are then directly encoded into Tungsten’s `UnsafeRow` binary format, bypassing standard Java object creation to minimize Garbage Collection (GC) overhead. Tungsten places this binary data into off-heap memory, preparing it for Whole-Stage CodeGen execution in downstream operations.
 
-```text
-Driver JVM Worker Executor JVM
-┌────────────────────────────────┐ ┌───────────────────────────────────────────────┐
-│ DAGScheduler │ │ Executor Thread Pool │
-│ ┌──────────────────────────┐ │───────┐ │ ┌─────────────────────────────────────────┐ │
-│ │ Schema Inference Job │ │ │ │ │ Task 1 (Partition 0) │ │
-│ │ (Forces full data scan) │ │ │ │ │ │ │
-│ └──────────────────────────┘ │ │ │ │ Hadoop TextInputFormat │ │
-│ │ └─────▶│ │ │ (Raw UTF-8 Bytes) │ │
-│ Catalyst Optimizer │ │ │ ▼ │ │
-│ ┌──────────────────────────┐ │ │ │ Jackson Streaming Parser │ │
-│ │ Logical Plan │ │ │ │ │ (JSON Tokens) │ │
-│ │ Physical Plan │ │◀──────┐ │ │ ▼ │ │
-│ │ FileSourceScanExec │ │ │ │ │ Catalyst RowConverter │ │
-│ └──────────────────────────┘ │ │ │ │ │ (Catalyst Types) │ │
-└────────────────────────────────┘ │ │ │ ▼ │ │
- │ │ │ Tungsten UnsafeRow (Off-Heap Binary) │ │
- └──────│ └─────────────────────────────────────────┘ │
- └───────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **Hadoop TextInputFormat:** The underlying layer responsible for interpreting the raw bytes from storage (HDFS/S3) and splitting them by newline characters. This guarantees that Spark can divide massive files into parallel partitions without breaking records, provided each JSON object is strictly on a single line.
@@ -227,6 +207,11 @@ To achieve true mastery of Apache Spark's JSON processing capabilities, one must
 Furthermore, a deep understanding of the Hadoop `TextInputFormat` and the Jackson Streaming API reveals exactly why multi-line JSON is a distributed computing anti-pattern. Realizing that `multiLine=true` destroys block-level parallelism allows you to push back on upstream data providers to enforce NDJSON (Newline Delimited JSON) contracts. When you align your data architecture with Spark's physical block processing mechanics, you unlock the true scale of the execution engine and protect your worker nodes from devastating memory exhaustion. 
 
 Ultimately, mastering JSON in Spark is an exercise in defensive engineering. It requires anticipating schema drift, explicitly trapping malformed records via the `_corrupt_record` column, and understanding that Catalyst's optimization capabilities are severely limited by the necessity of character-by-character text parsing. By implementing these rigorous, low-level optimizations, you ensure that your JSON ingestion pipelines are not only highly performant, but resilient against the inevitable chaos of unstructured data at scale.
-</🔥 Master Class: Loading Json> 
+</🔥 Master Class: Loading Json>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

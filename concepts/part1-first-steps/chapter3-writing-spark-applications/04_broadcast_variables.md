@@ -26,29 +26,6 @@ When an executor receives a task, it checks if it already has the data for that 
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-subgraph "Without Broadcast (Inefficient)"
-        A1["Driver: 10MB Array"] -->|Sends 10MB| T1(Task 1 on Exec A);
-        A1 -->|Sends 10MB| T2(Task 2 on Exec A);
-        A1 -->|Sends 10MB| T3(Task 3 on Exec B);
-        A1 -->|Sends 10MB| T4(Task 4 on Exec B);
-end
-
-subgraph "With Broadcast (Efficient)"
-        B1["Driver: Creates Broadcast"] == Sends 10MB once ==> E1[Executor A Cache];
-        B1 == Sends 10MB once ==> E2[Executor B Cache];
-        
-        E1 -. Local Memory Read .-> T5(Task 1);
-        E1 -. Local Memory Read .-> T6(Task 2);
-        
-        E2 -. Local Memory Read .-> T7(Task 3);
-        E2 -. Local Memory Read .-> T8(Task 4);
-end
-    
-    style A1 fill:#F5B7B1,stroke:#333
-    style B1 fill:#A9DFBF,stroke:#333
-```
 
 ## Data Visualization
 
@@ -199,13 +176,6 @@ Broadcast variables are not a silver bullet and can crash your application if us
 5. **Peer-to-Peer Transfer:** The executor downloads the chunks from the driver OR other executors that already have them.
 6. **Deserialization:** The chunks are reassembled, deserialized into a Java/Python object, and stored in the executor's memory for all subsequent tasks.
 
-```plaintext
-[Driver] --> Chunks Data (Block 1, 2, 3)
-   |
-   +-- (P2P Fetch) --> [Executor A] reads Block 1, fetches Block 2 from Driver
-   |
-   +-- (P2P Fetch) --> [Executor B] fetches Block 1 from Exec A, Block 2 from Driver
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

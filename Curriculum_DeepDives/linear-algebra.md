@@ -20,31 +20,6 @@ BLAS (Basic Linear Algebra Subprograms) and LAPACK (Linear Algebra PACKage) are 
 
 Apache Arrow enters this picture as the serialization format for the JVM-to-Python boundary. When PySpark calls `toArrow()` on a DataFrame containing feature vectors, Spark serializes the column-oriented data into Arrow's in-memory columnar format without copying individual values — the Arrow buffer is handed to the Python process via a memory-mapped file or socket, and NumPy/pandas can read it with zero deserialization overhead. For linear algebra workloads that bridge Spark preprocessing and scikit-learn or NumPy model fitting, this reduces Python worker startup overhead from seconds (with pickle serialization) to milliseconds.
 
-```text
-Driver JVM Executor JVMs (RDD Partitions)
-┌──────────────────────────────────┐ ┌─────────────────────────────────────┐
-│ SparkContext / DAGScheduler │ │ Partition 0: RDD[Vector] rows 0..k │
-│ │◀──────▶│ Partition 1: RDD[Vector] rows k..2k│
-│ Phase 2: LAPACK dsyevd │ │ Partition N: RDD[Vector] rows ... │
-│ ┌────────────────────────────┐ │ └───────────┬─────────────────────────┘
-│ │ Breeze DenseMatrix (n×n) │ │ │ treeReduce (partial G=A^TA)
-│ │ netlib-java → OpenBLAS │ │◀───────────────────┘
-│ │ dsyevd → top-k eigenvecs │ │
-│ └────────────────────────────┘ │ ┌──────────────────────────────────────┐
-│ │ │ Arrow IPC Buffer (columnar) │
-│ Phase 3: U = A·V·Σ⁻¹ (RDD map)│──────▶│ JVM → Python (mmap, zero-copy) │
-└──────────────────────────────────┘ │ NumPy array view (no deserialization)│
- └──────────────────────────────────────┘
-
-CoordinateMatrix BlockMatrix (2×2 grid)
-RDD[MatrixEntry] RDD[((blockRow,blockCol), Matrix)]
-┌───────────────┐ ┌───────────┬───────────┐
-│(0,5,0.9) │ toBlockMatrix│ B(0,0) │ B(0,1) │
-│(1,2,0.3) │─────────────▶│ dense │ sparse │
-│(3,8,1.1) │ ├───────────┼───────────┤
-│ ... │ │ B(1,0) │ B(1,1) │
-└───────────────┘ └───────────┴───────────┘ 
-```
 
 ### Key Internal Components
 
@@ -345,8 +320,11 @@ Spark's distributed linear algebra stack is a carefully designed split-level sys
 
 The native BLAS/LAPACK stack via netlib-java and OpenBLAS is the single most impactful performance lever in the entire linear algebra pipeline. A 10–50× gap between native and reference BLAS is not an edge case — it is the baseline difference on every executor that processes local dense matrices. Verifying BLAS implementation type (`NativeSystemBLAS` vs `F2jBLAS`) should be a mandatory step in any Spark cluster health check. Similarly, the `OPENBLAS_NUM_THREADS=1` configuration is non-negotiable in multi-task executors to prevent thread oversubscription. 
 
-Apache Arrow closes the final gap in the linear algebra workflow: the boundary between JVM and Python. By encoding columnar data in a shared-memory format that both pyarrow and pandas understand natively, Arrow eliminates the serialization bottleneck that historically made PySpark ML workflows 10–20× slower than their Scala equivalents. Combined with scikit-learn's randomized algorithms for data that fits in memory, the Arrow-accelerated pipeline enables a pragmatic hybrid architecture: use Spark for distributed preprocessing and feature engineering, collect via Arrow, and fit models locally — achieving both the scale of distributed computing and the numerical richness of the Python ML ecosystem. 
+Apache Arrow closes the final gap in the linear algebra workflow: the boundary between JVM and Python. By encoding columnar data in a shared-memory format that both pyarrow and pandas understand natively, Arrow eliminates the serialization bottleneck that historically made PySpark ML workflows 10–20× slower than their Scala equivalents. Combined with scikit-learn's randomized algorithms for data that fits in memory, the Arrow-accelerated pipeline enables a pragmatic hybrid architecture: use Spark for distributed preprocessing and feature engineering, collect via Arrow, and fit models locally — achieving both the scale of distributed computing and the numerical richness of the Python ML ecosystem.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

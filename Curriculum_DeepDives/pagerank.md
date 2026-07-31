@@ -149,3 +149,10 @@ customPageRank.vertices.take(5).foreach(println)
 ```
 
 While built-in PageRank libraries are powerful, data engineers frequently need to implement custom logic, such as incorporating dynamic edge weights or varying damping factors per vertex. This Scala example showcases how to manually implement PageRank from scratch using GraphX's core Pregel API. The heart of Pregel involves three user-defined functions: the vertex program (`vprog`), which computes the new vertex state based on the accumulated incoming messages; the send message function (`sendMsg`), which determines the exact rank a vertex propagates along its outbound edges; and the message combiner (`mergeMsg`), which aggregates multiple incoming messages before they reach the target vertex. This map-reduce paradigm is highly optimized by Spark's Catalyst engine, but writing it manually requires careful attention to schema and data types. In this snippet, we handle dangling nodes gracefully by checking the out-degree before sending messages. This custom implementation provides unparalleled flexibility, allowing developers to inject arbitrary business logic into the distributed graph traversal layer.
+
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

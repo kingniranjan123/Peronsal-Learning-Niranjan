@@ -20,7 +20,7 @@ In **Cluster Mode**, the architecture forks dramatically, focusing on resilience
 
 Once this Driver is running within the cluster, it dynamically requests additional YARN containers to spin up Executor JVMs. These JVMs are where Tungsten's memory pools (heap and off-heap) are established, and where Catalyst's physical plans will ultimately execute via Whole-Stage Code Generation. Because the Driver is now a YARN-managed container, it benefits from YARN's native retry mechanisms and is completely immune to edge-node disconnections, making it the definitive standard for production data engineering.
 
-```text
+```bash
 Edge Node (Client) Cluster Manager (YARN/K8s) Worker Node
 ┌─────────────────────────┐ ┌─────────────────────────┐ ┌───────────────────────┐
 │ spark-submit (bash) │ RPC │ ResourceManager │ │ NodeManager │
@@ -159,7 +159,7 @@ print(f"Spark UI running at: {spark.sparkContext.uiWebUrl}")
 
 > **What this demonstrates:** Optimizing `spark-submit` configurations for Jupyter Notebooks or interactive shells running in Client Mode, prioritizing driver responsiveness and network stability.
 
-```plaintext
+```python
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
@@ -247,6 +247,11 @@ The `spark-submit` utility represents the critical threshold where user-defined 
 Architecturally, realizing the distinction between Client and Cluster modes dictates the resilience of your entire pipeline. By utilizing Cluster mode, you embed the Spark Driver as an ApplicationMaster securely within the cluster, decoupling it from the fragility of edge-node network connections. You enable the Driver to dynamically scale Executor JVMs, managing Tungsten's off-heap allocations and Catalyst's physical plans completely insulated from external failures. 
 
 Ultimately, mastering `spark-submit` transitions an engineer from simply "writing Spark code" to successfully "operating Spark in production." By precisely tuning memory overhead to prevent YARN container kills, managing classloader hierarchies to avoid dependency hell, and securely mapping Kubernetes volumes for efficient shuffle spills, you ensure that the Tungsten execution engine has the exact physical foundation it needs to operate at peak performance.
-</🔥 Master Class: Spark Submit> 
+</🔥 Master Class: Spark Submit>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=305" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="spark-submit CLI">p.305</a> <a href="spark_book.pdf#page=308" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Deploy Modes">p.308</a> <a href="spark_book.pdf#page=311" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Configuration Precedence">p.311</a> <a href="spark_book.pdf#page=314" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Driver Memory">p.314</a>
+</div>

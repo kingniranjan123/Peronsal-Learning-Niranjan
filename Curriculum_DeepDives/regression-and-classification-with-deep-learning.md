@@ -18,49 +18,6 @@ Petastorm's `make_batch_reader` opens Parquet files directly from the distribute
 
 During the backward pass, Horovod intercepts each layer's gradient tensor immediately after it is computed (using framework hooks: `tf.GradientTape` callbacks or PyTorch's `register_hook`) and initiates an all-reduce operation across all ranks using the ring-all-reduce algorithm. Ring-all-reduce transmits `2 * (N-1) / N` times the gradient data per rank, making communication cost nearly constant regardless of cluster size—this is what enables linear scaling efficiency of 85–95% on clusters up to 128 GPUs. The reduced gradient is applied to the local model replica before the next mini-batch forward pass. Catalyst and Tungsten play no role in the training loop itself, but they are critical in the upstream feature engineering pipeline: Catalyst's Logical Optimization phase pushes `cast`, `fillna`, and `bucketize` transformations into a single fused physical plan, and Tungsten's Whole-Stage Codegen generates JIT-compiled bytecode that processes feature vectors at near-native speed before Petastorm serializes them to Parquet.
 
-```text
-Spark Driver JVM
-┌──────────────────────────────────────────────────────────────┐
-│ SparkContext → DAGScheduler → TaskScheduler │
-│ HorovodRunner.run(fn, np=N) ──► emits N pinned tasks │
-└─────────────────────┬────────────────────────────────────────┘
- │ Task assignment (locality-aware)
- ┌───────────┼───────────┐
- ▼ ▼ ▼
- Executor 0 Executor 1 Executor N-1
- ┌──────────┐ ┌──────────┐ ┌──────────────┐
- │JVM Heap │ │JVM Heap │ │JVM Heap │
- │(feature │ │(feature │ │(feature pipe)│
- │pipeline) │ │pipeline) │ │ │
- │ │ │ │ │ │
- │ Py4J fork│ │ Py4J fork│ │ Py4J fork │
- │ ┌──────┐ │ │ ┌──────┐ │ │ ┌──────────┐ │
- │ │ TF/ │ │ │ │ TF/ │ │ │ │ TF/PyTch │ │
- │ │PyTch │ │ │ │PyTch │ │ │ │ Rank N-1 │ │
- │ │Rank 0│ │ │ │Rank 1│ │ │ └────┬─────┘ │
- │ └──┬───┘ │ │ └──┬───┘ │ │ │ │
- └────┼─────┘ └────┼─────┘ └──────┼────────┘
- │ │ │
- └───────────────┴─────────────────┘
- Horovod Ring-AllReduce (Gloo/NCCL)
- ∇W₀ + ∇W₁ + ... + ∇Wₙ → averaged ∇W
- │
- ▼
- Petastorm (Arrow/Parquet on HDFS/S3)
- ┌───────────────────────────────┐
- │ Row Group 0 │ Row Group 1 │ ...
- │ (Rank 0) │ (Rank 1) │
- └───────────────────────────────┘
- │
- ▼
- MLflow Tracking Server
- ┌──────────────────────┐
- │ run_id, params, │
- │ metrics, artifact │
- │ → Model Registry │
- │ (Staging→Prod) │
- └──────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -604,8 +561,11 @@ Deploying deep neural networks for regression and classification on Spark at sca
 
 Linear scaling efficiency in Horovod all-reduce depends on three factors that must all be correct simultaneously: learning rate scaling proportional to the number of ranks, warm-up scheduling to stabilize the early training landscape, and balanced Petastorm shard sizes that prevent any rank from becoming a barrier straggler. Failure in any one of these produces symptoms that are superficially similar—poor validation accuracy, slow convergence—but have entirely different root causes visible only in Spark UI task timelines, GPU utilization dashboards, and MLflow training curves combined. 
 
-The MLflow Model Registry is not optional scaffolding—it is the governance contract between data scientists who train models and platform engineers who serve them. The promotion pipeline enforces that no model reaches Production without quantitative validation against a holdout set, with full metric provenance recorded against the exact run ID that produced the artifact. For regulated industries where model decisions carry legal weight, this audit chain—from raw Parquet shard through Horovod all-reduce to Registry version tag—is the complete evidentiary record of how a prediction was produced. 
+The MLflow Model Registry is not optional scaffolding—it is the governance contract between data scientists who train models and platform engineers who serve them. The promotion pipeline enforces that no model reaches Production without quantitative validation against a holdout set, with full metric provenance recorded against the exact run ID that produced the artifact. For regulated industries where model decisions carry legal weight, this audit chain—from raw Parquet shard through Horovod all-reduce to Registry version tag—is the complete evidentiary record of how a prediction was produced.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

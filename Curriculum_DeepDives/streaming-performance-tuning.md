@@ -22,44 +22,6 @@ The RocksDB state store fundamentally changes the memory model for stateful stre
 
 Trigger intervals and the async progress tracking API are the final layer. Setting `Trigger.ProcessingTime("30 seconds")` tells `MicroBatchExecution` to sleep until the interval boundary if the batch completes early, which is essential for cost control in cloud environments where you pay per executor-second. Async progress tracking (`spark.sql.streaming.asyncProgressTrackingEnabled = true`), introduced in Spark 3.5, decouples the WAL commit from the processing loop: the driver commits offsets to the checkpoint store asynchronously in a separate thread while the next batch begins constructing. This alone reduces trigger-to-trigger latency overhead by 15–40% on high-throughput pipelines.
 
-```text
-Driver JVM (StreamExecution Thread)
-┌────────────────────────────────────────────────────────┐
-│ MicroBatchExecution.constructNextBatch() │
-│ ┌──────────────────────────────────────────────────┐ │
-│ │ KafkaSource.getOffset() ──▶ latestOffset │ │
-│ │ Apply maxOffsetsPerTrigger ──▶ endOffset │ │
-│ │ WAL: write offsets to checkpoint/offsets/N │ │
-│ └──────────────────────────────────────────────────┘ │
-│ │ │
-│ ▼ Catalyst Pipeline │
-│ Analysis ──▶ Logical Opt ──▶ Physical Plan │
-│ │ │
-│ ▼ │
-│ DAGScheduler submits Stage(s) to TaskScheduler │
-└────────────────────────────────────────────────────────┘
- │ Task serialization (Kryo)
- ▼
-Executor JVM (Task Thread Pool)
-┌────────────────────────────────────────────────────────┐
-│ Tungsten Whole-Stage CodeGen: processNext() loop │
-│ ┌──────────────────────────────────────────────────┐ │
-│ │ KafkaRDD.compute() → UnsafeRow (binary format) │ │
-│ │ Filter / Project / HashAgg (on-heap UnsafeRows) │ │
-│ │ StateStoreSaveExec │ │
-│ │ ┌────────────────────────────────────────────┐ │ │
-│ │ │ RocksDBStateStore │ │ │
-│ │ │ ├── MemTable (write buffer, off-heap) │ │ │
-│ │ │ ├── Block Cache (LRU, off-heap, tunable) │ │ │
-│ │ │ └── SST Files (local NVMe disk) │ │ │
-│ │ └────────────────────────────────────────────┘ │ │
-│ └──────────────────────────────────────────────────┘ │
-│ Async Checkpoint Thread: WAL commit (non-blocking) │
-└────────────────────────────────────────────────────────┘
- │ shuffle write (sort-based, Kryo)
- ▼
-ShuffleManager (External Shuffle Service or Spark shuffle) 
-```
 
 ### Key Internal Components
 
@@ -491,8 +453,11 @@ Structured Streaming performance tuning is a multi-layered discipline that spans
 
 At the state store layer, migrating from `HDFSBackedStateStore` to `RocksDBStateStoreProvider` is the most impactful architectural change available for stateful streaming jobs. It transforms state management from a heap-exhausting JVM problem into a well-understood LSM storage problem, at the cost of requiring careful RocksDB configuration: block cache sizing, write buffer tuning, and compaction thread allocation must all be sized against the actual state cardinality and write throughput of the specific workload. Changelog checkpointing then makes the checkpoint upload cost proportional to write volume rather than total state size, unlocking the ability to maintain terabytes of state while still committing checkpoints within the trigger interval. 
 
-At the join and aggregation layer, watermark precision is the master control variable. Every stateful operator's memory footprint is directly proportional to the watermark delay: a 2-hour watermark in a stream-stream join buffers 2 hours of left-side events per partition. Instrumenting `inputRowsPerSecond`, `processedRowsPerSecond`, `triggerExecution` duration, and RocksDB compaction metrics via the `StreamingQueryListener` API transforms streaming performance from reactive firefighting into proactive, data-driven capacity management — which is the defining characteristic of production-grade Spark streaming engineering. 
+At the join and aggregation layer, watermark precision is the master control variable. Every stateful operator's memory footprint is directly proportional to the watermark delay: a 2-hour watermark in a stream-stream join buffers 2 hours of left-side events per partition. Instrumenting `inputRowsPerSecond`, `processedRowsPerSecond`, `triggerExecution` duration, and RocksDB compaction metrics via the `StreamingQueryListener` API transforms streaming performance from reactive firefighting into proactive, data-driven capacity management — which is the defining characteristic of production-grade Spark streaming engineering.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=235" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Streaming Tuning">p.235</a> <a href="spark_book.pdf#page=238" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Trigger Intervals">p.238</a> <a href="spark_book.pdf#page=241" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="State Store">p.241</a>
+</div>

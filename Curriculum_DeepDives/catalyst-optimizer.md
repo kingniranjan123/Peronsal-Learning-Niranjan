@@ -66,7 +66,7 @@ By default, the CBO might be disabled or lack the necessary metadata to make inf
 
 ## 💻 Code Example 3: Adaptive Query Execution (AQE) in Action
 
-```python
+```scala
 # Enable AQE and specific features
 spark.conf.set("spark.sql.adaptive.enabled", "true")
 spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", "true")
@@ -129,3 +129,10 @@ spark.sql("SELECT * FROM range(10) WHERE 1 = 0").explain(true)
 
 For advanced platform engineering teams, treating Catalyst as a black box is often insufficient. Spark provides a powerful `SparkSessionExtensions` API that allows developers to inject custom rules directly into the Catalyst Optimizer. In this Scala example, we define a custom rule `ProhibitFullTableScan` that implements `Rule[LogicalPlan]`. We use Scala's pattern matching to traverse the AST recursively via the `transform` method. We search specifically for `Filter` nodes containing an `EqualTo(1, 0)` condition. When injected via `.withExtensions`, Catalyst adds our custom logic to its internal Rule-Based Optimization batches. You can use this mechanism to enforce corporate security policies, automatically rewrite inefficient legacy queries, enforce mandatory partition filters, or seamlessly push down custom proprietary database predicates. Extending Catalyst allows you to fundamentally alter Spark’s query understanding, making it an indispensable tool for bespoke platform architectures.
 </Master Class: Catalyst Optimizer>
+
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=178" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Catalyst Architecture">p.178</a> <a href="spark_book.pdf#page=181" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Logical Plan">p.181</a> <a href="spark_book.pdf#page=184" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Physical Plan">p.184</a> <a href="spark_book.pdf#page=187" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Predicate Pushdown">p.187</a> <a href="spark_book.pdf#page=190" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Code Generation">p.190</a>
+</div>

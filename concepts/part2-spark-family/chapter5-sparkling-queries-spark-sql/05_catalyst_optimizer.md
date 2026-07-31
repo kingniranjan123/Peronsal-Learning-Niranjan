@@ -22,32 +22,6 @@ You can view this entire lifecycle by using the DataFrame `.explain()` method. C
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A[Unresolved Logical Plan] --> B[Analysis Phase]
-    B -->|Check Catalog/Metastore| C[Resolved Logical Plan]
-    
-    C --> D[Logical Optimization Phase]
-    D -->|Predicate Pushdown| D1[Apply Rules]
-    D -->|Column Pruning| D1
-    D -->|Constant Folding| D1
-    D1 --> E[Optimized Logical Plan]
-    
-    E --> F[Physical Planning Phase]
-    F -->|Cost-Based Optimizer| G[Physical Plan 1]
-    F -->|Cost-Based Optimizer| H[Physical Plan 2]
-    F -->|Cost-Based Optimizer| I[Physical Plan N]
-    
-    G & H & I --> J{Cost Evaluation}
-    J --> K[Selected Physical Plan]
-    
-    K --> L[Code Generation via Tungsten]
-    
-    style B fill:#fff9c4,stroke:#fbc02d
-    style D fill:#ffe0b2,stroke:#f57c00
-    style F fill:#e1bee7,stroke:#8e24aa
-    style K fill:#c8e6c9,stroke:#2e7d32
-```
 
 ## Data Visualization
 
@@ -162,24 +136,6 @@ When a developer calls an action on a DataFrame:
 5. **Code Generation:** Tungsten translates the plan into optimized Java bytecode.
 6. **Execution:** The execution plan is translated into a DAG of RDDs, divided into Stages and Tasks, and sent to Executors.
 
-```plaintext
-User Code (DataFrame/SQL)
-      │
-      ▼
-[Unresolved Logical Plan]
-      │ (Analysis via Catalog)
-      ▼
-[Resolved Logical Plan]
-      │ (Rule-Based Optimization)
-      ▼
-[Optimized Logical Plan]
-      │ (Cost-Based Physical Planning)
-      ▼
-[Multiple Physical Plans] ──► (Cost Evaluation) ──► [Selected Physical Plan]
-                                                          │
-                                                          ▼
-                                                 [Tungsten Code Gen] ──► [Executors]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

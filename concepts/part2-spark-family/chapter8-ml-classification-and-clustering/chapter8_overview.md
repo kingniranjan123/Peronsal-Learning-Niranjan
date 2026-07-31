@@ -178,28 +178,6 @@ When you call `pipeline.fit(trainingData)` in Spark:
    - The Driver coordinates partial model updates (e.g., gathering tree statistics or cluster centroids) and broadcasts them back to Executors for the next pass.
 5. **Model Generation:** Once convergence or max iterations are reached, the Driver finalizes the mathematical model and returns a trained `PipelineModel`.
 
-```plaintext
-[ Driver Node ] ---> 1. Pipeline defined (Transformers + Estimator)
-      |
-      v
-[ DAG Scheduler ] -> 2. Optimizes physical execution plan
-      |
-      v
-[ Task Scheduler ]-> 3. Sends tasks to Executors
-      |
-      +-----------------------------+-----------------------------+
-      v                             v                             v
-[ Executor 1 (RAM) ]          [ Executor 2 (RAM) ]          [ Executor 3 (RAM) ]
-Partition 1 (Data)            Partition 2 (Data)            Partition 3 (Data)
- -> VectorAssembler            -> VectorAssembler            -> VectorAssembler
- -> Train Trees (Partial)      -> Train Trees (Partial)      -> Train Trees (Partial)
-      |                             |                             |
-      +------------(Shuffle/Reduce to Driver)---------------------+
-                                    |
-[ Driver Node ] <--- 4. Aggregates tree stats / updates model
-                                    |
-[ Trained Model ]<-- 5. Final PipelineModel returned
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

@@ -160,3 +160,9 @@ Processing complex nested data structures like JSON or Parquet arrays historical
 
 </Master Class: DataFrames>
 
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=130" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="DataFrame API">p.130</a> <a href="spark_book.pdf#page=133" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Schema Inference">p.133</a> <a href="spark_book.pdf#page=136" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Catalyst Optimizer">p.136</a> <a href="spark_book.pdf#page=139" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="DataFrame vs RDD">p.139</a>
+</div>

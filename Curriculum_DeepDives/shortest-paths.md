@@ -153,3 +153,10 @@ optimized_paths.show()
 ```
 Our final example tackles bounded All-Pairs Shortest Path using GraphFrames Motif Finding. Instead of recursive iteration, we search for specific structural patterns, `(a)-[e1]->(b); (b)-[e2]->(c)`. This translates to a massive self-join on the edge DataFrame. In dense graphs, this generates extreme data skew and shuffle partitions. To mitigate this, we demonstrate filtering and aggregating the intermediate motif DataFrame, and then use a `broadcast` join to push a filter dictionary to all worker nodes. Tungsten’s code generation combines the filter and the join into a streamlined pipeline. By viewing `.explain()`, you can verify the `BroadcastHashJoin` and Catalyst’s `Project` / `Filter` pushdowns, which drastically reduce the shuffle read bytes across the cluster.
 </Master Class: Shortest Paths>
+
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

@@ -154,26 +154,6 @@ When you start a local Spark session, a specific execution flow occurs within yo
 4. **Executor Threading**: Instead of launching separate executor JVMs on different nodes, Spark spawns one executor thread per logical core inside the single local JVM.
 5. **Execution**: The Driver translates your code into a DAG, splits it into stages and tasks, and assigns those tasks to the local threads.
 
-```plaintext
-[ Developer Machine ]
-       |
-       v
-+---------------------------------------------------+
-|                   Single JVM                      |
-|                                                   |
-|  +--------+       +----------------------------+  |
-|  | Driver | ----> | Local Cluster Environment  |  |
-|  | (Main) |       |                            |  |
-|  +--------+       |  +----------+ +----------+ |  |
-|       ^           |  | Thread 1 | | Thread 2 | |  |
-|       |           |  +----------+ +----------+ |  |
-|       v           |  | Thread 3 | | Thread 4 | |  |
-|  [ DAG ]          |  +----------+ +----------+ |  |
-+---------------------------------------------------+
-       |
-       v
-[ Local Disk / Memory ]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -219,7 +199,7 @@ When you start a local Spark session, a specific execution flow occurs within yo
 **Business Problem:** A data engineer at a retail company needs to write a unit test on their laptop to ensure a data transformation script correctly calculates total sales per store before deploying the code to a Databricks production cluster.
 
 **Sample Dataset (`sales.csv`):**
-```csv
+```scala
 StoreID,Item,Price,Quantity
 101,Apple,1.00,50
 101,Banana,0.50,100
@@ -268,15 +248,6 @@ spark.stop()
 6. The `spark.stop()` command cleanly shuts down the local JVM.
 
 **Expected Output:**
-```plaintext
-Expected Output:
-+-------+-------------------+
-|StoreID|Store_Total_Revenue|
-+-------+-------------------+
-|    101|              100.0|
-|    102|               90.0|
-+-------+-------------------+
-```
 
 **Performance Notes:**
 Running this locally is instantaneous because the data is tiny and avoids network latency. However, if `sales.csv` were 50GB, this script would likely crash the laptop.

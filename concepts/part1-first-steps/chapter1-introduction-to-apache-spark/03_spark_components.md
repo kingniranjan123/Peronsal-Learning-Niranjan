@@ -166,18 +166,6 @@ When you write an application mixing these components (e.g., SQL + MLlib), here 
 4. **Task Execution:** The DAG is broken into Stages (separated by shuffles) and Tasks. 
 5. **Executors:** Tasks execute in parallel across worker nodes. Data flows seamlessly from the SQL transformation step directly into the MLlib training step in-memory, without writing to disk.
 
-```plaintext
-[Driver] --> Translates SQL + MLlib code to DAG
-   |
-   v
-[DAG Scheduler] --> Breaks DAG into Stages based on Shuffles
-   |
-   v
-[Task Scheduler] --> Assigns Tasks to Executors
-   |
-   v
-[Executors] --> Run Tasks (e.g., SQL Filter --> MLlib VectorAssembler) in RAM
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -224,7 +212,7 @@ When you write an application mixing these components (e.g., SQL + MLlib), here 
 **Dataset:** `customers.csv` containing `customer_id`, `age`, `annual_income`, and `spending_score`.
 **Approach:** We will use **Spark SQL** to ingest and clean the data, and **MLlib** to apply a K-Means clustering algorithm.
 
-```plaintext
+```python
 from pyspark.sql import SparkSession
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.clustering import KMeans

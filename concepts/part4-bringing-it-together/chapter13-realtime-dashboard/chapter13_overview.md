@@ -176,19 +176,6 @@ This architecture shines in scenarios requiring sub-second to minute-level situa
 
 When a user clicks a button on a website, here is the execution flow to update the dashboard:
 
-```plaintext
-[1. Event Gen]      [2. Ingestion]         [3. Stream Processing]             [4. Push Layer]       [5. Visualization]
-  Web Server  ----> Apache Kafka   ---->   Spark Streaming (Driver)   ---->  Node.js Server  ---->  Browser (D3.js)
- (Log entry)        (Topic: input)         [Micro-batch Scheduler]           (WebSocket TCP)       (DOM Update)
-                                                     |                              ^                     ^
-                                            [Executors / Tasks]                     |                     |
-                                            - Parse JSON                            |                     |
-                                            - Map (URL, 1)                          |                     |
-                                            - Shuffle (reduceByKey)                 |                     |
-                                            - Serialize to JSON                     |                     |
-                                            [Action: foreachPartition] -------------+---------------------+
-                                            Writes to Kafka (Topic: output)
-```
 
 Behind the scenes, the Spark Driver orchestrates micro-batches. Tasks are distributed across Executors which parse logs and shuffle data to aggregate metrics across partitions. The results are flushed from the Executors directly to the output messaging layer, skipping driver bottlenecks. The WebSocket server consumes this output topic and broadcasts it, triggering the D3 frontend to recalculate its SVG paths.
 

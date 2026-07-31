@@ -153,19 +153,6 @@ When a Spark action triggers a job that involves partitioning:
    - *Shuffle Write*: Executors write their data out to local disk, bucketed by the target partition.
    - *Shuffle Read*: Executors pull the specific buckets they need over the network to form the new partitions.
 
-```plaintext
-+-------------------+       +-------------------+       +-------------------+
-|  Executor 1       |       |   Network         |       |  Executor 1       |
-|  Partition A      | ----> |   Shuffle Phase   | ----> |  New Partition 1  |
-|  (Keys: 1, 2, 3)  |       |   (Hash/Range)    |       |  (Keys: 1, 4)     |
-+-------------------+       +-------------------+       +-------------------+
-                                     |
-+-------------------+                |                  +-------------------+
-|  Executor 2       |                v                  |  Executor 2       |
-|  Partition B      | --------------------------------> |  New Partition 2  |
-|  (Keys: 4, 5, 6)  |                                   |  (Keys: 2, 5)     |
-+-------------------+                                   +-------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -264,15 +251,6 @@ final_agg_df.show()
 5. We perform a final grouping on the true `city_id`. Since the first aggregation reduced 100,000 rows to just 10 rows, this final shuffle uses virtually no memory.
 
 **Expected Output**:
-```plaintext
-+-------+-------------+
-|city_id|total_revenue|
-+-------+-------------+
-|      3|       5000.0|
-|      1|    2500000.0|
-|      2|      15000.0|
-+-------+-------------+
-```
 
 **Performance Notes**:
 By salting the keys before the first aggregation, we avoided an OutOfMemoryError on the executor handling city_id 1. The trade-off is two shuffle phases instead of one, but it guarantees job completion and utilizes the entire cluster evenly.

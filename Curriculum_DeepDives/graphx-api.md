@@ -22,34 +22,6 @@ Tungsten's off-heap memory management does **not** apply natively to GraphX — 
 
 The **Pregel API** models computation as a series of supersteps. In each superstep: (1) active vertices receive messages from the previous round, (2) the vertex program (`vprog`) updates the vertex attribute based on the incoming merged message, (3) `sendMsg` runs on every `EdgeTriplet` and decides whether to generate a message, (4) `mergeMsg` reduces all messages destined for the same vertex using an associative, commutative merge function. A vertex becomes inactive (halts) when it receives no messages. The BSP barrier between supersteps is implemented as an RDD action (`count`) that forces materialization of the updated vertex RDD before the next iteration begins, ensuring exactly-once message delivery per superstep.
 
-```text
-Graph Construction & Triplet View
-─────────────────────────────────────────────────────────────────────────
- VertexRDD[VD] EdgeRDD[ED]
- ┌──────────────────────┐ ┌────────────────────────────────┐
- │ (1L, "Alice") │ │ EdgePartition0: src│dst│attr │
- │ (2L, "Bob") │─routing─▶│ 1L │ 2L │ "follows" │
- │ (3L, "Carol") │ table │ 2L │ 3L │ "follows" │
- └──────────────────────┘ └────────────────────────────────┘
- │ │
- └──────────────┬──────────────────────┘
- ▼
- EdgeTriplet View (Triplets RDD)
- ┌──────────────────────────────────────────┐
- │ srcAttr="Alice" ──edge:"follows"──▶ dstAttr="Bob" │
- │ srcAttr="Bob" ──edge:"follows"──▶ dstAttr="Carol" │
- └──────────────────────────────────────────┘
- │
- ┌───────────────┴───────────────┐
- ▼ ▼
- aggregateMessages Pregel API
- (fine-grained control) (BSP superstep loop)
- │ │
- └───────────────┬───────────────┘
- ▼
- Updated VertexRDD[VD']
- (written back into new Graph) 
-```
 
 ### Key Internal Components
 
@@ -95,7 +67,7 @@ Pregel terminates when no messages are generated in a superstep. A common mistak
 
 > **What this demonstrates:** How to build a `Graph[VD, ED]` from raw RDDs using the correct partition strategy for skewed social-network-like graphs, and how to inspect the triplet view to validate co-location of vertex and edge attributes.
 
-```text
+```scala
 import org.apache.spark.graphx._
 import org.apache.spark.graphx.PartitionStrategy._
 import org.apache.spark.rdd.RDD
@@ -365,8 +337,11 @@ GraphX is Spark's native graph computation library, built on the property graph 
 
 The Pregel API provides a clean BSP abstraction over `aggregateMessages`, modelling algorithms as vertex programs that exchange typed messages across supersteps, with automatic quiescence detection terminating the loop when no messages are generated. The critical engineering discipline is the conditional `sendMsg` pattern: only emitting messages when vertex state has meaningfully changed, preventing expensive BSP barriers (each of which is a full RDD action with a shuffle stage) from executing unnecessarily. Combined with correct `mergeMsg` commutativity and a bounded `maxIterations`, Pregel implementations converge safely even on pathological graph topologies. 
 
-GraphX's position below Catalyst and Tungsten means it receives none of the automatic optimizations that DataFrame-based workloads enjoy — no predicate pushdown, no whole-stage codegen, no off-heap columnar storage. For production graph workloads, this demands explicit performance engineering: choosing the right partition strategy at construction time, applying `subgraph` filters early in the operator pipeline, using `TripletFields` hints to minimize routing table broadcast, and caching the graph with eager materialization before entering any iterative algorithm. Engineers who internalize these mechanics can build graph algorithms at billion-edge scale on commodity Spark clusters with predictable, controlled resource consumption. 
+GraphX's position below Catalyst and Tungsten means it receives none of the automatic optimizations that DataFrame-based workloads enjoy — no predicate pushdown, no whole-stage codegen, no off-heap columnar storage. For production graph workloads, this demands explicit performance engineering: choosing the right partition strategy at construction time, applying `subgraph` filters early in the operator pipeline, using `TripletFields` hints to minimize routing table broadcast, and caching the graph with eager materialization before entering any iterative algorithm. Engineers who internalize these mechanics can build graph algorithms at billion-edge scale on commodity Spark clusters with predictable, controlled resource consumption.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

@@ -145,3 +145,9 @@ print(f"Optimal maxDepth: {best_rf.getOrDefault('maxDepth')}")
 
 Finally, extracting peak performance from a Random Forest necessitates rigorous hyperparameter tuning. This example leverages Spark's `CrossValidator` and `ParamGridBuilder`. We search across a multi-dimensional space encompassing `numTrees`, `maxDepth`, and `maxBins`. Critically, we set `parallelism=4`. This parameter enables Spark to evaluate multiple hyperparameter combinations simultaneously on the cluster, dramatically reducing the wall-clock time required for the grid search. We also optimize for the F1-score rather than raw accuracy, which provides a more robust evaluation metric for complex datasets.
 
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

@@ -161,7 +161,7 @@ Anytime your Spark job relies on non-standard libraries, an Uberjar is the best 
 ### Q7: What Happens Behind the Scenes?
 When you build and deploy an Uberjar, a multi-step process occurs across the build machine and the cluster:
 
-```plaintext
+```bash
 [Build Phase - Local Machine]
 App Code + Dep 1 (JSON) + Dep 2 (JDBC)
        |
@@ -233,7 +233,7 @@ Executor 1 (Node A)                        Executor 2 (Node B)
 A ride-sharing company (like Uber) processes GPS coordinates using PySpark. To group rides geographically, they need to convert Latitude/Longitude into H3 Hexagon IDs. The official, highly optimized H3 library is written in Java. The data engineers must package this Java library as an Uberjar and call it from PySpark.
 
 **Sample Dataset (`rides.csv`):**
-```csv
+```scala
 ride_id,lat,lon
 R101,37.775938,-122.415315
 R102,40.712776,-74.005974
@@ -254,7 +254,7 @@ Running `sbt assembly` produces `target/h3-spark-dependency-assembly-1.0.jar`.
 **Step 2: Full Working PySpark Code**
 Now, we use PySpark to register the Java class loaded from our Uberjar.
 
-```plaintext
+```python
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StringType
 from pyspark.sql.functions import col, udf

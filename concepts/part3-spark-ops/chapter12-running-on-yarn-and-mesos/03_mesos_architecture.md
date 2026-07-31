@@ -435,13 +435,6 @@ When a Spark job is submitted to Mesos:
 5. **Execution:** The Master tells the Agents to launch Spark Executors.
 6. **Task Processing:** The Executors run the tasks and report status back.
 
-```plaintext
-[Spark Driver] <--(Registers)--> [Mesos Master] <--(Reports)--> [Mesos Agents]
-       |                              |                               |
-       +------(Accepts Offer)---------+----(Launches Executor)--------> [Spark Executor]
-                                                                      |
-                                                                  [Executes Tasks]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -532,14 +525,6 @@ spark.stop()
 6. `spark.stop()` releases all resources back to the Mesos Master.
 
 **Expected output:**
-```plaintext
-+---------+--------------+--------------+
-|driver_id|total_earnings|total_distance|
-+---------+--------------+--------------+
-|      102|       1250.50|         450.2|
-|      845|       1100.00|         390.8|
-+---------+--------------+--------------+
-```
 
 **Performance notes:** By capping `spark.cores.max`, we ensure this batch job doesn't consume all cluster resources, leaving room for the company's critical real-time microservices.
 

@@ -20,26 +20,6 @@ The shuffle itself is managed by the **ShuffleManager** (default: `SortShuffleMa
 
 The **Whole-Stage Code Generation** (Tungsten's WSCG) fuses the sort, hash map probing, and aggregation steps into a single tight Java bytecode loop per stage, eliminating virtual method dispatch and per-row object allocation. This is why `explain(mode="codegen")` reveals that a `groupBy` with a simple `sum` compiles down to a single generated class rather than a chain of iterator calls. `spark.sql.codegen.wholeStage=true` (default) is the configuration that enables this.
 
-```text
-Driver JVM Shuffle Service / Executors
-┌──────────────────────────────┐ ┌────────────────────────────────────────────┐
-│ Catalyst Optimizer │ │ Executor A (Map Side) │
-│ ┌──────────────────────┐ │ │ ┌──────────────────────────────────────┐ │
-│ │ Analysis │ │ │ │ HashAggregateExec (Partial) │ │
-│ │ Logical Optimization │ │ │ │ UnsafeRow HashMap (off-heap) │ │
-│ │ Physical Planning │ │ │ │ → Spill to disk if > aggMemory │ │
-│ │ Code Generation │──────▶ │ │ → Write sorted shuffle file │ │
-│ └──────────────────────┘ │ │ └──────────────────────────────────────┘ │
-│ │ │ │ Netty RPC (BlockManager) │
-│ DAGScheduler │ │ ▼ │
-│ ┌──────────────────────┐ │ │ Executor B (Reduce Side) │
-│ │ Stage 1: Map/Partial │ │ │ ┌──────────────────────────────────────┐ │
-│ │ Stage 2: Shuffle/Agg │──────▶ │ │ HashAggregateExec (Final) │ │
-│ └──────────────────────┘ │ │ │ Merge partial aggregates │ │
-└──────────────────────────────┘ │ │ Output: one row per group key │ │
- │ └──────────────────────────────────────┘ │
- └────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -128,7 +108,7 @@ result.write.parquet("/output/user_spend_summary/")
 
 > **What this demonstrates:** The concrete performance and behavioral difference between `orderBy` (global, shuffles) and `sortWithinPartitions` (local, no shuffle), and when each is the correct choice.
 
-```text
+```python
 from pyspark.sql import functions as F
 
 logs = spark.read.parquet("/data/server_logs/")
@@ -170,7 +150,7 @@ locally_sorted.explain(mode="simple")
 
 > **What this demonstrates:** How to detect a skewed key using Spark UI stage metrics and implement the two-pass salting pattern to distribute hot-key aggregation across multiple tasks.
 
-```text
+```python
 from pyspark.sql import functions as F
 import math
 
@@ -240,7 +220,7 @@ final_result.write.parquet("/output/seller_summary/")
 
 > **What this demonstrates:** How to implement the secondary sort pattern using `repartition` + `sortWithinPartitions` to achieve ordered-within-group processing without materializing entire groups in memory via `collect_list`, which is the primary cause of executor OOM in grouped time-series processing.
 
-```text
+```python
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 
@@ -308,8 +288,11 @@ Grouping and sorting in Apache Spark are not thin wrappers around SQL semantics 
 
 `orderBy` and `sortWithinPartitions` represent fundamentally different cost profiles. `orderBy` requires a `RangePartitioner` sampling pass and a full range-partition shuffle to produce a globally ordered output, making it appropriate only when total order is a hard requirement. `sortWithinPartitions` achieves local ordering with zero network cost, and combined with a prior `repartition`, it implements the secondary sort pattern — a memory-safe, high-throughput alternative to `collect_list` for ordered-within-group processing. 
 
-Data skew remains the single most common cause of production `groupBy` failures. When hash partitioning concentrates millions of rows on a single reduce task, the result is task-level OOM, stalled stages, and wildly unbalanced Spark UI timing histograms. The salting technique — append a random suffix, aggregate partially, strip the suffix, aggregate finally — is the canonical solution, distributing hot-key work across dozens of balanced tasks. Mastery of grouping and sorting means knowing not just the API surface, but the physical execution model, the memory management implications, and the failure modes that only emerge at production scale. 
+Data skew remains the single most common cause of production `groupBy` failures. When hash partitioning concentrates millions of rows on a single reduce task, the result is task-level OOM, stalled stages, and wildly unbalanced Spark UI timing histograms. The salting technique — append a random suffix, aggregate partially, strip the suffix, aggregate finally — is the canonical solution, distributing hot-key work across dozens of balanced tasks. Mastery of grouping and sorting means knowing not just the API surface, but the physical execution model, the memory management implications, and the failure modes that only emerge at production scale.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

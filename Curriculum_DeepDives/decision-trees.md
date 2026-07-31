@@ -18,24 +18,6 @@ Once the features are binned, the execution transitions to iterative MapReduce-s
 
 The aggregation of these local histograms is where Spark's network serialization comes into play. Instead of sending raw data, executors send their aggregated histograms to the driver using `treeAggregate`. This operation uses a multi-level reduction tree, serialized via Kryo, to prevent the driver from being overwhelmed by a flood of incoming statistics. Once the driver receives the global histograms, it calculates the Gini impurity or variance reduction for all possible splits. It selects the optimal split condition for each active node, updates the tree topology, and broadcasts the new tree structure back to the executors to begin processing the next level.
 
-```text
-Driver JVM (Coordinator) Worker Executor JVM (Data Nodes)
-┌───────────────────────────┐ ┌──────────────────────────────────┐
-│ MLlib Tree Optimizer │ │ Tungsten Execution Engine │
-│ ┌─────────────────────┐ │Broadcast │ ┌────────────────────────────┐ │
-│ │ Global Histograms │◀─┼─────────────┼──│ Partition 0: Calc Stats │ │
-│ │ (Driver Memory) │ │ treeAgg │ │ (Updates local array) │ │
-│ └─────────────────────┘ │ │ └────────────────────────────┘ │
-│ │ │ │ ┌────────────────────────────┐ │
-│ ┌─────────────────────┐ │ │ │ Partition 1: Calc Stats │ │
-│ │ Select Best Splits │ │ │ │ (Updates local array) │ │
-│ └─────────────────────┘ │ │ └────────────────────────────┘ │
-│ │ │ │ ... │
-│ ┌─────────────────────┐ │ │ ┌────────────────────────────┐ │
-│ │ Broadcast New Tree │──┼────────────▶│ │ NodeIdCache (RDD[Array]) │ │
-│ └─────────────────────┘ │ Tree state │ └────────────────────────────┘ │
-└───────────────────────────┘ └──────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **Feature Discretizer:** A preprocessing component that scans a sample of the data to find quantiles, converting continuous floats into integer bin indices. This avoids sorting features at every node and allows the use of dense integer arrays for rapid indexing.
@@ -145,7 +127,7 @@ final_df = vector_indexer.fit(assembled_df).transform(assembled_df)
 
 > **What this demonstrates:** Accessing the internal representation of the trained model to extract specific split conditions and debug the decision logic, bypassing the standard `toDebugString`.
 
-```plaintext
+```scala
 import org.apache.spark.ml.classification.DecisionTreeClassificationModel
 import org.apache.spark.ml.tree._
 
@@ -237,6 +219,11 @@ Decision trees in Apache Spark represent a masterclass in adapting classical mac
 However, this distributed power introduces unique configuration paradigms that separate novices from experts. Understanding the delicate balance between `maxBins`, `maxDepth`, and `maxMemoryInMB` is non-negotiable for production engineering. Misconfiguring these parameters leads to silently degraded performance—where Spark compensates for low memory by launching dozens of redundant data scans—or spectacular driver crashes due to histogram explosion. By caching node IDs and strategically checkpointing the RDD DAG, engineers can push the boundaries of tree depth without destabilizing the cluster. 
 
 Ultimately, mastering Spark's decision trees requires treating the algorithm not as a black box, but as a distributed MapReduce application. Every parameter tweak directly influences network serialization, JVM memory allocation, and Catalyst query planning. With this architectural mental model, you can architect robust, petabyte-scale pipelines, paving the way for advanced ensembles like Random Forests and Gradient-Boosted Trees while avoiding the pitfalls of naive implementations.
-</🔥 Master Class: Decision Trees> 
+</🔥 Master Class: Decision Trees>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

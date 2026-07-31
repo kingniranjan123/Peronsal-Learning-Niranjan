@@ -46,7 +46,7 @@ Comparison of network traffic overhead: HTTP Polling vs. WebSockets over a 15-se
 
 Below is a complete, lightweight Node.js application demonstrating the WebSocket server component bridging Kafka and the browser.
 
-```javascript
+```scala
 // WebSocket Server (Node.js)
 const WebSocket = require('ws');
 const { Kafka } = require('kafkajs');
@@ -184,18 +184,6 @@ When data flows from the source to the browser, a complex orchestrated sequence 
 6. **WebSocket Server**: A Node.js backend running a Kafka Consumer reads the output.
 7. **Client Push**: The WebSocket server broadcasts the JSON payload to all connected clients over the persistent TCP socket.
 
-```plaintext
-+----------+      +-------------+      +---------------+      +-------------------+
-|  Kafka   | ---> | Spark Tasks | ---> | Shuffle/Agg.  | ---> |   Output Sink     |
-| (Source) |      | (Executors) |      | (Memory)      |      | (Kafka/Redis)     |
-+----------+      +-------------+      +---------------+      +-------------------+
-                                                                       |
-                                                                       v
-+------------------+      +--------------------+              +-------------------+
-|  Browser (UI)    | <--- | WebSocket Server   | <----------- | Backend Consumer  |
-| (D3.js / React)  |      | (Node.js/Socket.io)|              |                   |
-+------------------+      +--------------------+              +-------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -296,7 +284,7 @@ query.awaitTermination()
 ```
 
 *Node.js: The WebSocket Bridge*
-```javascript
+```scala
 const WebSocket = require('ws');
 const { Kafka } = require('kafkajs');
 

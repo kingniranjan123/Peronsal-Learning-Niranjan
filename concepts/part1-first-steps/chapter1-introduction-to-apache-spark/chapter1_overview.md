@@ -170,19 +170,6 @@ When you submit a Spark job, a complex orchestration occurs.
 5. **Task Scheduler:** Stages are divided into individual **Tasks** (one task per data partition).
 6. **Executors:** The Cluster Manager allocates Executors. The Tasks are sent to Executors, which process the data in RAM.
 
-```plaintext
-+-------------------+       +-----------------+       +--------------------+
-|                   |       |                 |       | Executor 1 (Worker)|
-|  Driver Program   | ----> | Cluster Manager | ----> | - Task 1           |
-| (SparkContext/DAG)|       |  (YARN/K8s/SA)  |       | - Task 2           |
-|                   |       |                 |       +--------------------+
-+-------------------+       +-----------------+                 |
-         |                           |                +--------------------+
-         |---------------------------+--------------> | Executor 2 (Worker)|
-                                                      | - Task 3           |
-                                                      | - Task 4           |
-                                                      +--------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -220,7 +207,7 @@ When you submit a Spark job, a complex orchestration occurs.
 **Business Problem:** A retail giant (like Walmart) wants to analyze raw web server logs to find which product categories generate the most HTTP 404 (Not Found) errors, helping them fix broken links immediately.
 **Sample Dataset:** Millions of log lines in raw text format.
 
-```plaintext
+```python
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, split, count, desc
 

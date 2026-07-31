@@ -16,20 +16,6 @@ Once the data is successfully aggregated across the worker nodes—perhaps conde
 
 Finally, this JSON payload is served to the frontend via a robust REST API or streaming WebSockets. Once it hits the browser context, the D3.js lifecycle seizes control. D3 binds this serialized JSON array to raw SVG or Canvas DOM elements utilizing its famous data join mechanics. Because the sheer data volume has been drastically reduced by the Spark backend, D3.js can smoothly execute complex CSS transitions, recalculate heavy physics simulations (like force-directed networking graphs), or render intricate geometric maps without exceeding the browser's strict memory allocation limitations. The delicate harmony between Spark's massive parallel reduction capabilities and D3's highly selective DOM updates is what makes true big data visualization technically feasible.
 
-```text
-Driver JVM Worker Executor JVM Web Browser (Client)
-┌─────────────────┐ ┌──────────────────────┐ ┌─────────────────────────┐
-│ SparkContext │──────▶│ Executor Thread Pool│ JSON Payload │ D3.js Visualization │
-│ DAGScheduler │ │ ┌────────────────┐ │═══════════════════▶│ ┌─────────────────────┐ │
-│ TaskScheduler │ │ │ Task 1 (Part.0)│ │ (via REST/Socket) │ │ SVG / Canvas DOM │ │
-└─────────────────┘ │ │ Task 2 (Part.1)│ │ │ │ 1. data(json) │ │
- ▲ │ └────────────────┘ │ │ │ 2. enter() / update │ │
- │ └──────────────────────┘ │ └─────────────────────┘ │
- │ │ └─────────────────────────┘
- │ Kryo Serialization │
- └──────────────────────────────┘
- Shuffle & Collect Phase 
-```
 
 ### Key Internal Components
 - **Catalyst Optimizer:** The advanced query execution engine that transforms SQL or DataFrame operations into a highly optimized physical plan. In the context of D3 visualization, it ensures that complex group-by and binning operations are executed with minimal I/O and shuffle overhead, rapidly generating the exact data shape needed for frontend rendering.
@@ -173,7 +159,7 @@ val jsonOutput = finalPayload.toJSON.collect().mkString("[", ",", "]")
 
 > **What this demonstrates:** Connects Spark Structured Streaming aggregations to a D3.js frontend, safely managing temporal state limits in the JVM and pushing dynamic delta updates for real-time live dashboards.
 
-```plaintext
+```python
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.Trigger
@@ -298,6 +284,11 @@ The strategic integration of Apache Spark and D3.js represents the ultimate conv
 By proactively pushing the heavy computational geometry, hierarchical object nesting, and large-scale data aggregation down into the Catalyst optimizer, we effectively leverage whole-stage code generation and distributed off-heap memory to crush billions of raw rows into compact, high-signal JSON payloads. This rigorous architectural discipline completely eliminates the ever-present risk of driver JVM heap overflows and ensures that network serialization overhead remains negligible during data transmission across clusters. 
 
 Ultimately, passing only this aggressively reduced, pre-formatted data to the web frontend unleashes the absolute full potential of D3.js. It allows the Data-Driven Documents framework to do exactly what it does best: seamlessly executing intelligent data joins (`enter`, `update`, `exit`) and rendering fluid, 60-frames-per-second interactive graphics that visually captivate users. A senior data engineer fundamentally understands that the most beautiful, highly performant web visualization is entirely dependent on the brutal computational efficiency of the underlying Apache Spark pipeline reliably feeding it.
-</🔥 Master Class: D3.js Visualization> 
+</🔥 Master Class: D3.js Visualization>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

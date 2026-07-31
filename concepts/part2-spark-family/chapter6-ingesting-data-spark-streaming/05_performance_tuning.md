@@ -176,33 +176,6 @@ When a tuned Spark Streaming application runs, the execution follows this path:
 5.  **Parallel Execution (Executors):** Cores process the data. Efficient GC (like G1GC) runs in the background to clean up discarded objects.
 6.  **Metric Reporting:** Executors report processing times back to the Driver, closing the feedback loop for the next batch.
 
-```plaintext
-[Incoming Data Spikes] 
-        |
-        v
-+---------------------------------------------------+
-|                  Spark Driver                     |
-|  1. RateController calculates safe intake rate    |
-|  2. Signals Kafka Direct Stream to throttle       |
-+---------------------------------------------------+
-        | (Requests controlled batch size)
-        v
-+---------------------------------------------------+
-|               Kafka Cluster                       |
-|  Reads Partitions 1, 2, 3 at throttled speed      |
-+---------------------------------------------------+
-        |
-        v
-+---------------------------------------------------+
-|               Spark Executors                     |
-|  Task 1 (Core 1) -> Processes P1 (Kryo + G1GC)    |
-|  Task 2 (Core 2) -> Processes P2 (Kryo + G1GC)    |
-|  Task 3 (Core 3) -> Processes P3 (Kryo + G1GC)    |
-+---------------------------------------------------+
-        |
-        v
-[Output / Sink (e.g., Cassandra, S3)]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -327,17 +300,6 @@ query.awaitTermination()
 5. **Trigger:** Every 10 seconds, Spark initiates a micro-batch execution, outputting updated error counts to the console.
 
 **Expected Output (Console):**
-```plaintext
--------------------------------------------
-Batch: 1
--------------------------------------------
-+------------------------------------------+-------+-----+
-|window                                    |region |count|
-+------------------------------------------+-------+-----+
-|{2023-08-05 10:15:00, 2023-08-05 10:16:00}|US-East| 142 |
-|{2023-08-05 10:15:00, 2023-08-05 10:16:00}|EU-West| 89  |
-+------------------------------------------+-------+-----+
-```
 
 **Performance Notes:**
 - Setting `spark.sql.shuffle.partitions` to 24 (instead of the default 200) prevents creating too many tiny files and scheduling overhead for a moderate data stream.

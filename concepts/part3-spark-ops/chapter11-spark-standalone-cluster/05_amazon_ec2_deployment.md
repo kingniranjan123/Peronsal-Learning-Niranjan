@@ -153,26 +153,6 @@ When a Spark job is submitted to an EC2/EMR cluster:
 6. **Write:** Results are pushed back to Amazon S3.
 7. **Termination (Optional):** If configured as a transient cluster, AWS automatically terminates all EC2 instances to stop billing.
 
-```plaintext
-[AWS Cloud Environment]
-       |
-       v
-+------------------+         [Security Group: Allow TCP All Internal]
-|  Master Node     | ----------------------+
-| (Spark Driver)   |                       |
-+------------------+                       v
-       |                          +------------------+
-       | Orchestrates             |  Worker Node 1   | ---> Reads/Writes
-       |                          |  (Executor)      |      (s3a://bucket)
-       v                          +------------------+           |
-+------------------+                       |                     v
-| Cluster Manager  | ----------------------+               [ Amazon S3 ]
-| (Standalone/YARN)|                       v                     ^
-+------------------+              +------------------+           |
-                                  |  Worker Node 2   | ---> Reads/Writes
-                                  |  (Executor)      |      (s3a://bucket)
-                                  +------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

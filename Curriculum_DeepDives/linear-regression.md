@@ -18,32 +18,6 @@ When the **normal equation solver** is selected (`solver = "normal"`), the drive
 
 **Tungsten** accelerates the executor-side gradient computation via Whole-Stage Codegen: Spark fuses the `VectorAssembler` transformation, the dot product `wᵀxᵢ`, the residual `(wᵀxᵢ - yᵢ)`, and the gradient accumulation `xᵢ · residualᵢ` into a single tight JVM loop with no intermediate object allocation. Feature vectors are stored in **Tungsten's binary off-heap format** (UnsafeRow), eliminating Java object header overhead and GC pressure during the inner loop. The `StandardScaler` applied internally (when `standardization = true`) is fused into this same loop.
 
-```text
-Driver JVM Executor JVM (×N)
-┌──────────────────────────────┐ ┌──────────────────────────────────┐
-│ LinearRegression.fit() │ │ Partition [0..k] │
-│ ┌──────────────────────┐ │ │ ┌────────────────────────────┐ │
-│ │ Catalyst Analyzer │ │ │ │ mapPartitions (Tungsten) │ │
-│ │ (resolve cols, types)│ │ │ │ for row in partition: │ │
-│ └──────────┬───────────┘ │ │ │ pred = w · x_i │ │
-│ │ │ │ │ residual = pred - y_i │ │
-│ ┌──────────▼───────────┐ │ RDD │ │ grad += x_i * residual │ │
-│ │ Physical Plan │────┼───────▶│ │ XtX_local += x_i ⊗ x_i │ │
-│ │ (mapPartitions job) │ │ │ └────────────┬───────────────┘ │
-│ └──────────┬───────────┘ │ └───────────────┼──────────────────┘
-│ │ │ │ treeAggregate
-│ ┌──────────▼───────────┐ │◀───────────────────────┘ (log-depth reduce)
-│ │ Aggregated Gradient │ │
-│ │ g = Σ xᵢ(wᵀxᵢ - yᵢ) │ │
-│ └──────────┬───────────┘ │
-│ │ │
-│ ┌──────────▼───────────┐ │
-│ │ L-BFGS / Normal Eq │ │
-│ │ (Breeze / LAPACK) │ │
-│ │ w* = argmin L(w) │ │
-│ └──────────────────────┘ │
-└──────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -423,8 +397,11 @@ Spark's `LinearRegression` is not a simple least-squares fitter — it is a care
 
 The most consequential engineering decisions when deploying `LinearRegression` at production scale are regularization strategy and feature preprocessing. Failing to standardize features is the single most common cause of convergence failure, increasing required L-BFGS iterations by orders of magnitude. Feature collinearity silently corrupts coefficient interpretability and, in the normal equation path, causes hard numerical failures. Proper VIF analysis pre-fit and Ridge regularization post-detection are the correct mitigations. The `LinearRegressionSummary` object — `objectiveHistory`, `totalIterations`, `r2adj`, and coefficient p-values — is your complete diagnostic toolkit. 
 
-Mastery of Spark's `LinearRegression` means knowing not just the API but *when the API lies to you*: when convergence appears achieved but the model is at a saddle point, when R² is high but collinear coefficients are nonsense, when Lasso's sparse output is a sign of correct regularization versus over-penalization. These distinctions, rooted in the numerical linear algebra and distributed systems mechanics described in this chapter, are what separate production-grade ML engineers from practitioners who tune hyperparameters by intuition alone. 
+Mastery of Spark's `LinearRegression` means knowing not just the API but *when the API lies to you*: when convergence appears achieved but the model is at a saddle point, when R² is high but collinear coefficients are nonsense, when Lasso's sparse output is a sign of correct regularization versus over-penalization. These distinctions, rooted in the numerical linear algebra and distributed systems mechanics described in this chapter, are what separate production-grade ML engineers from practitioners who tune hyperparameters by intuition alone.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

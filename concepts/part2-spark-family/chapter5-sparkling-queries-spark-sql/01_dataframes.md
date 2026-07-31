@@ -16,7 +16,7 @@ Creating DataFrames is highly versatile. They can be instantiated by reading str
 
 ## Flow Diagram
 
-```plaintext
+```python
 graph TD
     A[Data Source] -->|spark.read.format| B[DataFrame Creation]
     B --> C{DataFrame Transformations}
@@ -197,19 +197,6 @@ When a developer submits a DataFrame operation, Spark orchestrates a highly comp
 5. **Task Scheduler:** Stages are broken down into independent Tasks. A Task corresponds to one Partition of data.
 6. **Executors:** The Cluster Manager assigns Tasks to worker nodes (Executors). Executors process their partitions in memory and write output to disk/storage.
 
-```plaintext
-+-------------------+       +-----------------------+       +-------------------------+
-|  DataFrame Code   |       |  Catalyst Optimizer   |       |   Tungsten Execution    |
-| (Python/Scala)    | ----> | (Logical -> Physical) | ----> | (Bytecode Generation)   |
-+-------------------+       +-----------------------+       +-------------------------+
-                                                                         |
-                                                                         v
-+-------------------+       +-----------------------+       +-------------------------+
-|   Executors       |       |  Task Scheduler       |       |     DAG Scheduler       |
-| (Compute Tasks)   | <---- | (Assigns Tasks to     | <---- | (Splits plan to Stages) |
-| (Partition Data)  |       |  Worker Nodes)        |       |                         |
-+-------------------+       +-----------------------+       +-------------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -313,14 +300,6 @@ bad_experience_summary.write.mode("overwrite").parquet("s3a://streamflix-datalak
 6. **Action:** `show()` forces execution to the console, and `write()` exports the highly compressed, partitioned Parquet output.
 
 **Expected Output:**
-```plaintext
-+----------+------------+
-|user_id   |total_errors|
-+----------+------------+
-|USR-9831  |4           |
-|USR-1029  |7           |
-+----------+------------+
-```
 
 **Performance Notes:**
 By avoiding RDDs, we bypass Python-JVM serialization. Defining the schema explicitly ensures the job starts instantly rather than waiting for a full JSON scan. This approach is best for heavily structured reporting and aggregation pipelines.

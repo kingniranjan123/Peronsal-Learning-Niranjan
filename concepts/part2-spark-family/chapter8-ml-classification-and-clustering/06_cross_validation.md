@@ -210,7 +210,7 @@ When you call `cv.fit(dataset)`, a complex distributed process kicks off.
 6. **Shuffle**: Algorithms may cause shuffles (e.g., aggregating tree statistics), which are distributed across the cluster.
 7. **Aggregation**: Evaluation metrics are sent back to the Driver, which averages them and picks the best model.
 
-```plaintext
+```scala
 [Driver] Generate Param Grid (e.g., 4 combos) & Split Data (K=3)
     |
     +---> [Scheduler] Queue 12 Training Tasks

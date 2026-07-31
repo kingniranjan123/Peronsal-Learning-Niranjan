@@ -19,23 +19,6 @@ During the execution of an algorithm like Logistic Regression or a Random Forest
 
 Catalyst optimization phases (Analysis, Logical Optimization, Physical Planning, and Code Generation) play a surprisingly vital role in ML execution. While Catalyst doesn't optimize the gradient math itself, it fiercely optimizes the data preparation steps—predicate pushdown, column pruning, and Whole-Stage CodeGen are applied to the feature engineering phases. Tungsten's vectorized readers pull data straight from Parquet into CPU registers for featurization. Furthermore, Spark ML utilizes optimized BLAS (Basic Linear Algebra Subprograms) and LAPACK libraries via `netlib-java` at the executor level, ensuring that matrix multiplications and vector dot products run close to bare-metal speed using hardware-specific SIMD instructions.
 
-```text
-Driver JVM Worker Executor JVMs
-┌───────────────────────────────────┐ ┌────────────────────────────────────┐
-│ Pipeline (Estimators/Transformers)│ │ Executor 1 (Partition 0-1) │
-│ ┌───────────────────────────────┐ │ │ ┌────────────────────────────────┐ │
-│ │ Model Training Coordinator │ │ │ │ BLAS / LAPACK Native Bindings │ │
-│ │ (e.g., L-BFGS Optimizer) │ │◄─────────►│ │ Local Gradient Computation │ │
-│ └───────────────────────────────┘ │ Network │ └────────────────────────────────┘ │
-│ ▲ │ (Kryo) └────────────────────────────────────┘
-│ │ treeAggregate │ ┌────────────────────────────────────┐
-│ ┌───────────────▼───────────────┐ │ │ Executor N (Partition N) │
-│ │ DAGScheduler / TaskScheduler │ │──────────►│ ┌────────────────────────────────┐ │
-│ │ Catalyst + Tungsten Codegen │ │ │ │ Tungsten Off-Heap Memory │ │
-│ └───────────────────────────────┘ │ │ │ (Dense/Sparse Vectors) │ │
-└───────────────────────────────────┘ │ └────────────────────────────────┘ │
- └────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **Estimators:** Algorithms that are fit on a DataFrame to produce a Model (which is a Transformer). Internally, they trigger heavy shuffling and `treeAggregate` actions to compute global statistics or model weights.
@@ -112,7 +95,7 @@ val assembler = new VectorAssembler()
 
 > **What this demonstrates:** How to properly manage the DAG scheduler and JVM memory when running highly iterative ML workflows like ALS or custom gradient descents.
 
-```plaintext
+```python
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.ml.recommendation.ALS
 
@@ -143,7 +126,7 @@ val model = als.fit(trainingData)
 
 > **What this demonstrates:** How MLlib internally calculates distributed gradients and statistics without bottlenecking the Driver's network interface.
 
-```plaintext
+```scala
 import org.apache.spark.rdd.RDD
 import org.apache.spark.ml.linalg.Vector
 
@@ -239,8 +222,11 @@ Spark MLlib is much more than a distributed clone of scikit-learn; it is a profo
 
 However, treating Spark ML as a black box is a recipe for disaster. Production-grade machine learning at the petabyte scale requires a deep understanding of JVM memory management, particularly the catastrophic differences in RAM footprint between sparse and dense vectors. Engineers must actively manage DAG lineages through checkpointing for iterative algorithms, prevent Driver network bottlenecking via hierarchical tree aggregations, and understand the hardware-level Native BLAS bindings that actually execute the math. 
 
-Ultimately, mastering Spark MLlib means bridging the gap between data science and distributed systems architecture. When configured correctly—with parallelized cross-validation, proper memory tuning, and native math acceleration—it provides an unmatched capability to train massive, complex models across thousands of commodity nodes efficiently and reliably. 
+Ultimately, mastering Spark MLlib means bridging the gap between data science and distributed systems architecture. When configured correctly—with parallelized cross-validation, proper memory tuning, and native math acceleration—it provides an unmatched capability to train massive, complex models across thousands of commodity nodes efficiently and reliably.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

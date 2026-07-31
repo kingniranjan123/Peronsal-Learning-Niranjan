@@ -170,14 +170,6 @@ In GraphX, this works through a distributed Label Propagation algorithm.
 4. **Shuffle**: Message passing heavily relies on the network shuffle to move messages from an edge's source vertex partition to its destination vertex partition.
 5. **Convergence**: Once a superstep produces no new updates, the DAG terminates.
 
-```plaintext
-Driver 
-  └── Initializes Pregel Job
-      ├── Superstep 1: Map Edges -> Shuffle Messages -> Update Vertices
-      ├── Superstep 2: Map Edges -> Shuffle Messages -> Update Vertices
-      └── ...
-          └── Convergence (No messages sent) -> Return ccGraph
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -213,7 +205,7 @@ Driver
 **Business Problem:** A retail bank wants to perform Entity Resolution. They have customer records that might be duplicates. They create edges between records that share the same Phone Number or Email.
 **Sample Dataset:** Customer nodes and Similarity edges. We will use PySpark with GraphFrames (the standard for Python graph processing on Spark).
 
-```plaintext
+```python
 from pyspark.sql import SparkSession
 from graphframes import GraphFrame
 

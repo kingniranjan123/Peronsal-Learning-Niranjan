@@ -20,26 +20,6 @@ When working with distributed systems, you cannot use standard global variables 
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A[Driver Node] -->|Initializes: counter=0| B(Accumulator)
-    B -->|Serialized & Broadcast| C(Executor 1)
-    B -->|Serialized & Broadcast| D(Executor 2)
-    
-    C -->|Task 1 runs| E[add 5]
-    C -->|Task 2 runs| F[add 2]
-    D -->|Task 3 runs| G[add 10]
-    
-    E --> H{Task Success?}
-    F --> H
-    G --> I{Task Success?}
-    
-    H -- Yes --> J[Driver merges Executor 1: +7]
-    I -- Yes --> K[Driver merges Executor 2: +10]
-    
-    J --> L[Driver Final Value: 17]
-    K --> L
-```
 
 ## Data Visualization
 
@@ -168,21 +148,6 @@ Accumulators should **not** be used for core business logic or when you need exa
 5. **Shuffle & Memory:** Accumulator updates bypass the standard shuffle mechanism. They are lightweight metadata messages.
 6. **Driver Merge:** The driver receives the deltas and adds them to its master copy.
 
-```plaintext
-[Driver (acc=0)] 
-       | (Serialize & Broadcast)
-       v
-+-----------------------+   +-----------------------+
-| Executor 1            |   | Executor 2            |
-| Task A: acc.add(2)    |   | Task C: acc.add(1)    |
-| Task B: acc.add(3)    |   | Task D: acc.add(4)    |
-| (Local Delta: 5)      |   | (Local Delta: 5)      |
-+-----------------------+   +-----------------------+
-       |                           |
-       | (Send Delta on Success)   |
-       v                           v
-[Driver Merges: 0 + 5 + 5 = 10]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

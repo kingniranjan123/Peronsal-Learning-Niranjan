@@ -20,29 +20,6 @@ Additionally, the Metastore enables **Table Partitioning**. Data can be physical
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A[Spark Application] -->|enableHiveSupport| B[SparkSession Catalog]
-    B -->|Metadata Request| C[(Hive Metastore DB)]
-    C -->|Returns Table Schema & Path| B
-    
-    A -->|SQL: SELECT * FROM sales WHERE year=2023| D{Catalyst}
-    D -->|Get Partition Paths| C
-    
-    C -->|Returns 's3://lake/sales/year=2023'| D
-    
-    D -->|Executes Read| E[(Data Lake / S3 / HDFS)]
-    
-    subgraph Managed vs External Drop
-    F[DROP TABLE Managed] -->|Deletes| C
-    F -->|Deletes| E
-    G[DROP TABLE External] -->|Deletes| C
-    G -.->|Does NOT Delete| E
-    end
-    
-    style C fill:#fff9c4,stroke:#fbc02d
-    style E fill:#e1f5fe,stroke:#01579b
-```
 
 ## Data Visualization
 
@@ -173,28 +150,6 @@ Additionally, relying on the Metastore is an anti-pattern when dealing with heav
 6. **Executors & Partitions:** The Task Scheduler assigns tasks to Executors. Each Executor reads a specific Parquet file block (partition) directly from distributed storage (e.g., S3) into RAM.
 7. **Shuffle & Memory:** If the query included a `GROUP BY` or `JOIN`, executors shuffle data across the network. Results are aggregated in memory and sent back to the Driver.
 
-```plaintext
-[User Query] -> (Spark Driver)
-                     | 1. Request Metadata
-                     v
-             (Hive Metastore DB)
-                     | 2. Return Table Path & Partitions
-                     v
-            (Catalyst Optimizer) -> Prunes irrelevant partitions
-                     | 3. Create Physical Plan
-                     v
-              (DAG Scheduler) -> Creates Stages & Tasks
-                     | 4. Distribute Tasks
-                     v
-    +-----------------------------------+
-    |             Executors             |
-    | Task 1 reads 'year=2023/part1'    |
-    | Task 2 reads 'year=2023/part2'    |
-    +-----------------------------------+
-                     | 5. In-Memory Execution
-                     v
-           [Final Result to User]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -311,17 +266,6 @@ print("Data exists:", os.path.exists(storage_path))
 6. We drop the table to prove that external tables protect underlying files.
 
 *Expected output:*
-```plaintext
-Query Results using Hive Metastore Catalog:
-+--------+-------------+
-|movie_id|total_minutes|
-+--------+-------------+
-|     m55|          135|
-+--------+-------------+
-
-Is data safe on disk? Checking filesystem...
-Data exists: True
-```
 
 *Performance notes:*
 Partitioning by `event_date` drastically reduces I/O for time-bounded queries. However, avoid using `user_id` as a partition column, as it would create millions of tiny directories, crashing the Metastore.

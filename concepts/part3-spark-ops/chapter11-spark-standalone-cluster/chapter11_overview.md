@@ -24,7 +24,7 @@ Understanding this flow is crucial because it highlights where things can go wro
 
 ## Flow Diagram
 
-```plaintext
+```bash
 graph TD
 subgraph "Client Machine"
         Submit[spark-submit script]
@@ -181,22 +181,6 @@ When you submit an application to a Standalone cluster, a precise sequence of ev
 8.  **Shuffle:** If a wide dependency occurs (e.g., `groupByKey`), Executors exchange data across the network (Shuffle).
 9.  **Result Collection:** Executors send the final results back to the Driver, or write them directly to a distributed storage system (like S3 or HDFS).
 
-```plaintext
-[Spark-Submit] --> (Launches Driver)
-                      |
-                      v
-             [Driver Program] ------------> [Spark Master]
-             (DAG & Scheduler)                 (Resource Manager)
-                      |                               |
-                      | (Assigns Tasks)               | (Commands Launch)
-                      v                               v
-             +-----------------+             +-----------------+
-             |   Worker Node   |             |   Worker Node   |
-             |  [ Executor ]   |             |  [ Executor ]   |
-             |   - Task 1      |             |   - Task 3      |
-             |   - Task 2      |             |   - Task 4      |
-             +-----------------+             +-----------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -247,7 +231,7 @@ When you submit an application to a Standalone cluster, a precise sequence of ev
 A ride-sharing company (like Uber) operates a fleet of vehicles in multiple cities. They dump millions of GPS ping records every hour into Amazon S3. The data engineering team needs to process this data on a self-managed AWS EC2 Spark Standalone cluster to calculate the total distance driven per vehicle and flag any vehicles exceeding a speed threshold.
 
 **Sample Dataset (`rides.csv` in S3):**
-```csv
+```scala
 vehicle_id,timestamp,latitude,longitude,speed_mph
 V-101,2023-10-01T08:00:00,37.7749,-122.4194,25.5
 V-102,2023-10-01T08:00:05,37.7750,-122.4190,65.2
@@ -301,13 +285,6 @@ spark.stop()
 8.  **Completion:** The Driver terminates, the Master reclaims the resources, and the EC2 instances can be safely shut down.
 
 **Expected Output (in S3 Parquet format):**
-```plaintext
-+----------+---------+
-|vehicle_id|max_speed|
-+----------+---------+
-|     V-102|     65.2|
-+----------+---------+
-```
 
 **Performance Notes & When This Approach is Best:**
 *   **Performance:** Using Standalone on EC2 avoids the massive overhead of spinning up an Amazon EMR Hadoop cluster. It is blazingly fast to start and stop.

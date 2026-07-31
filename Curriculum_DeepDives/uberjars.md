@@ -20,7 +20,7 @@ On the executor side, the TaskScheduler instructs executors to fetch the JAR via
 
 The Catalyst optimizer's code generation phase — Whole-Stage CodeGen — dynamically compiles generated query plans into JVM bytecode at runtime using Janino. These generated classes are loaded into the executor's classloader alongside your uberjar's classes. If your uberjar has relocated or shadowed a version of a library that Janino or the Catalyst runtime expects (e.g., `com.google.common` from Guava), a `NoSuchMethodError` or `ClassCastException` emerges at plan execution time, not at job submission — making the failure appear non-deterministic. Kryo serialization compounds this: Kryo resolves class names to `Class` objects via `Class.forName()`, which uses the current thread's context classloader. If the uberjar's classloader hierarchy is misconfigured, Kryo silently falls back to Java serialization, inflating shuffle payload sizes by 3–5× and crashing on non-`Serializable` types.
 
-```text
+```bash
 spark-submit (Driver JVM)
 ┌────────────────────────────────────────────────────────────┐
 │ Bootstrap ClassLoader │
@@ -183,7 +183,7 @@ lazy val root = (project in file("."))
 
 > **What this demonstrates:** A programmatic approach to introspecting the classloader hierarchy at driver startup to detect version conflicts before they manifest as cryptic `NoSuchMethodError` or `ClassCastException` failures deep in task execution.
 
-```text
+```python
 import org.apache.spark.sql.SparkSession
 import java.net.URLClassLoader
 
@@ -503,8 +503,11 @@ Uberjars are not merely a packaging convenience — they are the primary mechani
 
 The failure modes of a poorly assembled uberjar are among the most difficult to diagnose in production Spark: `NoSuchMethodError` appearing only on certain data distributions, `OOMKilled` pods with no JVM heap dumps, Kryo silently falling back to Java serialization and producing 5× larger shuffle blocks, and Spring or Jackson failing to discover SPI extensions because `META-INF/services` files were discarded at assembly time. Each of these failures has a specific, preventable root cause traceable to a single build configuration directive or JVM flag. 
 
-Mastery of uberjars means treating JAR assembly as a first-class engineering concern with the same rigor applied to query optimization or shuffle tuning. This means: explicit shade rules for every dependency that conflicts with Spark's internal classpath, explicit merge strategies for every known file category, `registrationRequired=true` for Kryo, Metaspace-aware memory overhead sizing on Kubernetes, and automated validation of the assembled JAR's class count and SPI service files in CI pipelines — before the job reaches the cluster and fails in ways that cost hours to diagnose. 
+Mastery of uberjars means treating JAR assembly as a first-class engineering concern with the same rigor applied to query optimization or shuffle tuning. This means: explicit shade rules for every dependency that conflicts with Spark's internal classpath, explicit merge strategies for every known file category, `registrationRequired=true` for Kryo, Metaspace-aware memory overhead sizing on Kubernetes, and automated validation of the assembled JAR's class count and SPI service files in CI pipelines — before the job reaches the cluster and fails in ways that cost hours to diagnose.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=320" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Fat JAR Creation">p.320</a> <a href="spark_book.pdf#page=323" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="sbt-assembly">p.323</a> <a href="spark_book.pdf#page=326" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Dependency Conflicts">p.326</a>
+</div>

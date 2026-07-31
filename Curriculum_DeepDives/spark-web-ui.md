@@ -22,34 +22,6 @@ Tungsten's Whole-Stage CodeGen collapses multiple physical plan operators into a
 
 The Stages tab metrics come from `TaskMetrics` objects serialized inside `SparkListenerTaskEnd` events. Each `TaskMetrics` record carries: executor deserialize time, JVM GC time (`jvmGCTime`), result serialization time, shuffle read/write bytes and records, input bytes, spill (memory and disk), and peak execution memory. These are aggregated across all tasks in a stage into min/p25/median/p75/max summary statistics — the distribution shape is your skew detector.
 
-```text
-Driver JVM Executor JVM
-┌──────────────────────────────────┐ ┌─────────────────────────────────┐
-│ SparkContext │ │ Executor │
-│ ┌────────────────────────────┐ │ │ ┌─────────────────────────────┐│
-│ │ LiveListenerBus │ │ heartbeat │ │ Task Thread ││
-│ │ ┌──────────────────────┐ │ │◀─────────── │ │ AccumulatorV2 (SQLMetric) ││
-│ │ │ appStatus queue │ │ │ (10s delta) │ │ TaskMetrics (GC, spill, ││
-│ │ │ AppStatusListener │ │ │ │ │ shuffle bytes) ││
-│ │ └──────────┬───────────┘ │ │ │ └─────────────────────────────┘│
-│ │ │ │ │ └─────────────────────────────────┘
-│ │ ┌──────────▼───────────┐ │
-│ │ │ ElementTrackingStore │ │ HistoryServer (off-cluster)
-│ │ │ (in-memory KVStore) │ │ ┌─────────────────────────────────┐
-│ │ └──────────┬───────────┘ │ eventLog │ KVStore (disk-backed LevelDB) │
-│ │ │─────────────────────────────▶ FsHistoryProvider │
-│ │ ┌──────────▼───────────┐ │ │ /api/v1/applications/... │
-│ │ │ AppStatusStore │ │ └─────────────────────────────────┘
-│ │ └──────────┬───────────┘ │
-│ └─────────────┼──────────────┘
-│ ▼ SQL Tab
-│ Jetty HTTP Server (:4040) ──────────────▶ DAG (SparkPlanInfo tree)
-│ ┌────────────────────────┐ Stages Tab (TaskMetrics aggregates)
-│ │ /api/v1/ REST endpoints│ Storage Tab (BlockStatus, RDD info)
-│ │ /stages, /sql, /storage│ Executors Tab (HeartbeatReceiver)
-│ └────────────────────────┘ Environment Tab (SparkConf snapshot)
-└──────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -350,7 +322,7 @@ def print_gc_diagnosis(health_reports: List[ExecutorHealth]) -> None:
 
 > **What this demonstrates:** Using the Storage REST API to audit cached RDD/DataFrame partition placement, detect cross-node replication failures, and identify broadcast variable memory consumption — preventing the silent performance regression where an evicted broadcast variable forces re-broadcast on every job.
 
-```text
+```scala
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.storage.StorageLevel
 import scala.io.Source
@@ -468,8 +440,11 @@ The Spark Web UI is an architectural component, not an afterthought. Its data fl
 
 The Executors tab's GC time ratio is the most important early-warning signal in the entire UI. A ratio above 10% demands investigation; above 20%, executor loss is imminent. The Storage tab catches the insidious problem of partial cache eviction, where a logically cached DataFrame silently falls back to full recomputation on the next action. The Environment tab is the ground truth for Spark configuration — essential for debugging the common case where config set in code, in `spark-defaults.conf`, and in cluster-level config create unexpected precedence behavior. 
 
-The `SparkListener` API elevates all of this from passive observation to active automation. By registering custom listeners via `spark.extraListeners`, production systems can build real-time skew detectors, GC canaries, SLA monitors, and lineage trackers — all from the same event stream that drives the UI itself. Mastery of the Web UI means never being surprised by a production job failure that the metrics were announcing for the previous 20 minutes. 
+The `SparkListener` API elevates all of this from passive observation to active automation. By registering custom listeners via `spark.extraListeners`, production systems can build real-time skew detectors, GC canaries, SLA monitors, and lineage trackers — all from the same event stream that drives the UI itself. Mastery of the Web UI means never being surprised by a production job failure that the metrics were announcing for the previous 20 minutes.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=275" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Web UI Overview">p.275</a> <a href="spark_book.pdf#page=278" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Stages & Tasks Tab">p.278</a> <a href="spark_book.pdf#page=281" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="SQL Tab">p.281</a> <a href="spark_book.pdf#page=284" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Storage Tab">p.284</a>
+</div>

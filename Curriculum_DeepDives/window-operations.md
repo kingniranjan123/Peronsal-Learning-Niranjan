@@ -17,24 +17,6 @@ Once the data is physically collocated on the target executors, a `SortExec` ope
 
 As the `WindowExec` physical operator iterates over the sorted data stream, it maintains an internal state buffer representing the active rows currently inside the sliding frame. For physical frames defined by `rowsBetween`, Tungsten simply tracks physical pointer offsets in memory, which is exceptionally fast. For logical frames defined by `rangeBetween`, the engine must continuously evaluate the actual values of the ordering column, dynamically expanding or contracting the off-heap memory buffer to accommodate rows with identical peer values. Furthermore, the Whole-Stage Code Generation phase collapses these physical operators into a single, highly optimized Java function, completely bypassing virtual method dispatch overhead and maximizing CPU L1/L2 cache locality during the iterative frame evaluation.
 
-```text
-Driver JVM Worker Executor JVM
-┌─────────────────┐ ┌─────────────────────────────────┐
-│ Catalyst │──────▶│ Tungsten Execution Engine │
-│ Optimizer │ │ ┌─────────────────────────────┐ │
-│ │ │ │ ShuffleExchangeExec │ │
-│ │ │ │ (Hash Partitioning via keys)│ │
-│ │ │ │ ▼ │ │
-│ │ │ │ SortExec (Order internally) │ │
-│ │ │ │ ▼ │ │
-│ │ │ │ WindowExec │ │
-│ │ │ │ ┌─────────────────────────┐ │ │
-│ │ │ │ │ Off-Heap Frame Buffer │ │ │
-│ │ │ │ │ (UnsafeRow management) │ │ │
-│ │ │ │ └─────────────────────────┘ │ │
-│ │ │ └─────────────────────────────┘ │
-└─────────────────┘ └─────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **ShuffleExchangeExec:** Responsible for physically repartitioning the data across the cluster network based on the `partitionBy` expression, ensuring all rows for a given partition key land on the identical executor node.
@@ -200,6 +182,11 @@ Window functions are one of the most powerful declarative constructs in Apache S
 However, this declarative power masks significant physical complexity under the hood. True engineering mastery requires understanding the physical execution plan—specifically the mandatory `ShuffleExchangeExec` and `SortExec` that precede the `WindowExec` operator in the Catalyst pipeline. Spark must partition the data across the cluster network and sort it locally in memory before Tungsten can sequentially iterate through the rows, carefully managing off-heap memory buffers to maintain the sliding logical or physical frames. 
 
 Misconfigurations, such as omitting a partition key or misunderstanding the default range-based logical frame, can easily bring down an entire production cluster via unmanageable OutOfMemoryErrors or single-executor compute bottlenecks. Elite Spark engineering involves explicitly defining window bounds, leveraging physical row boundaries (`rowsBetween`) wherever mathematically possible, eliminating peer-ties in sorting logic, and carefully monitoring the Spark UI for skewed partitions to ensure distributed execution remains highly parallel and memory-efficient.
-</🔥 Master Class: Window Operations> 
+</🔥 Master Class: Window Operations>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=210" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Window Functions">p.210</a> <a href="spark_book.pdf#page=213" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Rank & Lead/Lag">p.213</a> <a href="spark_book.pdf#page=216" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="WindowSpec">p.216</a>
+</div>

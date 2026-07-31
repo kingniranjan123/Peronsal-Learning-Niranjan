@@ -189,23 +189,6 @@ While SQL is fundamentally deterministic, we can conceptualize clustering by com
 5. **Shuffle & Update (Reduce Phase)**: The local sums and counts are sent back to the Driver (or aggregated via treeReduce). The Driver divides the total sum by the total count to find the new global centroids.
 6. **Iteration**: The Driver broadcasts the new centroids back to the Executors, and the loop continues until convergence.
 
-```plaintext
-[Driver] Initializes & Broadcasts Centroids {C1, C2, C3}
-       |
-       v
-[Executors] Map over Partitions (Point -> Nearest Centroid)
-       |--> Partition 1 computes distances & assigns points
-       |--> Partition 2 computes distances & assigns points
-       |
-       v
-[Local Combine] Calculate Sum & Count per cluster locally
-       |
-       v
-[Driver/Reduce] Aggregates global sums & counts -> Computes New Centroids
-       |
-       v
-[Loop] Broadcast new centroids until convergence
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

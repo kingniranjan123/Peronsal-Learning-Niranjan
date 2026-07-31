@@ -18,24 +18,6 @@ Additionally, Tungsten leverages **Vectorized Columnar Reading**. When reading f
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A[Physical Plan from Catalyst] --> B[Tungsten Execution Engine]
-    B --> C[Whole-Stage Code Generation]
-    B --> D[Explicit Memory Management]
-    B --> E[Cache-Aware Computation]
-    C -->|Fuses operators into single function| F[Custom Runtime Bytecode]
-    D -->|Bypasses Garbage Collector| G[Compact Binary Data]
-    E -->|Optimizes L1/L2 cache| H[CPU Cache Efficiency]
-    F --> I[Execution on Worker Node]
-    G --> I
-    H --> I
-    style B fill:#f3e5f5,stroke:#4a148c
-    style C fill:#e8eaf6,stroke:#283593
-    style D fill:#e8eaf6,stroke:#283593
-    style E fill:#e8eaf6,stroke:#283593
-    style I fill:#c8e6c9,stroke:#2e7d32
-```
 
 ## Data Visualization
 
@@ -50,7 +32,7 @@ graph TD
 
 ## Code Example
 
-```plaintext
+```python
 from pyspark.sql import SparkSession
 
 # Initialize SparkSession
@@ -161,29 +143,6 @@ When a query is executed, Tungsten takes over after the Catalyst Optimizer deter
 5. **Execution on Binary Data:** The Executors run this bytecode directly against Tungsten's compact binary data structures (`UnsafeRow`) stored in off-heap memory. 
 6. **Cache-Aware Operations:** Any sorting or grouping leverages cache-friendly pointer arrays rather than moving actual records.
 
-```plaintext
-[Catalyst Physical Plan] 
-         |
-         v
-+-----------------------+
-|  Operator Fusion      |  (Fuses Filter + Project + Sum)
-+-----------------------+
-         |
-         v
-+-----------------------+
-|  Source Generation    |  (Writes Java `for` loop)
-+-----------------------+
-         |
-         v
-+-----------------------+
-|  Janino Compiler      |  (Compiles to Bytecode)
-+-----------------------+
-         |
-         v
-+-----------------------+
-|  Executor Hardware    |  (Reads Binary Data via CPU Cache)
-+-----------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

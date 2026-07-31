@@ -154,24 +154,6 @@ The process involves two main phases: Action (aggregation) and Transformation.
 4.  **Transformation (Pass 2):** The driver creates a new DataFrame lineage involving a `withColumn` operation. The calculated scalar values (`mean_val`, `range_val`) are embedded directly into the task closures.
 5.  **Executors (Pass 2):** When a final action (like `.write` or `.show()`) is called, executors process partitions in parallel, applying the `(x - mean) / range` formula row-by-row in memory.
 
-```plaintext
-[Driver] --> Extract Code
-   |
-   v
-[DAG Scheduler] --> Create 2-stage Aggregation Plan
-   |
-   v
-[Executors] --> Read Partitions --> Compute Local Min/Max/Sum (Stage 1)
-   |
-   v
-[Shuffle] --> Aggregate Global Stats on Driver (Action)
-   |
-   v
-[Driver] --> Inject Scalars into Formula --> Plan Pass 2
-   |
-   v
-[Executors] --> Apply Formula (x - mu) / range row-by-row in memory (Stage 2)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -263,18 +245,6 @@ normalized_df.select("user_id", "movie_id", "rating", "normalized_rating").order
 ```
 
 **Expected Output:**
-```plaintext
-+-------+--------+------+-------------------+
-|user_id|movie_id|rating|  normalized_rating|
-+-------+--------+------+-------------------+
-| User_A| Movie_1|   5.0|                0.5|
-| User_A| Movie_2|   3.0|                0.0|
-| User_A| Movie_3|   1.0|               -0.5|
-| User_B| Movie_1|   5.0| 0.3333333333333333|
-| User_B| Movie_4|   4.0|-0.6666666666666666|
-| User_B| Movie_5|   5.0| 0.3333333333333333|
-+-------+--------+------+-------------------+
-```
 
 **Performance Notes:**
 Window functions can trigger heavy shuffles. If the dataset has billions of ratings, ensure `user_id` is properly salted or partitioned to avoid data skew (e.g., if one user has 100,000 ratings while others have 10). 

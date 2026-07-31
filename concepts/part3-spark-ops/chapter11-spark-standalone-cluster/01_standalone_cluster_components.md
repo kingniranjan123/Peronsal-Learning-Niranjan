@@ -170,17 +170,6 @@ When you submit a job to a Standalone cluster, a specific sequence unfolds:
 6. **Task Execution:** The Driver breaks the DAG into Stages and Tasks, sending Tasks directly to the Executors.
 7. **Completion:** Executors process data (reading/writing to storage). Upon job completion, the Driver exits, and the Master instructs Workers to kill the Executors.
 
-```plaintext
-[Driver] 
-   | (1. Request Resources)
-   v
-[Master] ----> (2. Launch Command) ----> [Worker Node]
-   ^                                          |
-   | (Heartbeats)                             v (3. Spawns JVM)
-   |                                     [Executor]
-   |                                          |
-   +------------------------------------------+ (4. Registers directly to Driver & gets Tasks)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

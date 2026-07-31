@@ -140,30 +140,6 @@ Distributed optimization is the backbone of training large-scale linear models i
 ### Q7: What Happens Behind the Scenes?
 During a single iteration of an optimizer like L-BFGS:
 
-```plaintext
-+-------------------+
-|   Spark Driver    | (Maintains current weights `w`)
-+-------------------+
-         | 1. Broadcast `w`
-         v
-+-------------------+       +-------------------+
-|    Executor 1     |       |    Executor 2     |
-| (Data Partition)  |       | (Data Partition)  |
-+-------------------+       +-------------------+
-         | 2. Compute local gradients
-         v
-+-------------------+       +-------------------+
-|  Local Gradient 1 |       |  Local Gradient 2 |
-+-------------------+       +-------------------+
-         | 3. treeAggregate (Partial Sums)
-         v
-+-------------------+
-|   Spark Driver    | (Combines gradients)
-+-------------------+
-         | 4. Update Weights
-         v
-      New `w`
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

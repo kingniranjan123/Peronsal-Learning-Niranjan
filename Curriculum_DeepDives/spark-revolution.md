@@ -22,35 +22,6 @@ The **Catalyst optimizer** — Spark SQL's query planning engine — operates in
 
 Network serialization has also been redesigned. MapReduce used Java's default serialization for shuffle data — verbose, slow, and GC-heavy. Spark defaults to **Java serialization** for RDD operations but strongly recommends **Kryo serialization** (`spark.serializer=org.apache.spark.serializer.KryoSerializer`), which is 10× smaller and 3× faster for complex domain objects. For DataFrames and Datasets, Tungsten's `Encoder`-based binary format sidesteps both entirely, storing data as raw bytes that match CPU cache lines and can be operated on without deserialization.
 
-```text
-MapReduce Execution (3 stages, disk-bound) Spark Execution (3 stages, in-memory DAG)
-─────────────────────────────────────────── ──────────────────────────────────────────────
-
- Input (HDFS) Input (HDFS / Memory)
- │ │
- ▼ ▼
- ┌─────────┐ write to HDFS ┌─────────┐ ┌──────────────────────────────────┐
- │ Map 1 │──────────────────▶│ HDFS │ │ Stage 1 (Whole-Stage Codegen) │
- └─────────┘ └────┬────┘ │ filter ─▶ map ─▶ project │
- │ │ (pipelined, no materialization) │
- ▼ └──────────────┬───────────────────┘
- ┌─────────┐ │ shuffle write (only at
- │Reduce 1 │──write──▶ HDFS │ stage boundary)
- └─────────┘ ▼
- ┌──────────────────────────────────┐
- ┌─────────┐ │ Stage 2 (Whole-Stage Codegen) │
- │ Map 2 │◀──read── │ hash-agg ─▶ sort │
- └─────────┘ HDFS └──────────────┬───────────────────┘
- │ │
- ▼ ▼
- ┌─────────┐ ┌──────────────────────────────────┐
- │Reduce 2 │──write──▶ │ Stage 3: Action (collect/write) │
- └─────────┘ HDFS └──────────────────────────────────┘
-
- Disk I/O: 6 full HDFS passes Disk I/O: 1 read + shuffle spill only if OOM
- GC pressure: high (Java serialization per record) GC pressure: low (Tungsten off-heap UnsafeRow)
- Iterative jobs (ML): re-read from disk each pass Iterative jobs (ML): data cached in executor RAM 
-```
 
 ### Key Internal Components
 
@@ -418,8 +389,11 @@ The Spark Revolution is, at its foundation, a rejection of the assumption that d
 
 The Catalyst optimizer extends this revolution to the declarative query layer. Rather than requiring engineers to hand-tune every join strategy and aggregation plan, Catalyst applies over 50 rule-based rewrites, cost-based join reordering, and predicate pushdown to columnar storage formats — automatically. The result is that a naive SQL query written by a data analyst often executes with the same physical plan as a hand-optimized Scala job written by a Spark core contributor. 
 
-Production Spark engineering, however, demands understanding where the abstractions break down: when shuffle data volume overwhelms network bandwidth, when lineage graphs grow deep enough to cause Driver JVM stack overflows, when broadcast tables exceed executor heap capacity, and when Python UDFs silently disable Whole-Stage Code Generation. The engineers who master Spark are those who can look at a Spark UI Stage summary and reconstruct exactly which line of application code created the performance cliff — and that requires understanding the full stack from `LogicalPlan` trees to JVM bytecode generation to HDFS block placement. 
+Production Spark engineering, however, demands understanding where the abstractions break down: when shuffle data volume overwhelms network bandwidth, when lineage graphs grow deep enough to cause Driver JVM stack overflows, when broadcast tables exceed executor heap capacity, and when Python UDFs silently disable Whole-Stage Code Generation. The engineers who master Spark are those who can look at a Spark UI Stage summary and reconstruct exactly which line of application code created the performance cliff — and that requires understanding the full stack from `LogicalPlan` trees to JVM bytecode generation to HDFS block placement.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Spark Origins & RDD Paper">p.1</a> <a href="spark_book.pdf#page=3" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="MapReduce vs Spark">p.3</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="DAG Execution Engine">p.5</a> <a href="spark_book.pdf#page=8" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="In-Memory Computing">p.8</a> <a href="spark_book.pdf#page=11" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Unified Programming Model">p.11</a>
+</div>

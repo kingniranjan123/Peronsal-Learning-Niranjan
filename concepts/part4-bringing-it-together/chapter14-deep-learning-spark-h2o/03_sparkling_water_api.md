@@ -24,19 +24,6 @@ Alongside the programmatic API, initializing the `H2OContext` automatically spin
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A["SparkContext sc"] -->|"H2OContext.getOrCreate(sc)"| B["H2OContext h2o"]
-    B --> C["H2O Flow UI
-localhost:54321"]
-    D["Spark DataFrame"] -->|"h2o.asH2OFrame(df)"| E["H2OFrame
-for ML"]
-    E -->|"H2ODeepLearning.train"| F["H2O Model"]
-    F -->|"h2o.asDataFrame(predictions)"| G["Spark DataFrame
-with results"]
-    style B fill:#FECB00,color:#000
-    style F fill:#27ae60,color:#fff
-```
 
 ## Data Visualization
 
@@ -193,15 +180,6 @@ The API provides bidirectional conversion (`asH2OFrame` and `asDataFrame`). Inst
 4. **Model Training**: H2O orchestrates MapReduce-like tasks across its nodes to train the Deep Learning model using the H2OFrame.
 5. **Prediction**: The trained model generates predictions, and `asDataFrame()` wraps them back into Spark partitions for further SQL processing.
 
-```plaintext
-+-------------------+       +-------------------+       +-------------------+
-|   Spark Driver    |       |  Spark Executor 1 |       |  Spark Executor 2 |
-|                   |       |                   |       |                   |
-| H2OContext Init   |------>|  [H2O Node 1]     |<----->|  [H2O Node 2]     |
-| Pipeline.fit()    |       |  Spark Partitions |       |  Spark Partitions |
-+-------------------+       |  H2O Chunks       |       |  H2O Chunks       |
-                            +-------------------+       +-------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -314,16 +292,6 @@ spark.stop()
 6. The resulting PipelineModel is used to transform the data, generating predictions using H2O's scoring engine.
 
 **Expected output:**
-```plaintext
-+-----------+-----+----------+
-|customer_id|churn|prediction|
-+-----------+-----+----------+
-|        101|    1|         1|
-|        102|    0|         0|
-|        103|    1|         1|
-|        104|    0|         0|
-+-----------+-----+----------+
-```
 
 **Performance notes:** The DataFrame should be cached before calling `.fit()` if the upstream ETL processes are expensive, as H2O will force an eager evaluation.
 

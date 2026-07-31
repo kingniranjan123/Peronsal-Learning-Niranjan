@@ -18,32 +18,6 @@ The `JobGenerator` acts as the system's internal clock. At every batch interval,
 
 Because DStreams map directly to standard RDDs, they operate largely outside the Catalyst optimizer and Tungsten execution engine found in Spark SQL. Consequently, serialization overhead and JVM garbage collection on the heap can become significant bottlenecks. To mitigate this, DStreams rely heavily on Kryo serialization for network shuffling and off-heap memory configurations to reduce GC pressure. The RDD lineage guarantees fault tolerance—if a partition is lost, it can be recomputed from the original replicated blocks. However, for stateful operations (`updateStateByKey`), lineage chains grow infinitely, necessitating Checkpointing to HDFS to periodically truncate the dependency graph and prevent catastrophic `StackOverflowError` failures during DAG resolution.
 
-```text
-Driver JVM Worker Executor JVM (Receiver)
-┌─────────────────────────────────┐ ┌─────────────────────────────┐
-│ StreamingContext │ │ Receiver Task │
-│ ┌───────────────────────────┐ │ │ ┌──────────────────────┐ │
-│ │ ReceiverTracker │◀─┼──(Meta)─────┼──│ Data Receiver Stream │ │
-│ └───────────────────────────┘ │ │ └──────────────────────┘ │
-│ ┌───────────────────────────┐ │ │ ┌──────────────────────┐ │
-│ │ JobGenerator (Timer) │ │ │ │ Block Generator │ │
-│ └───────────────────────────┘ │ │ └──────────────────────┘ │
-│ ┌───────────────────────────┐ │ │ ┌──────────────────────┐ │
-│ │ DStreamGraph (Lineage) │ │ │ │ BlockManager (Cache) │ │
-│ └───────────────────────────┘ │ │ └──────────────────────┘ │
-│ ┌───────────────────────────┐ │ └─────────────┬───────────────┘
-│ │ DAGScheduler │ │ │ Data Replication
-│ │ TaskScheduler │──┼─(Tasks)─▶ Worker Executor JVM (Compute)
-└─────────────────────────────────┘ ┌─────────────▼───────────────┐
- │ Executor Thread Pool │
- │ ┌──────────────────────┐ │
- │ │ Task (RDD Partition) │ │
- │ └──────────────────────┘ │
- │ ┌──────────────────────┐ │
- │ │ BlockManager (Cache) │ │
- │ └──────────────────────┘ │
- └─────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **StreamingContext:** The main entry point for DStream functionality, responsible for setting the batch interval, managing the lifecycle of the application, and launching the underlying execution daemons.
@@ -228,6 +202,11 @@ Apache Spark's Discretized Streams fundamentally revolutionized stream processin
 However, operating DStreams in a high-scale production environment requires a deep, uncompromising understanding of internal mechanics. Because DStreams rely solely on the RDD API, they do not benefit from the advanced optimizations of the Catalyst optimizer or the Tungsten execution engine. Developers must manually manage serialization overhead, carefully tune JVM garbage collection, and explicitly architect their stateful operations—using advanced features like `mapWithState` and precise checkpointing intervals—to prevent infinite lineage graphs and executor memory exhaustion. 
 
 While Structured Streaming serves as the modern standard for new Spark applications, DStreams remain deeply embedded in countless massive enterprise architectures. Mastering DStreams is not simply an exercise in maintaining legacy code; it is a rigorous exercise in understanding the absolute fundamentals of distributed micro-batch execution, complex state management, and the intricate, time-bound dance between the Driver's `JobGenerator` and the Executor's thread pools. This deep knowledge translates directly into a broader comprehension of how distributed systems achieve genuine resilience at scale.
-</🔥 Master Class: Discretized Streams DStreams> 
+</🔥 Master Class: Discretized Streams DStreams>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 471](spark_book.pdf#page=471) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

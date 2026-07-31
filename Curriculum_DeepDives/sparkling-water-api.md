@@ -22,7 +22,7 @@ The Catalyst optimizer has no visibility into H2O operations. When you call `h2o
 
 AutoML uses H2O's `AutoML` Java API under the hood, which runs entirely on the H2O cluster—not on the Spark DAGScheduler. The Spark driver thread blocks on `trainModels()` via H2O's Future mechanism while H2O's internal scheduler trains and cross-validates up to `maxModels` models. The resulting leaderboard `ModelMetrics` objects live in the DKV. When you call `getBestModel()`, the winning model is serialized into a MOJO (Model ObJect, Optimized)—a self-contained zip file containing the model tree structure and scoring logic in H2O's portable binary format. The MOJO has no JVM dependency: it is scored by the `h2o-genmodel.jar` runtime, which uses hand-optimized bytecode that bypasses reflection and achieves throughput within 2–5x of native compiled C++ inference code.
 
-```text
+```bash
 Driver JVM
 ┌────────────────────────────────────────────────────────────────┐
 │ SparkSession │
@@ -153,7 +153,7 @@ println(s"Backend: ${hc.getConf.backendClusterMode}")
 
 > **What this demonstrates:** The correct ordering of Spark-side filter operations relative to `asH2OFrame()` conversion, and why invoking filters after conversion is an invisible but catastrophic performance anti-pattern that Catalyst cannot detect.
 
-```text
+```python
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, to_timestamp, year
 from pysparkling import H2OContext
@@ -400,8 +400,11 @@ Sparkling Water's core value proposition is collapsing the Spark–H2O data pipe
 
 The `H2OAutoML` estimator's integration into Spark's `Pipeline` API provides MLOps-friendly model training: the same `Pipeline.fit()` / `Pipeline.transform()` interface used for Spark ML models now trains and selects from up to hundreds of H2O models, returning a `H2OMOJOModel` transformer that works in both batch and streaming contexts. The MOJO export format is the linchpin of production deployment: it decouples the scoring runtime from both Spark and H2O, requiring only `h2o-genmodel.jar` and enabling sub-millisecond per-row inference inside Structured Streaming micro-batches. 
 
-The two most consequential engineering decisions in any Sparkling Water deployment are backend selection (internal vs. external, driven by memory budget) and the filter-before-convert discipline (ensuring Catalyst optimizations run before `asH2OFrame()` is called). Both decisions are invisible at the API level—the code compiles and runs either way—but the performance difference between the anti-pattern and the correct pattern at production scale (hundreds of millions of rows, dozens of executors) is the difference between a 10-minute conversion and a 90-minute conversion, and between a stable cluster and one that OOMKills executors hourly. 
+The two most consequential engineering decisions in any Sparkling Water deployment are backend selection (internal vs. external, driven by memory budget) and the filter-before-convert discipline (ensuring Catalyst optimizations run before `asH2OFrame()` is called). Both decisions are invisible at the API level—the code compiles and runs either way—but the performance difference between the anti-pattern and the correct pattern at production scale (hundreds of millions of rows, dozens of executors) is the difference between a 10-minute conversion and a 90-minute conversion, and between a stable cluster and one that OOMKills executors hourly.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

@@ -22,33 +22,6 @@ The **GraphX Pregel API** adapts A* into a bulk-synchronous parallel (BSP) model
 
 The Pregel model does **not** guarantee A*'s node-expansion order. Classical A* expands nodes in strict `f(n)` order, ensuring optimality with an admissible heuristic. In Pregel, all active vertices in a superstep expand simultaneously regardless of their `f(n)` value. This means Pregel-based A* behaves more like a parallel Bellman-Ford with a heuristic bias — it still converges to the optimal path (given consistent heuristics and sufficient supersteps), but it may process more relaxations than necessary, increasing total work by a factor proportional to the graph diameter.
 
-```text
-Driver JVM (spark.driver.memory) Executor JVM (spark.executor.memory)
-┌──────────────────────────────────┐ ┌──────────────────────────────────────────┐
-│ Classical A* (single-source) │ │ GraphX Pregel A* (distributed) │
-│ │ │ │
-│ PriorityQueue<Node> [heap] │ │ VertexRDD[(gScore, fScore, pred)] │
-│ gScore: HashMap<Long,Double> │ │ EdgeRDD[(weight)] │
-│ cameFrom: HashMap<Long,Long> │ │ │
-│ │ Superstep │ ┌──────────────┐ ┌──────────────┐ │
-│ graph data ◀──── collect() ──── │◀─────────────│ │ Partition 0 │ │ Partition 1 │ │
-│ (entire graph in driver heap!) │ │ │ vprog() │ │ vprog() │ │
-│ │ │ │ sendMsg() │ │ sendMsg() │ │
-│ DAGScheduler │ │ └──────┬───────┘ └──────┬───────┘ │
-│ TaskScheduler │ │ │ Shuffle/Kryo │ │
-│ BlockManager │ │ ▼ (aggregateMsg) ▼ │
-└──────────────────────────────────┘ │ ┌──────────────────────────────────┐ │
- │ │ mergeMsg: min(gScore) │ │
- ┌──────────────────────────┐ │ │ (one shuffle per superstep) │ │
- │ Parallel Multi-Source │ │ └──────────────────────────────────┘ │
- │ A* via mapPartitions │ └──────────────────────────────────────────┘
- │ │
- │ RDD[QueryPair] ──────▶ │ Each partition runs
- │ .mapPartitions { │ a full in-memory A*
- │ localAstar(...) │ on a subgraph shard
- │ } │
- └──────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -529,8 +502,11 @@ A* Search in Apache Spark is not a single algorithm but a family of architectura
 
 For distributed graphs exceeding driver memory capacity, GraphX Pregel provides a principled adaptation of A* into Spark's parallel execution model. The BSP superstep model sacrifices strict expansion ordering for parallelism, requiring careful heuristic validation (admissibility and consistency) and mandatory Kryo serialization to control per-superstep shuffle volume. The combination of `KryoSerializer`, registered `KryoRegistrator`, and `spark.kryo.unsafe=true` reduces shuffle data volume from ~350 bytes to ~26 bytes per vertex message — a 13x reduction that translates directly to faster supersteps and lower network I/O costs. 
 
-For workloads requiring thousands to millions of simultaneous shortest-path queries (logistics, ride-sharing, network analysis), the `mapPartitions` multi-source pattern turns A* into an embarrassingly parallel operation, scaling linearly with cluster size. Memory-bounded beam search further extends A* to arbitrarily large graphs on the driver by capping heap usage with off-heap Unsafe allocation, trading provable optimality for guaranteed memory safety. The unifying thread across all patterns is serialization discipline, heuristic correctness, and an explicit accounting of where state lives — driver heap, executor heap, off-heap, or shuffle storage — because in production Spark, the location of your data is the first determinant of your performance. 
+For workloads requiring thousands to millions of simultaneous shortest-path queries (logistics, ride-sharing, network analysis), the `mapPartitions` multi-source pattern turns A* into an embarrassingly parallel operation, scaling linearly with cluster size. Memory-bounded beam search further extends A* to arbitrarily large graphs on the driver by capping heap usage with off-heap Unsafe allocation, trading provable optimality for guaranteed memory safety. The unifying thread across all patterns is serialization discipline, heuristic correctness, and an explicit accounting of where state lives — driver heap, executor heap, off-heap, or shuffle storage — because in production Spark, the location of your data is the first determinant of your performance.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

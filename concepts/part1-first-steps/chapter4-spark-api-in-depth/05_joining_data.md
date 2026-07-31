@@ -33,19 +33,6 @@ Spark SQL (DataFrames/Datasets) is much smarter than the RDD API. The Catalyst O
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    S[Small Table] --> |Broadcast| E1[Executor 1 Hash Map]
-    S --> |Broadcast| E2[Executor 2 Hash Map]
-    L[Large Table Part 1] --> E1
-    M[Large Table Part 2] --> E2
-    E1 --> O1[Output]
-    E2 --> O2[Output]
-    T1[Table A] --> |Shuffle| N1[Node 1]
-    T2[Table B] --> |Shuffle| N1
-    N1 --> |Sort A & B| N1S[Sorted Data]
-    N1S --> |Merge Pointers| O3[Output]
-```
 
 ## Data Visualization
 
@@ -220,7 +207,7 @@ Sort-Merge Join Flow:
 **Business Problem:** Netflix wants to enrich a massive stream of daily viewing logs with a small reference table containing movie metadata (titles and genres).
 **Sample Dataset:** `viewing_logs` (Billions of rows), `movies_dim` (10,000 rows).
 
-```plaintext
+```python
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import broadcast
 

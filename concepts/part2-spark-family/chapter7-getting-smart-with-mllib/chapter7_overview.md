@@ -150,21 +150,6 @@ When you execute an MLlib pipeline, the process translates from high-level Pytho
 5. **Iterative Processing:** For algorithms like Logistic Regression, the Driver orchestrates multiple iterations. In each iteration, Executors compute partial gradients on their partitions and send them back to the Driver (or via tree aggregation) to update the global model weights.
 6. **Transformer Evaluation:** Once fit, the Estimator becomes a Transformer. The pipeline moves to the next stage, applying the transformation via lazy evaluation.
 
-```plaintext
-+-------------------+      +-------------------------------------------------+
-|   Spark Driver    |      |                 Spark Cluster                   |
-|                   |      |                                                 |
-| 1. Define         |      |   +-------------+       +-------------+         |
-|    Pipeline       |      |   | Executor 1  |       | Executor 2  |         |
-| 2. Trigger Action |----->|   | (Partition 1|       | (Partition 2|         |
-|    (.fit())       |      |   | Data)       |       | Data)       |         |
-| 3. Manage Gradient|      |   +-------------+       +-------------+         |
-|    Updates        |<-----|        | Compute partial       |                |
-|                   |      |        | gradients             |                |
-+-------------------+      +--------|-----------------------|----------------+
-                                    v                       v
-                           [ Tree Aggregation / Shuffle to combine results ]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

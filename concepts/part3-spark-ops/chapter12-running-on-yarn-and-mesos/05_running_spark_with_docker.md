@@ -316,7 +316,7 @@ In a production environment, this Docker image is typically deployed using Kuber
 
 ## Flow Diagram
 
-```plaintext
+```bash
 graph TD
     subgraph Development
         DF[Dockerfile<br/>FROM spark:3.3<br/>COPY app.py /opt/app/]
@@ -362,7 +362,7 @@ graph TD
 
 ## Code Example
 
-```dockerfile
+```bash
 # Example Dockerfile for a PySpark application
 # 1. Start from the official Spark base image
 FROM apache/spark:3.4.1

@@ -47,7 +47,7 @@ How D3 translates Spark JSON output into SVG properties using scales.
 
 Below is the JavaScript/D3 code to render and update a real-time bar chart showing Top URLs.
 
-```html
+```scala
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
@@ -225,7 +225,8 @@ The browser reflows and repaints the DOM dynamically based on D3's calculated at
 |---|---|---|
 | **Data Binding** | Always use a key function in .data(). | Ensures object constancy during transitions so elements update smoothly rather than re-rendering entirely. |
 | **Element Size** | Limit DOM elements to <10,000. | Browsers struggle to render excessive SVG nodes, leading to laggy animations and high CPU use. |
-| **Animations** | Use equestAnimationFrame or D3's native transitions. | Avoids blocking the main JavaScript thread, ensuring smooth 60fps animations. |
+| **Animations** | Use 
+equestAnimationFrame or D3's native transitions. | Avoids blocking the main JavaScript thread, ensuring smooth 60fps animations. |
 | **WebSocket** | Batch WebSocket messages on the server. | Sending thousands of individual messages per second will overwhelm the browser and D3 renderer. |
 | **Common Mistake** | Forgetting to call .exit().remove(). | Results in memory leaks and visually overlapping ghost elements on the chart. |
 

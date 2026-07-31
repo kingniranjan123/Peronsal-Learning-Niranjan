@@ -122,3 +122,10 @@ result_df.explain()
 **Explanation:**
 Standard Python UDFs represent a major performance trap. Spark must serialize each row from Tungsten's off-heap memory, push it through a local socket via Pickle into a Python worker process, compute it, and serialize it back. This row-by-row overhead is disastrous. Pandas UDFs utilize Apache Arrow, a columnar memory format. Spark batches thousands of Tungsten rows, natively converts them to Arrow format with near-zero copy overhead, and sends them to the Python process. Python receives a `pandas.Series`, allowing vectorized operations backed by optimized C libraries (NumPy). This dramatically reduces CPU cycles spent on serialization and network I/O, bridging the performance gap between Scala/JVM and Python execution.
 </Master Class: SQL Queries>
+
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=155" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Spark SQL">p.155</a> <a href="spark_book.pdf#page=158" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Temp Views">p.158</a> <a href="spark_book.pdf#page=161" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="SQL vs DataFrame API">p.161</a> <a href="spark_book.pdf#page=164" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Query Planning">p.164</a>
+</div>

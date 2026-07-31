@@ -17,24 +17,6 @@ When a function like `stats()` is invoked, Spark does not simply ship raw data t
 
 Once each partition has computed its local `StatCounter`, Spark must merge these statistics. Rather than a naive `reduce` operation which could overwhelm the Driver JVM's heap (causing an OutOfMemory error on massive clusters), Spark employs a `treeAggregate` strategy. `treeAggregate` performs multi-level partial aggregations on the executors themselves. It combines `StatCounter` objects in a tree-like hierarchy before sending the final, highly compressed payload to the driver. The network serialization of these objects is tightly optimized via Kryo, ensuring that the mathematical state traversing the network is minimal in binary footprint.
 
-```text
-Driver JVM Worker Executor JVM (Partition 0) Worker Executor JVM (Partition 1)
-┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐
-│ SparkContext │────┐ │ TaskContext │ │ TaskContext │
-│ DAGScheduler │ │ │ ┌─────────────────────┐ │ │ ┌─────────────────────┐ │
-│ ┌─────────────────────┐ │ ├───▶│ │ Iterator[Double] │ │ │ │ Iterator[Double] │ │
-│ │ RDD[Double] │ │ │ │ │ StatCounter(p0) │ │ │ │ StatCounter(p1) │ │
-│ │ implicit conversion │ │ │ │ │ (Welford's Math) │ │ │ │ (Welford's Math) │ │
-│ └─────────┬───────────┘ │ │ │ └─────────┬───────────┘ │ │ └─────────┬───────────┘ │
-└───────────┼─────────────┘ │ └───────────┼─────────────┘ └───────────┼─────────────┘
- │ │ │ │
- │ └────────────────┼────────────────────────────────────┘
- │ │
- ┌───────┴───────┐ ┌───────▼───────┐
- │ Result Tuple │◀──────────────────│ treeAggregate │ (Multi-level merge across executors)
- │ (mean, var,..)│ │ Shuffle/Merge │
- └───────────────┘ └───────────────┘ 
-```
 
 ### Key Internal Components
 - **`StatCounter`:** The core state machine and foundational workhorse. It efficiently maintains statistical state during a single pass and provides a `merge` function to mathematically combine two `StatCounters` from different network partitions.
@@ -192,6 +174,11 @@ The implementation of `DoubleRDDFunctions` in Apache Spark is a masterclass in d
 The true genius of this architecture lies in the interplay between the `StatCounter` and `treeAggregate`. The `StatCounter` isolates mathematical stability locally on the worker node, employing Welford's algorithm to incrementally digest massive arrays of data without retaining them in memory. Concurrently, `treeAggregate` orchestrates the network topology, ensuring that these intermediate mathematical states are merged hierarchically. This avoids bottlenecking the driver JVM and minimizes expensive cross-network shuffles. 
 
 For production Spark engineering, mastering these internals is non-negotiable. Whether you are generating statistical summaries for machine learning pipelines or computing distributed histograms for data quality monitoring, understanding how `DoubleRDDFunctions` maps to Catalyst execution plans ensures your pipelines remain resilient. Recognizing the difference between triggering multiple actions and unifying computation via `stats()` is often the distinguishing factor between a job that crashes after hours of execution and one that completes seamlessly in minutes.
-</🔥 Master Class: Double Rdd Functions> 
+</🔥 Master Class: Double Rdd Functions>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

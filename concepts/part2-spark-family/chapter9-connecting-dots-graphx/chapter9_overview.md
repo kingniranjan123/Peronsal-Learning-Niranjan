@@ -20,47 +20,6 @@ In this chapter, we will explore the core concepts of GraphX, from constructing 
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    subgraph Data Sources
-        A[Relational DB] -->|ETL| D(Data Lake)
-        B[Log Files] -->|ETL| D
-        C[Streaming Data] -->|ETL| D
-    end
-
-    subgraph Spark Ecosystem
-        D --> E[Spark DataFrames / RDDs]
-        
-        subgraph GraphX Engine
-            E -->|Create Graph| F(Property Graph)
-            F -->|Vertices RDD| G(Vertex Data)
-            F -->|Edges RDD| H(Edge Data)
-            
-            G -.-> I{Graph Operators}
-            H -.-> I
-            
-            I -->|Transform| J(mapVertices, subgraph, etc.)
-            I -->|Iterative| K(Pregel API)
-            
-            K --> L(PageRank)
-            K --> M(Shortest Paths)
-            K --> N(Connected Components)
-            K --> O(A* Search)
-        end
-    end
-
-    J --> P[Transformed Graph]
-    L --> Q[Ranked Entities]
-    M --> R[Optimal Routes]
-    N --> S[Identified Clusters]
-    O --> T[Heuristic Path]
-
-    P --> U(Downstream Analytics)
-    Q --> U
-    R --> U
-    S --> U
-    T --> U
-```
 
 ## Data Visualization
 
@@ -222,13 +181,6 @@ When you trigger a GraphX algorithm, a heavily optimized distributed execution u
     *   *Step C:* Vertices receive the aggregated messages, update their properties, and trigger the next superstep.
 4.  **Convergence:** The DAG executes recursively until a superstep produces zero messages.
 
-```plaintext
-[Executor 1: Vertex A]      [Executor 2: Vertex B]
-       |                              ^
-       | (Send Message via Edge)      |
-       +------------------------------+
-            (Network Shuffle)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

@@ -7,28 +7,6 @@ This guide outlines the professional steps required to set up a comprehensive Ap
 > [!NOTE]
 > **Why this architecture?** A true production-like data engineering project doesn't exist in isolation. Connecting PySpark to a relational database (for staging data) and a frontend (for visualization/interaction) simulates real-world workflows.
 
-```text
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        REAL-WORLD DATA ENGINEERING ECOSYSTEM                           │
-│                                                                                        │
-│  [1. INGESTION]          [2. DEVELOPMENT & ORCHESTRATION]          [4. SERVING]        │
-│                                                                                        │
-│  ┌────────────┐               📍 YOU ARE HERE                      ┌─────────────┐     │
-│  │ Kaggle API │               ┌─────────────┐                      │ Streamlit   │     │
-│  │ (Raw CSV)  │────────┐      │  Local Dev  │                      │ Dashboards  │     │
-│  └────────────┘        │      │ (PyCharm)   │─────────┐            └─────────────┘     │
-│                        │      └─────────────┘         │                   ▲            │
-│  ┌────────────┐        │             │                │                   │            │
-│  │ Event Hub  │        ▼             ▼                ▼                   │            │
-│  │ (Streams)  │   ┌─────────┐   ┌─────────┐    ┌──────────────┐    ┌─────────────┐     │
-│  └────────────┘   │   Raw   │   │ GitHub  │    │ Apache Spark │    │ PostgreSQL  │     │
-│                   │ Storage │   │ (CI/CD) │    │   Cluster    │───>│ Data Whse   │     │
-│  ┌────────────┐   │ (HDFS/  │   └─────────┘    │ (YARN/Local) │    │ (Analytics) │     │
-│  │ OLTP DB    │──>│  S3)    │─────────────────>│  Processing  │    └─────────────┘     │
-│  │ (Postgres) │   └─────────┘                  └──────────────┘                        │
-│  └────────────┘                                 [3. COMPUTE]                           │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
 
 | Component | Technology / Recommended Version | Download Link & Purpose |
 | :--- | :--- | :--- |
@@ -98,3 +76,10 @@ Your PyCharm project should now follow this workflow to practice all concepts:
 - `[ ]` PostgreSQL running locally with `spark_db` created.
 - `[ ]` JDBC Driver downloaded and referenced in Spark configurations.
 - `[ ]` Real-world dataset downloaded to the local workspace.
+
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

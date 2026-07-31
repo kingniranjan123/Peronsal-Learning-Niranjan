@@ -22,38 +22,6 @@ Spark's Tungsten engine allocates memory in two zones: the JVM heap (managed by 
 
 Image layering strategy directly impacts cluster startup latency. Docker images are built in layers. If the JRE base layer, the Spark distribution layer, and the application JAR layer are all in one `RUN` command, any change to the application JAR invalidates and re-downloads the entire multi-gigabyte image on every worker node. The correct approach is to separate layers by change frequency: `FROM openjdk:17-slim` → `ADD spark-3.x.tgz` → `COPY app.jar`. The first two layers are cached permanently on workers; only the 50MB application JAR layer is re-pulled on each deployment, reducing cold-start time from 10+ minutes to under 30 seconds.
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Docker Host (Linux Kernel) │
-│ │
-│ ┌──────────────────────┐ ┌──────────────────────────────────────────┐ │
-│ │ Driver Container │ │ Worker Node (Executor Pool) │ │
-│ │ ┌────────────────┐ │ │ ┌─────────────┐ ┌─────────────┐ │ │
-│ │ │ SparkContext │──┼─────┼─▶│ Executor-1 │ │ Executor-2 │ ... │ │
-│ │ │ DAGScheduler │ │ │ │ JVM Heap │ │ JVM Heap │ │ │
-│ │ │ TaskScheduler │ │ │ │ Off-Heap │ │ Off-Heap │ │ │
-│ │ └────────────────┘ │ │ └──────┬──────┘ └──────┬──────┘ │ │
-│ │ cgroup limit: │ │ │ │ │ │
-│ │ driver.memory + │ │ cgroup limit: │ │ │
-│ │ memoryOverhead │ │ executor.memory + │ │ │
-│ └──────────────────────┘ │ overhead + offHeap │ │ │
-│ │ │ │ │ │
-│ ┌──────────────────────┐ │ ▼ ▼ │ │
-│ │ Standalone Master │ │ ┌───────────────────────────────────┐ │ │
-│ │ Container │ │ │ Host Volume (shuffle/spill disk) │ │ │
-│ │ (port 7077) │ │ │ Bypasses OverlayFS copy-on-write │ │ │
-│ └──────────────────────┘ │ └───────────────────────────────────┘ │ │
-│ └──────────────────────────────────────────┘ │
-│ │
-│ ┌──────────────────────────────────────────────────────────────────────┐ │
-│ │ OverlayFS Image Layers │ │
-│ │ Layer 4 (R/W): Container writable layer ← Shuffle/spill AVOID this │ │
-│ │ Layer 3 (RO): app.jar ← Changes per deployment │ │
-│ │ Layer 2 (RO): spark-3.5.0 distribution ← Cached on workers │ │
-│ │ Layer 1 (RO): openjdk:17-slim base ← Cached permanently │ │
-│ └──────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -97,65 +65,6 @@ In docker-compose multi-container setups, all Spark services must be on the same
 
 > **What this demonstrates:** How to structure a multi-stage Dockerfile so that the JRE and Spark distribution layers are cached permanently on worker nodes, and only the application JAR is re-pushed on each deployment, while also correctly configuring `UseContainerSupport` and non-root execution.
 
-```dockerfile
-# ─── Stage 1: Build stage — resolves dependencies, does not ship in final image ───
-FROM maven:3.9-eclipse-temurin-17 AS builder
-WORKDIR /build
-COPY pom.xml .
-# Download all dependencies into the Docker layer cache BEFORE copying source.
-# If pom.xml is unchanged, this entire layer is skipped on next build.
-RUN mvn dependency:go-offline -q
-COPY src/ ./src/
-# Package the application, skipping tests (tests run in CI, not image build)
-RUN mvn package -DskipTests -q
-
-# ─── Stage 2: Minimal runtime image ───
-# openjdk:17-slim is ~220MB vs openjdk:17 at ~470MB; metaspace and code cache
-# are not affected by the image choice — only the base system libraries differ.
-FROM eclipse-temurin:17-jre-jammy
-
-# Layer 1 (most stable): OS packages required by Spark and Hadoop native libs
-RUN apt-get update && apt-get install -y --no-install-recommends \
- procps \ 
- # procps provides 'ps', used by Spark's worker process monitoring
- tini \ 
- # tini is a minimal init system that correctly forwards SIGTERM to the JVM,
- # allowing graceful executor shutdown instead of abrupt SIGKILL on stop.
- && rm -rf /var/lib/apt/lists/*
-
-# Layer 2 (stable, changes ~quarterly): Spark distribution
-# ADD automatically extracts .tgz archives, saving an extra RUN layer
-ARG SPARK_VERSION=3.5.1
-ARG HADOOP_VERSION=3
-ADD https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz /opt/
-RUN ln -s /opt/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /opt/spark
-
-ENV SPARK_HOME=/opt/spark
-ENV PATH="${SPARK_HOME}/bin:${PATH}"
-
-# Layer 3 (changes per deployment): Application JAR — only this layer is
-# re-downloaded on worker nodes when the application changes.
-COPY --from=builder /build/target/my-spark-app.jar /opt/spark/jars/
-
-# Layer 4: Configuration — separate from JAR to avoid invalidating JAR layer
-# on config-only changes.
-COPY spark-defaults.conf /opt/spark/conf/spark-defaults.conf
-
-# Run as non-root: Spark workers do not need root; running as root in Docker
-# is a security risk and violates PodSecurityPolicy in Kubernetes clusters.
-RUN groupadd -r spark && useradd -r -g spark spark \
- && chown -R spark:spark /opt/spark
-USER spark
-
-# Shuffle and spill dirs are declared as volumes — Docker will mount these
-# as host paths in docker-compose/Kubernetes, bypassing OverlayFS.
-VOLUME ["/opt/spark/work", "/tmp/spark-shuffle"]
-
-# tini as PID 1 ensures correct signal handling; without it, SIGTERM from
-# 'docker stop' is not forwarded to the JVM and Spark cannot deregister executors.
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"] 
-```
 
 > **Mastery Note:** The multi-stage build ensures the Maven compiler and full JDK never ship in the runtime image, reducing the final image from ~700MB to ~380MB. The `tini` init process as PID 1 is non-negotiable in production: without it, `docker stop` sends SIGTERM to the Spark JVM, which is intercepted by tini and forwarded correctly, allowing the executor to deregister from the Driver, persist shuffle data markers, and release BlockManager resources gracefully. Without tini, Docker waits 10 seconds (the default stop timeout) then sends SIGKILL, causing the Driver to mark all tasks on that executor as failed and re-submit them. The `VOLUME` declarations ensure that when orchestration tools mount host paths for shuffle directories, the intent is explicit and documented.
 
@@ -327,7 +236,7 @@ spec:
 
 > **What this demonstrates:** A diagnostic PySpark script and shell command set that detects cgroup memory misconfiguration, validates that shuffle directories are on host volumes (not OverlayFS), and measures the actual container memory headroom available to Tungsten's off-heap allocator.
 
-```text
+```python
 # diagnostics/spark_docker_health_check.py
 # Run as: spark-submit --master spark://spark-master:7077 \
 # spark_docker_health_check.py
@@ -466,8 +375,11 @@ Running Apache Spark inside Docker is not a matter of wrapping `spark-submit` in
 
 Image layering strategy determines operational velocity. A monolithic Dockerfile image that bundles the JDK, Spark distribution, and application JAR into a single layer means every code change triggers a multi-gigabyte image pull on every worker node, serializing the cluster startup. The multi-stage build pattern — frozen base layer, frozen Spark layer, hot-swappable application JAR layer — reduces deployment-time image distribution to tens of megabytes and cold-start times from ten minutes to under thirty seconds on a typical ten-node cluster. 
 
-Kubernetes via Docker Desktop adds a third dimension of complexity: the Kubernetes scheduler, cgroup v2 enforcement, and Spark's dynamic executor allocation must all agree on memory and CPU accounting. `UseContainerSupport` and `MaxRAMPercentage` are the bridge between the Kubernetes resource model and JVM ergonomics. The diagnostic patterns — reading `/sys/fs/cgroup/memory.max` from within executors, checking `/proc/mounts` for OverlayFS on shuffle directories, verifying `SPARK_LOCAL_IP` resolves across the Docker network — are the production debugging toolkit that separates an engineer who deploys Spark in Docker from one who operates it reliably at scale. 
+Kubernetes via Docker Desktop adds a third dimension of complexity: the Kubernetes scheduler, cgroup v2 enforcement, and Spark's dynamic executor allocation must all agree on memory and CPU accounting. `UseContainerSupport` and `MaxRAMPercentage` are the bridge between the Kubernetes resource model and JVM ergonomics. The diagnostic patterns — reading `/sys/fs/cgroup/memory.max` from within executors, checking `/proc/mounts` for OverlayFS on shuffle directories, verifying `SPARK_LOCAL_IP` resolves across the Docker network — are the production debugging toolkit that separates an engineer who deploys Spark in Docker from one who operates it reliably at scale.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

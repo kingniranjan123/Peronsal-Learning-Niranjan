@@ -316,7 +316,7 @@ Apache Mesos takes a different approach, acting more like a datacenter operating
 
 ## Flow Diagram
 
-```plaintext
+```bash
 sequenceDiagram
     participant User
     participant SparkSubmit

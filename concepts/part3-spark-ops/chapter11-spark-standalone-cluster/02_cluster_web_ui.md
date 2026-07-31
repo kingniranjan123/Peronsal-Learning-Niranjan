@@ -32,38 +32,6 @@ When a task fails, you first use the Application UI (port 4040) to identify *whi
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    User([Data Engineer])
-    
-    subgraph Cluster Master Node
-        MasterUI[Master Web UI<br>http://master:8080]
-    end
-    
-    subgraph Worker Node 1
-        WorkerUI1[Worker Web UI<br>http://worker1:8081]
-        Exec1Logs[Executor 1 Logs<br>stdout / stderr]
-    end
-    
-    subgraph Worker Node 2
-        WorkerUI2[Worker Web UI<br>http://worker2:8081]
-        Exec2Logs[Executor 2 Logs<br>stdout / stderr]
-    end
-    
-    subgraph Driver Machine
-        AppUI[Application Web UI<br>http://driver:4040]
-    end
-
-    User -->|Views Cluster Health & Registered Workers| MasterUI
-    MasterUI -.->|Links to| WorkerUI1
-    MasterUI -.->|Links to| WorkerUI2
-    
-    User -->|Inspects Stage/Task DAG| AppUI
-    AppUI -.->|Shows failure on Worker 1| WorkerUI1
-    
-    User -->|Reads Stack Traces| WorkerUI1
-    WorkerUI1 -.->|Serves| Exec1Logs
-```
 
 ## Data Visualization
 
@@ -164,11 +132,6 @@ When you submit a Spark application:
 4. When a user requests a page via HTTP, the UI renders HTML using these live data structures.
 5. If an executor fails, the **Worker** (via port 8081) exposes the physical file system logs through its own HTTP endpoints.
 
-```plaintext
-[Spark Engine Events] --> (SparkListener Bus) --> [UI Data Store]
-                                                       |
-[Web Browser] --HTTP GET--> [Jetty Server (Port 4040)]-+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

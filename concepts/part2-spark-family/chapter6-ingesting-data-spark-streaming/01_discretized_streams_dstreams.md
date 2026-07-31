@@ -167,7 +167,7 @@ When a Spark Streaming application starts, a complex orchestration of components
 5. **DAG Generation:** The DStream lineage is translated into an RDD Directed Acyclic Graph (DAG).
 6. **Task Execution:** The DAG Scheduler breaks it into stages and tasks, sending them to Executors to process the RDD.
 
-```plaintext
+```scala
 [External Source: Kafka/Socket]
            | (Continuous Data Stream)
            v

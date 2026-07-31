@@ -36,7 +36,7 @@ When submitting, `spark-submit` uploads your JAR file and any specified dependen
 
 ## Flow Diagram
 
-```plaintext
+```bash
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -159,7 +159,7 @@ Before `spark-submit`, deploying distributed applications required writing custo
 6. The Driver starts, reads the configuration, and registers back with the Cluster Manager to request Executor containers.
 7. Executors are launched, connect to the Driver, and await tasks.
 
-```plaintext
+```bash
 [Developer] --> (spark-submit CLI)
                      |
                      v

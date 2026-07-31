@@ -18,23 +18,6 @@ At the Physical Planning level, Catalyst selects a `HashAggregateExec` strategy 
 
 Once the global means are computed at the Driver JVM, they are broadcasted to all Worker Executor JVMs via a TorrentBroadcast mechanism. For the transformation phase, Tungsten generates code that maps over the vectorized readers, subtracting the broadcasted mean from each element. If the data is stored in Parquet format, Spark utilizes dictionary encoding and run-length encoding (RLE) to accelerate the scanning process. The network serialization for broadcasting the statistical models relies heavily on Kryo serialization rather than standard Java serialization, drastically reducing the byte footprint over the wire and deserialization latency on the worker nodes.
 
-```text
-Driver JVM Worker Executor JVMs
-┌─────────────────────────────────┐ ┌─────────────────────────────────────────┐
-│ Spark MLlib / Catalyst │ │ Tungsten Execution Engine │
-│ │ │ ┌───────────────────────────────────┐ │
-│ 1. Logical Plan Generation │◀── Shuffle ─┤ │ Task 1 (Partial Aggregate) │ │
-│ 2. TreeAggregate (Welford's) │ (Reduce) │ │ ├─ Vectorized Parquet Reader │ │
-│ 3. Global Mean Calculation │ │ │ ├─ Off-Heap Memory Access │ │
-│ │ │ │ └─ WSCG Aggregation Loop │ │
-│ ┌───────────────────────────┐ │ │ └───────────────────────────────────┘ │
-│ │ BroadcastManager │ │── Torrent ─▶│ ┌───────────────────────────────────┐ │
-│ │ (Kryo Serialized Means) │ │ Broadcast │ │ Task 2 (Normalization Map) │ │
-│ └───────────────────────────┘ │ │ │ ├─ Receive Broadcasted Mean │ │
-└─────────────────────────────────┘ │ │ └─ Vector Subtraction (SIMD) │ │
- │ └───────────────────────────────────┘ │
- └─────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **VectorUDT (User Defined Type):** The internal representation used by Spark MLlib to store dense and sparse vectors. It interfaces directly with Catalyst, allowing complex vector math to be evaluated within SQL execution plans.
@@ -230,6 +213,11 @@ Mean normalization within Apache Spark is fundamentally a masterclass in distrib
 The primary danger of mean normalization in Spark lies in memory management, particularly the catastrophic expansion of SparseVectors into DenseVectors. Because Catalyst does not natively protect against densification, the burden falls on the engineer to deeply understand the physical layout of their data structures in off-heap memory. A single misconfigured `StandardScaler` can bring an entire production cluster to a halt through GC thrashing and out-of-memory errors. 
 
 Ultimately, mastering mean normalization is about bridging the gap between abstract mathematical transformations and raw JVM execution. By leveraging Kryo serialization, monitoring BlockManager overhead, and understanding Tungsten’s code-generation patterns, elite Spark practitioners ensure that even the most massive normalization tasks execute with bare-metal efficiency, preserving cluster resources for the intensive model training phases that follow.
-</🔥 Master Class: Mean Normalization> 
+</🔥 Master Class: Mean Normalization>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 471](spark_book.pdf#page=471) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

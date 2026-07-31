@@ -314,23 +314,6 @@ spark.stop()
 ```
 
 **Expected Output:**
-```plaintext
-Valid and Flattened Data:
-+--------+--------------------+-----------+-------------+------+
-|event_id|           timestamp|customer_id|customer_tier|amount|
-+--------+--------------------+-----------+-------------+------+
-|      e1|2023-10-01T10:00:00Z|        101|         gold| 250.5|
-|      e2|2023-10-01T10:05:00Z|        102|       silver|  15.0|
-|      e3|2023-10-01T10:10:00Z|        103|         null| 99.99|
-+--------+--------------------+-----------+-------------+------+
-
-Corrupt Records (Send to DLQ):
-+------------------------------------------------+
-|_corrupt_record                                 |
-+------------------------------------------------+
-|{"event_id": "e4", malformed_payload_missing... |
-+------------------------------------------------+
-```
 
 **Performance Notes:** By defining the `StructType`, Spark reads this dataset in exactly one pass. Using the Dead Letter Queue pattern ensures the pipeline never crashes due to anomalous webhook payloads.
 

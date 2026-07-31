@@ -135,26 +135,6 @@ When you call `stats()` on an `RDD[Double]`, the execution unfolds seamlessly:
 5. **Shuffle/Merge**: The local `StatCounter` from each partition is sent back to the Driver (or merged via a tree-reduce). The Driver calls `merge()` on these counters to combine them into one final global `StatCounter`.
 6. **Result**: The final statistics are returned to the user application.
 
-```plaintext
-[Driver Program]
-       | (Calls .stats() action)
-       v
-+-----------------------------+
-|        DAG Scheduler        |
-+-----------------------------+
-       | (Creates Tasks)
-       v
-[Executor 1]       [Executor 2]       [Executor 3]
-[Partition 1]      [Partition 2]      [Partition 3]
-      |                  |                  |
-(StatCounter 1)    (StatCounter 2)    (StatCounter 3)
-      \                  |                  /
-       \                 |                 /
-        \---> [ Tree Reduce / Merge ] <---/
-                         |
-                         v
-             [Global Final StatCounter] -> Returned to User
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

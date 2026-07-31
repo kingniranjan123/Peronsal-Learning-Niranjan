@@ -22,36 +22,6 @@ Physical planning then selects the file format reader — for Parquet, this is t
 
 The `BlockManager` on each executor uses the partition location URIs from the metastore to determine data locality — scheduling tasks on nodes that physically host the HDFS blocks. A stale or missing partition entry in the metastore therefore produces not just a logical gap in query results, but also prevents the TaskScheduler from making locality-aware decisions, forcing remote reads across the network at full rack-transfer cost (~1 GB/s vs. ~10 GB/s local disk).
 
-```text
-SparkSession (Driver JVM)
-┌───────────────────────────────────────────────────────────────┐
-│ SparkContext │
-│ ┌─────────────────────┐ ┌──────────────────────────────┐ │
-│ │ SessionCatalog │───▶│ HiveExternalCatalog │ │
-│ │ (SparkSQL API) │ │ ┌────────────────────────┐ │ │
-│ └─────────────────────┘ │ │ HiveClientImpl │ │ │
-│ │ │ (Thrift Client) │ │ │
-│ Catalyst Analysis Phase │ └──────────┬─────────────┘ │ │
-│ ┌─────────────────────┐ └─────────────┼────────────────┘ │
-│ │ Unresolved Relation │ │ Thrift RPC │
-│ │ ─▶ CatalogTable │ ▼ │
-│ │ ─▶ PartitionList │ HMS Thrift Server (:9083) │
-│ │ ─▶ ColumnStats │ ┌─────────────────────────────┐ │
-│ └─────────────────────┘ │ Metastore Service │ │
-│ │ ┌─────────────────────┐ │ │
-│ Logical Optimization │ │ MySQL / PostgreSQL │ │ │
-│ ┌─────────────────────┐ │ │ (DBS, TBLS, │ │ │
-│ │ Partition Pruning │◀───│ │ PARTITIONS, │ │ │
-│ │ Stats-based CBO │ │ │ TAB_COL_STATS) │ │ │
-│ └─────────────────────┘ │ └─────────────────────┘ │ │
-│ └─────────────────────────────┘ │
-│ Tungsten Physical Plan │
-│ ┌─────────────────────┐ Executor JVM │
-│ │ VectorizedParquet │───▶ ColumnarBatch (off-heap) │
-│ │ Reader (projection) │ BlockManager (locality-aware) │
-│ └─────────────────────┘ │
-└───────────────────────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -98,7 +68,7 @@ Spark's Cost-Based Optimizer (CBO), enabled via `spark.sql.cbo.enabled=true`, us
 
 > **What this demonstrates:** How to wire Spark to a production MySQL-backed HMS, including connection pool tuning and Kryo serialization, and how to verify the catalog is live before submitting production jobs.
 
-```plaintext
+```python
 import org.apache.spark.sql.SparkSession
 
 val spark = SparkSession.builder()
@@ -258,7 +228,7 @@ spark.stop()
 
 > **What this demonstrates:** Advanced use of the `spark.catalog` API for programmatic database/table introspection, automated partition recovery from a schema mismatch, and dynamic schema evolution — all without writing raw SQL strings.
 
-```text
+```python
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, LongType, DateType
 from pyspark.sql.catalog import Table
@@ -372,8 +342,11 @@ The Hive Metastore is the invisible backbone of every production Spark SQL deplo
 
 The Derby vs. external metastore decision is not a configuration preference — it is a hard architectural constraint. Derby's embedded file lock means a second Spark application connecting to the same warehouse directory will fail with `ERROR XJ040: Failed to start database 'metastore_db'`. The moment your platform has more than one concurrent Spark session (which is immediately, in any real environment), you need MySQL or PostgreSQL behind the HMS Thrift service, with connection pooling tuned for your concurrency profile. The shift from `InMemoryCatalog` to `HiveExternalCatalog` via `enableHiveSupport()` is a one-line change with profound architectural implications for the Driver JVM's `SessionStateBuilder`, Catalyst's Analysis phase, and the TaskScheduler's ability to make data-locality decisions. 
 
-Partition management and statistics collection are ongoing operational disciplines, not one-time setup tasks. Every ETL pipeline that writes new partitions must register them explicitly and run `ANALYZE TABLE` before the next consumer query executes — failing to do so produces stale partition lists that cause missing data, and absent column statistics that force the CBO into heuristic mode, systematically choosing sort-merge joins over broadcast joins and adding unnecessary shuffle stages to every analytical query. Instrumenting these steps into the final task of every Airflow DAG or Dagster job is the hallmark of a production-grade Spark data platform. 
+Partition management and statistics collection are ongoing operational disciplines, not one-time setup tasks. Every ETL pipeline that writes new partitions must register them explicitly and run `ANALYZE TABLE` before the next consumer query executes — failing to do so produces stale partition lists that cause missing data, and absent column statistics that force the CBO into heuristic mode, systematically choosing sort-merge joins over broadcast joins and adding unnecessary shuffle stages to every analytical query. Instrumenting these steps into the final task of every Airflow DAG or Dagster job is the hallmark of a production-grade Spark data platform.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=168" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Hive Metastore Integration">p.168</a> <a href="spark_book.pdf#page=171" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="HiveContext">p.171</a> <a href="spark_book.pdf#page=174" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Managed vs External Tables">p.174</a>
+</div>

@@ -16,25 +16,6 @@ Choosing the right cluster manager is a foundational architectural decision. A d
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A[Cluster Managers] --> B(Local)
-    A --> C(Standalone)
-    A --> D(YARN)
-    A --> E(Kubernetes)
-    
-    B -->|Use Case| B1["Laptop / Unit Tests"]
-    B -->|Topology| B2[Single JVM]
-    
-    C -->|Use Case| C1["Small/Medium Dedicated Clusters"]
-    C -->|Topology| C2[Master & Worker Daemons]
-    
-    D -->|Use Case| D1[Enterprise Hadoop Data Lakes]
-    D -->|Topology| D2[ResourceManager & NodeManagers]
-    
-    E -->|Use Case| E1["Cloud-Native / Containerized"]
-    E -->|Topology| E2[API Server & Pods]
-```
 
 ## Data Visualization
 
@@ -136,19 +117,6 @@ When a Spark job is submitted, the **Driver** process starts and creates a `Spar
 6. The Task Scheduler sends Tasks to the Executors.
 7. Executors process the **Partitions** of data in memory, write shuffle data if necessary, and return the final results.
 
-```plaintext
-[Spark-Submit]
-      |
-      v
-+------------+       Requests       +-----------------+
-|   Driver   | -------------------> | Cluster Manager | (YARN, K8s, Standalone)
-+------------+                      +-----------------+
-      |                               /        |        \
-      | Assigns Tasks                /         |         \ Allocates
-      |                             v          v          v
-      +-------------------> [Executor 1] [Executor 2] [Executor 3]
-                            (Worker A)   (Worker B)   (Worker C)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

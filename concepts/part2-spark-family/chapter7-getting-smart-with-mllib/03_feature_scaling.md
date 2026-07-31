@@ -131,18 +131,6 @@ When `StandardScaler.fit(df)` is called:
 4. **Model Creation:** A `StandardScalerModel` is instantiated on the Driver holding these arrays.
 5. **Transform:** During `StandardScalerModel.transform(df)`, the statistics are broadcasted to the Executors. Executors iterate over partitions, applying the $z = (x - \mu)/\sigma$ formula independently to each vector, yielding the new column.
 
-```plaintext
-[Driver] -> Define StandardScaler -> Call fit()
-   |
-   v
-[Executors] -> Read Partitions -> Compute local sums/counts (Task)
-   |
-   v
-[Driver] -> TreeAggregate results -> Calculate Global Mean & StdDev -> Create Model
-   |
-   v
-[Executors] -> Receive Broadcasted Stats -> Apply Z-score formula -> Return Scaled Vectors
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

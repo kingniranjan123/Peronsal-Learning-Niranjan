@@ -195,23 +195,6 @@ When a user submits an H2O machine learning task via Python:
 7. **Iteration:** Steps 5 and 6 repeat until the algorithm converges or reaches the max epochs.
 8. **Model Generation:** The final model object is assembled and can be downloaded as a low-latency MOJO for production.
 
-```plaintext
-[Python Client] --REST API--> [H2O Cluster Leader]
-                                 |
-           +---------------------+---------------------+
-           |                     |                     |
-     [H2O Node 1]          [H2O Node 2]          [H2O Node 3]
-     (H2OFrame Chunk)      (H2OFrame Chunk)      (H2OFrame Chunk)
-           |                     |                     |
-        Compute               Compute               Compute
-      Gradients             Gradients             Gradients
-           |                     |                     |
-           +----------+----------+----------+----------+
-                      |
-              [Global Aggregation]
-                      |
-                [Model Updated] ---> (Iterate until convergence) ---> [Export MOJO]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

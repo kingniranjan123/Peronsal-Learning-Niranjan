@@ -16,35 +16,6 @@ Beneath the scheduling layer, data transfer between Spark’s JVM-based Tungsten
 
 During distributed training, Spark executors utilize physical GPU resources assigned via Spark's resource scheduling API. The actual neural network gradient synchronization bypasses the Spark Driver and DAGScheduler entirely. Instead, tools like Horovod establish peer-to-peer TCP or RDMA connections directly between the Spark executors. Each executor computes local gradients on its partition of the DataFrame, and the Ring-AllReduce algorithm aggregates these gradients across the cluster in parallel. This eliminates the traditional Parameter Server bottleneck and maintains an optimal O(1) communication footprint relative to the cluster size.
 
-```text
-Driver JVM Worker Executor JVM 1 (GPU 0)
-┌─────────────────────────┐ ┌───────────────────────────────────┐
-│ SparkContext │────┐ │ TaskContext (Barrier Task) │
-│ DAGScheduler │ │ │ ┌───────────────────────────────┐ │
-│ BarrierStageCoordinator │ ├───▶│ │ Tungsten Off-Heap Memory │ │
-└─────────────────────────┘ │ │ │ (Apache Arrow Format) │ │
- │ │ └─────────┬─────────────────────┘ │
- │ │ │ Zero-Copy Read │
- │ │ ┌─────────▼─────────────────────┐ │
- │ │ │ Python Worker (PyTorch/TF) │ │
- │ │ │ - Computes Local Gradients │ │
- │ │ └─────────┬─────────────────────┘ │
- │ └───────────┼───────────────────────┘
- │ │ Ring-AllReduce (NCCL)
-Worker Executor JVM 2 (GPU 1) │ │ Bypasses Spark Driver
-┌──────────────────────────────┴────┐ │
-│ TaskContext (Barrier Task) │ │
-│ ┌───────────────────────────────┐ │ │
-│ │ Tungsten Off-Heap Memory │ │◀──────────┘
-│ │ (Apache Arrow Format) │ │
-│ └─────────┬─────────────────────┘ │
-│ │ Zero-Copy Read │
-│ ┌─────────▼─────────────────────┐ │
-│ │ Python Worker (PyTorch/TF) │ │
-│ │ - Computes Local Gradients │ │
-│ └───────────────────────────────┘ │
-└───────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **BarrierTaskContext:** A specialized Spark task context introduced in Project Hydrogen that enables gang-scheduling. It provides a `barrier()` method that forces all tasks in a stage to pause and wait until all peers have reached the exact same execution point, allowing MPI-based communication to initialize safely.
@@ -176,7 +147,7 @@ trained_weights = hr.run(train_distributed_logic)
 
 > **What this demonstrates:** This code leverages Spark's specialized `binaryFile` format to efficiently ingest raw unstructured data (like images) directly into the Tungsten memory format, ready for neural network consumption.
 
-```plaintext
+```python
 // Scala Spark API demonstrating efficient binary payload ingestion
 import org.apache.spark.sql.SparkSession
 
@@ -280,6 +251,11 @@ Mastering deep learning on Apache Spark fundamentally alters how data engineerin
 Furthermore, we dissected the indispensable role of Apache Arrow in bypassing the JVM-to-Python serialization bottleneck. By enabling Tungsten off-heap memory to feed GPU-accelerated training loops with zero-copy efficiency, Spark removes the CPU-bound serialization tax that historically plagued PySpark. Recognizing the impedance mismatch between Spark's partition-based processing and deep learning's need for randomized epochs is vital to preventing catastrophic network shuffles and preserving Catalyst optimizer efficiency. 
 
 Ultimately, integrating these two distinct computational paradigms demands rigorous attention to memory management across the JVM heap, off-heap buffers, and Python worker processes. By internalizing these architectural intricacies—from iterator-based Pandas UDFs to the nuances of barrier scheduling—senior engineers can build highly scalable, unified pipelines that perform both exabyte-scale data engineering and state-of-the-art deep learning within a single, cohesive Spark ecosystem.
-</🔥 Master Class: Deep Learning Concepts> 
+</🔥 Master Class: Deep Learning Concepts>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

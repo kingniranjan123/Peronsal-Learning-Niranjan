@@ -22,48 +22,6 @@ The KVStore is the critical internal component for scalability. By default it is
 
 Rolling event logs, introduced to address the problem of enormous single-file event logs that can reach tens of GBs for long-running streaming jobs, partition the log stream into fixed-size files. When `spark.eventLog.rolling.enabled=true` and a file exceeds `spark.eventLog.rolling.maxFileSize` (default 128MB), the current file is closed and a new one opened in the same application directory. The History Server replays all rolling files in order, correctly reconstructing a unified application view across the file boundaries.
 
-```text
-Driver JVM (Application Process)
-┌────────────────────────────────────────────┐
-│ LiveListenerBus │
-│ ┌──────────────────────────────────────┐ │
-│ │ EventLoggingListener │ │
-│ │ ┌────────────────────────────────┐ │ │
-│ │ │ SparkListenerEvent (JSON line) │ │ │
-│ │ │ → compress(LZ4/Snappy/Zstd) │ │ │
-│ │ └────────────┬───────────────────┘ │ │
-│ └───────────────┼──────────────────────┘ │
-└──────────────────┼─────────────────────────┘
- │ write (atomic rename on stop)
- ▼
- Event Log Storage Backend
- ┌───────────────────────────────────────┐
- │ HDFS / S3 / NFS / Local FS │
- │ app_20240101_0001/ │
- │ ├── events-1.lz4 (≤128 MB) │
- │ ├── events-2.lz4 (≤128 MB) │
- │ └── events-3.lz4 (in-progress) │
- └───────────────────┬───────────────────┘
- │ poll (every 10s)
- ▼
- History Server JVM
- ┌───────────────────────────────────────┐
- │ FsHistoryProvider │
- │ ┌─────────────────────────────────┐ │
- │ │ Replay Thread Pool │ │
- │ │ → JSON decode → AppStatusStore │ │
- │ └──────────────┬──────────────────┘ │
- │ │ │
- │ ┌──────────────▼──────────────────┐ │
- │ │ KVStore (InMemory or LevelDB) │ │
- │ │ ┌──────────┐ ┌──────────────┐ │ │
- │ │ │ App Meta │ │ Stage/Task │ │ │
- │ │ │ SQL Plan │ │ Executor I/O │ │ │
- │ │ └──────────┘ └──────────────┘ │ │
- │ └─────────────────────────────────┘ │
- │ Jetty HTTP Server → REST API / UI │
- └───────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -110,7 +68,7 @@ With `InMemoryStore` (the default), every replayed application's full state — 
 
 > **What this demonstrates:** How to configure the History Server, the Spark application, and the S3A filesystem connector together for reliable event logging at scale, including rolling log files, LevelDB KVStore, and proper S3 credential handling.
 
-```text
+```python
 # spark_history_server_config.py
 # Production-grade configuration generator for SHS + S3 event logs.
 # Run on your cluster management host to emit spark-defaults.conf entries.
@@ -516,8 +474,11 @@ The Spark History Server is a purpose-built observability system whose correctne
 
 The two most common production failure modes — KVStore heap exhaustion and S3 listing latency — both have well-defined solutions: the LevelDB KVStore backend and rolling event logs, respectively. These are not optional optimizations; they are prerequisites for operating SHS in any environment with more than a few hundred completed applications per day. Failing to configure them produces a system that appears functional under load testing but degrades catastrophically in production, either through `OutOfMemoryError` in the SHS JVM or through multi-minute listing delays that cause the SHS UI to show stale or empty application lists. 
 
-The SHS REST API elevates the History Server from a human-facing UI to a machine-queryable metrics store. Integrating it into CI/CD pipelines enables regression detection — an automated job can compare the shuffle bytes written by the current build against the 7-day median and flag a 2x regression before it reaches production. This is the mental model that separates reactive Spark debugging from proactive Spark performance engineering: the History Server is not a post-mortem tool, it is an always-on performance database. 
+The SHS REST API elevates the History Server from a human-facing UI to a machine-queryable metrics store. Integrating it into CI/CD pipelines enables regression detection — an automated job can compare the shuffle bytes written by the current build against the 7-day median and flag a 2x regression before it reaches production. This is the mental model that separates reactive Spark debugging from proactive Spark performance engineering: the History Server is not a post-mortem tool, it is an always-on performance database.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

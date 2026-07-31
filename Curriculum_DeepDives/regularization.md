@@ -16,20 +16,6 @@ The distributed execution heavily relies on the `treeAggregate` primitive across
 
 Once the aggregated gradients arrive at the Driver JVM, the actual optimization algorithm takes over. The regularization penalty itself (whether L1 or L2) is computed entirely on the Driver using the global weight vector, completely independent of the distributed data. For L2 (Ridge) regularization, the gradient of the penalty is mathematically smooth and is simply added to the aggregated data gradient. The Driver then uses the Limited-memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) algorithm to update the weights. However, for L1 (Lasso) regularization, the penalty is non-differentiable at exactly zero. Spark handles this by dynamically switching to the Orthant-Wise Limited-memory Quasi-Newton (OWL-QN) optimizer. OWL-QN restricts the search direction to a specific orthant, enforcing true mathematical sparsity. This sparsity is a massive architectural advantage: Spark dynamically compresses the resulting sparse weight vector, drastically reducing the Kryo serialization payload size during the subsequent `Broadcast` step back to the worker JVMs for the next iteration.
 
-```text
-Driver JVM (Optimizer) Worker Executor JVMs (Gradient Computation)
-┌───────────────────────────────┐ ┌───────────────────────────────────────┐
-│ L-BFGS / OWL-QN Solver │◀──Aggregate──│ Executor Thread Pool │
-│ ┌───────────────────────────┐ │ Gradients │ ┌─────────────────────────────────┐ │
-│ │ 1. Receive Data Gradients │ │ (tree │ │ Task 1: Compute Partition 0 │ │
-│ │ 2. Add L1/L2 Penalty │ │ reduce) │ │ (Tungsten Vectorized Execution) │ │
-│ │ 3. Update Weight Vector │ │ │ └─────────────────────────────────┘ │
-│ └───────────────────────────┘ │ │ ┌─────────────────────────────────┐ │
-│ Broadcast Updated Weights (W) │───Broadcast──▶ │ Task 2: Compute Partition 1 │ │
-└───────────────────────────────┘ (Kryo) │ │ (Tungsten Vectorized Execution) │ │
- │ └─────────────────────────────────┘ │
- └───────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **`treeAggregate` Gradient Computation:** Computes partial gradients on RDD/DataFrame partitions locally, then merges them in a tree structure to prevent Driver OOM and network bottlenecking.
@@ -221,6 +207,11 @@ Regularization in Apache Spark transcends its traditional statistical purpose of
 The choice of regularization strategy drastically impacts the physical execution plan and the cluster's stability. Applying an L1 penalty via the `elasticNetParam` forces the Driver to utilize the OWL-QN optimizer, which correctly handles the non-differentiable nature of L1 to result in perfectly sparse weight vectors. This sparsity acts as a potent data compression mechanism, shrinking the payload sizes during the iterative Kryo broadcast phase and severely alleviating JVM Garbage Collection pressure across the entire cluster. Conversely, utilizing pure L2 regularization enables the use of specialized normal equation solvers for lower-dimensional datasets, allowing Spark to bypass iterative gradient descent entirely and solve the system exactly in a single, lightning-fast distributed pass via distributed matrix factorization. 
 
 Mastering regularization within Spark MLlib requires the engineer to think far beyond mathematical formulas and actively visualize the cluster's hardware topology. Every parameter tweak—from the `regParam` magnitude to the `standardization` flag and the solver selection—dictates whether the underlying Catalyst engine will optimize for line-search numerical stability, aggressive network I/O reduction, or CPU-bound distributed matrix factorization. By profoundly understanding the complex interplay between the optimization algorithms on the driver and the workers executing the `treeAggregate` phase, you empower yourself to train models that are not only statistically flawless but architecturally optimized for massive, unforgiving scale.
-</🔥 Master Class: Regularization> 
+</🔥 Master Class: Regularization>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

@@ -2732,7 +2732,8 @@ function render(html) {
   document.getElementById('content-area').scrollTop = 0;
   if (window.hljs) {
     ci.querySelectorAll('pre code').forEach(el => {
-      if (!el.classList.contains('language-plaintext') && !el.classList.contains('language-text')) {
+      // Only skip blocks explicitly tagged as plaintext (ASCII diagrams)
+      if (!el.classList.contains('language-plaintext')) {
         hljs.highlightElement(el);
       }
     });
@@ -3102,9 +3103,9 @@ async function fetchDLQ(partId, chapterId, topicId) {
     aHtml += `</div>`;
     container.innerHTML = aHtml;
 
-    // Re-run highlight.js on new code blocks (skip plaintext/diagram blocks)
+    // Re-run highlight.js on new code blocks (only skip plaintext diagram blocks)
     container.querySelectorAll('pre code').forEach(el => {
-      if (!el.classList.contains('language-plaintext') && !el.classList.contains('language-text')) {
+      if (!el.classList.contains('language-plaintext')) {
         hljs.highlightElement(el);
       }
     });

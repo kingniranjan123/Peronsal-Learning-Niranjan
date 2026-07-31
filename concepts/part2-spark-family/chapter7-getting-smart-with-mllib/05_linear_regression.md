@@ -157,28 +157,6 @@ Linear Regression makes strong assumptions about the data, and it should not be 
 6.  **Weight Update:** The driver uses the aggregated gradient and the optimizer (e.g., L-BFGS) to update the global model weights.
 7.  **Iteration:** Steps 3-6 repeat until the model converges or hits the maximum number of iterations.
 
-```plaintext
-[Driver Node] 
-   | 1. Broadcasts current weights (θ)
-   v
-+---------------------------------------------------+
-|                  [Cluster Network]                |
-+---------------------------------------------------+
-   |                 |                 |
-   v                 v                 v
-[Executor 1]      [Executor 2]      [Executor 3]
-(Partition 1)     (Partition 2)     (Partition 3)
-   |                 |                 |
-   | 2. Computes     | 2. Computes     | 2. Computes
-   |    Local Grad   |    Local Grad   |    Local Grad
-   v                 v                 v
-   +--------> 3. Reduce Gradients <--------+
-                     |
-                     v
-             [Driver Node]
-      4. Updates weights (θ = θ - α * Grad)
-      5. Repeats until convergence
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -316,17 +294,6 @@ print(f"Test R-Squared: {r2:.4f}")
 5.  **Transform & Evaluate:** The trained pipeline processes the test data. RMSE and R-squared are calculated to quantify accuracy.
 
 **Expected Output:**
-```plaintext
-Model Intercept: 491666.6666666667
-Model Coefficients: [111666.42, 45213.11, 67891.22, -23145.88]
-+--------------------+--------+------------------+
-|            features|   price|        prediction|
-+--------------------+--------+------------------+
-|[1500.0,2.0,1.0,2...|300000.0| 303450.123456789 |
-+--------------------+--------+------------------+
-Test RMSE: $3,450.12
-Test R-Squared: 0.9855
-```
 *(Note: Output values are simulated approximations based on sample data)*
 
 **Performance Notes & Best Fit:**

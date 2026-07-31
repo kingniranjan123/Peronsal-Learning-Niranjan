@@ -22,7 +22,7 @@ The Tungsten execution engine's Whole-Stage Code Generation (WSCG) fuses multipl
 
 The `ExpressionEncoder` uses `ScalaReflection` (backed by Scala 2.x runtime reflection via `scala.reflect.api.Universe`) to build a tree of `CreateNamedStruct`, `GetStructField`, and `Invoke` expressions that map between `InternalRow` binary format and your JVM class. This reflection happens once at `Dataset` construction time and is cached, but it means that complex or nested types with custom `apply` factories, generic types with type erasure, or classes with private fields can fail with cryptic `AnalysisException: No encoder found` errors at runtime.
 
-```text
+```scala
  Spark Driver JVM
  ┌───────────────────────────────────────────────────────────────┐
  │ Dataset[T] │
@@ -163,7 +163,7 @@ highEarners_good.explain(true)
 
 > **What this demonstrates:** Why typed `groupByKey().mapGroups()` forces full object materialization in memory for each group while the aggregation DSL stays in Tungsten binary format — and when each approach is the correct choice.
 
-```text
+```scala
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{KeyValueGroupedDataset, Dataset}
 
@@ -221,7 +221,7 @@ val anomaliesDS: Dataset[(String, Double)] = salesDS
 
 > **What this demonstrates:** How to handle types that `ExpressionEncoder` cannot introspect — Java beans, classes with private constructors, and the performance-safety tradeoff of using the Kryo encoder.
 
-```text
+```scala
 import org.apache.spark.sql.{Encoder, Encoders, Dataset}
 import java.time.LocalDate
 
@@ -291,7 +291,7 @@ stateDS.printSchema()
 
 > **What this demonstrates:** The performance and usability differences between `Dataset.joinWith` (which produces `Dataset[(T, U)]`) and the DataFrame join followed by `as[CaseClass]` — a classic expert-level tradeoff with significant shuffle and GC implications.
 
-```text
+```scala
 import org.apache.spark.sql.functions._
 
 case class Order(orderId: Long, customerId: Long, total: Double)
@@ -379,8 +379,11 @@ The Dataset API is not simply a typed wrapper around DataFrames — it is the in
 
 The `ExpressionEncoder[T]` is the linchpin of the entire system. It compiles a schema-aware binary translation layer using Catalyst expression trees, enabling Spark to treat your case class fields as first-class relational columns without the overhead of runtime reflection on every row. Understanding when the Encoder's serializer/deserializer fires — and when Spark stays entirely in `InternalRow` binary format — is the single most important mental model for writing high-performance Dataset code. The Spark UI's SQL tab makes this visible: any physical plan containing `DeserializeToObject` is a signal that you are paying the object materialization tax. 
 
-In production, the pragmatic strategy is to use `Dataset[T]` for type-safe API boundaries (reading from sources, writing to sinks, function signatures) and to perform the bulk of transformation and aggregation logic using column expressions and the aggregation DSL, converting to typed objects only at the final stage. This hybrid approach gives you compile-time schema validation, readable code, and Tungsten-level performance — the core promise the Dataset API was designed to deliver. 
+In production, the pragmatic strategy is to use `Dataset[T]` for type-safe API boundaries (reading from sources, writing to sinks, function signatures) and to perform the bulk of transformation and aggregation logic using column expressions and the aggregation DSL, converting to typed objects only at the final stage. This hybrid approach gives you compile-time schema validation, readable code, and Tungsten-level performance — the core promise the Dataset API was designed to deliver.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=145" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Dataset API">p.145</a> <a href="spark_book.pdf#page=148" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Encoder & Type Safety">p.148</a> <a href="spark_book.pdf#page=151" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Dataset vs DataFrame">p.151</a>
+</div>

@@ -22,44 +22,6 @@ Wide transformations — `groupBy`, `join` (sort-merge or shuffle-hash variants)
 
 The **ShuffleWriter** serializes rows using either Kryo (if configured via `spark.serializer=org.apache.spark.serializer.KryoSerializer`) or Java serialization (the default, which is 3–10× slower and produces 2–5× larger payloads). Every wide transformation is therefore a candidate for serialization tuning.
 
-```text
-Driver JVM
-┌──────────────────────────────────────────────────────────┐
-│ Unresolved Logical Plan │
-│ filter ──▶ groupBy ──▶ join │
-│ │ │
-│ Catalyst Analyzer (resolve columns, types) │
-│ │ │
-│ Catalyst Optimizer (PushDownPredicate, ColumnPruning…) │
-│ │ │
-│ Physical Planner (BroadcastHashJoin vs SortMerge…) │
-│ │ │
-│ Tungsten CodeGen (fused bytecode per stage) │
-│ │ │
-│ DAGScheduler ──▶ Stage 0 (Narrow) ──▶ Stage 1 (Wide) │
-│ TaskScheduler ──▶ TaskSet submitted to executors │
-└──────────────────────────────────────────────────────────┘
-
-Executor JVM (per Worker Node)
-┌──────────────────────────────────────────────────────────┐
-│ Stage 0 Tasks (Narrow — pipelined, no shuffle) │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
-│ │ Task (P0) │ │ Task (P1) │ │ Task (P2) │ │
-│ │ map▶filter │ │ map▶filter │ │ map▶filter │ │
-│ │ [off-heap] │ │ [off-heap] │ │ [off-heap] │ │
-│ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ │
-│ │ ShuffleWrite │ ShuffleWrite │ │
-│ ▼ ▼ ▼ │
-│ ── Shuffle Barrier (MapOutputTracker sync) ──────────── │
-│ │
-│ Stage 1 Tasks (Wide — post-shuffle reduce side) │
-│ ┌──────────────┐ ┌──────────────┐ │
-│ │ Task (P0) │ │ Task (P1) │ │
-│ │ groupBy agg │ │ groupBy agg │ │
-│ │ [heap/UnsafeRow] [heap/UnsafeRow] │
-│ └──────────────┘ └──────────────┘ │
-└──────────────────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -336,8 +298,11 @@ Transformations are the vocabulary of Spark computation, but their power comes e
 
 The narrow-vs-wide boundary is the most consequential architectural concept for production engineering. Narrow transformations compose for free: Tungsten fuses them into single-pass, off-heap binary loops with GC pauses measured in milliseconds. Wide transformations impose hard costs: shuffle write, network transfer, shuffle read, and a full stage barrier during which the DAGScheduler holds the downstream stage until every upstream task completes. Every `groupBy`, `join`, and `repartition` is a deliberate engineering cost that must be justified by the correctness or aggregation requirement it serves. 
 
-Mastering transformations means developing an instinct for the physical reality behind the logical API. When you write `.groupBy("category").agg(sum("revenue"))`, you should mentally see the SortShuffleManager writing sort-ordered shuffle blocks to local disk, the `MapOutputTracker` broadcasting block locations, and the reduce tasks fetching blocks over Netty. When you write `.filter(col("date") > "2024-01-01")`, you should see Catalyst's `PushDownPredicate` rule moving that filter into the Parquet scan's row-group statistics check, skipping entire 128 MB blocks without reading them. That mental model — the gap between the API and the silicon — is what separates a Spark user from a Spark engineer. 
+Mastering transformations means developing an instinct for the physical reality behind the logical API. When you write `.groupBy("category").agg(sum("revenue"))`, you should mentally see the SortShuffleManager writing sort-ordered shuffle blocks to local disk, the `MapOutputTracker` broadcasting block locations, and the reduce tasks fetching blocks over Netty. When you write `.filter(col("date") > "2024-01-01")`, you should see Catalyst's `PushDownPredicate` rule moving that filter into the Parquet scan's row-group statistics check, skipping entire 128 MB blocks without reading them. That mental model — the gap between the API and the silicon — is what separates a Spark user from a Spark engineer.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=36" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="map & flatMap">p.36</a> <a href="spark_book.pdf#page=38" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="filter & reduce">p.38</a> <a href="spark_book.pdf#page=41" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="groupByKey vs reduceByKey">p.41</a> <a href="spark_book.pdf#page=44" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Lazy Evaluation">p.44</a>
+</div>

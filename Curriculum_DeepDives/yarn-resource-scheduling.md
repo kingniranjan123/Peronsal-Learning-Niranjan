@@ -22,41 +22,6 @@ Node labels partition cluster nodes into disjoint (exclusive) or shared (non-exc
 
 Preemption is the mechanism by which the Capacity Scheduler reclaims Containers from over-capacity queues to give them to under-served queues. When `yarn.scheduler.capacity.preemption.enabled=true`, the `PreemptionManager` runs a background thread (period set by `yarn.resourcemanager.monitor.capacity.preemption.monitoring_interval`, default 3 seconds). It calculates each queue's ideal share, identifies queues exceeding it, and marks excess Containers for reclamation. Marked Containers are first given a grace period (`yarn.resourcemanager.monitor.capacity.preemption.max_wait_before_kill`, default 15 seconds) during which the ApplicationMaster can voluntarily release them. Spark's AM does not implement voluntary preemption, so YARN always kills the Container hard after the grace period, causing the executor to be lost and all in-flight tasks and cached shuffle data on it to be invalidated.
 
-```text
-ResourceManager JVM
-┌──────────────────────────────────────────────────────────────────┐
-│ RPC Server (Client/AM/RM protocols) │
-│ ┌────────────────────────┐ ┌──────────────────────────────┐ │
-│ │ ApplicationManager │ │ Capacity Scheduler │ │
-│ │ (App lifecycle, AM │ │ ┌──────────────────────┐ │ │
-│ │ tracking, history) │ │ │ Queue Hierarchy │ │ │
-│ └────────────────────────┘ │ │ root │ │ │
-│ │ │ ├─ prod (60%) │ │ │
-│ ┌────────────────────────┐ │ │ │ ├─ spark (40%) │ │ │
-│ │ NodeLabelManager │ │ │ │ └─ hive (20%) │ │ │
-│ │ (ZK-backed label map) │ │ │ └─ dev (40%) │ │ │
-│ └───────────┬────────────┘ │ └──────────────────────┘ │ │
-│ │ label lookup │ ┌──────────────────────┐ │ │
-│ ▼ │ │DominantResourceCalc │ │ │
-│ ┌────────────────────────┐ │ │ dom_share = max( │ │ │
-│ │ PreemptionManager │ │ │ mem_used/mem_total, │ │ │
-│ │ (monitors every 3s, │ │ │ cpu_used/cpu_total) │ │ │
-│ │ kills after 15s) │ │ └──────────────────────┘ │ │
-│ └────────────────────────┘ └──────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────────┘
- │ allocate() RPC heartbeat (every ~1s)
- ▼
-NodeManager JVM (×N worker nodes)
-┌──────────────────────────────────────────────────────────────────┐
-│ ContainerManager │
-│ ┌──────────────────────┐ ┌──────────────────────────────┐ │
-│ │ Executor Container │ │ External Shuffle Service │ │
-│ │ (Task Runners, │ │ (AuxService: retains shuffle│ │
-│ │ BlockManager, │ │ data after Container dies; │ │
-│ │ NettyRpcEnv) │ │ serves to other executors) │ │
-│ └──────────────────────┘ └──────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -359,7 +324,7 @@ spark.stop()
 
 > **What this demonstrates:** How a Spark application can query YARN's REST API at runtime to inspect queue headroom, detect preemption risk, and adaptively tune `spark.dynamicAllocation.maxExecutors` to avoid breaching queue capacity and triggering preemption of its own Containers.
 
-```plaintext
+```python
 # preemption_aware_submission.py
 # Pattern: Query YARN RM REST API before submission to compute safe executor ceiling.
 
@@ -492,8 +457,11 @@ YARN Resource Scheduling is the contract layer between Spark's computational dem
 
 Preemption is the enforcement mechanism for the capacity contract. When an elastic burst from one queue prevents another queue from reaching its guaranteed minimum, the PreemptionManager reclaims Containers — hard kills after a configurable grace period. For Spark, this means executors can disappear at any time when operating in elastic burst territory, and the application must be architected to tolerate it: ESS retains shuffle data, executor decommission migrates blocks before release, and `maxNumFailures` must be sized to absorb preemption events without aborting. The External Shuffle Service is not optional in preemption-enabled clusters — it is the mechanism that makes the entire dynamic executor lifecycle safe. 
 
-The interaction between these five mechanisms — DRC, labels, hierarchy, preemption, and ESS — means that cluster operators and Spark engineers must share a unified mental model. A queue configuration change in `capacity-scheduler.xml` by a YARN administrator can silently change whether a Spark job's executors are preemptible, which in turn determines whether ESS is load-bearing or merely advisory. Production Spark engineering requires understanding YARN as deeply as Spark's own internals, because the boundary between them is where the most costly and least-debuggable failures originate. 
+The interaction between these five mechanisms — DRC, labels, hierarchy, preemption, and ESS — means that cluster operators and Spark engineers must share a unified mental model. A queue configuration change in `capacity-scheduler.xml` by a YARN administrator can silently change whether a Spark job's executors are preemptible, which in turn determines whether ESS is load-bearing or merely advisory. Production Spark engineering requires understanding YARN as deeply as Spark's own internals, because the boundary between them is where the most costly and least-debuggable failures originate.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=290" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="YARN Architecture">p.290</a> <a href="spark_book.pdf#page=293" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="ApplicationMaster">p.293</a> <a href="spark_book.pdf#page=296" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Dynamic Allocation">p.296</a> <a href="spark_book.pdf#page=299" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Queue Management">p.299</a>
+</div>

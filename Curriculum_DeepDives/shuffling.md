@@ -17,37 +17,6 @@ During the Shuffle Write phase, records are inserted into a memory structure—o
 
 On the Shuffle Read side, reduce tasks are scheduled in the subsequent Stage. They query the MapOutputTracker on the Driver to discover the locations of their respective data blocks. The `BlockTransferService` then initiates network fetches—often via Netty—pulling the required partition blocks from the remote Executor's `BlockManager`. If the data volume being fetched exceeds the local memory capacity, the reduce tasks will also spill to disk, utilizing an `ExternalAppendOnlyMap` to perform final aggregations or sorting.
 
-```text
-Driver JVM Worker 1 Executor JVM
-┌───────────────────────┐ ┌─────────────────────────────────────────────────────┐
-│ │ │ ┌──────────────┐ Shuffle Write Phase │
-│ DAGScheduler │ │ │ Map Task 1 │──────┐ │
-│ │ │ └──────────────┘ ▼ │
-│ MapOutputTrackerMaster│◀────┐ │ ┌────────────┐ ┌───────────────┐ │
-│ │ │ │ │ Memory │──▶│ Spill Files │ │
-└───────────────────────┘ │ │ │ Buffer/ │ └───────────────┘ │
- │ │ │ Sorter │ │ Merge │
- │ │ └────────────┘ ▼ │
- │ │ ┌────────────────────────────────┐ │
- │ │ │ Final Data File & Index File │ │
- │ │ └────────────────────────────────┘ │
- │ └───────────────────────────────────┬─────────────────┘
- │ │
- │ │ Network Fetch (Netty)
- │ Worker 2 Executor JVM │ BlockTransferService
- │ ┌───────────────────────────────────┴─────────────────┐
- │ │ Shuffle Read Phase │
- └─────│ ┌──────────────┐ Fetch Blocks ┌────────────────┐ │
- │ │ Reduce Task 1│◀───────────────│ MapOutputTracker│ │
- │ └──────────────┘ │ Worker │ │
- │ │ Aggregation/Sort └────────────────┘ │
- │ ▼ │
- │ ┌──────────────┐ │
- │ │ External │──▶ Disk Spill (if needed) │
- │ │ AppendOnlyMap│ │
- │ └──────────────┘ │
- └─────────────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **ShuffleManager:** The pluggable interface managing shuffle operations. The default `SortShuffleManager` handles the logistics of sorting, spilling, and merging map outputs, ensuring that the number of intermediate files remains low and disk I/O is minimized during the write phase.
@@ -247,6 +216,11 @@ When a shuffle occurs, it strains every resource available: the JVM heap is bomb
 
 By writing code that minimizes data movement, leverages map-side combinations, and gracefully manages execution memory, an elite engineer transforms a fragile, crash-prone job into a resilient, high-performance pipeline. The difference between a failed Spark job and a successful one almost always comes down to how effectively the shuffle is managed. 
 
-</🔥 Master Class: Shuffling> 
+</🔥 Master Class: Shuffling>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469) [Ref: 456](spark_book.pdf#page=456) [Ref: 461](spark_book.pdf#page=461) [Ref: 470](spark_book.pdf#page=470)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=65" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Shuffle Architecture">p.65</a> <a href="spark_book.pdf#page=68" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="SortShuffleManager">p.68</a> <a href="spark_book.pdf#page=71" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Shuffle Read/Write">p.71</a> <a href="spark_book.pdf#page=74" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Shuffle Tuning">p.74</a>
+</div>

@@ -24,27 +24,6 @@ This overview sets the stage for the specific deep-dives in the subsequent files
 5.  **Double RDD Functions**: Statistical operations on numeric data.
 
 ## Flow Diagram
-```plaintext
-graph TD
-    A[Chapter 2: Spark Fundamentals] --> B(01_spark_shell.md)
-    A --> C(02_rdds.md)
-    A --> D(03_actions.md)
-    A --> E(04_transformations.md)
-    A --> F(05_double_rdd_functions.md)
-
-    B -->|Interactive Sandbox| C
-    C -->|Core Abstraction| G[Spark Programming Model]
-    G -->|Lazy Execution| E
-    G -->|Eager Execution| D
-    C -->|Numeric Specialization| F
-
-    style A fill:#f9f,stroke:#333,stroke-width:4px
-    style B fill:#bbf,stroke:#f66,stroke-width:2px
-    style C fill:#bbf,stroke:#f66,stroke-width:2px
-    style D fill:#bbf,stroke:#f66,stroke-width:2px
-    style E fill:#bbf,stroke:#f66,stroke-width:2px
-    style F fill:#bbf,stroke:#f66,stroke-width:2px
-```
 
 ## Data Visualization
 | Topic | Concept | Analogy | Key Takeaway |
@@ -148,23 +127,6 @@ The foundational RDD model and lazy evaluation shine in scenarios where fine-gra
 5. **Execution:** The Task Scheduler sends Tasks to Executors on worker nodes.
 6. **In-Memory Processing:** Executors run the tasks in parallel, keeping intermediate data in RAM.
 
-```plaintext
-[Driver (User Code)] 
-       | (Calls Action)
-       v
-[DAG Scheduler] ----> Divides logical plan into Stages
-       |
-       v
-[Task Scheduler] ---> Creates Tasks based on Partitions
-       |
-       v
-[Cluster Manager] --> Allocates resources
-       |
-       +-------------------+-------------------+
-       |                   |                   |
-[Executor 1]        [Executor 2]        [Executor N]
-(Processes Part 1)  (Processes Part 2)  (Processes Part 3)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

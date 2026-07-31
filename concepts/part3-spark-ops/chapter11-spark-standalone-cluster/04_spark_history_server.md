@@ -24,21 +24,6 @@ The History Server can also track "incomplete" applications (jobs that are curre
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A["Spark App running"] -->|"spark.eventLog.enabled=true"| B["Event Logs
-written to HDFS or local"]
-    B -->|"App finishes
-UI disappears"| C["History Server
-start-history-server.sh"]
-    C --> D["localhost:18080
-Browse completed apps"]
-    D --> E["Jobs Stages Tasks
-from event log replay"]
-    style A fill:#2980b9,color:#fff
-    style C fill:#1F497D,color:#fff
-    style D fill:#27ae60,color:#fff
-```
 
 ## Data Visualization
 
@@ -145,26 +130,6 @@ It should be used whenever jobs are scheduled automatically (e.g., via Airflow o
 | **Log Cleaner** | Log Rotation / Retention Policies | Prevents storage exhaustion by deleting old historical data. |
 
 ### Q7: What Happens Behind the Scenes?
-```plaintext
-[Spark Application]
-       |
-       v (Internal Event Bus)
-+--------------------+
-| EventLogListener   |  --> Serializes SparkListener events to JSON
-+--------------------+
-       |
-       v (Writes to HDFS/S3)
-[ spark-application-123.lz4 ] 
-       |
-       v (Directory Polling)
-+--------------------+
-|  History Server    |  --> Reconstructs Application State in JVM Memory
-|  (FsHistoryProvider)|
-+--------------------+
-       |
-       v (Serves via Jetty Web Server)
-[ HTTP /localhost:18080 ]
-```
 Behind the scenes, Spark uses an internal event bus. The `EventLogListener` subscribes to this bus. Every time a task starts or ends, the listener captures it and writes a JSON line to the log file (often compressed using LZ4 or Snappy). The History Server uses an `FsHistoryProvider` to scan the storage directory, checking for new files or size changes in existing files. When you click an application in the UI, the server reads the JSON file, replays the events to populate its internal data structures, and then serves the UI pages just like a live Spark Driver would.
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes

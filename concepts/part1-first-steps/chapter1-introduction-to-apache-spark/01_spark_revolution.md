@@ -13,7 +13,7 @@ To solve this, the AMPLab researchers conceptualized a new data structure: the R
 By 2010, Spark was open-sourced, and by 2013, it had been donated to the Apache Software Foundation, quickly becoming a Top-Level Project. Benchmarks showed astounding results: Spark could run logistic regression up to 100x faster than Hadoop MapReduce in memory, and even 10x faster when running on disk (thanks to a more efficient execution engine and DAG optimization). This revolution transformed industries. Financial institutions used it for real-time fraud detection; e-commerce giants used it for interactive recommendation engines; and healthcare companies used it for rapid genomic sequencing analysis. Spark proved that big data didn't have to be slow data.
 
 ## Flow Diagram
-```plaintext
+```bash
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -160,26 +160,6 @@ When a Spark job is submitted, a complex orchestration occurs to achieve its hig
 4. **Executors:** Worker nodes receive Tasks. They execute the code on their assigned data partitions.
 5. **In-Memory Caching:** If `cache()` is called, the Executor stores the partition in its local RAM instead of writing it to disk. 
 
-```plaintext
-+-------------------+        +--------------------+
-|   User Program    |        |   Cluster Manager  |
-| (SparkContext/    +------->+   (YARN/K8s/etc)   |
-|  SparkSession)    |        +---------+----------+
-+---------+---------+                  |
-          |                            |
-          v                            v
-+---------+---------+        +---------+----------+
-|  DAG Scheduler    |        |    Worker Node 1   |
-| (Creates Stages)  +------->+ [Executor] (RAM)   |
-+---------+---------+        |  Task -> Partition |
-          |                  +--------------------+
-          v
-+---------+---------+        +--------------------+
-|  Task Scheduler   |        |    Worker Node 2   |
-| (Assigns Tasks)   +------->+ [Executor] (RAM)   |
-+-------------------+        |  Task -> Partition |
-                             +--------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -299,17 +279,6 @@ spark.stop()
 6. **Output:** The model generates matrix factorizations and outputs predictions.
 
 **Expected Output:**
-```plaintext
-Total ratings loaded: 10485760
-Training model... (This is up to 100x faster than MapReduce!)
-Model training completed in 45.21 seconds
-+------+---------------------------------------------------------+
-|userId|recommendations                                          |
-+------+---------------------------------------------------------+
-|101   |[{858, 4.9}, {50, 4.8}, {296, 4.7}, {1198, 4.6}, {527, 4.5}]|
-|205   |[{318, 4.9}, {2858, 4.7}, {1196, 4.6}, {260, 4.5}, {1210, 4.5}]|
-+------+---------------------------------------------------------+
-```
 
 **Performance Notes:**
 If this same 10-iteration ALS model was written in MapReduce, it would write the intermediate matrix to disk 10 times, taking significantly longer. The explicit `.cache()` is the hero here.

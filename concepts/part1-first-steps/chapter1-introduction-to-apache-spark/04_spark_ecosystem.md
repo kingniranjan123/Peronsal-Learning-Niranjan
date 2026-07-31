@@ -22,44 +22,6 @@ When you submit a Spark job to a cluster of 100 machines, something needs to fig
 Spark acts as a universal router for data. It connects to message brokers like Apache Kafka to ingest real-time streaming data. It connects to Apache Hive to read metadata and schemas, allowing Spark SQL to act as a massive distributed data warehouse. It utilizes Apache ZooKeeper for high availability and coordination in streaming scenarios. This pluggable architecture means that as new technologies emerge, Spark simply needs a connector to integrate them into its ecosystem.
 
 ## Flow Diagram
-```plaintext
-graph TD
-    subgraph "Resource Managers (Where Spark Runs)"
-        RM1[Apache YARN]
-        RM2[Kubernetes K8s]
-        RM3[Spark Standalone]
-    end
-
-    subgraph "Apache Spark Core Engine"
-        S[Spark Core & Memory Management]
-    end
-
-    subgraph "Storage Layer (Where Data Lives)"
-        ST1[Amazon S3 / ADLS / GCS]
-        ST2[Hadoop HDFS]
-        ST3[(Cassandra / HBase)]
-    end
-    
-    subgraph "Data Ingestion & Metadata"
-        D1[Apache Kafka Streams]
-        D2[Apache Hive Metastore]
-        D3[Delta Lake / Iceberg]
-    end
-
-    RM1 -->|Allocates CPU/RAM| S
-    RM2 -->|Allocates Pods| S
-    RM3 -->|Allocates Local Resources| S
-    
-    S -->|Reads/Writes Batch| ST1
-    S -->|Reads/Writes Batch| ST2
-    S <-->|Fast Lookup/Writes| ST3
-    
-    D1 -->|Streams Data Into| S
-    S <-->|Reads Schemas| D2
-    S <-->|ACID Transactions| D3
-    
-    style S fill:#ff9900,stroke:#333,stroke-width:4px,color:#fff
-```
 
 ## Data Visualization
 | Category | Technology | Role in the Ecosystem | Modern Cloud Equivalent |

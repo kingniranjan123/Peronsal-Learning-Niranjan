@@ -22,38 +22,6 @@ Mesos agents enforce isolation using **cgroups** at the Linux kernel level — e
 
 Frameworks register with the Mesos master by connecting and sending a `SUBSCRIBE` call containing a `FrameworkInfo` protobuf. This protobuf carries the framework's **role** (e.g., `spark`, `marathon`), **failover timeout** (how long the master preserves the framework's resources after a scheduler disconnect), and **capabilities** (e.g., `PARTITION_AWARE`, `MULTI_ROLE`, `GPU_RESOURCES`). The master's **replicated log** — a Paxos-based distributed log built on LevelDB — persists registered framework state, agent registrations, and resource reservations so that a master failover (via ZooKeeper leader election among standby masters) does not lose cluster state.
 
-```text
-ZooKeeper Ensemble (Leader Election)
- │
- ▼
-┌───────────────────────────────────────────────────┐
-│ Mesos Master (Active) │
-│ ┌──────────────┐ ┌────────────────────────┐ │
-│ │ Allocator │ │ Replicated Log │ │
-│ │ (DRF) │ │ (Paxos / LevelDB) │ │
-│ └──────┬───────┘ └────────────────────────┘ │
-│ │ Resource Offers (HTTP/2 or Protobuf) │
-└─────────┼─────────────────────────────────────────┘
- │
- ┌─────┴──────────────────────────┐
- │ │
- ▼ ▼
-┌──────────────────────┐ ┌──────────────────────┐
-│ Spark Framework │ │ Marathon Framework │
-│ Scheduler (Driver) │ │ Scheduler │
-│ - Accept offers │ │ - Launch app tasks │
-│ - Launch executors │ │ - Health checking │
-└──────────┬───────────┘ └──────────┬───────────┘
- │ LaunchTasks │ LaunchTasks
- ┌──────┴───────────────────────────┴──────┐
- │ Mesos Agents (Workers) │
- │ ┌───────────────┐ ┌───────────────┐ │
- │ │ Agent Node 1 │ │ Agent Node 2 │ │
- │ │ cgroup: Task1 │ │ cgroup: Task3│ │
- │ │ cgroup: Task2 │ │ cgroup: Task4│ │
- │ └───────────────┘ └───────────────┘ │
- └──────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -480,8 +448,11 @@ Mesos's two-level scheduling architecture achieves something that monolithic sch
 
 The Mesos master's design as a thin offer broker — maintaining only cluster state and allocation policy, never application semantics — is what gives it its linear scalability. The Catalyst optimizer and Tungsten execution engine inside Spark's driver operate completely independently of Mesos's allocation cycle; Mesos simply provides the physical slots and enforces the cgroup boundaries, while Spark decides what tasks fill those slots and how data moves between them. 
 
-For production Spark deployments on Mesos, the critical engineering decisions are: sizing executor resources to match offer granularity (avoiding partial offer acceptance), configuring roles and quota to protect co-located services from Spark's greedy offer consumption, and selecting the right containerizer (Mesos unified containerizer over Docker daemon for reduced agent overhead). Mastery of Mesos architecture means understanding the full event chain from ZooKeeper leader election through DRF allocation cycles to cgroup enforcement — every link in that chain is a potential failure point and a performance lever. 
+For production Spark deployments on Mesos, the critical engineering decisions are: sizing executor resources to match offer granularity (avoiding partial offer acceptance), configuring roles and quota to protect co-located services from Spark's greedy offer consumption, and selecting the right containerizer (Mesos unified containerizer over Docker daemon for reduced agent overhead). Mastery of Mesos architecture means understanding the full event chain from ZooKeeper leader election through DRF allocation cycles to cgroup enforcement — every link in that chain is a potential failure point and a performance lever.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

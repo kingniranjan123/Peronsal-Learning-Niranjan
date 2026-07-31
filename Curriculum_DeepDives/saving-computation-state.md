@@ -17,20 +17,6 @@ If caching deserialized JVM objects (which is the default behavior for raw RDDs)
 
 Checkpointing operates on an entirely distinct architectural paradigm. While caching stores data via the BlockManager and carefully retains the RDD lineage in the DAGScheduler for fault tolerance, checkpointing completely truncates the lineage graph. It forces an immediate execution action that writes the materialized partition data out to a distributed file system (like HDFS, S3, or GCS) as highly compressed sequence files or Parquet chunks. This truncation is absolutely essential for preventing stack overflow exceptions within the DAGScheduler during highly iterative algorithms (such as PageRank or K-Means clustering) and provides absolute, cross-application fault tolerance. The definitive tradeoff is the severe network and disk I/O penalty associated with writing the files across the cluster network.
 
-```text
-Driver JVM Worker Executor JVM
-┌─────────────────────────┐ ┌──────────────────────────────────────────────┐
-│ DAGScheduler │ │ ┌────────────────┐ ┌───────────────────────┐ │
-│ ┌─────────────────────┐ │ │ │ TaskRunner │ │ BlockManager │ │
-│ │ Stage 0: Compute │ │─(Schedules)▶ │ │ (Partition 0)│ │ ┌───────────────────┐ │ │
-│ │ Stage 1: Write Cache│ │ │ │ └──────┬───────┘ │ │ MemoryStore (Heap)│ │ │
-│ └─────────────────────┘ │ │ │ │ │ │ Off-Heap (Tungsten) │ │ │
-│ │ │ │ ▼ │ │ DiskStore (Spill) │ │ │
-│ BlockManagerMaster │◀──(Reports)──│ ┌────────────────┴─┴───────────────────┐ │ │
-└─────────────────────────┘ │ │ │ Serializer (Kryo / Java) │ │ │
- │ │ └────────────────────────────────────┘ │ │
- └──────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **BlockManager:** A distributed key-value store running on every worker executor and the driver. It manages the physical storage of blocks (data partitions) in memory, on local disk, or in off-heap space, acting as the primary interface for caching.
@@ -228,6 +214,11 @@ Saving computation state is a fundamental, non-negotiable pillar of writing perf
 Conversely, checkpointing addresses the stringent architectural limitations of the DAGScheduler and Catalyst optimizer. By physically writing materialized data to reliable distributed storage and forcefully severing the lineage graph, it protects the Driver JVM from debilitating stack overflows during complex, iterative algorithms like those frequently found in machine learning. Understanding precisely when to use which mechanism is critical; caching preserves the execution lineage for rapid fault tolerance but heavily burdens memory and GC, while checkpointing sacrifices disk I/O throughput and network bandwidth to provide a completely clean, truncated execution slate. 
 
 Ultimately, elite Spark engineering demands precise manipulation of these storage levers. By meticulously managing executor memory boundaries, deeply embracing off-heap Tungsten storage mechanics, and expertly utilizing `localCheckpoint` for immediate query plan truncation, developers can construct massively scalable pipelines that entirely bypass redundant computation and completely eliminate Garbage Collection bottlenecks in production environments.
-</🔥 Master Class: Saving Computation State> 
+</🔥 Master Class: Saving Computation State>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

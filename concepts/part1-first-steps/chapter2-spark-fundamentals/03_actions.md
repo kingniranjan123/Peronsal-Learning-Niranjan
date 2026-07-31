@@ -15,29 +15,6 @@ Actions generally do one of two things:
 It is crucial to understand the implications of returning data to the driver. The driver node has a finite amount of RAM. If you call `collect()` on a 50GB RDD, Spark will attempt to serialize all 50GB, send it over the network, and load it into the driver's memory, causing the driver to crash instantly. Therefore, actions like `take(n)` (which only evaluates enough partitions to get `n` elements) or writing to distributed storage are preferred for large datasets.
 
 ## Flow Diagram
-```plaintext
-graph TD
-    A["RDD Transformations
-Lazy - Not yet computed"] -->|"Action called"| B["DAG Scheduler"]
-    B --> C["Stage 1
-Task execution"]
-    C --> D["Stage 2
-Task execution"]
-    D --> E{"Action Type"}
-    E -->|"collect"| F["All data
-to Driver"]
-    E -->|"count"| G["Single number
-to Driver"]
-    E -->|"saveAsTextFile"| H["Written
-to Disk"]
-    E -->|"foreach"| I["Side effects
-per element"]
-    style A fill:#e74c3c,color:#fff
-    style B fill:#2980b9,color:#fff
-    style F fill:#27ae60,color:#fff
-    style G fill:#27ae60,color:#fff
-    style H fill:#27ae60,color:#fff
-```
 
 ## Data Visualization
 | Action Method | What it Returns | Safe for Massive Data? | Use Case |
@@ -138,21 +115,6 @@ When an action is called, Spark transitions from building a logical plan to exec
 5. **Execution:** Executors process tasks in parallel across the cluster.
 6. **Result Gathering:** The executors either write results to disk or send their computed partial results back to the driver, which merges them to yield the final output.
 
-```plaintext
-[Driver] --> action (e.g., count)
-   |
-   v
-[DAG Scheduler] --> splits into Stages
-   |
-   v
-[Task Scheduler] --> splits into Tasks
-   |
-   v
-[Executors] --> process Tasks (Partitions)
-   |
-   v
-[Driver or Storage] <--- final output
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -226,16 +188,6 @@ spark.stop()
 4. The `write.parquet()` action is called. Executors write the cached data partitions directly to S3.
 
 **Expected output:**
-```plaintext
-Total completed rides today: 154320
-Preview of completed rides:
-+-------+---------+--------+
-|ride_id|   status|distance|
-+-------+---------+--------+
-|   1001|completed|     5.2|
-|   1003|completed|    12.4|
-...
-```
 
 **Performance Notes:** By caching `completed_rides` before triggering actions, we prevented Spark from reading and filtering the raw S3 file three separate times, vastly improving performance.
 

@@ -14,38 +14,6 @@ The **Cluster Manager** is a pluggable component that handles physical resource 
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    subgraph Client Machine / Edge Node
-        A[Spark-Submit] -->|Launches| B(Driver Program)
-    end
-    
-    subgraph Cluster Manager Node
-        C[Cluster Manager: YARN/K8s/Standalone]
-    end
-    
-    subgraph Worker Node 1
-        D[Executor 1]
-        D1[Task 1]
-        D2[Task 2]
-        D3[(Cache/Storage)]
-        D --> D1 & D2 & D3
-    end
-    
-    subgraph Worker Node 2
-        E[Executor 2]
-        E1[Task 3]
-        E2[Task 4]
-        E3[(Cache/Storage)]
-        E --> E1 & E2 & E3
-    end
-
-    B <-->|1. Negotiates Resources| C
-    C -->|2. Allocates/Launches| D
-    C -->|2. Allocates/Launches| E
-    B <-->|3. Sends Tasks & Receives Status| D
-    B <-->|3. Sends Tasks & Receives Status| E
-```
 
 ## Data Visualization
 
@@ -161,18 +129,6 @@ This architecture shines in large-scale data processing scenarios across cluster
 7. **Shuffle**: If needed (e.g., for aggregations), Executors exchange data across the network.
 8. **Result**: Executors send final metrics/results back to the Driver.
 
-```plaintext
-User Code --> Driver (Builds DAG) --> DAG Scheduler (Creates Stages)
-                                          |
-                                     Task Scheduler (Creates Tasks)
-                                          |
-                                   [Cluster Manager Allocates]
-                                          |
-       +----------------------------------+----------------------------------+
-       |                                  |                                  |
-   Executor 1 (Tasks)                 Executor 2 (Tasks)                 Executor 3 (Tasks)
-   [Partition A]                      [Partition B]                      [Partition C]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

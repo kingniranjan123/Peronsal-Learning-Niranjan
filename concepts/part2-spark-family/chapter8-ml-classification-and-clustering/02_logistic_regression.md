@@ -181,19 +181,6 @@ When you call `lr.fit(trainingData)` in Spark, the following execution flow happ
 6. **Weight Update:** The driver updates the model's global weights based on the aggregated gradients.
 7. **Iteration:** Steps 4-6 repeat until convergence or `maxIter` is reached.
 
-```plaintext
-[Driver (Initial Weights)] 
-       | (broadcasts weights)
-       v
-+-----------------------------+
-|        Executors            |
-| Partition 1 | Partition 2   |
-| Calc gradients| Calc grads  |
-+-----------------------------+
-       | (Tree Aggregate)
-       v
-[Driver (Updates Weights via L-BFGS)] --> Repeat until Convergence
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

@@ -459,24 +459,6 @@ When a Spark job is submitted to a YARN cluster with a Capacity Scheduler:
 5. **Allocation:** The RM evaluates cluster load. It grants container leases across various NodeManagers based on queue capacity and data locality.
 6. **Dynamic Scaling:** As the Spark DAG executes, if tasks pile up, Spark requests more executors. If tasks finish and executors idle, Spark releases them back to YARN.
 
-```plaintext
-+----------------+      1. Submit Job     +------------------------+
-| Spark Client   | ---------------------> | YARN ResourceManager   |
-| (--queue mktg) |                        | (Capacity Scheduler)   |
-+----------------+                        +------------------------+
-                                                 | 2. Allocate AM
-                                                 v
-+------------------+    3. Request Execs  +------------------------+
-| NodeManager 1    | <------------------- | NodeManager 2          |
-| [Spark Executor] |                      | [Spark AppMaster]      |
-+------------------+                      +------------------------+
-                                                 | 4. Launch Execs
-                                                 v
-                                          +------------------------+
-                                          | NodeManager 3          |
-                                          | [Spark Executor]       |
-                                          +------------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

@@ -20,25 +20,6 @@ Because deep learning models have millions or billions of parameters, they are h
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A["Input Layer
-feature vector"] --> B["Hidden Layer 1
-ReLU activation"]
-    B --> C["Hidden Layer 2
-ReLU activation"]
-    C --> D["Output Layer
-Softmax for classification
-Linear for regression"]
-    D --> E["Loss Function
-cross-entropy or MSE"]
-    E -->|"Backpropagation"| F["Update Weights
-gradient descent"]
-    F -->|"Next epoch"| A
-    style A fill:#2980b9,color:#fff
-    style D fill:#1F497D,color:#fff
-    style F fill:#27ae60,color:#fff
-```
 
 ## Mathematical Formulas
 
@@ -202,19 +183,6 @@ When training a Distributed Deep Learning model on Spark:
 5. **Weight Update:** The global weights are updated using the aggregated gradients.
 6. **Broadcast:** The new, updated weights are broadcast back to the Executors for the next mini-batch/epoch.
 
-```plaintext
-[Spark Driver / Parameter Server]
-       | (Broadcasts Weights)  ^ (Aggregates Gradients)
-       v                       |
-+---------------------------------------------------+
-|                  Spark Cluster                    |
-|  [Executor 1]      [Executor 2]      [Executor 3] |
-|  - Partition A     - Partition B     - Partition C|
-|  - Fwd Pass        - Fwd Pass        - Fwd Pass   |
-|  - Bwd Pass        - Bwd Pass        - Bwd Pass   |
-|  - Local Gradient  - Local Gradient  - Local Grad |
-+---------------------------------------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

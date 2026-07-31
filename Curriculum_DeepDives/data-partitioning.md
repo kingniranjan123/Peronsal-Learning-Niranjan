@@ -17,34 +17,6 @@ As transformations are applied, the Catalyst optimizer tracks the partitioning s
 
 During a shuffle, the Tungsten execution engine heavily utilizes off-heap memory for shuffle buffers. Tasks running on Executor Thread Pools write map outputs to local disk, partitioned by the target reducer. When reducers fetch this data, they pull it into memory for sorting or hashing. If the incoming partition size exceeds the executor's JVM heap or off-heap allocation, Spark will spill to disk, causing massive performance degradation. Therefore, tuning the number of partitions (e.g., via `spark.sql.shuffle.partitions`) directly impacts the size of each task's working set in memory, dictating whether Tungsten can process the data entirely in RAM or if it must thrash the disk.
 
-```text
-Driver JVM Worker Executor JVM (Node 1)
-┌─────────────────────────┐ ┌─────────────────────────────────────────┐
-│ SparkContext │ │ Executor Thread Pool │
-│ ┌─────────────────────┐ │ Task Execution │ ┌────────────────┐ ┌────────────────┐ │
-│ │ DAGScheduler │─┼────────────────────▶│ │ Task 1 (Part 0)│ │ Task 2 (Part 1)│ │
-│ │ (Stages & Tasks) │ │ │ │ ┌────────────┐ │ │ ┌────────────┐ │ │
-│ └─────────────────────┘ │ │ │ │ Tungsten │ │ │ │ Tungsten │ │ │
-│ ┌─────────────────────┐ │ │ │ │ Binary Row │ │ │ │ Binary Row │ │ │
-│ │ TaskScheduler │ │ │ │ └────────────┘ │ │ └────────────┘ │ │
-│ │ (Task Dispatch) │ │ │ └───────┬────────┘ └────────┬───────┘ │
-│ └─────────────────────┘ │ │ │ Shuffle Write │ │
-└─────────────────────────┘ │ ┌───────▼───────────────────▼───────┐ │
- │ │ BlockManager (Disk/RAM) │ │
- │ └───────────────────────────────────┘ │
- └─────────────────────────────────────────┘
- │ Network Fetch
- Worker Executor JVM (Node 2)
- ┌─────────────────────────────────────────┐
- │ ┌───────────────────────────────────┐ │
- │ │ Shuffle Fetcher (RAM) │ │
- │ └─────────┬─────────────────┬───────┘ │
- │ ┌─────────▼──────┐ ┌────────▼───────┐ │
- │ │ Task 3 (Part 2)│ │ Task 4 (Part 3)│ │
- │ │ (Hash Join) │ │ (Hash Join) │ │
- │ └────────────────┘ └────────────────┘ │
- └─────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **`Partitioner` Trait:** The abstract class defining how key-value pairs are mapped to partition IDs (integers). The primary implementations are `HashPartitioner` (uses `Object.hashCode % numPartitions`) and `RangePartitioner` (samples keys to create relatively equal-sized ranges).
@@ -271,6 +243,11 @@ Data partitioning is not merely an operational detail in Apache Spark; it is the
 Mastering partitioning requires recognizing that Spark is fundamentally a network-bound system operating under strict memory constraints. By utilizing techniques like key salting to defeat data skew, leveraging bucketing to eliminate Sort-Merge Join shuffles, and properly ordering `coalesce` and `repartition` transformations to protect DAG parallelism, engineers can tame the volatility of distributed data processing. 
 
 Ultimately, modern Spark relies on Adaptive Query Execution to handle dynamic partition sizing, but AQE cannot fix fundamentally flawed logical plans. The engineer must still architect the data layout—both in memory and on disk—to ensure that the physical execution limits cross-node traffic and maximizes the throughput of Tungsten's vectorized processing engine. True Spark mastery is achieved when the engineer controls the partitions, rather than the partitions controlling the cluster.
-</🔥 Master Class: Data Partitioning> 
+</🔥 Master Class: Data Partitioning>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=115" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Partitioning Strategies">p.115</a> <a href="spark_book.pdf#page=117" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="HashPartitioner">p.117</a> <a href="spark_book.pdf#page=119" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="RangePartitioner">p.119</a> <a href="spark_book.pdf#page=121" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Custom Partitioners">p.121</a>
+</div>

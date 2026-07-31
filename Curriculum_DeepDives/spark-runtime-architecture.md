@@ -22,32 +22,6 @@ Inside the Executor JVM, memory is managed by the **Unified Memory Manager** (in
 
 The **Tungsten execution engine** operates primarily off-heap in the **DirectMemory** region (managed via `sun.misc.Unsafe`), storing binary-encoded rows in a compact format that avoids Java object overhead — a `String` field that costs 48+ bytes as a Java object costs exactly its character count in Tungsten binary format. Whole-Stage CodeGen collapses the entire operator pipeline into a single compiled JVM method, eliminating virtual dispatch and iterator overhead between operators, reducing the CPU cost of a query pipeline by 2-5x compared to interpreted execution.
 
-```text
-Driver JVM Worker Node 1 (Executor JVM)
-┌────────────────────────────────┐ ┌──────────────────────────────────────────────┐
-│ SparkContext │ │ CoarseGrainedExecutorBackend │
-│ ┌─────────────────────────┐ │ Netty │ ┌──────────────────────────────────────┐ │
-│ │ DAGScheduler │◀──┼──RPC────▶│ │ Unified Memory Manager │ │
-│ │ (Stage/Task creation) │ │ │ │ ┌─────────────┬──────────────────┐ │ │
-│ └─────────────────────────┘ │ │ │ │ Reserved │ Spark Pool (60%)│ │ │
-│ ┌─────────────────────────┐ │ │ │ │ 300MB │ ┌────────┬─────┐│ │ │
-│ │ TaskScheduler │ │ │ │ │ │ │Exec Mem│Store││ │ │
-│ │ SchedulerBackend │───┼──Tasks──▶│ │ │ │ │(fluid) │Cache││ │ │
-│ └─────────────────────────┘ │ │ │ └─────────────┴──┴────────┴─────┘│ │ │
-│ ┌─────────────────────────┐ │ │ │ User Memory (40%) │ Off-Heap(Tungsten)│ │
-│ │ MapOutputTracker │◀──┼──shuffle─│ └──────────────────────────────────────┘ │
-│ │ (Master) │ │ metadata│ ┌──────────────────────────────────────┐ │
-│ └─────────────────────────┘ │ │ │ BlockManager (Slave) │ │
-│ ┌─────────────────────────┐ │ │ │ ┌──────────┐ ┌──────────────────┐ │ │
-│ │ BlockManagerMaster │◀──┼──block───│ │ │MemStore │ │ DiskStore │ │ │
-│ │ (Driver-side registry) │ │ reports │ │ │(Heap/UMM)│ │(shuffle/persist) │ │ │
-│ └─────────────────────────┘ │ │ └──────────────────────────────────────┘ │
-└────────────────────────────────┘ │ ┌──────────────────────────────────────┐ │
- │ │ Thread Pool (spark.executor.cores) │ │
- │ │ Task 0 │ Task 1 │ Task 2 │ Task 3 │ │
- │ └──────────────────────────────────────┘ │
- └──────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -362,8 +336,11 @@ Spark's runtime architecture is a precisely engineered contract between the Driv
 
 The `UnifiedMemoryManager` is the most operationally significant internal component — its dynamic boundary between Execution and Storage Memory means that a heavy aggregation job and a cached reference dataset compete for the same pool of bytes, and the aggregation always wins (Execution can evict Storage; Storage cannot evict Execution). Understanding this asymmetry explains a class of production failures where cached DataFrames silently disappear under load, causing re-computation that looks like query regression. The Tungsten engine's off-heap binary format severs the link between dataset size and GC pause duration, which is why off-heap caching is the correct solution when both high-throughput aggregation and stable caching are required simultaneously. 
 
-Network topology awareness and shuffle architecture are the final pillars. Every shuffle write produces exactly one sorted file + one index file per mapper (SortShuffleManager), and the `MapOutputTracker` must hold location records for every `(mapper, reducer)` pair in Driver heap. At 2,000 map tasks × 1,000 shuffle partitions, this is 2 million records — 200MB of Driver heap minimum. Designing Spark jobs means designing for memory at every layer: Driver metadata memory, Executor Execution Memory, Executor Storage Memory, off-heap Tungsten buffers, and the network shuffle — each with its own failure mode and its own configuration lever. 
+Network topology awareness and shuffle architecture are the final pillars. Every shuffle write produces exactly one sorted file + one index file per mapper (SortShuffleManager), and the `MapOutputTracker` must hold location records for every `(mapper, reducer)` pair in Driver heap. At 2,000 map tasks × 1,000 shuffle partitions, this is 2 million records — 200MB of Driver heap minimum. Designing Spark jobs means designing for memory at every layer: Driver metadata memory, Executor Execution Memory, Executor Storage Memory, off-heap Tungsten buffers, and the network shuffle — each with its own failure mode and its own configuration lever.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

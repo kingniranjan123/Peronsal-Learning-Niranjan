@@ -25,25 +25,6 @@ If 999 tasks finish in 10 seconds, but 1 task takes 5 minutes (due to a faulty n
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A[Action Called e.g. collect] --> B(Job Created)
-    B --> C[DAGScheduler]
-    
-subgraph "DAG Translation"
-        C -->|Wide Dependency| D("Stage 1: Map/Filter")
-        C -->|Shuffle Boundary| E("Stage 2: Reduce")
-end
-    
-    D --> F[TaskScheduler]
-    E --> F
-    
-subgraph "Cluster Execution"
-        F -->|Partition 1| G[Task 1 on Executor A, Core 1]
-        F -->|Partition 2| H[Task 2 on Executor A, Core 2]
-        F -->|Partition 3| I[Task 3 on Executor B, Core 1]
-end
-```
 
 ## Data Visualization
 
@@ -62,7 +43,7 @@ Let's assume a dataset with 4 partitions, running a map, a filter, and a reduceB
 
 ## Code Example
 
-```plaintext
+```python
 from pyspark.sql import SparkSession
 import time
 
@@ -164,19 +145,6 @@ While you can't "choose" not to use Stages and Tasks (they are built into Spark'
 4. **Executors**: Receive the Tasks and execute them on individual CPU cores.
 5. **Shuffle**: When a Stage ends, Tasks write intermediate results to local disk. The next Stage's Tasks fetch this data across the network.
 
-```plaintext
-Driver Program
-      │
-      ▼
-DAGScheduler ──(Splits Job at Shuffles)──► Stage 1 (Narrow Deps)
-                                              │
-                                              ▼
-                                       TaskScheduler
-                                              │
-                                              ├─► Task 1 (Partition 1) ─► Executor A
-                                              ├─► Task 2 (Partition 2) ─► Executor A
-                                              └─► Task 3 (Partition 3) ─► Executor B
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -225,7 +193,7 @@ DAGScheduler ──(Splits Job at Shuffles)──► Stage 1 (Narrow Deps)
 **Dataset Description:** A CSV of viewing records with columns `user_id`, `movie_id`, `genre`, and `watch_minutes`. 
 
 **PySpark Code:**
-```plaintext
+```python
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import sum, col
 

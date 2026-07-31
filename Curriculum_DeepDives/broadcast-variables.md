@@ -18,29 +18,6 @@ Rather than the Driver directly pushing this data to all executors, Spark employ
 
 On the execution side, Tungsten's Whole-Stage Code Generation seamlessly integrates broadcasted variables. During a Broadcast Hash Join, Tungsten generates optimized Java bytecode that reads directly from the broadcasted hash relation residing in the executor's memory. This memory is typically managed off-heap to circumvent JVM garbage collection overhead. By avoiding the shuffle phase entirely—bypassing local disk spills, network fetches, and sort-merge operations—broadcast variables enable a direct map-side join, operating at the speed of raw memory access.
 
-```text
-Driver JVM Worker Executor JVM (Node 1)
-┌────────────────────────────────┐ ┌─────────────────────────────────────┐
-│ SparkContext │ Chunk │ BlockManager │
-│ ┌──────────────────────────┐ │ Fetch (P2P)│ ┌───────────────────────────────┐ │
-│ │ TorrentBroadcastFactory │◀─┼──────────────┼─▶│ Broadcast Block (Cached) │ │
-│ └──────────────────────────┘ │ │ └───────────────────────────────┘ │
-│ BlockManagerMaster │ │ Executor Thread Pool │
-│ ┌──────────────────────────┐ │ │ ┌──────────────┐ ┌──────────────┐ │
-│ │ Serialized Chunks (4MB) │ │ │ │ Task 1 │ │ Task 2 │ │
-│ └──────────────────────────┘ │ │ │ (Read-Only) │ │ (Read-Only) │ │
-└────────────────────────────────┘ │ └──────────────┘ └──────────────┘ │
- ▲ └─────────────────────────────────────┘
- │ Chunk Fetch (P2P) ▲
- ▼ │ Chunk Fetch (P2P)
-Worker Executor JVM (Node 2) ▼
-┌────────────────────────────────┐ Worker Executor JVM (Node 3)
-│ BlockManager │ ┌─────────────────────────────────────┐
-│ ┌──────────────────────────┐ │ │ BlockManager │
-│ │ Broadcast Block (Cached) │ │ │ ┌───────────────────────────────┐ │
-│ └──────────────────────────┘ │ │ │ Broadcast Block (Cached) │ │
-└────────────────────────────────┘ └─────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **TorrentBroadcastFactory:** The internal factory responsible for instantiating the peer-to-peer broadcast mechanism, completely replacing the legacy HttpBroadcast which suffered from Driver bottlenecks at scale.
@@ -201,7 +178,7 @@ joined_df.write.parquet("s3a://data/output")
 
 > **What this demonstrates:** Advanced integration pattern using Broadcast variables for deploying custom, non-Spark ML inference directly onto executor nodes.
 
-```plaintext
+```python
 import xgboost as xgb
 import pandas as pd
 from pyspark.sql.functions import pandas_udf, PandasUDFType
@@ -262,6 +239,11 @@ Broadcast variables represent a critical architectural pillar in Apache Spark's 
 Deeply integrated into the Catalyst Optimizer and the Tungsten execution engine, broadcast mechanisms are the engine behind the Broadcast Hash Join. By materializing a heavily optimized, off-heap `HashedRelation` and distributing it via Torrent protocol, Tungsten can generate highly performant Java bytecode that performs map-side joins at bare-metal memory speeds. This completely bypasses the catastrophic performance penalties of the traditional shuffle-sort phase, enabling interactive analytics on petabyte-scale data lakes. 
 
 However, true mastery requires acute awareness of the inherent dangers, specifically the Driver OOM death spiral. Because Catalyst demands the entirety of the broadcasted data be collected, deserialized, and chunked on the Driver JVM prior to distribution, miscalculating compression ratios or blindly raising the broadcast threshold guarantees cluster failure. By carefully managing lifecycle state via `unpersist()` and understanding the mechanical transition from serialized chunk to JVM object graph, engineers can wield broadcast variables to achieve orders-of-magnitude performance gains in production environments.
-</🔥 Master Class: Broadcast Variables> 
+</🔥 Master Class: Broadcast Variables>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=90" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Broadcast Variables">p.90</a> <a href="spark_book.pdf#page=92" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Driver-to-Executor Broadcast">p.92</a> <a href="spark_book.pdf#page=94" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Broadcast Join Optimization">p.94</a>
+</div>

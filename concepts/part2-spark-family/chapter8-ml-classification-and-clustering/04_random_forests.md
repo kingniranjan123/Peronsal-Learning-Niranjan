@@ -197,20 +197,6 @@ Random Forests are not a silver bullet. You should avoid them when:
 5. **Shuffle**: Minimal shuffling occurs; executors calculate split statistics locally, and the Driver aggregates them to choose the best split for each node in each tree.
 6. **Model Generation**: Once the trees reach `maxDepth` or perfectly separate the data, the Driver finalizes the `RandomForestModel` containing the rules for all trees.
 
-```plaintext
-[Driver] -> Defines RF Estimator -> Calls fit()
-   |
-[Workers/Executors]
-   |--> Partition 1 (Sample A) -> Compute Gini for Feature X
-   |--> Partition 2 (Sample B) -> Compute Gini for Feature Y
-   |--> Partition 3 (Sample C) -> Compute Gini for Feature Z
-   |
-[Driver] <- Aggregates split statistics <- Selects best splits
-   |
-[Iterative Process] -> Trees grow until maxDepth
-   |
-[Final Model] -> Ensemble of Trees stored in memory
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

@@ -21,32 +21,6 @@ Under the hood, memory management within these Executor JVMs is rigidly partitio
 
 Fault tolerance in this system is driven by a rigorous heartbeat protocol. Executors send periodic heartbeats to the Driver, and Workers send heartbeats to the Master. If a Worker stops sending heartbeats (due to a hardware failure or network partition), the Master marks the Worker as "DEAD" and notifies the Driver. The Driver's `DAGScheduler` then invalidates any cached data partitions on that Worker and aggressively reschedules the lost tasks onto surviving Executors, guaranteeing absolute data consistency and processing continuity.
 
-```text
- ┌─────────────────────────────┐
- │ Standalone Master │
- │ (Resource State Ledger) │
- └──────────────┬──────────────┘
- ▲ │ ▲
- Heartbeats │ │ │ LaunchExecutor
- & App Registration │ │ │ Commands
- │ ▼ │
-┌─────────────────────────┐ ┌──────┴───────────────┴──────┐
-│ Driver JVM │ │ Worker JVM │
-│ ┌─────────────────────┐ │ │ ┌─────────────────────────┐ │
-│ │ SparkContext │ │ │ │ Worker RPC Endpoint │ │
-│ │ ┌───────────────┐ │ │ │ └──────────────┬──────────┘ │
-│ │ │ DAGScheduler │ │ │ │ │ forks │
-│ │ └───────────────┘ │ │ │ ┌──────────────▼──────────┐ │
-│ │ ┌───────────────┐ │◀┼───────┼─│ CoarseGrainedExecutor │ │
-│ │ │ TaskScheduler │ │ │ │ │ Backend (Executor JVM) │ │
-│ │ └───────────────┘ │ │ Task │ │ ┌─────────────────────┐ │ │
-│ └─────────────────────┘ │ Dis- │ │ │ Task Thread Pool │ │ │
-│ │ patch │ │ │ BlockManager │ │ │
-│ │───────┼▶│ │ ShuffleClient │ │ │
-└─────────────────────────┘ │ │ └─────────────────────┘ │ │
- │ └─────────────────────────┘ │
- └─────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **Standalone Master:** A lightweight JVM daemon acting as the cluster's resource coordinator. It maintains the global state of the cluster, tracks available CPU/memory on Workers, and schedules resources for competing Spark applications using a simple FIFO queuing model.
@@ -87,7 +61,7 @@ Conversely, in `cluster` mode, the Standalone Master natively schedules a "Drive
 
 > **What this demonstrates:** How to properly initialize a SparkSession targeting a Standalone Master while explicitly preventing the default greedy core-monopolization behavior.
 
-```plaintext
+```python
 import org.apache.spark.sql.SparkSession
 
 // Initialize SparkSession with explicit Standalone resource constraints
@@ -230,6 +204,11 @@ The Apache Spark Standalone cluster architecture is an elegant, high-performance
 Mastery of this architecture requires a deep understanding of its unforgiving defaults. Because the Standalone Master does not impose strict multi-tenant queuing out-of-the-box, engineers must actively protect cluster resources by defining rigid bounds with `spark.cores.max` and carefully sizing JVM heaps and off-heap memory. Furthermore, understanding the nuances of heartbeat timeouts, network topologies, and the critical distinction between client and cluster deploy modes is paramount for ensuring fault tolerance and avoiding devastating Driver OOM scenarios. 
 
 Ultimately, knowing how Spark natively allocates memory, schedules JVMs, and recovers from network partitions at the bare-metal level makes you a vastly superior engineer. Whether you are debugging complex Spark UI metrics, optimizing shuffle mechanics, or eventually migrating pipelines to Kubernetes, the internal JVM dynamics and Catalyst scheduling patterns you learn from the Standalone architecture apply universally across all Spark deployments.
-</🔥 Master Class: Standalone Cluster Components> 
+</🔥 Master Class: Standalone Cluster Components>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=260" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Standalone Cluster">p.260</a> <a href="spark_book.pdf#page=263" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Master & Worker">p.263</a> <a href="spark_book.pdf#page=266" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="REST API">p.266</a> <a href="spark_book.pdf#page=269" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="High Availability">p.269</a>
+</div>

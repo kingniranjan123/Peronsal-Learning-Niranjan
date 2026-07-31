@@ -48,7 +48,7 @@ If the lost partition resulted from a Wide Dependency, Spark would have to go ba
 
 ## Code Example
 
-```plaintext
+```python
 from pyspark import SparkContext, SparkConf
 
 conf = SparkConf().setAppName("LineageExample").setMaster("local[*]")
@@ -146,16 +146,6 @@ While lineage is fundamental to Spark, relying entirely on lineage for fault tol
 5. **Executors**: The tasks are shipped to the Executors to run on the actual data partitions.
 6. **Execution**: If a task fails, the DAGScheduler simply resubmits that specific task based on the lineage.
 
-```plaintext
-[ Logical RDD Lineage ]
-RDD1 --> (map) --> RDD2 --> (filter) --> RDD3 --> (reduceByKey) --> RDD4
-
-[ Physical DAG Execution ]
-Stage 1 (Narrow)                          Stage 2 (Wide)
-[ RDD1(p1) -> map -> filter -> RDD3(p1) ] -- Shuffle --\ 
-                                                        --> [ RDD4(p1) -> reduce ]
-[ RDD1(p2) -> map -> filter -> RDD3(p2) ] -- Shuffle --/
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

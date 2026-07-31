@@ -189,27 +189,6 @@ When you call `ShortestPaths.run(graph, landmarks)`, Spark orchestrates a distri
 5. **Shuffle (Message Routing)**: Because neighbors might exist on different machines, Spark performs a network **Shuffle** to route messages to the correct destination vertex.
 6. **Merge**: Vertices receive messages, update their state (if the new distance is shorter), and the loop repeats until no messages are sent.
 
-```plaintext
-[Driver] Sets Landmarks (e.g., Vertex A)
-   |
-   v
-[Executors] Initialize: A=0, B=Inf, C=Inf
-   |
-   +--> Superstep 1:
-          Vertex A (dist 0) sends "1" to Vertex B
-          Shuffle: Route message to B's machine
-   |
-   +--> Superstep 2:
-          Vertex B (dist 1) sends "2" to Vertex C
-          Shuffle: Route message to C's machine
-   |
-   +--> Superstep 3:
-          Vertex C (dist 2) sends "3" to neighbors. 
-          Neighbors reject (no shorter path).
-   |
-   v
-[Halts] Convergence Reached. Return Result Graph.
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -263,7 +242,7 @@ When you call `ShortestPaths.run(graph, landmarks)`, Spark orchestrates a distri
 
 **Code Execution:**
 
-```plaintext
+```python
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.graphx._
 import org.apache.spark.graphx.lib.ShortestPaths
@@ -338,15 +317,6 @@ object LogisticsRouting {
 6. The algorithm halts when no shorter paths can be found.
 
 **Expected Output**:
-```plaintext
---- Logistics Routing Hops ---
-Warehouse: Chicago Hub -> Hops to Chicago: 0 | Hops to New York: 1
-Warehouse: Denver Hub -> Hops to Chicago: 1 | Hops to New York: 2
-Warehouse: Seattle Hub -> Hops to Chicago: 1 | Hops to New York: 2
-Warehouse: Miami Hub -> Hops to Chicago: -1 | Hops to New York: 1
-Warehouse: New York Hub -> Hops to Chicago: -1 | Hops to New York: 0
-Warehouse: Dallas Hub -> Hops to Chicago: 1 | Hops to New York: 2
-```
 *(Note: Because edges are directional in GraphX by default, some return paths like Miami to Chicago are unreachable (-1) unless bidirectional edges are explicitly added).*
 
 **Performance Notes**:

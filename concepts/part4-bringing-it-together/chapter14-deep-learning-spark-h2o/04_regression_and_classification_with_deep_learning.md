@@ -22,26 +22,6 @@ To ensure success in both cases, hyperparameter tuning is essential. Deep learni
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A["Training Data
-Boston Housing or MNIST"] --> B["Spark DataFrame
-load and clean"]
-    B -->|"asH2OFrame"| C["H2O Frame"]
-    C --> D["H2ODeepLearning
-hidden=[200,200]
-epochs=50"]
-    D --> E["Trained Model
-weights optimized"]
-    E --> F{"Task"}
-    F -->|"Regression"| G["Predict house price
-Evaluate RMSE"]
-    F -->|"Classification"| H["Predict digit 0-9
-Evaluate accuracy"]
-    style D fill:#1F497D,color:#fff
-    style G fill:#27ae60,color:#fff
-    style H fill:#27ae60,color:#fff
-```
 
 ## Data Visualization
 
@@ -222,18 +202,6 @@ This concept is highly valuable across various industries:
 6. **Weight Synchronization**: H2O periodically averages the weights from all executors.
 7. **Scoring**: The model evaluates its loss on validation data and checks for early stopping.
 
-```plaintext
-[Spark Driver] --> [H2O Context]
-                       |
-        +--------------+--------------+
-        |                             |
- [Executor 1 (Partition 1)]    [Executor 2 (Partition 2)]
-  - Forward Pass (Loss)         - Forward Pass (Loss)
-  - Backpropagation (Gradients) - Backpropagation (Gradients)
-        |                             |
-        +-------> [Parameter Server] <+
-                 (Averages Weights)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

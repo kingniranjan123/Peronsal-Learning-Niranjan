@@ -22,28 +22,6 @@ The **Tungsten execution engine** underpins physical execution. For RDD-based co
 
 Network serialization at the shuffle boundary converts RDD partition data into byte streams. Kryo serialization (`spark.serializer=org.apache.spark.serializer.KryoSerializer`) is typically 3–10x faster and 3–5x more compact than Java serialization for user-defined types, and is strongly recommended for any RDD pipeline involving custom case classes or domain objects. Failure to register classes with the `KryoRegistrator` causes Kryo to fall back to Java-compatible mode, silently negating its performance benefit.
 
-```text
-Driver JVM Executor JVM (Worker Node)
-┌──────────────────────────────────┐ ┌────────────────────────────────────────┐
-│ SparkContext │ │ Unified Memory Manager │
-│ ┌────────────────────────────┐ │ │ ┌─────────────────┬────────────────┐ │
-│ │ RDD Lineage DAG │ │ Tasks │ │ Execution Mem. │ Storage Mem. │ │
-│ │ rdd1 ──▶ rdd2 ──▶ rdd3 │──┼──────────▶│ │ (shuffle,sort) │ (BlockManager) │ │
-│ └────────────────────────────┘ │ (Kryo/ │ └─────────────────┴────────────────┘ │
-│ DAGScheduler │ Java ser) │ ┌─────────────────────────────────┐ │
-│ ┌────────────────────────────┐ │ │ │ Task Thread Pool │ │
-│ │ Stage 0: map+filter (pipe) │ │ │ │ ┌──────────┐ ┌──────────┐ │ │
-│ │ Stage 1: reduceByKey │ │ │ │ │ Task P=0 │ │ Task P=1 │ ... │ │
-│ └────────────────────────────┘ │ │ └──────────────────────────────────┘ │
-│ TaskScheduler ──▶ SchedulerBackend │ Tungsten UnsafeExternalSorter │
-└──────────────────────────────────┘ │ (operates on raw memory addresses) │
- └────────────────────────────────────────┘
- Shuffle Service (External or Spark-managed)
- ┌─────────────────────────────────────────┐
- │ Map output files written to local disk │
- │ Reduce tasks fetch via BlockManager RPC │
- └─────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -91,7 +69,7 @@ Partition count is equally critical. With too few partitions (under-parallelism)
 
 > **What this demonstrates:** How to programmatically inspect the RDD lineage DAG to identify stage boundaries before submitting a job — a critical skill for diagnosing unnecessary shuffles.
 
-```plaintext
+```scala
 import org.apache.spark.{SparkConf, SparkContext}
 
 val conf = new SparkConf()
@@ -154,7 +132,7 @@ sc.stop()
 
 > **What this demonstrates:** The precise mechanical difference between a shuffle with a map-side combiner (`aggregateByKey`) and one without (`groupByKey`), and how to calculate per-key statistics that `reduceByKey` alone cannot express.
 
-```text
+```python
 from pyspark import SparkContext, SparkConf
 
 conf = SparkConf() \
@@ -222,7 +200,7 @@ sc.stop()
 
 > **What this demonstrates:** How the `BlockManager` stores RDD cache blocks at different storage levels, and how to select the right level based on executor memory pressure and recomputation cost.
 
-```text
+```scala
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -283,7 +261,7 @@ sc.stop()
 
 > **What this demonstrates:** How a `HashPartitioner` applied once eliminates all subsequent shuffle operations for repeated joins on the same key space — the foundational optimization for graph processing and iterative ML algorithms built on RDDs.
 
-```text
+```scala
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 
 val sc = new SparkContext(new SparkConf().setAppName("Custom-Partitioner").setMaster("local[*]")
@@ -363,8 +341,11 @@ RDDs are the immutable, fault-tolerant distributed collection abstraction that s
 
 The performance gap between naively written and expertly written RDD code is enormous. Choosing `groupByKey` over `aggregateByKey` can increase shuffle data by 100x for skewed key distributions. Failing to apply a custom `HashPartitioner` to both sides of a repeated join forces a full shuffle on every iteration, turning a 10-iteration algorithm from seconds to minutes. Selecting the wrong `StorageLevel` for a cached RDD can cause cascading LRU evictions that force full pipeline recomputation, negating the entire benefit of caching. 
 
-While the DataFrame and Dataset APIs are preferred for structured data because they unlock Catalyst optimization (predicate pushdown, projection pruning) and Tungsten's columnar off-heap execution, RDDs remain indispensable for unstructured data, custom partitioning logic, fine-grained fault tolerance control, and performance-critical iterative graph algorithms. Every production Spark engineer must be fluent in RDD internals because the DataFrame API compiles to RDDs — when the optimizer produces a suboptimal physical plan, dropping to the RDD layer and applying manual optimizations is always available as the escape hatch. 
+While the DataFrame and Dataset APIs are preferred for structured data because they unlock Catalyst optimization (predicate pushdown, projection pruning) and Tungsten's columnar off-heap execution, RDDs remain indispensable for unstructured data, custom partitioning logic, fine-grained fault tolerance control, and performance-critical iterative graph algorithms. Every production Spark engineer must be fluent in RDD internals because the DataFrame API compiles to RDDs — when the optimizer produces a suboptimal physical plan, dropping to the RDD layer and applying manual optimizations is always available as the escape hatch.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=29" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="RDD Fundamentals">p.29</a> <a href="spark_book.pdf#page=32" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Partitions & Dependencies">p.32</a> <a href="spark_book.pdf#page=35" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Transformations & Actions">p.35</a> <a href="spark_book.pdf#page=38" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Lineage & Fault Tolerance">p.38</a> <a href="spark_book.pdf#page=42" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Narrow vs Wide Dependencies">p.42</a>
+</div>

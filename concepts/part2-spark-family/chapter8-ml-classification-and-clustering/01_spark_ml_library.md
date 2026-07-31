@@ -55,7 +55,7 @@ end
 
 ## Code Example
 
-```plaintext
+```python
 from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import Tokenizer, HashingTF
@@ -182,19 +182,6 @@ The Spark ML Pipeline API is ideal for distributed, large-scale machine learning
 4. **Model Creation:** Once the algorithm converges, the Driver broadcasts the final weights. A `PipelineModel` is instantiated.
 5. **Inference:** When `transform()` is called, Spark simply appends new columns to the DataFrame by running the pre-computed mathematical functions on Executors.
 
-```plaintext
-[Driver] -> Builds Pipeline DAG -> [Scheduler] -> Breaks into Stages
-                                                          |
-  +-------------------------------------------------------+
-  |
-  v
-[Executors] -> Read Partitions -> Apply Transformers (In-Memory)
-  |
-  +-> [Iterative ML Stage] -> Compute Gradients -> (Shuffle/Aggregate) -> Update Weights
-  |
-  v
-[Driver] -> Collects Final Weights -> Generates PipelineModel
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -310,15 +297,6 @@ predictions.select("cust_serv_calls", "label", "prediction", "probability").show
 6. For the `test_data`, the model applies the exact same indexing and scaling parameters learned from the training data, then predicts the churn.
 
 **Expected output:**
-```plaintext
-Model AUC: 1.0
-+---------------+-----+----------+--------------------+
-|cust_serv_calls|label|prediction|         probability|
-+---------------+-----+----------+--------------------+
-|              1|  0.0|       0.0|[0.8523...,0.1476...|
-|              3|  1.0|       1.0|[0.3129...,0.6870...|
-+---------------+-----+----------+--------------------+
-```
 
 **Performance notes:**
 - Caching `train_data` before calling `pipeline.fit()` is beneficial since the RandomForest algorithm will make multiple passes over the dataset.

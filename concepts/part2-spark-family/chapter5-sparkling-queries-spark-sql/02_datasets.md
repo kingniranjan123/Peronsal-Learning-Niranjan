@@ -155,22 +155,6 @@ When a Dataset job is executed, Spark goes through the following lifecycle:
 5. **Task Scheduler:** Distributes Tasks to Executors.
 6. **Executors:** Process the data in Tungsten binary format. If a lambda function is used (e.g., `.map()`), the data is temporarily deserialized to a JVM object, processed, and serialized back.
 
-```plaintext
-[Scala Code / Case Class] 
-       | (Compile-time Type Check)
-       v
-[Logical Plan] -> [Catalyst Optimizer] -> [Physical Plan]
-                                              |
-    +-----------------------------------------+
-    | (Encoders map Objects <-> Tungsten Binary)
-    v
-[DAG Scheduler] -> [Stages] -> [Task Scheduler]
-                                      |
-                           +----------+----------+
-                           v                     v
-                      [Executor 1]          [Executor 2]
-                     (Tungsten Memory)     (Tungsten Memory)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -275,14 +259,6 @@ object NetflixDataPipeline {
 4. **Aggregation:** The `.groupBy()` leverages standard Catalyst functions, running directly on Tungsten binary data for blazing speed.
 
 **Expected Output:**
-```plaintext
-+---------------+----------------+
-|      show_name|total_long_views|
-+---------------+----------------+
-|Stranger Things|               1|
-|   Black Mirror|               1|
-+---------------+----------------+
-```
 
 **Performance Notes:**
 While the typed `.filter(log => log.watch_duration_mins > 30)` is extremely safe, in a massive production environment with petabytes of data, rewriting it to `.filter($"watch_duration_mins" > 30)` (DataFrame style) would prevent JVM deserialization and run faster.

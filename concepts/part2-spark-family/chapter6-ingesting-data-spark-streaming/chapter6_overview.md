@@ -18,43 +18,6 @@ This micro-batch architecture offers several profound advantages. First, it simp
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    %% Define styles
-    classDef source fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef receiver fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef rdd fill:#bfb,stroke:#333,stroke-width:2px;
-    classDef output fill:#fbb,stroke:#333,stroke-width:2px;
-
-    %% Components
-    S1(Apache Kafka) -->|Continuous Data Stream| R[Spark Streaming Receiver]
-    S2(Flume / Kinesis) -->|Continuous Data Stream| R
-    S3(TCP Sockets) -->|Continuous Data Stream| R
-    
-    R -->|Buffers records in memory| MB1[Time t to t+1]
-    R -->|Buffers records in memory| MB2[Time t+1 to t+2]
-    R -->|Buffers records in memory| MB3[Time t+2 to t+3]
-
-    subgraph Spark Execution Engine
-        MB1 -->|Forms| RDD1(RDD Batch 1)
-        MB2 -->|Forms| RDD2(RDD Batch 2)
-        MB3 -->|Forms| RDD3(RDD Batch 3)
-        
-        RDD1 -->|Transformations| T1(Transformed RDD 1)
-        RDD2 -->|Transformations| T2(Transformed RDD 2)
-        RDD3 -->|Transformations| T3(Transformed RDD 3)
-    end
-
-    T1 -->|Action| O1[(External Database)]
-    T2 -->|Action| O2[(HDFS / S3)]
-    T3 -->|Action| O3[(Live Dashboards)]
-
-    %% Apply styles
-    class S1,S2,S3 source;
-    class R receiver;
-    class RDD1,RDD2,RDD3,T1,T2,T3 rdd;
-    class O1,O2,O3 output;
-```
 
 ## Data Visualization
 
@@ -195,24 +158,6 @@ When a Spark Streaming application is deployed, a continuous execution flow is e
 6. **State & Shuffle:** If a stateful operation (like `updateStateByKey`) is used, data is shuffled across executors. The executors read previous state from memory/checkpoints and compute the new state.
 7. **Output:** The final RDD action (like `foreachRDD`) triggers writing the results to a database.
 
-```plaintext
-[Kafka Partitions] 
-      │ (Continuous Flow)
-      ▼
-[Spark Executors (Receivers / Direct API)]
-      │ (Buffer into 5-second intervals)
-      ▼
-[Driver] ──(Generates DAG & Tasks)──> [Cluster Manager]
-      │                                    │
-      ▼                                    ▼
-[Micro-Batch RDD n]                 [Worker Nodes]
-      │ (Transformations/Shuffle)          │
-      ▼                                    ▼
-[State RDD] <──(Checkpointing)── [Distributed Memory/HDFS]
-      │
-      ▼
-[External Sink (Cassandra / HDFS / Dashboard)]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

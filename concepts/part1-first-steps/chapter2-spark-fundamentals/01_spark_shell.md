@@ -138,19 +138,6 @@ When you launch the Spark Shell and run a job, a series of orchestrations happen
 5. **Execution:** Executors perform the work on partitions of data.
 6. **Result Return:** Executors send the computed results back to the Driver to be printed in the shell.
 
-```plaintext
-[User Terminal] -> Types commands
-       |
-[Driver JVM] -> Builds DAG -> [DAG Scheduler] -> Divides into Stages
-       |                                                |
-       v                                                v
-[Spark UI] <- Monitors Progress                 [Task Scheduler] -> Dispatches Tasks
-                                                        |
-                                       +----------------+----------------+
-                                       |                                 |
-                                [Executor 1]                      [Executor 2]
-                                (Processes Data)                  (Processes Data)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |
@@ -234,14 +221,6 @@ error_counts.show()
 5. The final formatted table is printed in the terminal.
 
 **Expected Output:**
-```plaintext
-+----------+-----+
-|error_code|count|
-+----------+-----+
-|       500|    2|
-|       404|    1|
-+----------+-----+
-```
 
 **Performance Notes:**
 For a simple log file, this runs instantly. For gigabytes of logs, it utilizes all local cores. If the regex operation is complex, testing it in the shell first prevents wasting hours on a failed cluster deployment.

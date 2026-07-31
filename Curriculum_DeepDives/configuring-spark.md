@@ -16,24 +16,6 @@ Configurations heavily and directly influence the Catalyst Optimizer and the Tun
 
 Finally, network I/O and distributed object serialization are tightly bound to user configuration. By default, Spark may use standard Java serialization for complex data types or closures, which is notoriously bloated, slow, and CPU-intensive. Enforcing Kryo serialization (`spark.serializer`) and specifically configuring its internal buffer sizes (`spark.kryoserializer.buffer.max`) drastically reduces the binary payload size sent across the wire by the ShuffleManager. These configurations determine exactly how effectively Spark's vectorized Parquet readers ingest data from disk directly into Tungsten's binary memory format, bypassing traditional JVM object instantiation entirely and drastically increasing throughput.
 
-```text
-Driver JVM Worker Executor JVM
-┌─────────────────┐ ┌──────────────────────┐
-│ SparkSession │ │ Executor Thread Pool │
-│ SparkContext │──────▶│ ┌────────────────┐ │
-│ DAGScheduler │ │ │ Task 1 (Part.0)│ │
-│ TaskScheduler │ │ │ Task 2 (Part.1)│ │
-└─────────────────┘ │ └────────────────┘ │
- │ │ Memory Management │
- ▼ │ ┌────────────────┐ │
- Catalyst Optimizer │ │ Execution Pool │ │
- (Logical/Physical Plan) │ ├────────────────┤ │
- │ │ │ Storage Pool │ │
- ▼ │ ├────────────────┤ │
- Tungsten Engine │ │ User / Off-Heap│ │
- (Whole-Stage Codegen) │ └────────────────┘ │
- └──────────────────────┘ 
-```
 
 ### Key Internal Components
 - **SparkConf:** The central configuration registry that holds all immutable key-value pairs, initialized exactly once per application, acting as the ultimate source of truth for the `SparkContext`, executors, and all internal subsystems.
@@ -236,6 +218,11 @@ Configuring Apache Spark is fundamentally the structural engineering of distribu
 At its core, understanding configuration means intimately understanding the Spark internal architecture. You must mentally trace the complete lifecycle of a distributed task: how Catalyst plans the initial join based on `autoBroadcastJoinThreshold`, how the Unified Memory Manager partitions the JVM heap based on `spark.memory.fraction`, how the ShuffleManager mathematically sizes its internal file buffers, and exactly how the S3 committer protocol finalizes output data safely. Each property you intentionally set is a direct, low-level command to one of these intricate sub-systems, fundamentally altering the execution DAG and resource allocation matrix across thousands of nodes. 
 
 In modern production data environments, default settings are almost invariably, and often dangerously, insufficient. Dealing with petabytes of data across thousands of ephemeral, containerized cloud nodes demands a highly aggressive posture towards memory overhead allocation, serialization protocols (like Kryo), and adaptive query optimization. An elite Spark data engineer does not guess at configurations; they deeply inspect the Spark UI, scientifically profile the true bottleneck—whether it be localized I/O, CPU thrashing, or network starvation—and surgically inject the precise configuration required to resolve the architectural impedance mismatch.
-</🔥 Master Class: Configuring Spark> 
+</🔥 Master Class: Configuring Spark>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

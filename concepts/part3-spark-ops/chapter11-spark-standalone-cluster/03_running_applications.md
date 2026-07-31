@@ -26,7 +26,7 @@ The Standalone Master uses a FIFO (First-In, First-Out) scheduling policy by def
 
 ## Flow Diagram
 
-```plaintext
+```bash
 sequenceDiagram
     participant User
     participant Submit as spark-submit (Client)
@@ -180,7 +180,7 @@ When you submit an application to a Standalone cluster, a highly orchestrated se
 7. **Execution & Shuffle:** Executors process data in memory. When a wide transformation occurs (e.g., `groupBy`), Executors shuffle data across the network.
 8. **Completion:** Results are saved to storage, the Driver exits, and the Master tears down the Executors.
 
-```plaintext
+```bash
 [User CLI] --(spark-submit)--> [Standalone Master]
                                       | (Assigns Driver)
                                       v
@@ -245,7 +245,7 @@ When you submit an application to a Standalone cluster, a highly orchestrated se
 **Business Problem:** A streaming platform (like Netflix) needs to run a nightly batch job to process user viewing logs. They need to calculate the total watch time per movie to update their trending algorithms. They are using a Spark Standalone cluster on AWS EC2.
 
 **Sample Dataset (`viewing_logs.csv`):**
-```csv
+```scala
 user_id,movie_id,watch_duration_minutes,timestamp
 u123,m991,45,2023-10-27T10:00:00Z
 u456,m991,120,2023-10-27T10:05:00Z

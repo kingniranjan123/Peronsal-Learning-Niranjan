@@ -22,31 +22,6 @@ Hyperparameter tuning via `CrossValidator` is architecturally distinct. Given `k
 
 MLflow integration closes the experiment tracking loop. When `mlflow.spark.autolog()` is enabled, the MLflow PySpark flavor intercepts `Pipeline.fit()` calls via Python monkey-patching, logging all `ParamMap` entries as MLflow run parameters, training metrics as run metrics, and the full `PipelineModel` artifact to the configured `mlflow.set_tracking_uri()` artifact store. The model is serialized using `MLWriter` internally and wrapped in an MLflow model format that supports `python_function`, `spark`, and optionally `mleap` flavors for low-latency serving.
 
-```text
-Driver JVM Executor JVMs
-┌──────────────────────────────────────┐ ┌───────────────────────────────────┐
-│ Pipeline.fit(trainDF) │ │ Task: Stage 0 (StringIndexer) │
-│ ┌──────────────────────────────┐ │ Jobs ──▶ │ ┌───────────────────────────┐ │
-│ │ Stage 0: StringIndexer.fit() │────┼──────────▶│ │ Tungsten Binary Row Scan │ │
-│ │ Stage 1: VectorAssembler │ │ │ │ WSCG Fused Loop │ │
-│ │ Stage 2: StandardScaler.fit()│ │ │ └───────────────────────────┘ │
-│ │ Stage 3: GBTClassifier.fit() │ │ └───────────────────────────────────┘
-│ └──────────────────────────────┘ │
-│ │ ┌───────────────────────────────────┐
-│ CrossValidator (parallelism=4) │ │ Task: Stage 3 (GBT Tree Build) │
-│ ┌──────────────────────────────┐ │ Jobs ──▶ │ ┌───────────────────────────┐ │
-│ │ ParamGrid: 20 combinations │────┼──────────▶│ │ Off-Heap Histogram Buffer │ │
-│ │ 5-fold CV → 100 fit() calls │ │ │ │ Gradient Accumulation │ │
-│ │ Futures pool: 4 concurrent │ │ │ └───────────────────────────┘ │
-│ └──────────────────────────────┘ │ └───────────────────────────────────┘
-│ │
-│ PipelineModel.save("s3://...") │ ┌───────────────────────────────────┐
-│ ┌──────────────────────────────┐ │ │ stages/0_StringIndexerModel/ │
-│ │ MLWriter → Parquet metadata │────┼──────────▶│ stages/2_StandardScalerModel/ │
-│ │ MLflow autolog → Run Params │ │ │ stages/3_GBTClassificationModel/ │
-│ └──────────────────────────────┘ │ └───────────────────────────────────┘
-└──────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -275,7 +250,7 @@ print(f"TVS Best AUC: {max(tvs_model.validationMetrics):.4f}")
 
 > **What this demonstrates:** The full MLWriter serialization protocol for a `PipelineModel`, including what gets written to each directory, and how to load and serve a saved model in a completely separate Spark session without the original training code.
 
-```text
+```python
 from pyspark.ml import PipelineModel
 from pyspark.ml.classification import GBTClassificationModel
 import json, os
@@ -482,8 +457,11 @@ The `spark.ml` Pipeline API fundamentally changes how machine learning is operat
 
 Persistence via `MLWriter`/`MLReader` elevates Spark ML to a production-grade ML platform by storing models as structured Parquet artifacts rather than opaque Java serialized blobs. This makes models introspectable, version-diffable, and loadable across Spark versions — critical properties for regulated industries requiring model audits. The integration with MLflow closes the experiment lifecycle loop: `autolog()` captures the full parameter space of a `ParamGridBuilder` sweep, enabling reproducibility and rollback through the MLflow Model Registry, while the multi-flavor model format (`spark`, `pyfunc`, `mleap`) supports everything from batch PySpark scoring to low-latency REST serving without retraining. 
 
-The performance failure modes in production Spark ML are almost always rooted in one of three causes: data leakage through incorrect pipeline construction order, executor OOM during `CrossValidator` parallel fit due to over-aggressive `parallelism` settings, or first-batch latency spikes after `MLReader.load()` due to lazy Parquet deserialization. Mastering the Spark UI's job timeline, executor memory tab, and SQL plan visualization tools is the non-negotiable path to diagnosing and eliminating these issues in real deployments. 
+The performance failure modes in production Spark ML are almost always rooted in one of three causes: data leakage through incorrect pipeline construction order, executor OOM during `CrossValidator` parallel fit due to over-aggressive `parallelism` settings, or first-batch latency spikes after `MLReader.load()` due to lazy Parquet deserialization. Mastering the Spark UI's job timeline, executor memory tab, and SQL plan visualization tools is the non-negotiable path to diagnosing and eliminating these issues in real deployments.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

@@ -189,32 +189,6 @@ The execution flow from raw event to pixel on a screen involves multiple distrib
 6. **Delivery (Node.js & WebSockets):** A Node.js process acts as a Kafka Consumer. It reads the new JSON payload from the output topic. It loops over its list of open WebSocket connections and writes the JSON payload to the underlying TCP sockets.
 7. **Rendering:** The browser receives the WebSocket frame, triggers a JavaScript event listener, and hands the JSON to a visualization library like D3.js to update the SVG nodes.
 
-```plaintext
-[Raw Event]
-    │
-    ▼
-┌──────────────────┐
-│  Kafka (weblogs) │ (Message Broker, Buffering)
-└────────┬─────────┘
-         │ (Pull via Direct Stream)
-    ┌────┴────┐
-    │  Spark  │ (Executors: Parse -> Filter -> Aggregate)
-    └────┬────┘
-         │ (Push computed metrics)
-         ▼
-┌──────────────────┐
-│  Kafka (stats)   │ (Secondary Broker)
-└────────┬─────────┘
-         │ (Consume)
-    ┌────┴────┐
-    │ Node.js │ (WebSocket Server)
-    └────┬────┘
-         │ (Push via ws://)
-         ▼
-┌──────────────────┐
-│ Browser (D3.js)  │ (Live Visualization)
-└──────────────────┘
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

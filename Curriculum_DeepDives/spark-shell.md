@@ -19,24 +19,6 @@ However, compiling code is only half the battle. Because Spark operates in a dis
 
 Once cleaned, the bytecode and captured variables are serialized—typically using Java serialization for closures and Kryo serialization for data—and broadcasted over the network via a BitTorrent-like protocol to the Executors. The TaskScheduler and DAGScheduler coordinate this orchestration. On the executor side, the bytecode is deserialized, loaded into the JVM metaspace by a custom classloader (the REPL Class Server), and executed by the Tungsten execution engine. Tungsten further optimizes this via Whole-Stage Code Generation (WSCG), collapsing the physical plan into a single, highly optimized Java function that operates directly on binary data in off-heap memory, entirely bypassing the garbage collector for intermediate records.
 
-```text
-Driver JVM (REPL Process) Worker Executor JVM 1
-┌───────────────────────────────────────┐ ┌──────────────────────────────────────┐
-│ ┌─────────────────────────────────┐ │ │ ┌────────────────────────────────┐ │
-│ │ Interactive REPL (ILoop) │ │ │ │ Custom REPL ClassLoader │ │
-│ │ 1. Dynamic Bytecode Compilation │ │ Serialized │ └────────────────────────────────┘ │
-│ └─────────────────────────────────┘ │ Closures │ ┌────────────────────────────────┐ │
-│ ┌─────────────────────────────────┐ │ & Tasks │ │ Executor Thread Pool │ │
-│ │ SparkContext / SparkSession │ │────────────────▶│ │ ┌────────┐ ┌────────┐ │ │
-│ │ 2. Catalyst Optimization │ │ (Netty RPC) │ │ │ Task 1 │ │ Task 2 │ │ │
-│ │ 3. Closure Cleaner │ │ │ │ └────────┘ └────────┘ │ │
-│ └─────────────────────────────────┘ │ │ └────────────────────────────────┘ │
-│ ┌─────────────────────────────────┐ │ │ ┌────────────────────────────────┐ │
-│ │ DAGScheduler & TaskScheduler │ │ │ │ Tungsten Execution Engine │ │
-│ └─────────────────────────────────┘ │ │ │ (Whole-Stage Codegen) │ │
-└───────────────────────────────────────┘ │ └────────────────────────────────┘ │
- └──────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **SparkILoop / REPL Compiler:** The customized Scala interpreter wrapper that captures interactive inputs, compiles them into synthetic classes dynamically, and maintains the state of your session.
@@ -212,6 +194,11 @@ The Apache Spark Shell is the nervous system of interactive distributed computin
 To master the Spark Shell is to master the boundary between local memory and distributed compute. Engineers who understand this environment know that every line typed into the prompt undergoes a rigorous lifecycle: parsing into an AST, cleaning via the Closure Cleaner, physical planning by Catalyst, bytecode generation by Tungsten, and network serialization via Kryo. Ignoring this lifecycle inevitably leads to JVM heap exhaustion, serialization crashes, and unoptimized execution graphs that bring clusters to their knees. 
 
 Ultimately, the Spark Shell is not merely a scratchpad; it is a real-time diagnostic command center. Whether inspecting the Catalyst physical plan with `explain()`, programmatically managing the Hive metastore via the Catalog API, or dynamically manipulating task scheduling pools, true mastery of the REPL unlocks unprecedented agility in big data engineering. It remains one of the most powerful interactive data tools ever built, provided the engineer respects the architectural complexity lurking just beneath the command prompt.
-</🔥 Master Class: Spark Shell> 
+</🔥 Master Class: Spark Shell>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

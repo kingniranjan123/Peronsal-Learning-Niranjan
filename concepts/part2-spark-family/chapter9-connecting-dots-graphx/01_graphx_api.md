@@ -26,35 +26,6 @@ GraphX also provides built-in attributes to compute simple graph metrics instant
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    subgraph Raw Data
-        A[Vertex Source: Users.csv] 
-        B[Edge Source: Relationships.csv]
-    end
-
-    subgraph Spark Core
-        A -->|Map to Tuple| C[Vertex RDD: RDD of VertexId, VD]
-        B -->|Map to Edge| D[Edge RDD: RDD of Edge, ED]
-    end
-
-    subgraph GraphX API
-        C --> E(Graph VD, ED)
-        D --> E
-        
-        E --> F[graph.vertices]
-        E --> G[graph.edges]
-        E --> H[graph.triplets]
-        
-        E --> I[graph.inDegrees]
-        E --> J[graph.outDegrees]
-        E --> K[graph.degrees]
-    end
-
-    F -.->|VertexId, VD| L[Vertex Output]
-    G -.->|srcId, dstId, attr| M[Edge Output]
-    H -.->|srcAttr, edgeAttr, dstAttr| N[Triplet Output]
-```
 
 ## Data Visualization
 
@@ -218,29 +189,6 @@ GraphX excels in scenarios where relationships and network topology are as impor
 ### Q7: What Happens Behind the Scenes?
 When you define a Graph in GraphX, it heavily optimizes the underlying RDDs for graph operations.
 
-```plaintext
-[Driver Program]
-       |
-       v
-[Graph Object Creation] -> Vertices (VertexRDD) + Edges (EdgeRDD)
-       |
-       v
-[Vertex-Cut Partitioning]
-GraphX distributes EDGES across the cluster evenly to balance load.
-Vertices are conceptually cut and duplicated to the machines where their edges reside.
-       |
-       v
-[Routing Table Maintenance]
-Maintains a mapping of which vertex properties need to be shipped to which edge partitions.
-       |
-       v
-[EdgeTriplet Construction (Triplet View)]
-       |---> Executor 1: Ships Vertex A & B to join with Edge 1
-       |---> Executor 2: Ships Vertex B & C to join with Edge 2
-       v
-[Pregel Iteration (If running an algorithm)]
-Superstep 1 -> Send Messages -> Aggregate -> Update Vertices -> Superstep 2 ...
-```
 Behind the scenes, GraphX avoids sending entire edges over the network. Instead, it only ships the modified vertex properties to the edge partitions during joins, heavily reducing network shuffle overhead.
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes

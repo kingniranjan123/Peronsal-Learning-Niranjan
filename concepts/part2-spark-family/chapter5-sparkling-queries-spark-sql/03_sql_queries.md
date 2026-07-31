@@ -18,27 +18,6 @@ Spark SQL supports a vast array of complex SQL-92 and newer features. This inclu
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A[DataFrame] -->|createOrReplaceTempView| B[(Session Temp View)]
-    A -->|createGlobalTempView| C[(Global Temp View)]
-    
-    D[SQL String 'SELECT * FROM...'] --> E(spark.sql)
-    
-    E -->|Resolves table name| B
-    E -->|Resolves table name via global_temp| C
-    
-    B --> F[Spark SQL Parser]
-    C --> F
-    
-    F -->|Same path as DataFrame API| G[Catalyst Optimizer]
-    G --> H[Physical Plan Execution]
-    
-    style A fill:#e1f5fe,stroke:#01579b
-    style B fill:#fff9c4,stroke:#fbc02d
-    style C fill:#ffe0b2,stroke:#f57c00
-    style G fill:#fff3e0,stroke:#e65100
-```
 
 ## Data Visualization
 
@@ -183,24 +162,6 @@ When a SQL query is passed into `spark.sql()`, Spark parses the string into an A
 ### Q7: What Happens Behind the Scenes?
 When you invoke `spark.sql("SELECT department, AVG(salary) FROM employees WHERE age > 30 GROUP BY department")`, a complex process unfolds:
 
-```plaintext
-[ SQL String ] 
-       | 
-       v (SQL Parser)
-[ Unresolved Logical Plan ] --> Abstract Syntax Tree.
-       | 
-       v (Analyzer + Catalog) --> Checks if "employees" table and columns exist.
-[ Resolved Logical Plan ] 
-       | 
-       v (Logical Optimizer) --> Pushes down "age > 30" filter, trims unused columns.
-[ Optimized Logical Plan ]
-       | 
-       v (Physical Planner) --> Generates multiple execution plans (e.g., HashAggregate vs SortAggregate).
-[ Cost Model ] --> Selects the cheapest physical plan based on data statistics.
-       | 
-       v (Code Generation)
-[ RDDs / DAG Execution ] --> Runs as tasks across Executor JVMs.
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -312,14 +273,14 @@ top_genres_df.show()
 5. The `.show()` action triggers execution, displaying the top genres in the console.
 
 **Expected Output:**
-```plaintext
+```bash
 +------+-----------+----------------+
 | genre|total_plays|total_watch_time|
 +------+-----------+----------------+
 |Comedy|          2|             200|
 |Sci-Fi|          2|             270|
 +------+-----------+----------------+
-``` *(Note: For Canada, Comedy is user 1(90) + user 3(90+110=200) = 290 total watch time, Sci-Fi is user 1 (120+150) = 270. Expected output reflects logical aggregation).*
+```
 
 ### 💡 Key Takeaways
 - Spark SQL allows expressing complex data logic in ANSI SQL, offering the exact same execution performance as the PySpark API.
@@ -344,3 +305,6 @@ top_genres_df.show()
 - Apache Spark Official Documentation
 - Learning Spark (O'Reilly)
 - Spark: The Definitive Guide (O'Reilly)
+
+```scala
+```

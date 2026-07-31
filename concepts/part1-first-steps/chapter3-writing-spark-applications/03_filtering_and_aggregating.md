@@ -197,13 +197,6 @@ Whenever raw data needs to be reduced into actionable metrics or when noise need
 5. **Shuffle:** The partially aggregated data is grouped by key and exchanged across the network to destination executors.
 6. **Stage 2 (Reduce/Final Aggregation):** Destination executors receive partial aggregates for specific keys and combine them into final exact counts.
 
-```plaintext
-[Source Data]
-      |
-[Executor 1: Filter & Partial Agg] ---> (KeyA: 5, KeyB: 2) --+
-      |                                                      |-- SHUFFLE --+--> [Executor 3: Final Agg KeyA] (KeyA: 15)
-[Executor 2: Filter & Partial Agg] ---> (KeyA: 10, KeyB: 8) -+             |--> [Executor 4: Final Agg KeyB] (KeyB: 10)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -261,7 +254,7 @@ A streaming service (like Netflix) wants to identify which geographic regions ha
 ```
 
 **PySpark Code:**
-```plaintext
+```python
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, count, desc
 

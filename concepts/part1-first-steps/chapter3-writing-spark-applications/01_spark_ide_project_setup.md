@@ -203,7 +203,7 @@ When you build a Spark project in an IDE, a precise sequence of events occurs to
 4. **Assembly/Shading**: A plugin (like `sbt-assembly`) gathers your compiled code and all third-party libraries (excluding those marked as `provided`) and bundles them into a single large file.
 5. **Deployment Artifact**: The resulting Fat JAR is generated, ready for `spark-submit`.
 
-```plaintext
+```bash
 +-------------+      +-------------------+      +------------------+      +-------------------+
 |  Write Code | ---> | Resolve Libraries | ---> | Compile to Class | ---> | Package Fat JAR   |
 | (IntelliJ)  |      |   (SBT / Maven)   |      |    (scalac)      |      | (sbt-assembly)    |
@@ -262,14 +262,6 @@ When you build a Spark project in an IDE, a precise sequence of events occurs to
 **Sample Dataset description:** A CSV file (`sales.csv`) containing `transaction_id`, `store_id`, `amount`, and `date`.
 
 **Project Structure:**
-```plaintext
-retail-aggregator/
-├── build.sbt
-└── src/
-    └── main/
-        └── scala/
-            └── com/retail/SalesAggregator.scala
-```
 
 **Full working Scala Spark code (`build.sbt`):**
 ```scala
@@ -328,15 +320,6 @@ object SalesAggregator {
 5. The CI/CD pipeline takes the resulting JAR and submits it to the cluster: `spark-submit --class com.retail.SalesAggregator target/scala-2.12/retail-aggregator_2.12-1.0.jar hdfs://data/sales.csv`.
 
 **Expected output:**
-```plaintext
-+--------+-----------+
-|store_id|total_sales|
-+--------+-----------+
-|     102|    4500.50|
-|     101|    3200.00|
-|     105|    1100.25|
-+--------+-----------+
-```
 
 **Performance notes:** Ensure the Spark dependencies are marked as `"provided"` in `build.sbt` to keep the JAR size small and prevent classloader issues during execution.
 **When this approach is best:** This structured approach is best for production pipelines, scheduled batch jobs, and large collaborative codebases where reliability and automated testing are paramount.

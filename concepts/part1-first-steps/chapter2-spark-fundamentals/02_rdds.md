@@ -18,7 +18,7 @@ When you create an RDD (e.g., via `sc.textFile()` or `sc.parallelize()`), Spark 
 The lineage graph is what makes RDDs "Resilient." Instead of relying on HDFS-style data replication (where every block is stored 3 times over the network), an RDD remembers how it was built. If an executor dies, the Spark Driver detects the failure, identifies which partitions were on that executor, and assigns new tasks to other executors to re-run the lineage graph specifically for those missing partitions.
 
 ## Flow Diagram
-```plaintext
+```scala
 graph TD
     subgraph Cluster Nodes
         N1[Node 1: Partition 1]
@@ -134,22 +134,6 @@ While modern Spark development favors DataFrames/Datasets for most use cases due
 5. **Shuffle**: If data needs to be grouped across partitions, executors exchange data over the network.
 6. **Memory**: Results are stored in memory (if cached) or written to disk.
 
-```plaintext
-Driver Program
-      | (Creates Lineage)
-      v
-DAG Scheduler (Splits into Stages)
-      |
-      +---> Stage 1 (Map, Filter) ---> Tasks
-      |
-      +---> [SHUFFLE NETWORK]
-      |
-      +---> Stage 2 (Reduce) ---> Tasks
-                 |
-         Executors (Worker Nodes)
-         [Task 1 on Partition 1]
-         [Task 2 on Partition 2]
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

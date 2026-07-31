@@ -210,21 +210,6 @@ Because a global Priority Queue cannot be efficiently distributed in Spark, a pr
 4. **Action (Collect):** The much smaller, localized subgraph is collected to the Driver's memory.
 5. **Local A* Execution:** The Driver runs a standard, highly-optimized local A* algorithm using a standard Python/Scala Priority Queue.
 
-```plaintext
-[Spark Executors] -> Filter 1 Billion Edges down to 10,000 Edges (Bounding Box)
-       |
-    (Collect)
-       v
-[Spark Driver] -> Initialize Open Set (Priority Queue)
-       |
-       +--> Loop: Pop lowest f(n)
-       |      |
-       |      +--> Check Neighbors
-       |      +--> Calc g(n) + h(n)
-       |      +--> Push to Open Set
-       |
-       +--> Destination Reached -> Return Path
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

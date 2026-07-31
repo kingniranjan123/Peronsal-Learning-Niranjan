@@ -16,25 +16,6 @@ Once the physical plan is finalized, Catalyst hands it over to the Tungsten exec
 
 The `TaskScheduler` then distributes these tasks to the worker JVMs (Executors). Within each Executor JVM, a Task runs in a dedicated thread pool thread, executing the Tungsten-compiled code against its specific partition of data. If the action requires returning data to the driver (like `collect`), the executors serialize the results using the Kryo serializer (if configured) or the default Java serializer, and transmit them over the network via Netty. If the action writes to storage (like `write.parquet`), the task threads write directly to distributed storage (HDFS/S3), bypassing the driver entirely, which is essential for massive scale.
 
-```text
-Driver JVM Worker Executor JVM (Node 1)
-┌─────────────────────────────────┐ ┌───────────────────────────────────┐
-│ User Code triggers Action │ │ Executor Thread Pool │
-│ │ │ │ ┌──────────────┐ ┌─────────────┐ │
-│ ▼ │Network │ │ Task 1 │ │ Task 2 │ │
-│ ┌─────────────────────────────┐ │(Netty) │ │ (Partition 0)│ │(Partition 1)│ │
-│ │ SparkContext │ │───────▶│ │ WSCG Engine │ │ WSCG Engine │ │
-│ │ ┌─────────────────────────┐ │ │ │ └──────┬───────┘ └──────┬──────┘ │
-│ │ │ DAGScheduler (Stages) │ │ │ │ │ │ │
-│ │ │ TaskScheduler (Tasks) │ │ │ │ ▼ ▼ │
-│ │ └─────────────────────────┘ │ │ │ ┌──────────────────────────────┐ │
-│ └─────────────────────────────┘ │ │ │ Tungsten Off-Heap Memory │ │
-└─────────────────────────────────┘ │ └──────────────────────────────┘ │
- ▲ └───────────────────────────────────┘
- │ (Result Transmission) │ (I/O)
- └───────────────────────────────────────────────▼
- Distributed Storage (S3/HDFS) 
-```
 
 ### Key Internal Components
 - **DAGScheduler:** Computes a Directed Acyclic Graph of stages for the submitted job, ensuring operations that don't require a shuffle are pipelined together.
@@ -212,6 +193,11 @@ Actions in Apache Spark are the ignition switches of the distributed engine. The
 Understanding the internal mechanics of actions is what separates junior developers from elite data engineers. An action is not merely a method call; it is a command that dictates network serialization behavior, triggers the DAGScheduler to dispatch tasks, and defines the memory boundaries of the Driver JVM. Misusing actions—such as invoking un-cached iterative operations or attempting to serialize petabytes of data back to the driver—results in degraded performance, wasted cloud compute costs, and catastrophic job failures. 
 
 Mastering actions requires a deep mental model of data locality. You must constantly evaluate whether your final dataset is remaining distributed across the Executor JVMs (via storage writes) or coalescing into the single Driver JVM. By carefully orchestrating actions alongside caching strategies and concurrency controls, engineers can build robust, highly optimized pipelines capable of processing infinite data streams with minimal resource overhead.
-</🔥 Master Class: Actions> 
+</🔥 Master Class: Actions>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=45" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="collect & count">p.45</a> <a href="spark_book.pdf#page=47" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="saveAsTextFile">p.47</a> <a href="spark_book.pdf#page=49" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="foreach & aggregate">p.49</a> <a href="spark_book.pdf#page=51" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Trigger Execution">p.51</a>
+</div>

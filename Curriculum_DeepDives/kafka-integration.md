@@ -16,27 +16,6 @@ Once the physical plan is generated, Tungsten's Whole-Stage Code Generation synt
 
 Because Spark tracks offsets in its own HDFS/S3-backed checkpoint directory rather than relying on Kafka's internal `__consumer_offsets` topic, it can tightly couple offset advancement with the successful completion of a micro-batch and its associated state updates. If an Executor crashes mid-batch, the Driver simply relaunches the task, and the new Executor requests the exact same offset range. This deterministic replayability, combined with idempotent sinks, forms the basis of Spark's exactly-once guarantees, ensuring zero data loss and zero duplication even in chaotic failure scenarios.
 
-```text
-Driver JVM Kafka Cluster
-┌─────────────────────────────────┐ ┌─────────────────────────┐
-│ Structured Streaming Engine │ Offset │ ┌─────────────────────┐ │
-│ ┌─────────────────────────────┐ │ Queries │ │ Topic: events │ │
-│ │ Micro-batch Planner │ │◀───────────▶│ │ Part 0 | Part 1 │ │
-│ │ Offset Tracker (Checkpoint) │ │ │ └─────────────────────┘ │
-│ └─────────────────────────────┘ │ └────────────▲────────────┘
-│ │ │ │
-│ Task Assignment │ │ Data Fetch
-│ ▼ │ │ (Direct)
-└─────────────────────────────────┘ │
-Worker Executor JVMs │
-┌─────────────────────────────────┐ │
-│ Executor Thread Pool │ │
-│ ┌─────────────────────────────┐ │ │
-│ │ Task 1 (Reads Part 0) │ │──────────────────────────┘
-│ │ Task 2 (Reads Part 1) │ │
-│ └─────────────────────────────┘ │
-└─────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **KafkaSourceProvider:** The entry point for the integration, responsible for creating the `KafkaMicroBatchStream` or `KafkaContinuousStream` and validating connection configurations.
@@ -208,6 +187,11 @@ The integration between Apache Spark and Apache Kafka is an engineering marvel t
 Furthermore, the physical execution model bypasses the driver entirely for data transfer. Executors establish direct TCP connections to Kafka partition leaders, heavily leveraging Tungsten's vectorized readers and Kafka's binary protocols to achieve millions of records per second in throughput. The ability to push down consumer configurations directly to the executor pool allows elite engineers to tune fetch sizes, wait times, and idempotence properties, squeezing maximum efficiency out of network I/O. 
 
 Ultimately, mastering this integration is not merely about writing a `.format("kafka")` statement. It requires a profound understanding of the JVM heap, Catalyst's physical task assignment, and Kafka's retention mechanics. Engineers who internalize this architecture do not just build pipelines; they build invincible, real-time data ingestion nervous systems capable of surviving cluster outages, network partitions, and massive data spikes without a single lost byte.
-</🔥 Master Class: Kafka Integration> 
+</🔥 Master Class: Kafka Integration>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=245" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Kafka Source">p.245</a> <a href="spark_book.pdf#page=248" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Exactly-Once Semantics">p.248</a> <a href="spark_book.pdf#page=251" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Kafka Offset Management">p.251</a>
+</div>

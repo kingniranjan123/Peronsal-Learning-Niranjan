@@ -18,7 +18,7 @@ The UI is divided into several crucial tabs:
 
 ## Flow Diagram
 
-```plaintext
+```python
 graph TD
     A[Action Triggered <br> e.g., df.count] --> B[Spark Web UI]
     
@@ -156,19 +156,6 @@ When you interact with the Spark Web UI, it visualizes data collected by the Spa
 4. **Web Server:** The embedded Jetty web server hosts the UI endpoints.
 5. **Rendering:** When you navigate to `http://driver-node:4040/stages`, the web server queries the in-memory state store and renders the HTML/JSON response, constructing the DAG visualizations and metric tables on the fly.
 
-```plaintext
-+-------------------+      +-------------------+      +-------------------+
-| Spark Components  |      |  Event Bus        |      | State Listeners   |
-| (DAGScheduler,    | ---> | (Asynchronous)    | ---> | (AppStatusListener|
-|  TaskScheduler)   |      +-------------------+      |  Store State)     |
-+-------------------+                                 +-------------------+
-                                                                |
-                                                                v
-+-------------------+      +-------------------+      +-------------------+
-| Developer Browser | <--- | Web UI (Jetty)    | <--- | In-Memory /       |
-| (Views port 4040) |      | (Renders HTML)    |      | LevelDB Store     |
-+-------------------+      +-------------------+      +-------------------+
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

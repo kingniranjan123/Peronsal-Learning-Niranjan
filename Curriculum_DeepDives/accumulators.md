@@ -20,24 +20,6 @@ Inside each executor, each task thread maintains a `TaskContext` which holds a `
 
 This architecture means the driver's accumulator value is the merge of all successfully committed task deltas, and the merge happens entirely on the driver JVM heap — no shuffle, no disk, no distributed coordination. The cost is proportional to the number of tasks and the size of each delta, not the size of the entire dataset. However, this also means two critical constraints apply: accumulators are **not** fault-tolerant counters (failed tasks may apply their delta multiple times due to retries), and accumulators updated inside transformations (lazy operations) are only executed when an action forces computation — the "lazy semantics trap" that silently produces zero values if the developer reads the accumulator before calling `.count()` or `.collect()`.
 
-```text
-Driver JVM Executor JVM (Worker Node)
-┌─────────────────────────────────┐ ┌──────────────────────────────────────┐
-│ SparkContext │ │ Task Thread (Partition N) │
-│ ┌─────────────────────────┐ │ Serialize │ ┌────────────────────────────────┐ │
-│ │ AccumulatorContext │ │ Task+AccID │ │ TaskContext │ │
-│ │ WeakHashMap<ID, AccV2> │◀───┼──────────────┼──│ TaskMetrics │ │
-│ └─────────────────────────┘ │ │ │ ┌──────────────────────────┐ │ │
-│ │ │ │ │ AccumulatorV2 (delta) │ │ │
-│ DAGScheduler │ │ │ │ add() called per record │ │ │
-│ ┌─────────────────────────┐ │ Delta via │ │ └──────────────────────────┘ │ │
-│ │ handleTaskCompletion() │◀───┼──────────────┼──│ DirectTaskResult (RPC) │ │
-│ │ accumulator.merge(delta)│ │ Netty RPC │ └────────────────────────────────┘ │
-│ └─────────────────────────┘ │ └──────────────────────────────────────┘
-│ │
-│ accumulator.value │ ← Only readable on driver, after action completes
-└─────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -371,8 +353,11 @@ Accumulators solve a fundamental distributed systems problem: how do you aggrega
 
 The two non-negotiable rules for production accumulator use are: only read accumulator values after an action has returned (not after a transformation), and treat accumulator values as approximate telemetry — not exact counters — in any environment where task retries, speculative execution, or stage recomputation can occur. For exact counting semantics, use Spark's native aggregation operators (`count`, `agg`, `reduce`) which are guaranteed idempotent under the fault-tolerance model. Accumulators are a *telemetry primitive*, not a correctness primitive. 
 
-Custom `AccumulatorV2` implementations unlock rich aggregation beyond simple numeric summation — sets, histograms, maps, HyperLogLog sketches, bloom filters — but each requires careful implementation of `isZero`, `copy`, `merge`, and `reset` to satisfy Spark's internal lifecycle assumptions. The multi-metric map accumulator pattern demonstrates the production best practice: consolidate related metrics into a single accumulator, disable speculative execution when correctness matters, batch all `add()` calls per partition, and emit the final `value` to an external monitoring system after the action completes. Accumulators used this way become a lightweight, zero-shuffle telemetry bus that integrates naturally with Spark's existing task execution infrastructure. 
+Custom `AccumulatorV2` implementations unlock rich aggregation beyond simple numeric summation — sets, histograms, maps, HyperLogLog sketches, bloom filters — but each requires careful implementation of `isZero`, `copy`, `merge`, and `reset` to satisfy Spark's internal lifecycle assumptions. The multi-metric map accumulator pattern demonstrates the production best practice: consolidate related metrics into a single accumulator, disable speculative execution when correctness matters, batch all `add()` calls per partition, and emit the final `value` to an external monitoring system after the action completes. Accumulators used this way become a lightweight, zero-shuffle telemetry bus that integrates naturally with Spark's existing task execution infrastructure.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=96" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Accumulators">p.96</a> <a href="spark_book.pdf#page=98" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Distributed Counters">p.98</a> <a href="spark_book.pdf#page=100" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Accumulator Pitfalls">p.100</a>
+</div>

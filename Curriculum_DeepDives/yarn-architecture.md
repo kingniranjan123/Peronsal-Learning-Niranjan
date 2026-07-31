@@ -136,3 +136,9 @@ spark.stop()
 
 In this final example, we allocate 16GB of on-heap memory but explicitly request an enormous 4GB of `memoryOverhead`. This is critical because Python UDFs run in separate worker processes outside the executor JVM but within the same YARN container limit. We also explicitly allocate `spark.python.worker.memory`. Furthermore, we inject JVM flags to utilize the G1 Garbage Collector (`-XX:+UseG1GC`), tuning the `InitiatingHeapOccupancyPercent` to 35% to trigger concurrent marking cycles earlier, avoiding catastrophic full GC pauses that could cause the executor to miss YARN NodeManager heartbeats and be falsely declared dead.
 
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

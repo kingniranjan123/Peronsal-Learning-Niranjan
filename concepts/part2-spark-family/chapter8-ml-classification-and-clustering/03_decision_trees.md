@@ -192,20 +192,6 @@ Building a decision tree in Spark is an iterative, distributed process:
 5. **Driver Decision:** The Driver uses the global histograms to calculate Information Gain for all possible splits and chooses the best one.
 6. **Iteration:** The Driver updates the tree structure, assigns data to the new left and right child nodes, and triggers the next iteration until `maxDepth` is reached.
 
-```plaintext
-Driver                      Executors (Partitions)
-  |                              |
-  |--- Request Histograms ------>| (Reads Data, creates Bins)
-  |                              | 
-  |<-- Return Local Aggregates --| (Map Partitions)
-  |                              |
-  | (Calculates Global Gini)     |
-  | (Finds Best Split: Age > 30) |
-  |                              |
-  |--- Send New Node Split ----->| (Update Data routing)
-  |                              |
-  | (Repeat recursively...)      |
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 

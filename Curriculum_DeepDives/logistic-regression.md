@@ -22,28 +22,6 @@ The optimizer itself is **L-BFGS** (Limited-memory Broyden–Fletcher–Goldfarb
 
 For **multinomial** (softmax) mode, the weight matrix grows from a single vector of size `numFeatures` to a matrix of shape `numClasses × numFeatures`. The memory footprint is proportional, and gradient aggregation cost scales linearly with `numClasses`. Spark automatically selects binary mode when `numClasses == 2` and multinomial otherwise, though you can force multinomial binary classification via `setFamily("multinomial")`.
 
-```text
-Training Data Partitions (Executors) Driver JVM
-┌────────────────────────────────────┐ ┌─────────────────────────────────┐
-│ Executor 1 │ │ L-BFGS / OWLQN Optimizer │
-│ ┌──────────────────────────────┐ │ │ ┌───────────────────────────┐ │
-│ │ UnsafeRow binary scan │ │ │ │ Global Weight Vector W │ │
-│ │ local loss + ∂L/∂W (shard 1) │──┼──┐ │ │ Direction: d = -H⁻¹ ∇L │ │
-│ └──────────────────────────────┘ │ │ │ └───────────┬───────────────┘ │
-│ │ │ │ │ broadcast W_t │
-│ Executor 2 │ │ └──────────────┼──────────────────┘
-│ ┌──────────────────────────────┐ │ │ │
-│ │ UnsafeRow binary scan │ │ │ treeAggregate │
-│ │ local loss + ∂L/∂W (shard 2) │──┼──┤◀─────────────────┘
-│ └──────────────────────────────┘ │ │
-│ │ │ Aggregation Tree (depth = log N)
-│ Executor N │ │ ┌──────┐ ┌──────┐
-│ ┌──────────────────────────────┐ │ └──▶│ sum │──▶│ sum │──▶ ∇L (global)
-│ │ local loss + ∂L/∂W (shard N) │──┘ └──────┘ └──────┘
-│ └──────────────────────────────┘
-└────────────────────────────────────┘
- Off-heap Tungsten memory (UnsafeRow) 
-```
 
 ### Key Internal Components
 
@@ -398,8 +376,11 @@ Logistic Regression in Apache Spark is a distributed, numerically optimized clas
 
 The most common production failures are all resource-related: driver OOM from large multinomial weight matrices, GC pauses from insufficient standardization (leading to more optimizer iterations), and misleading ROC AUC metrics on imbalanced datasets that mask poor minority-class recall. Each failure is diagnosable from the Spark UI — driver GC tab, task timeline, and shuffle read metrics respectively. 
 
-Mastery of this algorithm means knowing not just how to call `LogisticRegression().fit()`, but how to choose the right regularizer for your feature distribution, size your cluster resources for the coefficient matrix dimensionality, handle class imbalance without exploding dataset size, and evaluate model quality with the right metric for your class distribution. These decisions, made correctly, are the difference between a model that works in a notebook and one that serves reliably in production at petabyte scale. 
+Mastery of this algorithm means knowing not just how to call `LogisticRegression().fit()`, but how to choose the right regularizer for your feature distribution, size your cluster resources for the coefficient matrix dimensionality, handle class imbalance without exploding dataset size, and evaluate model quality with the right metric for your class distribution. These decisions, made correctly, are the difference between a model that works in a notebook and one that serves reliably in production at petabyte scale.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

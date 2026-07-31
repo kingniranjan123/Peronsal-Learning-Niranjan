@@ -21,29 +21,6 @@ For live applications, the `AppStatusListener` maintains a materialized view of 
 
 For completed applications, the architecture shifts to the Spark History Server. During active execution, the `EventLoggingListener` intercepts the exact same stream of bus events and serializes them using Spark's `JsonProtocol` into a continuous JSON event log file, persisting it to HDFS, S3, or local storage. Later, when a user accesses an old application on the History Server, the `FsHistoryProvider` parses this monolithic JSON log file, rebuilds the `AppStatusListener` state from scratch, and serves the UI identically to the live Driver. This deterministic replay mechanism ensures visual fidelity between live monitoring and post-mortem analysis.
 
-```text
-Driver JVM (Live UI) Worker Executor JVM
-┌─────────────────────────────────────────────────┐ ┌──────────────────────┐
-│ DAGScheduler / TaskScheduler │ │ Task Execution │
-│ │ (Posts Events) │ │ ┌────────────────┐ │
-│ ▼ │ │ │ TaskMetrics │ │
-│ ┌───────────────────────────────────────────┐ │ │ └───────┬────────┘ │
-│ │ LiveListenerBus │ │ └──────────┼───────────┘
-│ │ (Asynchronous Multi-Queue Dispatch) │ │ │ (Heartbeats)
-│ └─┬───────────────────────────────────────┬─┘ │ │
-│ │ │ │◀─────────────────────┘
-│ ▼ ▼ │
-│ ┌──────────────────┐ ┌───────────────────┐ │ Event Log Storage (HDFS/S3)
-│ │AppStatusListener │ │EventLoggingListener──┼───▶ ┌──────────────────────┐
-│ │ (RocksDB Store) │ │ (JSON Serializer) │ │ │ app_1234_log.json │
-│ └─┬────────────────┘ └───────────────────┘ │ └─────────┬────────────┘
-│ │ │ │
-│ ▼ │ ▼ (Replay)
-│ ┌──────────────────┐ │ ┌──────────────────────┐
-│ │ Jetty Web Server │◀─── (HTTP 4040/18080) ────┼─────│ Spark History Server │
-│ └──────────────────┘ │ └──────────────────────┘
-└─────────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **LiveListenerBus:** A heavily optimized, asynchronous event dispatcher inside the Driver. It acts as the nervous system, decoupling high-speed execution scheduling from metric reporting and UI view materialization.
@@ -265,6 +242,11 @@ The Apache Spark Web UI is far more than a simple diagnostic dashboard; it is a 
 True mastery requires moving completely beyond the visual HTML interface. Whether by injecting custom `SparkListener` implementations to build real-time monitoring infrastructure, or utilizing the embedded Jetty REST API to validate performance SLA budgets in continuous integration pipelines, the UI's subsystem is a profoundly powerful programmatic tool. Recognizing the memory implications of massive JSON event logs and correctly configuring rolling log behaviors ensures that the very tools meant to observe the system do not paradoxically become the cause of its failure. 
 
 Ultimately, the Cluster Web UI is the absolute arbiter of truth in distributed computing. Code may compile cleanly, and logical plans may look elegant on paper, but the UI exposes the harsh physical limitations of network shuffles, memory spilling, and JVM garbage collection. Learning to read its intricate metrics natively—and reacting to the constraints of distributed physics it highlights—is the defining characteristic of a senior distributed systems engineer.
-</🔥 Master Class: Cluster Web UI> 
+</🔥 Master Class: Cluster Web UI>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

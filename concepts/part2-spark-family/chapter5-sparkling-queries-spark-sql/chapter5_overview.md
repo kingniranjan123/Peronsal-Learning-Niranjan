@@ -18,33 +18,6 @@ Ultimately, Spark SQL acts as a universal bridge. It connects various data sourc
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    A1[SQL Query string] --> B(Spark SQL Parser)
-    A2[DataFrame API code] --> B
-    A3[Dataset API code] --> B
-    
-    B --> C[Unresolved Logical Plan]
-    
-    subgraph Catalyst Optimizer
-    C -->|Catalog / Hive Metastore| D[Resolved Logical Plan]
-    D -->|Optimization Rules| E[Optimized Logical Plan]
-    E -->|Physical Planning| F[Multiple Physical Plans]
-    F -->|Cost Model| G[Selected Physical Plan]
-    end
-    
-    subgraph Tungsten Engine
-    G --> H[Code Generation]
-    H --> I[Optimized RDDs]
-    I --> J[Execution on Cluster]
-    end
-    
-    style A1 fill:#e1f5fe,stroke:#01579b
-    style A2 fill:#e1f5fe,stroke:#01579b
-    style A3 fill:#e1f5fe,stroke:#01579b
-    style Catalyst Optimizer fill:#fff3e0,stroke:#e65100
-    style Tungsten Engine fill:#f3e5f5,stroke:#4a148c
-```
 
 ## Data Visualization
 
@@ -187,33 +160,6 @@ When a user submits a query via DataFrames or SQL:
 5. **Code Generation:** Tungsten generates custom, highly optimized Java bytecode for the chosen plan.
 6. **Execution:** The resulting DAG of RDDs is sent to the DAG Scheduler, broken into Stages and Tasks, and executed on worker nodes.
 
-```plaintext
-User Code (SQL / DataFrame) 
-       │
-       ▼
-[ Spark SQL Parser ]
-       │
-       ▼
-(Unresolved Logical Plan)
-       │
-       ▼  <-- Catalog / Metastore
-[ Catalyst Optimizer ]
-       │  -- Validation
-       ▼
-(Resolved Logical Plan)
-       │  -- Predicate Pushdown, Column Pruning
-       ▼
-(Optimized Logical Plan)
-       │  -- Cost-Based Optimization
-       ▼
-(Selected Physical Plan)
-       │
-       ▼
-[ Tungsten Engine ]  <-- Whole-Stage Code Generation
-       │
-       ▼
-(Optimized RDDs Executed on Cluster)
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 
@@ -310,15 +256,6 @@ sql_df.show()
 # rows for users under 18 entirely!
 ```
 **Expected Output:**
-```plaintext
-+-----------+--------------+
-|device_type|avg_watch_time|
-+-----------+--------------+
-|   Smart TV|        145.50|
-|     Tablet|         85.20|
-|     Mobile|         42.10|
-+-----------+--------------+
-```
 
 ### 💡 Key Takeaways
 - Spark SQL allows you to write declarative, highly optimized data pipelines.

@@ -18,20 +18,6 @@ Once Catalyst finishes planning, the Tungsten Execution Engine takes over, radic
 
 The final pillar of the ecosystem’s internal mechanics is network serialization. During massive SQL joins or complex ML model training, data must be shuffled across the network between executors. Relying on standard Java serialization is a death knell for performance due to heavy reflection and class metadata. Instead, the ecosystem utilizes Kryo serialization—which is heavily optimized and schema-less—combined with Tungsten’s binary format. Data moves across the network in the exact same binary layout it holds in memory. This means executor JVMs can stream, shuffle, and process millions of records without ever incurring the CPU-crushing cost of deserialization.
 
-```text
-Driver JVM Worker Executor JVM
-┌─────────────────┐ ┌─────────────────────────────────┐
-│ SparkSession │──────▶│ Tungsten Execution Engine │
-│ Catalyst Opt. │ │ ┌───────────────────────────┐ │
-│ DAGScheduler │ │ │ Task 1 (Core 0, Part. 0) │ │
-│ TaskScheduler │ │ │ Off-Heap Memory Manager │ │
-└─────────────────┘ │ └───────────────────────────┘ │
- │ │ ┌───────────────────────────┐ │
- ▼ │ │ Task 2 (Core 1, Part. 1) │ │
- Cluster Manager │ │ Vectorized Parquet Reader │ │
-(YARN/K8s/Mesos) │ └───────────────────────────┘ │
- └─────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **Catalyst Optimizer:** The rule-based and cost-based engine that transforms DataFrame/SQL API calls into highly optimized Physical Plans via iterative AST transformations.
@@ -219,6 +205,11 @@ The Apache Spark Ecosystem is not merely a collection of loosely coupled librari
 Beneath Catalyst lies the Tungsten execution engine, the true workhorse of the ecosystem. Tungsten aggressively subverts the traditional Java JVM object model, utilizing `sun.misc.Unsafe` to manage data in raw, off-heap binary formats. This architectural shift virtually eliminates the devastating performance penalties of garbage collection and metaspace overhead. By utilizing Whole-Stage Code Generation, Tungsten compiles complex query plans into dense, optimized Java bytecode that closely mirrors hand-written C, allowing modern CPUs to process data with maximum cache locality and vectorized efficiency. 
 
 Ultimately, mastering the Spark Ecosystem requires a deep understanding of this underlying machinery. When engineers comprehend how Catalyst evaluates join costs, how Tungsten manages off-heap memory, and how Kryo serialization directly impacts network transfer, they transcend basic API usage. They gain the ability to preemptively eliminate data skew, minimize expensive cluster-wide shuffles, and craft robust, massively parallel architectures that squeeze every ounce of performance out of their distributed infrastructure.
-</🔥 Master Class: Spark Ecosystem> 
+</🔥 Master Class: Spark Ecosystem>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=22" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Spark SQL">p.22</a> <a href="spark_book.pdf#page=25" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Structured Streaming">p.25</a> <a href="spark_book.pdf#page=27" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="MLlib">p.27</a> <a href="spark_book.pdf#page=29" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="GraphX">p.29</a>
+</div>

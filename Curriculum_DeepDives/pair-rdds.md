@@ -22,35 +22,6 @@ Tungsten's binary format is active throughout this pipeline. Values are stored i
 
 Catalyst's role in Pair RDD operations is limited compared to DataFrames — Pair RDDs bypass the Catalyst optimizer entirely. There is no predicate pushdown, no join reordering, and no Whole-Stage Codegen for arbitrary RDD lambda functions. This is why Spark's structured APIs (DataFrame/Dataset) exist and are preferred for production pipelines. However, Pair RDDs remain essential when dealing with complex, non-tabular value types — nested collections, custom ML model objects, or binary blobs — that cannot be expressed in Catalyst's type system.
 
-```text
-Driver JVM
-┌──────────────────────────────────────────────────────┐
-│ SparkContext │
-│ DAGScheduler │
-│ └─ Stage 1 (map-side) Stage 2 (reduce-side) │
-│ ShuffleMapTasks ──▶ ResultTasks │
-└────────────┬─────────────────────────┬───────────────┘
- │ │
- ▼ ▼
-Executor A (Worker JVM) Executor B (Worker JVM)
-┌──────────────────────┐ ┌──────────────────────┐
-│ Partition 0, 1 │ │ Partition 2, 3 │
-│ ┌────────────────┐ │ │ ┌────────────────┐ │
-│ │ map-side combiner│ │ │ │ map-side combiner│ │
-│ │ (partial agg) │ │ │ │ (partial agg) │ │
-│ └──────┬─────────┘ │ │ └──────┬─────────┘ │
-│ ShuffleWriter │ │ ShuffleWriter │
-│ Disk: shuffle_0.idx │ │ Disk: shuffle_0.idx │
-└──────────┬────────────┘ └──────────┬────────────┘
- │ BlockManager ◀──────────────▶ BlockManager │
- │ NettyBlockTransferService │
- ▼ ▼
-┌──────────────────────┐ ┌──────────────────────┐
-│ ShuffleReader (Exec A)│ │ ShuffleReader (Exec B)│
-│ Key-range [A–M] │ │ Key-range [N–Z] │
-│ Final aggregation │ │ Final aggregation │
-└──────────────────────┘ └──────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -378,8 +349,11 @@ Pair RDDs are the foundational abstraction for distributed keyed aggregation in 
 
 The single most impactful decision in any Pair RDD pipeline is operator selection. `groupByKey` ships every raw record across the network and materializes entire value iterables in heap memory — it is appropriate only when the full ordered value list is a genuine requirement. `reduceByKey` and `aggregateByKey` apply partial aggregation on the map side, dramatically reducing shuffle volume. `combineByKey` exposes all three aggregation hooks directly and is the primitive from which the others derive. For pipelines involving multiple joins against the same RDD, `partitionBy` amortizes the shuffle cost to a single upfront operation, converting all subsequent joins from shuffle-heavy to narrow-dependency. 
 
-Production Spark engineering with Pair RDDs ultimately requires fluency with three diagnostic tools: the Spark UI's **Stage Detail** view (for identifying shuffle write/read imbalance and straggler tasks caused by key skew), the **RDD `toDebugString`** lineage (for confirming that map-side combiners are active and that `partitionBy` has not been inadvertently discarded by a `map` call), and the **Executor Memory** tab (for detecting shuffle spill to disk, signaled by non-zero "Shuffle Spill (Disk)" values, which indicate that executor memory is insufficient for the current aggregation's working set and that either heap size or `spark.memory.fraction` must be increased). 
+Production Spark engineering with Pair RDDs ultimately requires fluency with three diagnostic tools: the Spark UI's **Stage Detail** view (for identifying shuffle write/read imbalance and straggler tasks caused by key skew), the **RDD `toDebugString`** lineage (for confirming that map-side combiners are active and that `partitionBy` has not been inadvertently discarded by a `map` call), and the **Executor Memory** tab (for detecting shuffle spill to disk, signaled by non-zero "Shuffle Spill (Disk)" values, which indicate that executor memory is insufficient for the current aggregation's working set and that either heap size or `spark.memory.fraction` must be increased).
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=105" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Key-Value RDDs">p.105</a> <a href="spark_book.pdf#page=107" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="PairRDD Operations">p.107</a> <a href="spark_book.pdf#page=110" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="partitionBy">p.110</a> <a href="spark_book.pdf#page=112" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="combineByKey">p.112</a>
+</div>

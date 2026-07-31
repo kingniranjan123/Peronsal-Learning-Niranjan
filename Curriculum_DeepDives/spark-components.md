@@ -118,3 +118,10 @@ for name, status in paired_rdd.context.getRDDStorageInfo():
 ```
 
 While DataFrames hide much of Spark's internal complexity, mastering raw RDD partitioning is essential for edge cases where Catalyst struggles, particularly with massive data skews. In this example, we bypass the default hash partitioner and implement a custom partitioning logic to evenly distribute data across 500 partitions. This directly impacts the Executor memory profile; if one partition is significantly larger than the others, a single Executor will OOM while others sit idle. Furthermore, we use `MEMORY_AND_DISK_SER` as our StorageLevel. This leverages Java serialization (or preferably Kryo if configured) to store the RDD as serialized byte arrays in the Executor JVM, drastically reducing the memory footprint compared to deserialized Java objects, providing a safety net that spills to disk if the heap limit is breached.
+
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=15" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Spark Core">p.15</a> <a href="spark_book.pdf#page=17" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="SparkContext">p.17</a> <a href="spark_book.pdf#page=19" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Cluster Manager">p.19</a> <a href="spark_book.pdf#page=21" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Executors & Drivers">p.21</a>
+</div>

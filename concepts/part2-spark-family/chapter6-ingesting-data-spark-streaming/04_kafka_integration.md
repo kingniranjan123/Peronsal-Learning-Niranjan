@@ -27,33 +27,6 @@ In modern applications, **the Direct Approach is universally preferred and recom
 
 ## Flow Diagram
 
-```plaintext
-graph TD
-    classDef kafka fill:#f96,stroke:#333,stroke-width:2px;
-    classDef spark fill:#6cf,stroke:#333,stroke-width:2px;
-
-subgraph "Apache Kafka Cluster"
-        P1[Topic Partition 0   Offsets 100-150]:::kafka
-        P2[Topic Partition 1   Offsets 200-250]:::kafka
-        P3[Topic Partition 2   Offsets 50-100]:::kafka
-end
-
-subgraph "Spark Streaming Cluster (Direct Approach)"
-        D[Spark Driver Program Queries Kafka for latest offsets]:::spark
-        
-        E1[Spark Executor 1 RDD Partition 0]:::spark
-        E2[Spark Executor 2 RDD Partition 1]:::spark
-        E3[Spark Executor 3 RDD Partition 2]:::spark
-        
-        D -.->|Assigns Offset Range 100-150| E1
-        D -.->|Assigns Offset Range 200-250| E2
-        D -.->|Assigns Offset Range 50-100| E3
-end
-
-    P1 ==>|Direct Read| E1
-    P2 ==>|Direct Read| E2
-    P3 ==>|Direct Read| E3
-```
 
 ## Data Visualization
 
@@ -184,27 +157,6 @@ This integration is the backbone of modern real-time data pipelines and is heavi
 | **Exactly-Once Semantics** | ACID Properties | Guaranteeing processing without duplication or data loss. |
 
 ### Q7: What Happens Behind the Scenes?
-```plaintext
-[Kafka Cluster]
-  ├── Partition 0 (Offsets 100-200)
-  └── Partition 1 (Offsets 150-250)
-         │
-         ▼
-[Spark Driver]
-  1. Queries Kafka for latest offsets (e.g., up to 200 and 250).
-  2. Creates a DAG and schedules tasks for the offset ranges.
-         │
-         ▼
-[Spark Executors]
-  ├── Executor 1 (Reads Partition 0: 100-200 directly from Kafka broker)
-  └── Executor 2 (Reads Partition 1: 150-250 directly from Kafka broker)
-         │
-         ▼
-[Processing & Commit]
-  1. Executes transformations (map, filter, reduce).
-  2. Writes results to external sink (e.g., Cassandra, HDFS).
-  3. Commits successful offsets back to Kafka or a checkpoint directory.
-```
 
 ### Q8: Performance Considerations, Best Practices, and Common Mistakes
 | Category | Recommendation | Why It Matters |

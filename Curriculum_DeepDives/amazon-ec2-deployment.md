@@ -20,33 +20,6 @@ Tungsten's off-heap memory manager operates outside the JVM heap within the exec
 
 Shuffle data is the central bottleneck in EC2 deployments. Spark's `SortShuffleManager` writes shuffle files to the local disk of each executor's EC2 instance. On instance types with NVMe storage (e.g., `m5d`, `c5d`, `r6id`), shuffle write throughput can reach 3+ GB/s, while EBS `gp3` volumes are capped at 1,000 MB/s (16,000 IOPS). The `ExternalShuffleService`, enabled by default in EMR, decouples shuffle file serving from executor JVMs, allowing YARN to reclaim executor containers while shuffle data remains readable — critical for dynamic allocation on Spot clusters. S3A's `fs.s3a.fast.upload` multipart upload pipeline (controlled by `fs.s3a.multipart.size` and `fs.s3a.fast.upload.buffer`) determines the throughput ceiling for writing Parquet/ORC output to S3, and misconfiguration is the single largest source of slow write performance in production.
 
-```text
-EMR Master Node (m5.xlarge) EMR Core / Task Nodes
-┌───────────────────────────────┐ ┌────────────────────────────────────┐
-│ YARN ResourceManager │◀────────────│ YARN NodeManager │
-│ Spark Driver (YarnClient) │ Container │ ┌──────────────────────────────┐ │
-│ ┌───────────────────────┐ │ Heartbeat │ │ Executor JVM │ │
-│ │ DAGScheduler │ │────────────▶│ │ Heap: spark.executor.memory │ │
-│ │ TaskScheduler │ │ │ │ Off-Heap: Tungsten UnsafeRow│ │
-│ │ YarnAllocator │ │ │ │ Shuffle: NVMe / EBS gp3 │ │
-│ │ HeartbeatReceiver │ │ │ └──────────────────────────────┘ │
-│ └───────────────────────┘ │ │ ExternalShuffleService (port 7337)│
-│ SparkHistoryServer │ └────────────────────────────────────┘
-│ S3A Committer (staging dir) │ │
-└───────────────────────────────┘ │ S3A multipart upload
- ▼
- ┌─────────────────────┐
- │ Amazon S3 Bucket │
- │ (output Parquet / │
- │ ORC / Delta Lake) │
- └─────────────────────┘
- EC2 Spot Interruption Notice (2-min warning)
- ┌──────────────────────────────────────────────────────┐
- │ Instance Fleet: replace interrupted instance with │
- │ next available type from diversified pool │
- │ EMR → resubmit YARN container → Spark task retry │
- └──────────────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 
@@ -212,7 +185,7 @@ print(f"Cluster ID: {response['JobFlowId']}")
 
 > **What this demonstrates:** The exact `SparkSession` configuration parameters that govern S3A read/write throughput, the Magic Committer pipeline, and how misconfigurations manifest as silent performance cliffs.
 
-```text
+```python
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, year, month
 
@@ -305,7 +278,7 @@ df = (
 
 > **What this demonstrates:** The JVM and Spark configuration adjustments required to fully exploit Graviton3 (ARM64) instances on EMR, including GC tuning differences, SIMD-aware shuffle settings, and Kryo serializer registration for reduced network overhead.
 
-```text
+```python
 from pyspark.sql import SparkSession
 
 # Graviton3 (r6g/m6g/c6g) characteristics vs x86 (m5/r5/c5):
@@ -400,7 +373,7 @@ print(f"Groups aggregated: {result}")
 
 > **What this demonstrates:** A production-grade pattern for running long-running Spark ETL on 100% Spot instances with S3-backed checkpointing, lineage truncation, and automated EMR Step retry — enabling 70–85% cost reduction with fault tolerance at the application layer.
 
-```text
+```python
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import col, to_date, current_timestamp
 import boto3
@@ -557,8 +530,11 @@ Apache Spark on Amazon EC2 is a multi-dimensional optimization problem where the
 
 The Spot Instances and Instance Fleet pairing is the highest-leverage cost optimization available in EC2 deployments, but it requires application-level fault tolerance that goes beyond Spark's default task retry. The `ExternalShuffleService`, `FetchFailed`-aware stage retry limits, S3-backed stage checkpoints, and speculative execution must all be configured as a coherent system. Each component addresses a different failure mode: ExternalShuffleService protects against single-executor loss, checkpoint patterns protect against multi-executor wave failures, and speculation protects against performance heterogeneity on mixed instance fleets. 
 
-Graviton3 instances represent a structural cost-performance improvement for memory bandwidth-bound Spark workloads — the dominant category in production ETL and analytics. The 25% memory bandwidth increase directly accelerates Tungsten's UnsafeRow operations, and the 20% lower On-Demand price compounds to a 40–45% cost-per-query reduction on shuffle-heavy aggregation pipelines. Combined with CAPACITY_OPTIMIZED Spot targeting, the Magic Committer eliminating S3 commit latency, and AQE's runtime partition coalescing, a fully-tuned EC2 Spark deployment delivers production-grade reliability at 20–30% of the cost of naive On-Demand deployments. 
+Graviton3 instances represent a structural cost-performance improvement for memory bandwidth-bound Spark workloads — the dominant category in production ETL and analytics. The 25% memory bandwidth increase directly accelerates Tungsten's UnsafeRow operations, and the 20% lower On-Demand price compounds to a 40–45% cost-per-query reduction on shuffle-heavy aggregation pipelines. Combined with CAPACITY_OPTIMIZED Spot targeting, the Magic Committer eliminating S3 commit latency, and AQE's runtime partition coalescing, a fully-tuned EC2 Spark deployment delivers production-grade reliability at 20–30% of the cost of naive On-Demand deployments.
 
+---
 
-
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471)</em></div>
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

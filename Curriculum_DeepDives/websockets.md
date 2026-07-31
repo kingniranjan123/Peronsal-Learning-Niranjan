@@ -109,7 +109,7 @@ query = watermarked_df.writeStream \
 WebSocket clients, especially on mobile networks, frequently experience latency spikes and temporary disconnects, resulting in out-of-order events. This example demonstrates how to implement stateful processing with event-time watermarking to handle this unreliability. The `withWatermark` function instructs Spark's state store (typically backed by HDFS-compatible storage via RocksDB) to maintain intermediate aggregations for up to 5 seconds of event-time delay. If a WebSocket packet containing an older timestamp arrives within this threshold, Spark updates the running aggregation. Once the watermark passes, the state is purged to prevent memory leaks in the Executor. This guarantees that your Tungsten memory footprint remains bounded, even if thousands of WebSocket connections are actively streaming chaotic, out-of-order data.
 
 ## 💻 Code Example 4: Implementing a Custom WebSocket Sink using `foreachBatch`
-```python
+```scala
 import websocket
 import json
 
@@ -141,3 +141,10 @@ sink_query = watermarked_df.writeStream \
 ```
 Outputting data from Spark to a WebSocket requires extreme care to avoid paralyzing the Driver node. This final example illustrates a scalable WebSocket Sink utilizing `foreachBatch` and `foreachPartition`. Rather than collecting the massive result set to the Driver and bottlenecking a single network interface, we distribute the network egress. Inside `send_partition`, each Spark Executor task establishes its own WebSocket connection to the downstream dashboard or API gateway. This parallelizes the TCP connection overhead and the network I/O. Furthermore, since `foreachPartition` operates on Tungsten's `UnsafeRow` objects, we perform a lightweight JSON serialization immediately before transmission. This architecture scales linearly: adding more Executors automatically increases the number of concurrent WebSocket connections, allowing Spark to push millions of updates per second to real-time client dashboards.
 </Master Class: WebSockets>
+
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

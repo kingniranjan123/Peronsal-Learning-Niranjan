@@ -16,31 +16,6 @@ For aggregations, the physical planning phase evaluates the `spark.sql.shuffle.p
 
 Tungsten's execution engine supercharges these physical operations through Whole-Stage Code Generation. This revolutionary feature fuses multiple physical operators (for example: Scan, Filter, and Partial Aggregate) into a single, cohesive Java function that is compiled into highly optimized bytecode at runtime. This completely eliminates virtual function calls and leverages CPU registers for intermediate states rather than creating garbage objects. Furthermore, Tungsten manages aggregation state buffers entirely in off-heap memory using a customized, CPU-cache-aligned binary format. This mechanism evades the Java Virtual Machine's garbage collector entirely, allowing Spark to aggregate billions of individual rows with near C-level performance speeds, remaining bounded strictly by L2/L3 cache access limits and memory bandwidth rather than GC pause times.
 
-```text
-Driver JVM Worker Executor JVM (Tungsten Engine)
-┌──────────────────────────┐ ┌──────────────────────────────────────────────────┐
-│ Catalyst Optimizer │ │ Task (Mapper Phase) │
-│ ┌──────────────────────┐ │ │ ┌──────────────────────────────────────────────┐ │
-│ │ Logical Plan │ │ Predicate Pushdown │ │ Vectorized Parquet Reader │ │
-│ │ ├─ Filter(x > 10) │─┼────────────────────┼─▶ (Reads only matching Row Groups) │ │
-│ │ └─ Aggregate(sum) │ │ │ ├──────────────────────────────────────────────┤ │
-│ │ │ │ Whole-Stage │ │ Off-Heap Hash Map (Tungsten) │ │
-│ │ Physical Plan │ │ CodeGen │ │ (Partial Aggregation - Local Sum) │ │
-│ │ └─ HashAggregate │─┼────────────────────┼─▶ [Key1: 100, Key2: 450] │ │
-│ └──────────────────────┘ │ │ └──────────────────────┬───────────────────────┘ │
-└──────────────────────────┘ └────────────────────────┼─────────────────────────┘
- │
- ▼
- Shuffle Write (Kryo Serialization)
- │
- ┌────────────────────────▼─────────────────────────┐
- │ Task (Reducer Phase) │
- │ ┌──────────────────────────────────────────────┐ │
- │ │ Final HashAggregate │ │
- │ │ (Merge Partial Sums across Partitions) │ │
- │ └──────────────────────────────────────────────┘ │
- └──────────────────────────────────────────────────┘ 
-```
 
 ### Key Internal Components
 - **Catalyst Predicate Pushdown Engine:** A critical logical optimization rule that analyzes filter expressions and propagates them down the query plan tree. By pushing filters directly into the data source's vectorized reader, Spark bypasses deserializing records into JVM objects, drastically cutting CPU and memory overhead by utilizing file-level metadata to skip non-matching blocks.
@@ -205,6 +180,11 @@ Filtering and aggregating in Apache Spark are profoundly more complex and archit
 The Catalyst optimizer and Tungsten execution engine have elegantly abstracted away the hardest elements of distributed computing, enabling near C-level performance speeds through off-heap memory management and Whole-Stage Code Generation. However, these systems are not omnipotent. As demonstrated throughout this deep dive, poor query construction can effortlessly bypass these critical optimizations, forcing Spark into highly expensive sort-based aggregations or triggering catastrophic out-of-memory errors as a direct result of data skew. 
 
 By strategically leveraging predicate pushdown at the storage layer, intimately understanding the network mechanics of two-phase hashing, and proactively salting skewed keys, data engineers can craft production pipelines that are both highly performant and incredibly resilient. Mastering filtering and aggregating is not simply about writing functional syntax; it is fundamentally about writing sympathetic code that aligns perfectly with Spark’s internal architectural realities.
-</🔥 Master Class: Filtering And Aggregating> 
+</🔥 Master Class: Filtering And Aggregating>
 
-<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>

@@ -145,3 +145,10 @@ A silent but deadly edge case in feature scaling is zero variance. If a feature 
 
 Spark’s `MinMaxScaler` handles this edge case robustly. The algorithm inspects the bounds: if `max == min`, it intelligently assigns the scaled value as `0.5 * (max + min)` or simply maps it securely within the target bounds without throwing a division-by-zero arithmetic exception. The provided code explicitly validates this safety net using a PySpark UDF. However, recognizing this behavior is paramount: a feature with zero variance carries zero information for ML models. While Spark protects your pipeline from crashing, the optimal architectural decision is to utilize a `VarianceThresholdSelector` (available in newer Spark versions) to prune these dead features *before* they ever reach the scaling and assembly stages, saving critical CPU cycles on the executors.
 </Master Class: Feature Scaling>
+
+---
+
+<div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
+<strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
+<a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>
+</div>
