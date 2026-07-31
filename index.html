@@ -3014,7 +3014,7 @@ async function fetchDLQ(partId, chapterId, topicId) {
   }
 
   try {
-    const resp = await fetch(mdPath);
+    const resp = await fetch(mdPath + '?v=' + new Date().getTime());
     if (!resp.ok) throw new Error('not found');
     const raw = await resp.text();
 
