@@ -30,6 +30,28 @@ graph TD
 ---
 `\`\`mermaid
 graph TD
+    Client((Client)) -->|1. File Create/Read| NN[NameNode<br/>Metadata & Namespace]
+    NN -.->|2. Block Locations| Client
+    Client ==>|3. Read/Write Data| DN1[DataNode 1<br/>Block A, B]
+    Client ==>|4. Read/Write Data| DN2[DataNode 2<br/>Block A, C]
+    Client ==>|5. Read/Write Data| DN3[DataNode 3<br/>Block B, C]
+    
+    style NN fill:#f9f,stroke:#333,stroke-width:2px
+    style DN1 fill:#bbf,stroke:#333,stroke-width:2px
+    style DN2 fill:#bbf,stroke:#333,stroke-width:2px
+    style DN3 fill:#bbf,stroke:#333,stroke-width:2px
+\`\`\`
+
+### Practical Examples
+1. **Log Aggregation:** Millions of small server logs are appended to a continuous file in HDFS for nightly batch processing. [Beginning Apache Spark 2 : 12, 15, 18]
+2. **Data Lake Storage:** Raw CSV and JSON files from web scrapers are dumped into HDFS before being structured into Parquet. [Spark in Action : 2, 23, 32]
+3. **Machine Learning Archives:** Massive datasets (like ImageNet) are stored in HDFS so Spark MLlib can process them in parallel.
+4. **Fault Tolerance:** If a DataNode rack goes down due to a power outage, the NameNode automatically redirects queries to the replicated blocks on surviving nodes.
+
+
+---
+`\`\`mermaid
+graph TD
     Client[Client Application] -->|1. Reads/Writes Metadata| NN(NameNode)
     NN -->|2. Downloads EditLog & FsImage| SNN(Secondary NameNode)
     SNN -->|3. Uploads Merged FsImage| NN
@@ -335,6 +357,25 @@ Master-Worker (or Controller-Agent) is the foundational design pattern for almos
 In modern Big Data, the Master-Worker setup is typically managed by a Cluster Manager like **YARN** (Yet Another Resource Negotiator) or **Kubernetes**. The Master distributes code and data to the workers, monitors their health via heartbeats, and reassigns failed tasks.
 
 \`\`\`mermaid
+flowchart LR
+    M[Master Node<br/>Resource Manager / Driver] -->|Assigns Task A| W1[Worker Node 1]
+    M -->|Assigns Task B| W2[Worker Node 2]
+    M -->|Assigns Task C| W3[Worker Node 3]
+    
+    W1 -.->|Heartbeat / Status| M
+    W2 -.->|Heartbeat / Status| M
+    W3 -.->|Heartbeat / Status| M
+\`\`\`
+
+### Practical Examples
+1. **Hadoop YARN:** The ResourceManager (Master) allocates RAM and CPU to NodeManagers (Workers) executing MapReduce jobs. [Spark in Action (YARN & Cluster Managers) : 9, 16, 23, 24]
+2. **Spark Standalone:** The Spark Master schedules tasks directly to Spark Workers, bypassing YARN entirely for simpler deployments. [Beginning Apache Spark 2 : 14, 15]
+3. **Kubernetes Pods:** A K8s Control Plane (Master) schedules containerized PySpark applications onto individual worker nodes.
+4. **Web Scraping:** A central controller dispatches URLs to hundreds of distributed scrapers (workers), combining the HTML results later.
+
+
+---
+`\`\`mermaid
 flowchart LR
     M[Master Node<br/>Resource Manager / Driver] -->|Assigns Task A| W1[Worker Node 1]
     M -->|Assigns Task B| W2[Worker Node 2]
@@ -732,6 +773,30 @@ graph TD
   "pre-sparksession": `## 3. SparkSession & SparkContext
 
 Historically (before Spark 2.0), developers had to create multiple contexts (e.g., \`SparkContext\`, \`SQLContext\`, \`HiveContext\`) to interact with different Spark features. Today, the **SparkSession** is the unified entry point for all Spark functionality.
+
+### The DAG and Execution Engine
+When you write Spark code, the SparkSession translates your queries into a Directed Acyclic Graph (DAG). The DAG Scheduler breaks this graph into stages, and the Task Scheduler sends those tasks to the executors.
+
+\`\`\`mermaid
+graph TD
+    Code[User Code<br/>DataFrame API] -->|Builds| SS(SparkSession)
+    SS -->|Generates| DAG[DAG Scheduler]
+    DAG -->|Creates Stages| TS[Task Scheduler]
+    TS -->|Dispatches Tasks| E1[Executor 1]
+    TS -->|Dispatches Tasks| E2[Executor 2]
+    
+    style SS fill:#dfd,stroke:#333,stroke-width:2px
+\`\`\`
+
+### Practical Examples
+1. **Reading CSVs:** \`spark.read.csv("hdfs://data.csv")\` uses the SparkSession to infer schemas automatically. [Beginning Apache Spark 2 : 15, 37, 38]
+2. **Executing SQL:** \`spark.sql("SELECT * FROM users WHERE age > 18")\` executes distributed SQL queries across the cluster. [Spark in Action : Page 35]
+3. **Configuration:** Setting \`spark.conf.set("spark.executor.memory", "4g")\` dynamically configures resources via the session.
+4. **Legacy RDDs:** While DataFrames are preferred, \`spark.sparkContext.parallelize()\` is still used to create lower-level Resilient Distributed Datasets.
+
+
+---
+`SparkContext\`, \`SQLContext\`, \`HiveContext\`) to interact with different Spark features. Today, the **SparkSession** is the unified entry point for all Spark functionality.
 
 ### The DAG and Execution Engine
 When you write Spark code, the SparkSession translates your queries into a Directed Acyclic Graph (DAG). The DAG Scheduler breaks this graph into stages, and the Task Scheduler sends those tasks to the executors.
@@ -1268,6 +1333,31 @@ sequenceDiagram
 
 
 ---
+`map\` or \`filter\`) which return *new* DataFrames. Furthermore, Spark uses **lazy evaluation**: it doesn't actually execute any transformations until an action (like \`count\` or \`collect\`) is called, allowing the engine to optimize the entire execution plan.
+
+\`\`\`mermaid
+sequenceDiagram
+    participant User
+    participant Spark
+    participant Cluster
+    User->>Spark: df = read.parquet("data")
+    Note right of Spark: Lazy Evaluation: No execution yet
+    User->>Spark: df2 = df.filter(age > 18)
+    Note right of Spark: Graph updated, still no execution
+    User->>Spark: df2.count()
+    Note right of Spark: Action triggered!
+    Spark->>Cluster: Optimize & Execute DAG
+    Cluster-->>User: Return 1,450,000
+\`\`\`
+
+### Practical Examples
+1. **Map (Transformation):** Applying a function to every row in a massive dataset simultaneously without side effects. [Beginning Apache Spark 2 (Immutability) : 5, 18, 32]
+2. **Filter (Transformation):** Removing corrupted JSON lines from a dataset. Spark records this intent but waits to execute it. [Spark in Action : 32, 35]
+3. **Reduce (Action):** Aggregating total sales across millions of transactions, forcing Spark to finally execute the DAG.
+4. **Fault Recovery:** Because RDDs are immutable and lineage is tracked, if a node crashes, Spark simply re-computes that specific partition from the original source.
+
+
+---
 `\`\`mermaid
 stateDiagram-v2
     direction LR
@@ -1475,6 +1565,29 @@ While CSV and JSON are human-readable, they are highly inefficient for distribut
 Formats like **Parquet** and **ORC** store data in columns rather than rows. If you have a table with 100 columns but only query 2 of them, a columnar format allows Spark to physically read only the data for those 2 columns from disk, skipping the rest and saving massive amounts of I/O. **Avro** is row-based and is preferred for write-heavy streaming.
 
 \`\`\`mermaid
+graph LR
+    subgraph Row-Based (CSV/JSON/Avro)
+    R1[Row 1: ID, Name, Age, City]
+    R2[Row 2: ID, Name, Age, City]
+    end
+
+    subgraph Columnar (Parquet/ORC)
+    C1[Column: ID 1, 2, 3...]
+    C2[Column: Name A, B, C...]
+    C3[Column: Age 22, 24, 26...]
+    end
+    
+    style C1 fill:#dfd
+    style C3 fill:#dfd
+\`\`\`
+
+### Practical Examples
+1. **Parquet for Analytics:** A Data Scientist running \`SELECT AVG(salary) FROM employees\` on a Parquet file only reads the salary column from disk. [Beginning Apache Spark 2 (Parquet/ORC) : 14, 19, 38]
+2. **Avro for Kafka Streams:** A real-time IoT pipeline uses Avro because of its fast row-level write speeds and robust schema evolution (handling new sensor types). [Spark in Action : 2, 32, 37]
+3. **ORC for Hive:** A Data Warehouse team uses ORC because it offers exceptional compression ratios (often 75% smaller than CSV).
+4. **Predicate Pushdown:** When Spark queries Parquet files with \`WHERE age > 30\`, the Parquet metadata allows Spark to completely skip reading file chunks where the maximum age is known to be under 30.
+
+`\`\`mermaid
 graph LR
     subgraph Row-Based (CSV/JSON/Avro)
     R1[Row 1: ID, Name, Age, City]
