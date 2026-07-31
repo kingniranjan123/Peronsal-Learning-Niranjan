@@ -1,0 +1,532 @@
+[
+  {
+    "file": "Curriculum_DeepDives\\accumulators.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\actions.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\broadcast-variables.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\catalyst-optimizer.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\cross-validation.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\data-partitioning.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\dataframes.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\datasets.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\decision-trees.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\deep-learning-concepts.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\graphx-api.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\hive-metastore.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\job-and-resource-scheduling.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\joining-data.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\kafka-integration.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\kmeans-clustering.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\linear-regression.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\logistic-regression.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\mapreduce-shortcomings.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\mesos-architecture.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\pair-rdds.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\pre-distributed.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\pre-formats.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\pre-functional.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\pre-hdfs.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\pre-sparksession.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\random-forests.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\rdd-lineage-and-dag.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\rdds.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\running-applications.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\shuffling.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-cluster-types.md",
+    "block": 6,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-components.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-history-server.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-ml-library.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-revolution.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-runtime-architecture.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-stages-and-tasks.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-streaming-components.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-submit.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark-web-ui.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\spark_hands_on_setup_guide.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\sql-queries.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\standalone-cluster-components.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\transformations.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\tungsten-performance.md",
+    "block": 5,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\window-operations.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "Curriculum_DeepDives\\yarn-resource-scheduling.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter1-introduction-to-apache-spark\\03_spark_components.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter1-introduction-to-apache-spark\\05_spark_vm_setup.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter1-introduction-to-apache-spark\\chapter1_overview.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter2-spark-fundamentals\\01_spark_shell.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter2-spark-fundamentals\\02_rdds.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter2-spark-fundamentals\\04_transformations.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter2-spark-fundamentals\\05_double_rdd_functions.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\01_spark_ide_project_setup.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\02_loading_json.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\03_filtering_and_aggregating.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\06_uberjars.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\chapter3_overview.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter4-spark-api-in-depth\\02_data_partitioning.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter4-spark-api-in-depth\\04_grouping_and_sorting.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter4-spark-api-in-depth\\06_rdd_lineage_and_dag.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part1-first-steps\\chapter4-spark-api-in-depth\\chapter4_overview.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter5-sparkling-queries-spark-sql\\01_dataframes.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter5-sparkling-queries-spark-sql\\02_datasets.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter6-ingesting-data-spark-streaming\\03_window_operations.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter6-ingesting-data-spark-streaming\\05_performance_tuning.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\01_ml_basics.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\02_linear_algebra.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\03_feature_scaling.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\04_mean_normalization.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\05_linear_regression.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\06_regularization.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\chapter7_overview.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\01_spark_ml_library.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\02_logistic_regression.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\03_decision_trees.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\04_random_forests.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\05_kmeans_clustering.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\06_cross_validation.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\chapter8_overview.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\02_transforming_joining_graphs.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\03_shortest_paths.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\04_pagerank.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\05_connected_components.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\06_astar_search_algorithm.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter10-running-spark\\04_configuring_spark.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter10-running-spark\\05_spark_web_ui.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter11-spark-standalone-cluster\\01_standalone_cluster_components.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter11-spark-standalone-cluster\\03_running_applications.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter11-spark-standalone-cluster\\05_amazon_ec2_deployment.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter11-spark-standalone-cluster\\chapter11_overview.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\01_yarn_architecture.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\03_mesos_architecture.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\04_mesos_resource_scheduling.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\05_running_spark_with_docker.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\chapter12_overview.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part4-bringing-it-together\\chapter13-realtime-dashboard\\01_realtime_dashboard_architecture.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part4-bringing-it-together\\chapter13-realtime-dashboard\\04_d3js_visualization.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "concepts\\part4-bringing-it-together\\chapter14-deep-learning-spark-h2o\\01_h2o_framework.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
+    "block": 1,
+    "ok": true
+  },
+  {
+    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
+    "block": 3,
+    "ok": true
+  },
+  {
+    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
+    "block": 4,
+    "ok": true
+  },
+  {
+    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
+    "block": 6,
+    "ok": true
+  },
+  {
+    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
+    "block": 7,
+    "ok": true
+  }
+]

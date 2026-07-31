@@ -182,9 +182,9 @@ graph LR
     C -->|Transformer| D[VectorAssembler]
     D -->|Estimator| E[LogisticRegression Algorithm]
     
-    E -->|fit()| F((Trained ML Model))
+    E -->|fit| F[Trained ML Model]
     
-    G[(Test DataFrame)] -->|transform()| F
+    G[(Test DataFrame)] -->|transform| F
     F --> H[Predictions DataFrame]
 ```
 

@@ -524,9 +524,71 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .dlq-not-available { padding:20px 18px; text-align:center; color:var(--text-3); font-size:.82rem; font-style:italic; }
 
+.book-ref-panel {
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  margin-top:14px; padding:12px 14px;
+  background:linear-gradient(135deg,#0F2A3A,#101A30);
+  border:1px solid #2563EB50; border-radius:8px;
+}
+.book-ref-label { font-size:.76rem; font-weight:700; color:#93C5FD; text-transform:uppercase; letter-spacing:.06em; }
+.book-ref-link {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:6px; border:1px solid #3B82F650;
+  color:#DBEAFE; background:#3B82F61A; text-decoration:none; font-size:.78rem; font-weight:600;
+}
+.book-ref-link:hover { background:#3B82F630; text-decoration:none !important; }
+.section-book-ref { margin:12px 0 22px; }
+
+.quiz-section {
+  margin-top:48px; border-top:2px solid transparent;
+  border-image:linear-gradient(90deg,#22C55E,#3B82F6,#F59E0B) 1;
+  padding-top:32px;
+}
+.quiz-card {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:8px; padding:18px; margin-bottom:14px;
+}
+.quiz-question-title { font-size:.95rem; font-weight:700; color:var(--text-1); line-height:1.55; margin-bottom:12px; }
+.quiz-options { display:grid; gap:8px; margin:12px 0; }
+.quiz-option {
+  display:flex; gap:10px; align-items:flex-start;
+  padding:10px 12px; border:1px solid var(--border); border-radius:6px;
+  background:#0B1324; cursor:pointer; color:var(--text-2); font-size:.88rem;
+}
+.quiz-option:hover { border-color:var(--border-2); color:var(--text-1); }
+.quiz-option input { margin-top:2px; }
+.quiz-submit {
+  border:1px solid #22C55E70; background:#22C55E1F; color:#BBF7D0;
+  border-radius:6px; padding:8px 12px; font-weight:700; cursor:pointer;
+}
+.quiz-submit:hover { background:#22C55E30; }
+.quiz-feedback {
+  display:none; margin-top:12px; padding:12px 14px; border-radius:6px;
+  border:1px solid var(--border); background:#0B1324; color:var(--text-2); line-height:1.65; font-size:.86rem;
+}
+.quiz-card.answered.correct { border-color:#22C55E80; }
+.quiz-card.answered.incorrect { border-color:#EF444480; }
+.quiz-card.answered .quiz-feedback { display:block; }
+.quiz-result-good { color:#86EFAC; font-weight:800; }
+.quiz-result-bad { color:#FCA5A5; font-weight:800; }
+
+.educational-visual {
+  margin:22px 0; padding:18px; border:1px solid #2563EB55; border-radius:8px;
+  background:linear-gradient(180deg,#F8FBFF,#EEF6FF); color:#111827; overflow:auto;
+}
+.educational-visual svg { width:100%; min-width:900px; height:auto; display:block; }
+.educational-visual-title { color:#0F172A; font-size:1.05rem; font-weight:800; margin-bottom:12px; }
+.curated-diagram {
+  margin:22px 0; padding:16px; border:1px solid #2563EB55; border-radius:8px;
+  background:#F8FBFF; color:#111827;
+}
+.curated-diagram img { width:100%; display:block; border-radius:6px; border:1px solid #BFDBFE; background:#fff; }
+.curated-diagram-caption { margin-top:10px; color:#475569; font-size:.88rem; line-height:1.6; }
+
 </style>
   <script src="dlq_data.js?v=20260720d"></script>
-  <script src="fundamentals_data.js?v=20260721"></script>
+  <script src="book_refs.js?v=20260731"></script>
+  <script src="quiz_data.js?v=20260731"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({startOnLoad:false});</script>
@@ -2094,6 +2156,12 @@ final_predictions.select("price", "prediction").show(10)`},
 // ─── INFRA SETUP DATA ───────────────────────────────────────────────────────
 const INFRA_SECTIONS = [
   {
+    id:'hands-on-lab', title:'Hands-On Lab Architecture', icon:'🧪',
+    desc:'End-to-end local Spark lab with data sources, bronze/silver/gold processing, PostgreSQL serving, Streamlit dashboard, and exact setup commands.',
+    markdown:'Curriculum_DeepDives/spark_hands_on_setup_guide.md',
+    steps:[]
+  },
+  {
     id:'local-setup', title:'Local Machine Setup', icon:'💻',
     desc:'Setup Apache Spark on your Windows/Mac/Linux machine for development',
     steps:[
@@ -2972,6 +3040,7 @@ function showTopic(partId, chId, topicId) {
         ${tagBadge(topic.tag)}
         <span class="tag tag-part">${topic.chapter}</span>
       </div>
+      ${buildBookRefs(topicId)}
     </div>
     <div class="section-divider"></div>
   `;
@@ -3030,6 +3099,7 @@ function showTopic(partId, chId, topicId) {
 
   // Build DLQ section synchronously (data already loaded in dlq_data.js)
   html += buildDLQSection(topicId);
+  html += buildQuizSection(topicId);
   render(html);
 
   // Trigger async fetch for deep dive
@@ -3043,7 +3113,7 @@ function showTopic(partId, chId, topicId) {
           let parsedHtml = (typeof marked !== 'undefined') ? marked.parse(rawMd) : '<pre>' + rawMd + '</pre>';
           document.getElementById('deep-dive-content').innerHTML = parsedHtml;
           document.getElementById('deep-dive-section').style.display = 'block';
-          document.querySelectorAll('#deep-dive-content pre code').forEach(el => { if (typeof hljs !== 'undefined') hljs.highlightElement(el); });
+          postProcessLearningContent(topicId);
         } else {
           document.getElementById('deep-dive-section').style.display = 'none';
         }
@@ -3055,7 +3125,7 @@ function showTopic(partId, chId, topicId) {
       let parsedHtml = (typeof marked !== 'undefined') ? marked.parse(md) : '<pre>' + md + '</pre>';
       document.getElementById('deep-dive-content').innerHTML = parsedHtml;
       document.getElementById('deep-dive-section').style.display = 'block';
-      document.querySelectorAll('#deep-dive-content pre code').forEach(el => { if (typeof hljs !== 'undefined') hljs.highlightElement(el); });
+      postProcessLearningContent(topicId);
     })
     .catch(err => console.log('Deep dive fetch failed:', err));
 }
@@ -3212,10 +3282,244 @@ function toggleDLQMeta() {
 
 
 // ─── Infra page ─────────────────────────────────────────────────────────────
+function buildBookRefs(topicId, compact=false) {
+  if (typeof BOOK_REFS === 'undefined') return '';
+  const refs = BOOK_REFS[topicId] || [];
+  if (!refs.length) return '';
+  const links = refs.slice(0, compact ? 1 : 3).map(ref => {
+    const href = `spark_book.pdf#page=${ref.page}`;
+    return `<a class="book-ref-link" href="${href}" target="_blank" rel="noopener">Book p.${ref.page}: ${escHtml(ref.title)}</a>`;
+  }).join('');
+  return `<div class="book-ref-panel ${compact ? 'section-book-ref' : ''}">
+    <span class="book-ref-label">Validate in book</span>${links}
+  </div>`;
+}
+
+function injectSectionBookRefs(container, topicId) {
+  const refs = (typeof BOOK_REFS !== 'undefined') ? (BOOK_REFS[topicId] || []) : [];
+  if (!refs.length) return;
+  container.querySelectorAll('h2, h3').forEach((heading, idx) => {
+    if (idx > 8 || heading.closest('.book-ref-panel')) return;
+    const holder = document.createElement('div');
+    holder.innerHTML = buildBookRefs(topicId, true);
+    heading.insertAdjacentElement('afterend', holder.firstElementChild);
+  });
+}
+
+async function renderMermaidBlocks(container) {
+  if (typeof mermaid === 'undefined') return;
+  const blocks = Array.from(container.querySelectorAll('pre code.language-mermaid'));
+  for (const block of blocks) {
+    const source = block.textContent;
+    const wrap = document.createElement('div');
+    wrap.className = 'educational-visual';
+    try {
+      if (typeof mermaid.parse === 'function') {
+        const ok = await mermaid.parse(source, { suppressErrors: true });
+        if (ok === false) continue;
+      }
+      const id = 'mermaid_' + Math.random().toString(36).slice(2);
+      const rendered = await mermaid.render(id, source);
+      wrap.innerHTML = `<div class="educational-visual-title">Concept Architecture Diagram</div>${rendered.svg}`;
+      block.closest('pre').replaceWith(wrap);
+    } catch (err) {
+      console.warn('Mermaid render failed', err);
+    }
+  }
+}
+
+function enhanceEducationalVisuals(container) {
+  container.querySelectorAll('pre code').forEach(block => {
+    const text = block.textContent || '';
+    if (text.includes('Driver JVM') && text.includes('Executor JVM') && text.includes('Unified Memory Manager')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'educational-visual';
+      wrap.innerHTML = runtimeArchitectureVisual();
+      block.closest('pre').replaceWith(wrap);
+    }
+  });
+}
+
+function injectCuratedConceptVisual(container, topicId) {
+  const curated = {
+    'rdds': {
+      src: 'assets/concept-diagrams/rdd-runtime-architecture.png',
+      title: 'RDD Runtime Architecture: where lineage, tasks, memory, BlockManager, and shuffle fit',
+      caption: 'Use this diagram to connect the RDD abstraction to the real execution path: lineage builds the DAG, DAGScheduler creates stages, TaskScheduler places partition tasks, executors use memory and BlockManager, and shuffle files move through the shuffle service.'
+    },
+    'rdd-lineage-and-dag': {
+      src: 'assets/concept-diagrams/rdd-runtime-architecture.png',
+      title: 'RDD Lineage DAG in the Spark Runtime',
+      caption: 'The RDD lineage chain is not just a drawing; it is the recovery and scheduling plan used by Spark to rebuild lost partitions and split work into stages.'
+    }
+  }[topicId];
+  if (!curated || container.querySelector('.curated-diagram')) return;
+  const panel = document.createElement('div');
+  panel.className = 'curated-diagram';
+  panel.innerHTML = `<div class="educational-visual-title">${escHtml(curated.title)}</div>
+    <img src="${curated.src}" alt="${escHtml(curated.title)}">
+    <div class="curated-diagram-caption">${escHtml(curated.caption)}</div>`;
+  const firstHeading = container.querySelector('h2, h3');
+  if (firstHeading) firstHeading.insertAdjacentElement('afterend', panel);
+  else container.prepend(panel);
+}
+
+function runtimeArchitectureVisual() {
+  const box = (title, body, color) => `
+    <div style="border:1px solid ${color};border-radius:8px;padding:12px;background:#fff;box-shadow:0 6px 18px #1e293b14;">
+      <div style="font-weight:800;color:#0f172a;margin-bottom:6px">${title}</div>
+      <div style="font-size:13px;line-height:1.45;color:#334155">${body}</div>
+    </div>`;
+  return `
+    <div class="educational-visual-title">Driver JVM, Executor JVM, Memory, and Shuffle Flow</div>
+    <div style="display:grid;grid-template-columns:1fr 260px;gap:18px;min-width:900px;">
+      <div style="border:2px solid #2563eb;border-radius:14px;padding:18px;background:#f8fbff;">
+        <div style="text-align:center;font-size:26px;font-weight:900;color:#0f172a;margin-bottom:16px;">Spark Runtime Architecture</div>
+        <div style="border:1.5px solid #2563eb;border-radius:10px;padding:14px;background:#eff6ff;margin-bottom:14px;">
+          <div style="text-align:center;font-size:22px;font-weight:900;color:#1e3a8a;margin-bottom:12px;">SparkContext</div>
+          <div style="border:1px solid #2563eb;border-radius:8px;background:#fff;padding:10px;text-align:center;font-weight:800;">Unified Memory Manager</div>
+          <div style="display:grid;grid-template-columns:1.3fr .7fr 1.1fr .9fr;gap:12px;margin-top:14px;">
+            ${box('RDD Lineage DAG','rdd1 -> rdd2 -> rdd3<br>Lineage enables recomputation after executor loss.','#16a34a')}
+            ${box('Tasks','One task per partition per stage.','#d97706')}
+            ${box('Memory','Execution memory for sort/hash/aggregation.<br>Storage memory for cached blocks.','#7c3aed')}
+            ${box('BlockManager','Stores cache, broadcast, and shuffle blocks.','#ef4444')}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-bottom:14px;">
+          ${box('DAGScheduler','Splits lineage into stages at shuffle boundaries.<br><br><strong>Stage 0</strong>: map + filter -> <strong>Stage 1</strong>: reduceByKey -> <strong>Stage N</strong>', '#2563eb')}
+          ${box('Task Thread Pool','Executor cores run tasks concurrently.<br>Task P=0 | Task P=1 | ...', '#2563eb')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:14px;margin-bottom:16px;">
+          ${box('TaskScheduler','Chooses task locality and retries.', '#16a34a')}
+          ${box('SchedulerBackend','Maintains executor RPC connections.', '#16a34a')}
+          ${box('Tungsten UnsafeExternalSorter','Operates on compact binary memory and spills when needed.', '#16a34a')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;border:1px solid #2563eb;border-radius:10px;background:#eff6ff;padding:14px;">
+          ${box('1. DAG','Lineage graph', '#16a34a')}
+          ${box('2. Tasks','Created per stage', '#d97706')}
+          ${box('3. Schedule','Placed on executors', '#2563eb')}
+          ${box('4. Execute','Memory + BlockManager', '#7c3aed')}
+          ${box('5. Persist','Shuffle output / result blocks', '#ef4444')}
+        </div>
+      </div>
+      <div style="border:1.5px solid #d97706;border-radius:12px;background:#fffbeb;padding:16px;align-self:center;">
+        <div style="font-size:22px;font-weight:900;text-align:center;color:#92400e;margin-bottom:12px;">Shuffle Service</div>
+        ${box('Map Output Files','Written to local disk by shuffle map tasks.', '#d97706')}
+        <div style="height:12px"></div>
+        ${box('Reduce Fetch','Fetched through BlockManager RPC.', '#d97706')}
+      </div>
+    </div>`;
+}
+
+function postProcessLearningContent(topicId) {
+  const container = document.getElementById('deep-dive-content');
+  if (!container) return;
+  injectSectionBookRefs(container, topicId);
+  injectCuratedConceptVisual(container, topicId);
+  enhanceEducationalVisuals(container);
+  renderMermaidBlocks(container).then(() => {
+    document.querySelectorAll('#deep-dive-content pre code').forEach(el => {
+      if (typeof hljs !== 'undefined') hljs.highlightElement(el);
+    });
+  });
+}
+
+function buildQuizSection(topicId) {
+  if (typeof QUIZ_DATA === 'undefined') {
+    return '<div class="quiz-section"><div class="dlq-not-available">Quiz data not loaded. Rebuild quiz_data.js and refresh.</div></div>';
+  }
+  const quiz = QUIZ_DATA[topicId];
+  if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+    return '<div class="quiz-section"><div class="dlq-not-available">Assessment quiz coming soon for this topic.</div></div>';
+  }
+  const questions = quiz.questions.slice(0, 50);
+  let html = `<div class="quiz-section">
+    <div class="dlq-header">
+      <div class="dlq-header-icon">&#9989;</div>
+      <div class="dlq-header-text"><h3>Assessment Quiz</h3><p>Answer first; then reveal the correction, clarification, and justification.</p></div>
+      <div class="dlq-badge">${questions.length} QUESTIONS</div>
+    </div>`;
+  questions.forEach((q, idx) => {
+    const qid = `quiz-${topicId}-${idx}`;
+    const options = (q.options && q.options.length) ? q.options : ['True', 'False'];
+    html += `<div class="quiz-card" id="${qid}" data-topic="${escHtml(topicId)}" data-index="${idx}">
+      <div class="quiz-question-title">${q.number}. ${escHtml(q.question)}</div>
+      <div class="quiz-options">`;
+    options.forEach(opt => {
+      html += `<label class="quiz-option"><input type="radio" name="${qid}" value="${escHtml(opt)}"><span>${escHtml(opt)}</span></label>`;
+    });
+    html += `</div>
+      <button class="quiz-submit" onclick="submitQuizAnswer('${qid}')">Check answer</button>
+      <div class="quiz-feedback"></div>
+    </div>`;
+  });
+  return html + '</div>';
+}
+
+function normalizeQuizAnswer(value) {
+  return String(value || '').trim().replace(/\.$/, '').replace(/^([A-Da-d])\).*/, '$1').toLowerCase();
+}
+
+function submitQuizAnswer(cardId) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  const topicId = card.dataset.topic;
+  const idx = Number(card.dataset.index || 0);
+  const question = QUIZ_DATA?.[topicId]?.questions?.[idx] || {};
+  const answer = question.answer || '';
+  const explanation = question.explanation || '';
+  const selected = card.querySelector('input[type="radio"]:checked');
+  const feedback = card.querySelector('.quiz-feedback');
+  if (!selected) {
+    feedback.style.display = 'block';
+    feedback.innerHTML = '<span class="quiz-result-bad">Choose an answer first.</span>';
+    return;
+  }
+  const correct = normalizeQuizAnswer(answer) && normalizeQuizAnswer(selected.value) === normalizeQuizAnswer(answer);
+  card.classList.add('answered');
+  card.classList.toggle('correct', correct);
+  card.classList.toggle('incorrect', !correct);
+  feedback.innerHTML = `${correct ? '<span class="quiz-result-good">Correct.</span>' : '<span class="quiz-result-bad">Not quite.</span>'}<br><strong>Correct answer:</strong> ${answer ? escHtml(answer) : 'Needs review in source file'}<br><strong>Why:</strong> ${explanation ? escHtml(explanation) : 'No explanation was parsed for this question yet. This item is marked for quiz-content cleanup.'}`;
+}
+
 function showInfra(sectionId) {
   const section = INFRA_SECTIONS.find(s=>s.id===sectionId);
   if (!section) return;
   setActiveTopicEl(document.getElementById('topic-infra-'+sectionId));
+
+  if (section.markdown) {
+    render(`
+      <div class="topic-header">
+        <div class="topic-breadcrumb">
+          <span>🏗️ Infrastructure Setup</span>
+          <span class="bc-sep">›</span>
+          <span class="bc-current">${section.title}</span>
+        </div>
+        <h1 class="topic-title"><span class="title-accent">${section.icon} ${section.title}</span></h1>
+        <p class="topic-tagline">${section.desc}</p>
+      </div>
+      <div class="section-divider"></div>
+      <div id="infra-md-content" class="fundamentals-content">
+        <div class="dlq-loading"><div class="dlq-spinner"></div> Loading infrastructure guide...</div>
+      </div>
+    `);
+    fetch(section.markdown)
+      .then(res => res.ok ? res.text() : Promise.reject(new Error('Guide not found')))
+      .then(md => {
+        const container = document.getElementById('infra-md-content');
+        container.innerHTML = (typeof marked !== 'undefined') ? marked.parse(md) : '<pre>' + escHtml(md) + '</pre>';
+        renderMermaidBlocks(container).then(() => {
+          container.querySelectorAll('pre code').forEach(el => {
+            if (typeof hljs !== 'undefined') hljs.highlightElement(el);
+          });
+        });
+      })
+      .catch(err => {
+        const container = document.getElementById('infra-md-content');
+        if (container) container.innerHTML = `<div class="dlq-not-available">${escHtml(err.message)}</div>`;
+      });
+    return;
+  }
 
   let html = `
     <div class="topic-header">

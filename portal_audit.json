@@ -1,0 +1,1003 @@
+{
+  "summary": {
+    "deepDiveCount": 83,
+    "deepDivesUnder1000Words": 5,
+    "quizCount": 82,
+    "quizzesWithFewerThan30Questions": 18,
+    "conceptsWithoutBookRefs": 10
+  },
+  "deepDives": [
+    {
+      "id": "accumulators",
+      "words": 3813,
+      "mermaidBlocks": 1,
+      "bookRefCount": 1
+    },
+    {
+      "id": "actions",
+      "words": 2374,
+      "mermaidBlocks": 1,
+      "bookRefCount": 0
+    },
+    {
+      "id": "amazon-ec2-deployment",
+      "words": 4912,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "astar-search-algorithm",
+      "words": 4668,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "broadcast-variables",
+      "words": 2598,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "catalyst-optimizer",
+      "words": 1863,
+      "mermaidBlocks": 1,
+      "bookRefCount": 2
+    },
+    {
+      "id": "cluster-web-ui",
+      "words": 2852,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "configuring-spark",
+      "words": 3167,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "connected-components",
+      "words": 1575,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "cross-validation",
+      "words": 1708,
+      "mermaidBlocks": 1,
+      "bookRefCount": 2
+    },
+    {
+      "id": "d3js-visualization",
+      "words": 3281,
+      "mermaidBlocks": 0,
+      "bookRefCount": 0
+    },
+    {
+      "id": "data-partitioning",
+      "words": 2909,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "dataframes",
+      "words": 1856,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "datasets",
+      "words": 4184,
+      "mermaidBlocks": 1,
+      "bookRefCount": 1
+    },
+    {
+      "id": "decision-trees",
+      "words": 2803,
+      "mermaidBlocks": 1,
+      "bookRefCount": 2
+    },
+    {
+      "id": "deep-learning-concepts",
+      "words": 2995,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "discretized-streams-dstreams",
+      "words": 2507,
+      "mermaidBlocks": 0,
+      "bookRefCount": 2
+    },
+    {
+      "id": "double-rdd-functions",
+      "words": 2247,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "feature-scaling",
+      "words": 1624,
+      "mermaidBlocks": 0,
+      "bookRefCount": 1
+    },
+    {
+      "id": "filtering-and-aggregating",
+      "words": 2587,
+      "mermaidBlocks": 0,
+      "bookRefCount": 1
+    },
+    {
+      "id": "graphx-api",
+      "words": 4095,
+      "mermaidBlocks": 1,
+      "bookRefCount": 2
+    },
+    {
+      "id": "grouping-and-sorting",
+      "words": 3306,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "h2o-framework",
+      "words": 1517,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "hive-metastore",
+      "words": 3965,
+      "mermaidBlocks": 1,
+      "bookRefCount": 1
+    },
+    {
+      "id": "job-and-resource-scheduling",
+      "words": 1649,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "joining-data",
+      "words": 1609,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "kafka-integration",
+      "words": 2456,
+      "mermaidBlocks": 1,
+      "bookRefCount": 1
+    },
+    {
+      "id": "kmeans-clustering",
+      "words": 4104,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "linear-algebra",
+      "words": 4154,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "linear-regression",
+      "words": 3661,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "loading-json",
+      "words": 2665,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "logistic-regression",
+      "words": 3882,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "mapreduce-shortcomings",
+      "words": 1700,
+      "mermaidBlocks": 1,
+      "bookRefCount": 1
+    },
+    {
+      "id": "mean-normalization",
+      "words": 2456,
+      "mermaidBlocks": 0,
+      "bookRefCount": 1
+    },
+    {
+      "id": "mesos-architecture",
+      "words": 4157,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "mesos-resource-scheduling",
+      "words": 2644,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "ml-basics",
+      "words": 2496,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "optimization",
+      "words": 1421,
+      "mermaidBlocks": 0,
+      "bookRefCount": 0
+    },
+    {
+      "id": "pagerank",
+      "words": 1781,
+      "mermaidBlocks": 0,
+      "bookRefCount": 1
+    },
+    {
+      "id": "pair-rdds",
+      "words": 3935,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "pre-distributed",
+      "words": 322,
+      "mermaidBlocks": 1,
+      "bookRefCount": 2
+    },
+    {
+      "id": "pre-formats",
+      "words": 964,
+      "mermaidBlocks": 1,
+      "bookRefCount": 0
+    },
+    {
+      "id": "pre-functional",
+      "words": 343,
+      "mermaidBlocks": 1,
+      "bookRefCount": 0
+    },
+    {
+      "id": "pre-hdfs",
+      "words": 379,
+      "mermaidBlocks": 1,
+      "bookRefCount": 0
+    },
+    {
+      "id": "pre-sparksession",
+      "words": 302,
+      "mermaidBlocks": 1,
+      "bookRefCount": 0
+    },
+    {
+      "id": "random-forests",
+      "words": 1560,
+      "mermaidBlocks": 1,
+      "bookRefCount": 2
+    },
+    {
+      "id": "rdd-lineage-and-dag",
+      "words": 3542,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "rdds",
+      "words": 3835,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "realtime-dashboard-architecture",
+      "words": 1756,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "regression-and-classification-with-deep-learning",
+      "words": 4300,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "regularization",
+      "words": 2624,
+      "mermaidBlocks": 0,
+      "bookRefCount": 1
+    },
+    {
+      "id": "running-applications",
+      "words": 1868,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "running-spark-with-docker",
+      "words": 3951,
+      "mermaidBlocks": 0,
+      "bookRefCount": 1
+    },
+    {
+      "id": "saving-computation-state",
+      "words": 2851,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "shortest-paths",
+      "words": 1605,
+      "mermaidBlocks": 0,
+      "bookRefCount": 1
+    },
+    {
+      "id": "shuffling",
+      "words": 2817,
+      "mermaidBlocks": 1,
+      "bookRefCount": 1
+    },
+    {
+      "id": "spark-cluster-types",
+      "words": 2012,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "spark-components",
+      "words": 1632,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "spark-ecosystem",
+      "words": 2661,
+      "mermaidBlocks": 0,
+      "bookRefCount": 1
+    },
+    {
+      "id": "spark-history-server",
+      "words": 4511,
+      "mermaidBlocks": 1,
+      "bookRefCount": 2
+    },
+    {
+      "id": "spark-ide-project-setup",
+      "words": 1758,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "spark-ml-library",
+      "words": 4321,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "spark-revolution",
+      "words": 4512,
+      "mermaidBlocks": 1,
+      "bookRefCount": 1
+    },
+    {
+      "id": "spark-runtime-architecture",
+      "words": 4174,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "spark-shell",
+      "words": 2306,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "spark-stages-and-tasks",
+      "words": 2983,
+      "mermaidBlocks": 1,
+      "bookRefCount": 2
+    },
+    {
+      "id": "spark-streaming-components",
+      "words": 4218,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "spark-submit",
+      "words": 2793,
+      "mermaidBlocks": 1,
+      "bookRefCount": 1
+    },
+    {
+      "id": "spark-vm-setup",
+      "words": 1548,
+      "mermaidBlocks": 0,
+      "bookRefCount": 1
+    },
+    {
+      "id": "spark-web-ui",
+      "words": 4141,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "spark_hands_on_setup_guide",
+      "words": 1554,
+      "mermaidBlocks": 1,
+      "bookRefCount": 0
+    },
+    {
+      "id": "sparkling-water-api",
+      "words": 4233,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "sql-queries",
+      "words": 1558,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "standalone-cluster-components",
+      "words": 2744,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "streaming-performance-tuning",
+      "words": 4525,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "transformations",
+      "words": 3986,
+      "mermaidBlocks": 1,
+      "bookRefCount": 2
+    },
+    {
+      "id": "transforming-joining-graphs",
+      "words": 1812,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "tungsten-performance",
+      "words": 1985,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    },
+    {
+      "id": "uberjars",
+      "words": 4663,
+      "mermaidBlocks": 0,
+      "bookRefCount": 0
+    },
+    {
+      "id": "websockets",
+      "words": 1525,
+      "mermaidBlocks": 0,
+      "bookRefCount": 0
+    },
+    {
+      "id": "window-operations",
+      "words": 2488,
+      "mermaidBlocks": 1,
+      "bookRefCount": 1
+    },
+    {
+      "id": "yarn-architecture",
+      "words": 1681,
+      "mermaidBlocks": 0,
+      "bookRefCount": 3
+    },
+    {
+      "id": "yarn-resource-scheduling",
+      "words": 4284,
+      "mermaidBlocks": 1,
+      "bookRefCount": 3
+    }
+  ],
+  "quizzes": [
+    {
+      "id": "accumulators",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 50
+    },
+    {
+      "id": "actions",
+      "questions": 40,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "amazon-ec2-deployment",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "astar-search-algorithm",
+      "questions": 50,
+      "withAnswers": 0,
+      "withExplanations": 0
+    },
+    {
+      "id": "broadcast-variables",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "catalyst-optimizer",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "cluster-web-ui",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "configuring-spark",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 35
+    },
+    {
+      "id": "connected-components",
+      "questions": 50,
+      "withAnswers": 50,
+      "withExplanations": 50
+    },
+    {
+      "id": "cross-validation",
+      "questions": 50,
+      "withAnswers": 0,
+      "withExplanations": 0
+    },
+    {
+      "id": "d3js-visualization",
+      "questions": 15,
+      "withAnswers": 15,
+      "withExplanations": 15
+    },
+    {
+      "id": "data-partitioning",
+      "questions": 35,
+      "withAnswers": 35,
+      "withExplanations": 25
+    },
+    {
+      "id": "dataframes",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "datasets",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "decision-trees",
+      "questions": 32,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "deep-learning-concepts",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 35
+    },
+    {
+      "id": "discretized-streams-dstreams",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "double-rdd-functions",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "feature-scaling",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 50
+    },
+    {
+      "id": "filtering-and-aggregating",
+      "questions": 25,
+      "withAnswers": 23,
+      "withExplanations": 23
+    },
+    {
+      "id": "graphx-api",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 50
+    },
+    {
+      "id": "grouping-and-sorting",
+      "questions": 18,
+      "withAnswers": 15,
+      "withExplanations": 15
+    },
+    {
+      "id": "h2o-framework",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "hive-metastore",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 50
+    },
+    {
+      "id": "job-and-resource-scheduling",
+      "questions": 25,
+      "withAnswers": 15,
+      "withExplanations": 15
+    },
+    {
+      "id": "joining-data",
+      "questions": 25,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "kafka-integration",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "kmeans-clustering",
+      "questions": 35,
+      "withAnswers": 35,
+      "withExplanations": 35
+    },
+    {
+      "id": "linear-algebra",
+      "questions": 25,
+      "withAnswers": 15,
+      "withExplanations": 25
+    },
+    {
+      "id": "linear-regression",
+      "questions": 0,
+      "withAnswers": 0,
+      "withExplanations": 0
+    },
+    {
+      "id": "loading-json",
+      "questions": 50,
+      "withAnswers": 47,
+      "withExplanations": 40
+    },
+    {
+      "id": "logistic-regression",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 43
+    },
+    {
+      "id": "mapreduce-shortcomings",
+      "questions": 17,
+      "withAnswers": 3,
+      "withExplanations": 5
+    },
+    {
+      "id": "mean-normalization",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "mesos-architecture",
+      "questions": 35,
+      "withAnswers": 0,
+      "withExplanations": 25
+    },
+    {
+      "id": "mesos-resource-scheduling",
+      "questions": 35,
+      "withAnswers": 35,
+      "withExplanations": 35
+    },
+    {
+      "id": "ml-basics",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "optimization",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "pagerank",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "pair-rdds",
+      "questions": 50,
+      "withAnswers": 0,
+      "withExplanations": 0
+    },
+    {
+      "id": "random-forests",
+      "questions": 50,
+      "withAnswers": 50,
+      "withExplanations": 50
+    },
+    {
+      "id": "rdd-lineage-and-dag",
+      "questions": 50,
+      "withAnswers": 50,
+      "withExplanations": 50
+    },
+    {
+      "id": "rdds",
+      "questions": 25,
+      "withAnswers": 16,
+      "withExplanations": 25
+    },
+    {
+      "id": "realtime-dashboard-architecture",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "regression-and-classification-with-deep-learning",
+      "questions": 26,
+      "withAnswers": 25,
+      "withExplanations": 26
+    },
+    {
+      "id": "regularization",
+      "questions": 50,
+      "withAnswers": 50,
+      "withExplanations": 40
+    },
+    {
+      "id": "running-applications",
+      "questions": 50,
+      "withAnswers": 41,
+      "withExplanations": 41
+    },
+    {
+      "id": "running-spark-with-docker",
+      "questions": 35,
+      "withAnswers": 0,
+      "withExplanations": 25
+    },
+    {
+      "id": "saving-computation-state",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "shortest-paths",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "shuffling",
+      "questions": 50,
+      "withAnswers": 50,
+      "withExplanations": 50
+    },
+    {
+      "id": "spark-cluster-types",
+      "questions": 50,
+      "withAnswers": 48,
+      "withExplanations": 50
+    },
+    {
+      "id": "spark-components",
+      "questions": 50,
+      "withAnswers": 50,
+      "withExplanations": 50
+    },
+    {
+      "id": "spark-ecosystem",
+      "questions": 25,
+      "withAnswers": 15,
+      "withExplanations": 16
+    },
+    {
+      "id": "spark-history-server",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "spark-ide-project-setup",
+      "questions": 42,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "spark-ml-library",
+      "questions": 50,
+      "withAnswers": 35,
+      "withExplanations": 50
+    },
+    {
+      "id": "spark-revolution",
+      "questions": 35,
+      "withAnswers": 32,
+      "withExplanations": 3
+    },
+    {
+      "id": "spark-runtime-architecture",
+      "questions": 35,
+      "withAnswers": 0,
+      "withExplanations": 0
+    },
+    {
+      "id": "spark-shell",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 50
+    },
+    {
+      "id": "spark-stages-and-tasks",
+      "questions": 50,
+      "withAnswers": 25,
+      "withExplanations": 50
+    },
+    {
+      "id": "spark-streaming-components",
+      "questions": 0,
+      "withAnswers": 0,
+      "withExplanations": 0
+    },
+    {
+      "id": "spark-submit",
+      "questions": 27,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "spark-vm-setup",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "spark-web-ui",
+      "questions": 25,
+      "withAnswers": 15,
+      "withExplanations": 25
+    },
+    {
+      "id": "sparkling-water-api",
+      "questions": 50,
+      "withAnswers": 0,
+      "withExplanations": 0
+    },
+    {
+      "id": "sql-queries",
+      "questions": 25,
+      "withAnswers": 15,
+      "withExplanations": 15
+    },
+    {
+      "id": "standalone-cluster-components",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "streaming-performance-tuning",
+      "questions": 25,
+      "withAnswers": 15,
+      "withExplanations": 15
+    },
+    {
+      "id": "transformations",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 50
+    },
+    {
+      "id": "transforming-joining-graphs",
+      "questions": 50,
+      "withAnswers": 0,
+      "withExplanations": 0
+    },
+    {
+      "id": "tungsten-performance",
+      "questions": 50,
+      "withAnswers": 50,
+      "withExplanations": 50
+    },
+    {
+      "id": "types-of-clusters",
+      "questions": 50,
+      "withAnswers": 0,
+      "withExplanations": 0
+    },
+    {
+      "id": "types-of-machine-learning",
+      "questions": 50,
+      "withAnswers": 40,
+      "withExplanations": 40
+    },
+    {
+      "id": "typical-spark-cluster",
+      "questions": 50,
+      "withAnswers": 35,
+      "withExplanations": 50
+    },
+    {
+      "id": "uberjars",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "understand-cluster-components",
+      "questions": 50,
+      "withAnswers": 50,
+      "withExplanations": 50
+    },
+    {
+      "id": "websockets",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 35
+    },
+    {
+      "id": "window-functions",
+      "questions": 28,
+      "withAnswers": 26,
+      "withExplanations": 25
+    },
+    {
+      "id": "window-operations",
+      "questions": 35,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "yarn-architecture",
+      "questions": 25,
+      "withAnswers": 25,
+      "withExplanations": 25
+    },
+    {
+      "id": "yarn-resource-scheduling",
+      "questions": 50,
+      "withAnswers": 0,
+      "withExplanations": 0
+    }
+  ]
+}
