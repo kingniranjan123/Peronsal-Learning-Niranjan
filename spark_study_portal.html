@@ -115,6 +115,14 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg-de
   display:flex; align-items:center; padding:0 20px; gap:16px;
   z-index:10;
 }
+.mobile-menu-btn {
+  display:none;
+  width:38px; height:38px; border-radius:10px;
+  border:1px solid var(--border-2); background:var(--bg-card);
+  color:var(--text-1); align-items:center; justify-content:center;
+  font-size:1.25rem; line-height:1; cursor:pointer;
+}
+.mobile-menu-btn:active { transform:scale(.98); }
 .app-header .logo { display:flex; align-items:center; gap:10px; min-width:calc(var(--sidebar-w) - 20px); }
 .app-header .logo-icon { width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#3B82F6,#A855F7); display:flex; align-items:center; justify-content:center; font-size:16px; }
 .app-header .logo-text { font-size:1rem; font-weight:700; }
@@ -141,6 +149,7 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg-de
   overflow-y:auto; overflow-x:hidden;
   display:flex; flex-direction:column;
 }
+.sidebar-backdrop { display:none; }
 .sidebar::-webkit-scrollbar { width:4px; }
 .sidebar::-webkit-scrollbar-track { background:transparent; }
 .sidebar::-webkit-scrollbar-thumb { background:var(--border-2); border-radius:4px; }
@@ -351,6 +360,15 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg-de
 .arch-node { background:var(--bg-deep); border:1px solid var(--border-2); border-radius:var(--radius-sm); padding:8px 14px; font-size:.78rem; font-weight:600; text-align:center; }
 .arch-node.highlight { border-color:var(--accent); color:var(--accent-2); }
 .arch-arrow { color:var(--text-3); font-size:1.1rem; }
+.project-infra-visual {
+  background:#F8FBFF; color:#0F172A; border:1px solid #BFDBFE;
+  border-radius:8px; padding:14px; overflow-x:auto; margin:16px 0 18px;
+}
+.project-infra-visual svg { display:block; min-width:880px; width:100%; height:auto; }
+.project-infra-caption {
+  color:var(--text-2); font-size:.86rem; line-height:1.6;
+  margin:8px 0 0;
+}
 .project-brief-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px; }
 .project-brief-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:16px; }
 .project-brief-card h4 { color:var(--text-1); font-size:.95rem; margin-bottom:8px; }
@@ -389,7 +407,44 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg-de
 
 /* Responsive tweaks */
 @media(max-width:768px) {
-  :root { --sidebar-w:260px; }
+  :root { --sidebar-w:280px; --header-h:58px; }
+  .app-header { padding:0 12px; gap:10px; position:relative; z-index:30; }
+  .mobile-menu-btn { display:flex; flex-shrink:0; }
+  .app-header .logo { min-width:0; flex:1; }
+  .app-header .logo-icon { width:30px; height:30px; }
+  .app-header .logo-text { font-size:.92rem; }
+  .app-header .logo-sub { display:none; }
+  .header-search { display:none; }
+  .header-right { margin-left:0; gap:8px; }
+  .header-badge { display:none; }
+  .user-avatar { width:31px; height:31px; font-size:.78rem; }
+  .app-body { position:relative; }
+  .sidebar {
+    position:fixed; top:var(--header-h); bottom:0; left:0; z-index:25;
+    width:var(--sidebar-w); min-width:var(--sidebar-w);
+    transform:translateX(-104%); transition:transform .22s ease;
+    box-shadow:18px 0 42px #0008;
+  }
+  body.sidebar-open .sidebar { transform:translateX(0); }
+  .sidebar-backdrop {
+    display:block; position:fixed; top:var(--header-h); left:0; right:0; bottom:0;
+    background:#02061799; opacity:0; pointer-events:none; transition:opacity .2s ease;
+    z-index:20;
+  }
+  body.sidebar-open .sidebar-backdrop { opacity:1; pointer-events:auto; }
+  .content-area { width:100%; }
+  .content-inner { max-width:none; padding:22px 16px 72px; }
+  .topic-title { font-size:1.55rem; }
+  .topic-tagline { font-size:.9rem; }
+  .section { margin-bottom:26px; }
+  .section-title { font-size:1rem; align-items:flex-start; }
+  .code-block pre code { font-size:.76rem !important; padding:14px !important; }
+  .steps li { gap:10px; }
+  .step-content .step-desc { font-size:.8rem; }
+  .project-card-header { padding:16px; gap:12px; align-items:flex-start; }
+  .project-badge { margin-left:0; }
+  .project-card-body { padding:16px; }
+  .project-infra-visual { margin-left:-2px; margin-right:-2px; padding:10px; }
   .compare-grid { grid-template-columns:1fr; }
 }
 
@@ -648,6 +703,7 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 <div id="app">
   <!-- Header -->
   <header class="app-header">
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Open menu" aria-controls="sidebar">⋯</button>
     <div class="logo">
       <div class="logo-icon">⚡</div>
       <div>
@@ -667,6 +723,7 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 
   <div class="app-body">
     <!-- ── SIDEBAR ── -->
+    <div class="sidebar-backdrop" onclick="closeMobileMenu()"></div>
     <nav class="sidebar" id="sidebar"></nav>
 
     <!-- ── CONTENT ── -->
@@ -2954,7 +3011,16 @@ function doLogin() {
 }
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+  if (e.key === 'Escape') closeMobileMenu();
 });
+
+function toggleMobileMenu() {
+  document.body.classList.toggle('sidebar-open');
+}
+
+function closeMobileMenu() {
+  document.body.classList.remove('sidebar-open');
+}
 
 // ═══════════════════════════════════════════════════════════
 //  SIDEBAR BUILDER
@@ -3039,6 +3105,7 @@ function toggleChapter(id) {
 function setActiveTopicEl(el) {
   document.querySelectorAll('.tree-topic').forEach(e => e.classList.remove('active'));
   if (el) el.classList.add('active');
+  closeMobileMenu();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3549,7 +3616,12 @@ function visualShell(topicId, inner, subtitle) {
 }
 
 function wrapSvgText(text, maxChars = 24, maxLines = 4) {
-  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const words = String(text || '').split(/\s+/).filter(Boolean).flatMap(word => {
+    if (word.length <= maxChars) return [word];
+    const chunks = [];
+    for (let i = 0; i < word.length; i += maxChars) chunks.push(word.slice(i, i + maxChars));
+    return chunks;
+  });
   const lines = [];
   let line = '';
   words.forEach(word => {
@@ -4029,12 +4101,91 @@ function projectDataTableHtml(rows) {
   </table></div>`;
 }
 
+function projectInfraDiagramHtml(p, pb) {
+  const dataLabel = (pb.data && pb.data[0] && pb.data[0].label) || p.dataset || 'Project dataset';
+  const dataFile = (pb.data && pb.data[0] && pb.data[0].file) || 'data/raw/project/';
+  const codeFile = (pb.files || []).find(x => x.includes('src/')) || 'src/projects/project_job.py';
+  const outputFile = (pb.files || []).find(x => x.includes('data/gold')) || 'data/gold/project_output/';
+  const validate = (pb.checks || p.metrics || ['Validate schema, counts, and metrics']).slice(0, 2).join(' | ');
+  const arch = (p.arch || []).slice(0, 5);
+  const stageText = arch.length ? arch.join(' -> ') : 'Source -> Spark -> Output';
+  return `<div class="project-infra-visual" role="img" aria-label="${escHtml(p.title)} hands-on infrastructure architecture">
+    <svg viewBox="0 0 1120 560" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="projArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <path d="M0,0 L10,4 L0,8 z" fill="#1F2937"></path>
+        </marker>
+        <filter id="projShadow" x="-10%" y="-20%" width="120%" height="150%">
+          <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#1e293b" flood-opacity=".14"/>
+        </filter>
+      </defs>
+      <rect x="20" y="20" width="1080" height="520" rx="18" fill="#F8FBFF" stroke="#2563EB" stroke-width="2"/>
+      <text x="560" y="58" text-anchor="middle" font-size="27" font-weight="900" fill="#0F172A">${escHtml(p.title)} Hands-on Architecture</text>
+      <text x="560" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="#475569">Infrastructure, local folders, Spark runtime, outputs, and validation path</text>
+
+      <rect x="54" y="126" width="215" height="92" rx="12" fill="#ECFDF5" stroke="#16A34A" stroke-width="1.8"/>
+      <text x="74" y="158" font-size="15" font-weight="900" fill="#064E3B">1. Data source</text>
+      ${svgTextBlock(dataLabel, 74, 183, 24, 2, 12, 750, '#334155')}
+      <text x="74" y="212" font-size="12" font-weight="650" fill="#475569">download or API export</text>
+
+      <rect x="329" y="126" width="220" height="92" rx="12" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.8"/>
+      <text x="349" y="158" font-size="15" font-weight="900" fill="#1E3A8A">2. Local raw zone</text>
+      ${svgTextBlock(dataFile, 349, 183, 28, 2, 12, 750, '#334155')}
+      <text x="349" y="212" font-size="12" font-weight="650" fill="#475569">immutable input files</text>
+
+      <rect x="609" y="126" width="220" height="92" rx="12" fill="#FFF7ED" stroke="#D97706" stroke-width="1.8"/>
+      <text x="629" y="158" font-size="15" font-weight="900" fill="#92400E">3. Project code</text>
+      ${svgTextBlock(codeFile, 629, 183, 28, 2, 12, 750, '#334155')}
+      <text x="629" y="212" font-size="12" font-weight="650" fill="#475569">read, clean, feature/model</text>
+
+      <rect x="884" y="126" width="180" height="92" rx="12" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.8"/>
+      <text x="904" y="158" font-size="15" font-weight="900" fill="#4C1D95">4. Submit job</text>
+      <text x="904" y="184" font-size="12" font-weight="750" fill="#334155">spark-submit</text>
+      <text x="904" y="204" font-size="12" font-weight="650" fill="#475569">${escHtml(p.cloud)}</text>
+
+      <line x1="269" y1="172" x2="329" y2="172" stroke="#1F2937" stroke-width="2.2" marker-end="url(#projArrow)"/>
+      <line x1="549" y1="172" x2="609" y2="172" stroke="#1F2937" stroke-width="2.2" marker-end="url(#projArrow)"/>
+      <line x1="829" y1="172" x2="884" y2="172" stroke="#1F2937" stroke-width="2.2" marker-end="url(#projArrow)"/>
+
+      <rect x="140" y="282" width="840" height="126" rx="18" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" filter="url(#projShadow)"/>
+      <text x="560" y="318" text-anchor="middle" font-size="21" font-weight="900" fill="#1E3A8A">Spark Runtime</text>
+      <rect x="184" y="342" width="220" height="42" rx="9" fill="#EFF6FF" stroke="#2563EB"/>
+      <text x="294" y="368" text-anchor="middle" font-size="13" font-weight="900" fill="#1E3A8A">Driver: plan DAG and stages</text>
+      <rect x="450" y="342" width="220" height="42" rx="9" fill="#ECFDF5" stroke="#16A34A"/>
+      <text x="560" y="368" text-anchor="middle" font-size="13" font-weight="900" fill="#14532D">Executors: parallel tasks</text>
+      <rect x="716" y="342" width="220" height="42" rx="9" fill="#FEF2F2" stroke="#EF4444"/>
+      <text x="826" y="368" text-anchor="middle" font-size="13" font-weight="900" fill="#991B1B">Shuffle/cache/checkpoint</text>
+      <line x1="974" y1="218" x2="974" y2="282" stroke="#1F2937" stroke-width="2.2" marker-end="url(#projArrow)"/>
+      <path d="M280 282 C280 248, 708 248, 708 218" fill="none" stroke="#64748B" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#projArrow)"/>
+
+      <rect x="70" y="454" width="285" height="58" rx="11" fill="#ECFEFF" stroke="#0EA5E9"/>
+      <text x="88" y="479" font-size="14" font-weight="900" fill="#155E75">Processing aim</text>
+      ${svgTextBlock(stageText, 88, 499, 34, 1, 12, 700, '#334155')}
+      <rect x="418" y="454" width="285" height="58" rx="11" fill="#F0FDF4" stroke="#16A34A"/>
+      <text x="436" y="479" font-size="14" font-weight="900" fill="#14532D">Gold output</text>
+      ${svgTextBlock(outputFile, 436, 499, 34, 1, 12, 700, '#334155')}
+      <rect x="766" y="454" width="285" height="58" rx="11" fill="#FEFCE8" stroke="#CA8A04"/>
+      <text x="784" y="479" font-size="14" font-weight="900" fill="#854D0E">Validation</text>
+      ${svgTextBlock(validate, 784, 499, 34, 1, 12, 700, '#334155')}
+      <line x1="560" y1="408" x2="560" y2="454" stroke="#1F2937" stroke-width="2.2" marker-end="url(#projArrow)"/>
+      <line x1="355" y1="483" x2="418" y2="483" stroke="#1F2937" stroke-width="2.2" marker-end="url(#projArrow)"/>
+      <line x1="703" y1="483" x2="766" y2="483" stroke="#1F2937" stroke-width="2.2" marker-end="url(#projArrow)"/>
+    </svg>
+    <p class="project-infra-caption">Read this image before running commands: download lands in <code>data/raw</code>, project code lives under <code>src/projects</code>, Spark runs the processing locally or on ${escHtml(p.cloud)}, and validated results are written under <code>data/gold</code>.</p>
+  </div>`;
+}
+
 function projectCommandCard(title, desc, src) {
   return `<div class="command-card">
     <div class="command-card-title">${escHtml(title)}</div>
     <div class="command-card-desc">${escHtml(desc)}</div>
     ${codeBlock({lang:'powershell', label:'PowerShell', src})}
   </div>`;
+}
+
+function projectFilesCodeBlock(files) {
+  if (!files || !files.length) return '';
+  return codeBlock({lang:'bash', label:'Project file layout', src: files.join('\n')});
 }
 
 function buildProjectPlaybookSections(p, pb) {
@@ -4065,6 +4216,7 @@ function buildProjectPlaybookSections(p, pb) {
       <div class="command-stack">
         ${projectCommandCard('1. Create folders and download the dataset', 'Run from the repository root in Windows PowerShell. Kaggle commands require a Kaggle API token at %USERPROFILE%\\.kaggle\\kaggle.json.', pb.download || '')}
         ${projectCommandCard('2. Install dependencies and run the Spark job', 'This creates a local virtual environment, installs PySpark dependencies, and runs the project job once the implementation file exists.', pb.run || '')}
+        ${projectFilesCodeBlock(pb.files || [])}
       </div>
     </div>
     <div class="section">
@@ -4120,6 +4272,7 @@ function showProject(projId) {
           <div class="project-badge">Project ${p.num}/10</div>
         </div>
         <div class="project-card-body">
+          ${projectInfraDiagramHtml(p, pb)}
           <div class="arch-flow">${archNodes}</div>
           <div class="info-box" style="margin-top:16px;">
             <strong>📦 Dataset:</strong> ${p.dataset}<br/>
