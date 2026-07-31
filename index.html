@@ -3514,72 +3514,155 @@ function findTopicById(topicId) {
   return null;
 }
 
-function deriveConceptVisual(topicId) {
+function topicMeta(topicId) {
   const found = findTopicById(topicId);
-  const topic = found?.topic || {title: topicId, overview: ''};
-  const title = topic.title || topicId;
-  const overview = topic.overview || '';
-  const lower = `${topicId} ${title} ${overview}`.toLowerCase();
-  const conceptNames = (topic.concepts || []).slice(0, 4).map(c => c.title);
-
-  let profile = {
-    input: 'Raw data / source system',
-    plan: 'SparkSession builds logical plan',
-    core: title,
-    execute: 'Executors process partitions in parallel',
-    output: 'Validated result dataset',
-    note: 'Connect the concept to Spark execution: define intent, build a plan, distribute work, and validate output.'
+  const topic = found?.topic || {title: topicId, overview: '', concepts: []};
+  return {
+    title: topic.title || topicId,
+    part: found?.part?.title || '',
+    chapter: found?.chapter?.title || '',
+    concepts: (topic.concepts || []).slice(0, 5).map(c => c.title)
   };
+}
 
-  if (lower.includes('stream') || lower.includes('kafka') || lower.includes('dstream') || lower.includes('window')) {
-    profile = {input:'Event source / Kafka topic', plan:'Micro-batch planner + checkpoint', core:title, execute:'Executors process time windows', output:'Aggregates, alerts, dashboard updates', note:'Streaming concepts fit between a continuous source and stateful windowed outputs.'};
-  } else if (lower.includes('sql') || lower.includes('dataframe') || lower.includes('dataset') || lower.includes('catalyst') || lower.includes('hive')) {
-    profile = {input:'Tables / files / metastore', plan:'Catalyst analysis and optimization', core:title, execute:'Tungsten physical operators on executors', output:'Rows, tables, Parquet, or dashboard result', note:'SQL concepts fit in the planning layer: schema, logical plan, optimized physical plan, then distributed execution.'};
-  } else if (lower.includes('ml') || lower.includes('regression') || lower.includes('kmeans') || lower.includes('forest') || lower.includes('classification') || lower.includes('cross validation') || lower.includes('feature')) {
-    profile = {input:'Training data + labels/features', plan:'ML Pipeline stages fit/transform', core:title, execute:'Distributed training / scoring tasks', output:'Model metrics, predictions, saved model', note:'ML concepts fit after feature preparation and before evaluation/serving.'};
-  } else if (lower.includes('graph') || lower.includes('pagerank') || lower.includes('shortest') || lower.includes('connected')) {
-    profile = {input:'Vertices + edges', plan:'GraphX graph and triplets', core:title, execute:'Iterative Pregel/message passing', output:'Graph scores, paths, components', note:'Graph concepts fit into iterative vertex-edge computation over partitioned graph data.'};
-  } else if (lower.includes('yarn') || lower.includes('mesos') || lower.includes('cluster') || lower.includes('standalone') || lower.includes('submit') || lower.includes('web ui') || lower.includes('history')) {
-    profile = {input:'Application package + configuration', plan:'Cluster manager allocates resources', core:title, execute:'Driver coordinates executors and tasks', output:'Application UI, logs, metrics, output data', note:'Operations concepts fit around deployment, resource allocation, observability, and repeatable execution.'};
-  } else if (lower.includes('rdd') || lower.includes('transformation') || lower.includes('action') || lower.includes('shuffle') || lower.includes('partition') || lower.includes('accumulator') || lower.includes('broadcast')) {
-    profile = {input:'RDD partitions / variables', plan:'Lineage DAG and stage boundaries', core:title, execute:'TaskScheduler places partition tasks', output:'Action result, cached block, shuffle output', note:'Core API concepts fit inside the DAG, partition, task, and memory execution path.'};
-  }
+function visualCard(title, body, color='#2563eb', minHeight=74) {
+  return `<div style="border:1px solid ${color};border-radius:8px;background:#fff;padding:12px;min-height:${minHeight}px;box-shadow:0 5px 16px #1e293b12;">
+    <div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">${escHtml(title)}</div>
+    <div style="font-size:14px;line-height:1.45;color:#334155;font-weight:650;">${escHtml(body)}</div>
+  </div>`;
+}
 
-  return {...profile, title, chapter: found?.chapter?.title || '', part: found?.part?.title || '', concepts: conceptNames};
+function visualHeader(meta, subtitle) {
+  return `<div style="text-align:center;margin-bottom:16px;">
+    <div style="font-size:25px;font-weight:900;color:#0f172a;">${escHtml(meta.title)}</div>
+    <div style="font-size:13px;color:#475569;margin-top:4px;">${escHtml(subtitle || `${meta.part} / ${meta.chapter}`)}</div>
+  </div>`;
+}
+
+function visualShell(topicId, inner, subtitle) {
+  const meta = topicMeta(topicId);
+  return `<div class="educational-visual-title">Concept Architecture Map: ${escHtml(meta.title)}</div>
+    <div style="min-width:900px;border:2px solid #2563eb;border-radius:14px;background:#f8fbff;padding:18px;">
+      ${visualHeader(meta, subtitle)}
+      ${inner}
+    </div>`;
+}
+
+function comparisonVisual(topicId, leftTitle, leftSteps, rightTitle, rightSteps, bottomNote) {
+  const stepList = (steps, color) => steps.map((s, i) => visualCard(`${i+1}. ${s[0]}`, s[1], color, 62)).join('');
+  return visualShell(topicId, `
+    <div style="display:grid;grid-template-columns:1fr 90px 1fr;gap:18px;align-items:center;">
+      <div style="border:2px solid #ef4444;border-radius:12px;background:#fff7ed;padding:14px;">
+        <div style="font-size:20px;font-weight:900;color:#991b1b;text-align:center;margin-bottom:12px;">${escHtml(leftTitle)}</div>
+        <div style="display:grid;gap:10px;">${stepList(leftSteps, '#ef4444')}</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:30px;font-weight:900;color:#0f172a;">vs</div>
+        <div style="margin-top:10px;border:1px dashed #64748b;border-radius:8px;padding:10px;color:#475569;font-weight:800;">Architecture shift</div>
+      </div>
+      <div style="border:2px solid #16a34a;border-radius:12px;background:#f0fdf4;padding:14px;">
+        <div style="font-size:20px;font-weight:900;color:#14532d;text-align:center;margin-bottom:12px;">${escHtml(rightTitle)}</div>
+        <div style="display:grid;gap:10px;">${stepList(rightSteps, '#16a34a')}</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(bottomNote)}</div>`);
+}
+
+function layeredVisual(topicId, layers, note) {
+  return visualShell(topicId, `
+    <div style="display:grid;grid-template-columns:1fr;gap:10px;">
+      ${layers.map((l, i) => `<div style="display:grid;grid-template-columns:190px 1fr;gap:12px;align-items:stretch;">
+        <div style="border:1px solid ${l.color};border-radius:8px;background:#fff;padding:12px;font-weight:900;color:#0f172a;">Layer ${i+1}<br>${escHtml(l.name)}</div>
+        <div style="border:1px solid ${l.color};border-radius:8px;background:${l.bg || '#fff'};padding:12px;color:#334155;font-weight:650;line-height:1.5;">${escHtml(l.desc)}</div>
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(note)}</div>`);
+}
+
+function hubVisual(topicId, center, spokes, note) {
+  return visualShell(topicId, `
+    <div style="display:grid;grid-template-columns:1fr 260px 1fr;gap:18px;align-items:center;">
+      <div style="display:grid;gap:12px;">${spokes.slice(0,3).map(s => visualCard(s[0], s[1], s[2], 76)).join('')}</div>
+      <div style="border:2px solid #2563eb;border-radius:18px;background:#eff6ff;padding:28px 16px;text-align:center;box-shadow:0 10px 24px #1e3a8a1f;">
+        <div style="font-size:24px;font-weight:900;color:#1e3a8a;">${escHtml(center)}</div>
+        <div style="font-size:13px;color:#475569;margin-top:8px;">central compute/runtime</div>
+      </div>
+      <div style="display:grid;gap:12px;">${spokes.slice(3).map(s => visualCard(s[0], s[1], s[2], 76)).join('')}</div>
+    </div>
+    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(note)}</div>`);
+}
+
+function flowVisual(topicId, steps, note) {
+  return visualShell(topicId, `
+    <div style="display:grid;grid-template-columns:repeat(${steps.length},1fr);gap:10px;align-items:stretch;">
+      ${steps.map((s, i) => `<div style="display:grid;grid-template-rows:auto 1fr;gap:8px;">
+        <div style="text-align:center;font-weight:900;color:#475569;">${i === 0 ? '' : '&#8594;'}</div>
+        ${visualCard(s[0], s[1], s[2] || '#2563eb', 104)}
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(note)}</div>`);
+}
+
+function cycleVisual(topicId, nodes, center, note) {
+  return visualShell(topicId, `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:center;">
+      ${visualCard(nodes[0][0], nodes[0][1], '#16a34a', 88)}
+      ${visualCard(nodes[1][0], nodes[1][1], '#2563eb', 88)}
+      ${visualCard(nodes[2][0], nodes[2][1], '#d97706', 88)}
+      ${visualCard(nodes[5][0], nodes[5][1], '#ef4444', 88)}
+      <div style="border:2px solid #7c3aed;border-radius:50%;height:190px;display:flex;align-items:center;justify-content:center;text-align:center;background:#f5f3ff;color:#4c1d95;font-size:22px;font-weight:900;padding:18px;">${escHtml(center)}</div>
+      ${visualCard(nodes[3][0], nodes[3][1], '#7c3aed', 88)}
+      <div></div>
+      ${visualCard(nodes[4][0], nodes[4][1], '#0ea5e9', 88)}
+      <div></div>
+    </div>
+    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(note)}</div>`);
 }
 
 function autoConceptVisualHtml(topicId) {
-  const v = deriveConceptVisual(topicId);
-  const box = (label, body, color) => `
-    <div style="border:1px solid ${color};border-radius:8px;background:#fff;padding:12px;min-height:88px;box-shadow:0 5px 16px #1e293b12;">
-      <div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em;">${escHtml(label)}</div>
-      <div style="font-size:15px;line-height:1.45;color:#334155;font-weight:650;">${escHtml(body)}</div>
-    </div>`;
-  const conceptStrip = v.concepts.length ? `
-    <div style="display:grid;grid-template-columns:repeat(${Math.min(v.concepts.length,4)},1fr);gap:10px;margin-top:14px;">
-      ${v.concepts.map((c, i) => box(`Key concept ${i+1}`, c, '#7c3aed')).join('')}
-    </div>` : '';
-  return `
-    <div class="educational-visual-title">Concept Architecture Map: ${escHtml(v.title)}</div>
-    <div style="min-width:900px;border:2px solid #2563eb;border-radius:14px;background:#f8fbff;padding:18px;">
-      <div style="text-align:center;margin-bottom:16px;">
-        <div style="font-size:25px;font-weight:900;color:#0f172a;">${escHtml(v.title)}</div>
-        <div style="font-size:13px;color:#475569;margin-top:4px;">${escHtml(v.part)}${v.chapter ? ' / ' + escHtml(v.chapter) : ''}</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 32px 1fr 32px 1fr 32px 1fr 32px 1fr;gap:8px;align-items:stretch;">
-        ${box('1. Data/Input', v.input, '#16a34a')}
-        <div style="display:flex;align-items:center;justify-content:center;font-size:24px;color:#1f2937;">&#8594;</div>
-        ${box('2. Planning Layer', v.plan, '#2563eb')}
-        <div style="display:flex;align-items:center;justify-content:center;font-size:24px;color:#1f2937;">&#8594;</div>
-        ${box('3. Concept Focus', v.core, '#d97706')}
-        <div style="display:flex;align-items:center;justify-content:center;font-size:24px;color:#1f2937;">&#8594;</div>
-        ${box('4. Execution', v.execute, '#7c3aed')}
-        <div style="display:flex;align-items:center;justify-content:center;font-size:24px;color:#1f2937;">&#8594;</div>
-        ${box('5. Output/Validation', v.output, '#ef4444')}
-      </div>
-      ${conceptStrip}
-      <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(v.note)}</div>
-    </div>`;
+  const specific = {
+    'spark-revolution': () => comparisonVisual(topicId, 'Hadoop MapReduce', [['Read','Load data from HDFS for each job'], ['Map/Reduce','Run rigid two-stage processing'], ['Write','Persist every intermediate result to disk']], 'Apache Spark', [['Read once','Load partitions into executors'], ['DAG','Pipeline transformations across stages'], ['Reuse','Cache hot data in memory for iterations']], 'The revolution is the removal of repeated disk materialization for iterative and interactive workloads.'),
+    'mapreduce-shortcomings': () => comparisonVisual(topicId, 'Disk-bound MapReduce chain', [['Job 1','Map writes intermediate HDFS files'], ['Job 2','Next job reads the same data again'], ['Penalty','Each iteration repeats disk, serialization, and startup cost']], 'Spark replacement pattern', [['Lineage','Remember transformations instead of every output'], ['Stages','Split only at shuffle boundaries'], ['Memory','Reuse cached partitions when algorithms iterate']], 'This concept is about the bottleneck in chained MapReduce jobs, not Kafka or streaming.'),
+    'spark-components': () => layeredVisual(topicId, [
+      {name:'Spark Core', desc:'Execution engine, RDDs, scheduling, memory, fault tolerance.', color:'#2563eb', bg:'#eff6ff'},
+      {name:'Spark SQL', desc:'DataFrames, Datasets, SQL parser, Catalyst optimizer, Tungsten execution.', color:'#16a34a', bg:'#f0fdf4'},
+      {name:'Streaming', desc:'Micro-batch processing for continuously arriving events.', color:'#0ea5e9', bg:'#ecfeff'},
+      {name:'MLlib / GraphX', desc:'Distributed ML pipelines and graph algorithms built on Spark execution.', color:'#7c3aed', bg:'#f5f3ff'}
+    ], 'Spark components are a layered stack: libraries sit above Spark Core and reuse the same cluster/runtime.'),
+    'spark-ecosystem': () => hubVisual(topicId, 'Spark Compute Engine', [['Storage','HDFS, S3, ADLS, GCS','#16a34a'], ['Messaging','Kafka, Kinesis, event streams','#0ea5e9'], ['Metadata','Hive Metastore, catalogs','#d97706'], ['Cluster Managers','Standalone, YARN, Kubernetes, Mesos','#7c3aed'], ['Formats','Parquet, JSON, CSV, ORC','#ef4444'], ['Serving/BI','Dashboards, APIs, warehouses','#2563eb']], 'The ecosystem diagram is hub-and-spoke because Spark integrates with surrounding systems instead of replacing all of them.'),
+    'vm-setup': () => flowVisual(topicId, [['JDK','Install Java runtime required by Spark','#16a34a'], ['Spark','Download and unpack Spark distribution','#2563eb'], ['Environment','Set JAVA_HOME, SPARK_HOME, PATH','#d97706'], ['Shell','Run spark-shell or pyspark locally','#7c3aed'], ['Verify','Open Spark UI and run a tiny job','#ef4444']], 'Local setup is an installation and verification path, not a distributed data-processing flow.'),
+    'pre-hdfs': () => hubVisual(topicId, 'NameNode metadata', [['Client','Requests file create/read','#2563eb'], ['DataNode 1','Stores replicated blocks','#16a34a'], ['DataNode 2','Stores replicated blocks','#16a34a'], ['DataNode 3','Stores replicated blocks','#16a34a'], ['Blocks','128MB chunks with replication','#d97706'], ['Spark','Reads block locations for data locality','#7c3aed']], 'HDFS is a storage architecture: metadata is centralized, data blocks are distributed.'),
+    'pre-distributed': () => hubVisual(topicId, 'Master / Driver', [['Worker 1','Runs assigned task partitions','#16a34a'], ['Worker 2','Runs assigned task partitions','#16a34a'], ['Worker 3','Runs assigned task partitions','#16a34a'], ['Cluster Manager','Allocates CPU and memory','#7c3aed'], ['Storage','Provides input blocks','#d97706'], ['Results','Returned or written externally','#ef4444']], 'Master-worker architecture is coordination plus parallel execution across workers.'),
+    'pre-sparksession': () => layeredVisual(topicId, [
+      {name:'User Code', desc:'DataFrame, SQL, or RDD operations written by the learner.', color:'#2563eb', bg:'#eff6ff'},
+      {name:'SparkSession', desc:'Unified entry point for SQL, DataFrames, catalog, and configuration.', color:'#16a34a', bg:'#f0fdf4'},
+      {name:'SparkContext', desc:'Lower-level connection to the cluster and RDD execution.', color:'#d97706', bg:'#fffbeb'},
+      {name:'Executors', desc:'Distributed processes that run tasks and store cached blocks.', color:'#7c3aed', bg:'#f5f3ff'}
+    ], 'SparkSession is the front door; SparkContext is the runtime bridge underneath it.'),
+    'pre-functional': () => flowVisual(topicId, [['Immutable data','Start with unchanged input collection','#16a34a'], ['map/filter','Apply pure functions to each element','#2563eb'], ['reduce/aggregate','Combine records safely in parallel','#d97706'], ['lazy lineage','Remember transformations until action','#7c3aed'], ['result','Return or persist computed output','#ef4444']], 'Functional programming matters because Spark distributes functions over immutable partitions.'),
+    'pre-formats': () => comparisonVisual(topicId, 'Row formats', [['JSON/CSV','Easy to inspect and ingest'], ['Cost','Scan full rows and parse text'], ['Use','Raw landing and interoperability']], 'Columnar formats', [['Parquet/ORC','Read only required columns'], ['Metadata','Store schema and statistics'], ['Use','Analytics, SQL, predicate pushdown']], 'File format choice directly controls scan cost, schema reliability, and Spark SQL performance.')
+  };
+  if (specific[topicId]) return specific[topicId]();
+
+  if (topicId.includes('stream') || topicId.includes('kafka') || topicId.includes('dstreams') || topicId.includes('window') || topicId.includes('realtime')) {
+    return flowVisual(topicId, [['Source','Kafka/socket/files receive events','#16a34a'], ['Ingest','Spark reads offsets and creates micro-batch','#2563eb'], ['State/window','Apply event-time windows, joins, or state','#d97706'], ['Checkpoint','Persist offsets and state for recovery','#7c3aed'], ['Sink','Write alerts, tables, or dashboard updates','#ef4444']], 'Streaming diagrams show continuous input, state/checkpointing, and incremental sinks.');
+  }
+  if (topicId.includes('dataframe') || topicId.includes('sql') || topicId.includes('dataset') || topicId.includes('catalyst') || topicId.includes('hive') || topicId.includes('tungsten')) {
+    return flowVisual(topicId, [['Tables/files','Structured rows with schema','#16a34a'], ['Logical plan','Resolve columns and operations','#2563eb'], ['Optimizer','Push filters, prune columns, select joins','#d97706'], ['Physical plan','Generate Tungsten operators/tasks','#7c3aed'], ['Result','Rows, table, or Parquet output','#ef4444']], 'Spark SQL concepts are about schema-aware planning before distributed execution.');
+  }
+  if (topicId.includes('ml') || topicId.includes('regression') || topicId.includes('kmeans') || topicId.includes('forest') || topicId.includes('cross') || topicId.includes('feature')) {
+    return flowVisual(topicId, [['Raw examples','Labeled rows or feature vectors','#16a34a'], ['Feature stages','Index, scale, assemble, split','#2563eb'], ['Estimator','Fit model across partitions','#d97706'], ['Evaluator','Score metrics and tune parameters','#7c3aed'], ['Model output','Predictions or saved pipeline','#ef4444']], 'ML diagrams center on fit/transform stages, metrics, and repeatable model output.');
+  }
+  if (topicId.includes('graph') || topicId.includes('pagerank') || topicId.includes('shortest') || topicId.includes('connected')) {
+    return cycleVisual(topicId, [['Vertices','Entity IDs and attributes'], ['Edges','Relationships and weights'], ['Triplets','Join source, edge, destination'], ['Messages','Send updates to neighbors'], ['Converge','Stop when scores stabilize'], ['Partitions','Distribute graph structure']], 'GraphX / Pregel loop', 'Graph concepts are iterative vertex-edge computations, so a cycle represents them better than a linear ETL flow.');
+  }
+  if (topicId.includes('cluster') || topicId.includes('standalone') || topicId.includes('yarn') || topicId.includes('mesos') || topicId.includes('submit') || topicId.includes('web-ui') || topicId.includes('history') || topicId.includes('docker')) {
+    return hubVisual(topicId, 'Spark Application', [['Driver','Builds DAG and schedules jobs','#2563eb'], ['Cluster Manager','Allocates executor resources','#7c3aed'], ['Executors','Run tasks and cache data','#16a34a'], ['Event Logs','Persist job history','#d97706'], ['Web UI','Shows jobs, stages, SQL, storage','#0ea5e9'], ['Output','Writes results to storage','#ef4444']], 'Ops concepts explain how applications are submitted, allocated, monitored, and recovered.');
+  }
+  if (topicId.includes('rdd') || topicId.includes('action') || topicId.includes('transformation') || topicId.includes('shuffle') || topicId.includes('partition') || topicId.includes('accumulator') || topicId.includes('broadcast')) {
+    return flowVisual(topicId, [['RDD/data','Partitioned records','#16a34a'], ['Lineage','Lazy transformations build DAG','#2563eb'], ['Stage split','Shuffle creates wide boundary','#d97706'], ['Tasks','One task per partition on executors','#7c3aed'], ['Action/output','Collect, count, save, metrics','#ef4444']], 'Core Spark API diagrams show lineage, partition tasks, shuffles, and actions.');
+  }
+  return flowVisual(topicId, [['Input','Source data or configuration','#16a34a'], ['Spark plan','Driver analyzes work','#2563eb'], ['Concept','Apply the current concept','#d97706'], ['Distributed run','Executors process partitions','#7c3aed'], ['Validate','Inspect output and metrics','#ef4444']], 'This fallback is only used for topics without a stronger category-specific architecture.');
 }
 
 function injectAutoConceptVisual(container, topicId) {
