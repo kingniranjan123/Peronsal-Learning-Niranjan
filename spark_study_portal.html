@@ -3188,6 +3188,11 @@ function showTopic(partId, chId, topicId) {
       ${buildBookRefs(topicId)}
     </div>
     <div class="section-divider"></div>
+
+    <div class="section">
+      <div class="section-title"><span class="s-icon">&#128506;</span> Concept Architecture Map</div>
+      <div class="educational-visual auto-concept-visual">${autoConceptVisualHtml(topicId)}</div>
+    </div>
   `;
 
   // Fetch Mastery Deep Dive if available
@@ -3248,7 +3253,24 @@ function showTopic(partId, chId, topicId) {
   render(html);
 
   // Trigger async fetch for deep dive
-  const deepDiveUrl = `Curriculum_DeepDives/${topicId}.md`;
+  const deepDiveAliases = {
+    'vm-setup': 'spark-vm-setup',
+    'project-setup': 'spark-ide-project-setup',
+    'double-rdd': 'double-rdd-functions',
+    'dag-lineage': 'rdd-lineage-and-dag',
+    'spark-sql': 'sql-queries',
+    'dstreams': 'discretized-streams-dstreams',
+    'ml-pipeline': 'spark-ml-library',
+    'kmeans': 'kmeans-clustering',
+    'random-forest': 'random-forests',
+    'cluster-modes': 'spark-cluster-types',
+    'standalone': 'standalone-cluster-components',
+    'yarn': 'yarn-architecture',
+    'realtime-arch': 'realtime-dashboard-architecture',
+    'sparkling-water': 'h2o-framework'
+  };
+  const deepDiveId = deepDiveAliases[topicId] || topicId;
+  const deepDiveUrl = `Curriculum_DeepDives/${deepDiveId}.md`;
   fetch(deepDiveUrl)
     .then(res => {
       if (!res.ok) {
@@ -3453,9 +3475,13 @@ function injectSectionBookRefs(container, topicId) {
 
 async function renderMermaidBlocks(container) {
   if (typeof mermaid === 'undefined') return;
-  const blocks = Array.from(container.querySelectorAll('pre code.language-mermaid'));
+  const mermaidStarts = /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt)\b/i;
+  const blocks = Array.from(container.querySelectorAll('pre code')).filter(block => {
+    const text = (block.textContent || '').trim();
+    return block.classList.contains('language-mermaid') || mermaidStarts.test(text);
+  });
   for (const block of blocks) {
-    const source = block.textContent;
+    const source = (block.textContent || '').trim();
     const wrap = document.createElement('div');
     wrap.className = 'educational-visual';
     try {
@@ -3471,6 +3497,99 @@ async function renderMermaidBlocks(container) {
       console.warn('Mermaid render failed', err);
     }
   }
+}
+
+function hasConceptVisual(container) {
+  return Boolean(container.querySelector('.curated-diagram, .educational-visual, .auto-concept-visual'));
+}
+
+function findTopicById(topicId) {
+  for (const part of CURRICULUM) {
+    for (const chapter of part.chapters || []) {
+      for (const topic of chapter.topics || []) {
+        if (topic.id === topicId) return {part, chapter, topic};
+      }
+    }
+  }
+  return null;
+}
+
+function deriveConceptVisual(topicId) {
+  const found = findTopicById(topicId);
+  const topic = found?.topic || {title: topicId, overview: ''};
+  const title = topic.title || topicId;
+  const overview = topic.overview || '';
+  const lower = `${topicId} ${title} ${overview}`.toLowerCase();
+  const conceptNames = (topic.concepts || []).slice(0, 4).map(c => c.title);
+
+  let profile = {
+    input: 'Raw data / source system',
+    plan: 'SparkSession builds logical plan',
+    core: title,
+    execute: 'Executors process partitions in parallel',
+    output: 'Validated result dataset',
+    note: 'Connect the concept to Spark execution: define intent, build a plan, distribute work, and validate output.'
+  };
+
+  if (lower.includes('stream') || lower.includes('kafka') || lower.includes('dstream') || lower.includes('window')) {
+    profile = {input:'Event source / Kafka topic', plan:'Micro-batch planner + checkpoint', core:title, execute:'Executors process time windows', output:'Aggregates, alerts, dashboard updates', note:'Streaming concepts fit between a continuous source and stateful windowed outputs.'};
+  } else if (lower.includes('sql') || lower.includes('dataframe') || lower.includes('dataset') || lower.includes('catalyst') || lower.includes('hive')) {
+    profile = {input:'Tables / files / metastore', plan:'Catalyst analysis and optimization', core:title, execute:'Tungsten physical operators on executors', output:'Rows, tables, Parquet, or dashboard result', note:'SQL concepts fit in the planning layer: schema, logical plan, optimized physical plan, then distributed execution.'};
+  } else if (lower.includes('ml') || lower.includes('regression') || lower.includes('kmeans') || lower.includes('forest') || lower.includes('classification') || lower.includes('cross validation') || lower.includes('feature')) {
+    profile = {input:'Training data + labels/features', plan:'ML Pipeline stages fit/transform', core:title, execute:'Distributed training / scoring tasks', output:'Model metrics, predictions, saved model', note:'ML concepts fit after feature preparation and before evaluation/serving.'};
+  } else if (lower.includes('graph') || lower.includes('pagerank') || lower.includes('shortest') || lower.includes('connected')) {
+    profile = {input:'Vertices + edges', plan:'GraphX graph and triplets', core:title, execute:'Iterative Pregel/message passing', output:'Graph scores, paths, components', note:'Graph concepts fit into iterative vertex-edge computation over partitioned graph data.'};
+  } else if (lower.includes('yarn') || lower.includes('mesos') || lower.includes('cluster') || lower.includes('standalone') || lower.includes('submit') || lower.includes('web ui') || lower.includes('history')) {
+    profile = {input:'Application package + configuration', plan:'Cluster manager allocates resources', core:title, execute:'Driver coordinates executors and tasks', output:'Application UI, logs, metrics, output data', note:'Operations concepts fit around deployment, resource allocation, observability, and repeatable execution.'};
+  } else if (lower.includes('rdd') || lower.includes('transformation') || lower.includes('action') || lower.includes('shuffle') || lower.includes('partition') || lower.includes('accumulator') || lower.includes('broadcast')) {
+    profile = {input:'RDD partitions / variables', plan:'Lineage DAG and stage boundaries', core:title, execute:'TaskScheduler places partition tasks', output:'Action result, cached block, shuffle output', note:'Core API concepts fit inside the DAG, partition, task, and memory execution path.'};
+  }
+
+  return {...profile, title, chapter: found?.chapter?.title || '', part: found?.part?.title || '', concepts: conceptNames};
+}
+
+function autoConceptVisualHtml(topicId) {
+  const v = deriveConceptVisual(topicId);
+  const box = (label, body, color) => `
+    <div style="border:1px solid ${color};border-radius:8px;background:#fff;padding:12px;min-height:88px;box-shadow:0 5px 16px #1e293b12;">
+      <div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em;">${escHtml(label)}</div>
+      <div style="font-size:15px;line-height:1.45;color:#334155;font-weight:650;">${escHtml(body)}</div>
+    </div>`;
+  const conceptStrip = v.concepts.length ? `
+    <div style="display:grid;grid-template-columns:repeat(${Math.min(v.concepts.length,4)},1fr);gap:10px;margin-top:14px;">
+      ${v.concepts.map((c, i) => box(`Key concept ${i+1}`, c, '#7c3aed')).join('')}
+    </div>` : '';
+  return `
+    <div class="educational-visual-title">Concept Architecture Map: ${escHtml(v.title)}</div>
+    <div style="min-width:900px;border:2px solid #2563eb;border-radius:14px;background:#f8fbff;padding:18px;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-size:25px;font-weight:900;color:#0f172a;">${escHtml(v.title)}</div>
+        <div style="font-size:13px;color:#475569;margin-top:4px;">${escHtml(v.part)}${v.chapter ? ' / ' + escHtml(v.chapter) : ''}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 32px 1fr 32px 1fr 32px 1fr 32px 1fr;gap:8px;align-items:stretch;">
+        ${box('1. Data/Input', v.input, '#16a34a')}
+        <div style="display:flex;align-items:center;justify-content:center;font-size:24px;color:#1f2937;">&#8594;</div>
+        ${box('2. Planning Layer', v.plan, '#2563eb')}
+        <div style="display:flex;align-items:center;justify-content:center;font-size:24px;color:#1f2937;">&#8594;</div>
+        ${box('3. Concept Focus', v.core, '#d97706')}
+        <div style="display:flex;align-items:center;justify-content:center;font-size:24px;color:#1f2937;">&#8594;</div>
+        ${box('4. Execution', v.execute, '#7c3aed')}
+        <div style="display:flex;align-items:center;justify-content:center;font-size:24px;color:#1f2937;">&#8594;</div>
+        ${box('5. Output/Validation', v.output, '#ef4444')}
+      </div>
+      ${conceptStrip}
+      <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(v.note)}</div>
+    </div>`;
+}
+
+function injectAutoConceptVisual(container, topicId) {
+  if (hasConceptVisual(container)) return;
+  const panel = document.createElement('div');
+  panel.className = 'educational-visual auto-concept-visual';
+  panel.innerHTML = autoConceptVisualHtml(topicId);
+  const firstHeading = container.querySelector('h2, h3');
+  if (firstHeading) firstHeading.insertAdjacentElement('afterend', panel);
+  else container.prepend(panel);
 }
 
 function enhanceEducationalVisuals(container) {
@@ -3568,6 +3687,7 @@ function postProcessLearningContent(topicId) {
   injectCuratedConceptVisual(container, topicId);
   enhanceEducationalVisuals(container);
   renderMermaidBlocks(container).then(() => {
+    injectAutoConceptVisual(container, topicId);
     document.querySelectorAll('#deep-dive-content pre code').forEach(el => {
       if (typeof hljs !== 'undefined') hljs.highlightElement(el);
     });
