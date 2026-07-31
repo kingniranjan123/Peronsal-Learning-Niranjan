@@ -10,27 +10,7 @@ The revolution was not just about speed. Spark unified four previously separate 
 
 ---
 
-```mermaid
-graph TD
-    subgraph MR["MapReduce - Disk Bound"]
-        M1[Map Task] -->|write to HDFS| H1[(HDFS)]
-        H1 -->|read| R1[Reduce Task]
-        R1 -->|write to HDFS| H2[(HDFS)]
-        H2 -->|read| M2[Next Map Task]
-    end
-    subgraph SP["Apache Spark - In-Memory DAG"]
-        S1[Stage 1
-map+filter+project] -->|shuffle only| S2[Stage 2
-hash-agg+sort]
-        S2 --> S3[Stage 3
-Action: collect/write]
-        CACHE["BlockManager Cache
-(RAM)"] -.->|reuse| S2
-    end
-    MR -- "10-100x slower" --- SP
-    style MR fill:#3b1a1a,stroke:#ef4444
-    style SP fill:#0f2d1f,stroke:#22c55e
-```
+The portal renders this chapter with a curated, bounded architecture diagram that compares MapReduce's repeated HDFS read/write cycle with Spark's in-memory DAG execution. Use that visual as the main mental model: MapReduce materializes intermediate data between jobs; Spark keeps reusable partitions in executor memory, cuts the application into stages at shuffle boundaries, and only spills or checkpoints when required.
 
 
 ## 🏗️ Architectural Deep Dive 

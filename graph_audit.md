@@ -1,25 +1,102 @@
-# Graph Rendering Audit
+# Graph Audit
 
-## Summary
+Total authored Mermaid blocks: 98
 
-- Total graph blocks scanned: 106
-- Mermaid graph blocks: 106
-- Invalid Mermaid blocks after fixes: 0
-- ASCII graph blocks in Markdown: 0
+Invalid authored Mermaid blocks: 0
 
-## Fixes Applied
-
-- Enabled portal-side Mermaid rendering so blocks such as `graph TD`, `flowchart`, and `sequenceDiagram` render as diagrams instead of code.
-- Fixed `Curriculum_DeepDives/pre-formats.md` by quoting Mermaid subgraph labels that contained slashes and parentheses.
-- Fixed `fules/detailed_concepts_study_guide_v2.0.md` by simplifying Mermaid edge labels that used unsupported `fit()` / `transform()` syntax.
-- Added the supplied RDD runtime architecture image as a curated concept diagram for `rdds` and `rdd-lineage-and-dag`.
-- Added a detailed hands-on lab architecture diagram and executable setup guide.
-
-## Validation Artifacts
-
-- Machine-readable scan: `graph_audit.json`
-- Mermaid validation result: `graph_validation.json`
-- Local screenshots:
-  - `localhost_deploy_v1/smoke-hdfs-graph.png`
-  - `localhost_deploy_v1/smoke-rdds-curated.png`
-  - `localhost_deploy_v1/smoke-hands-on-lab.png`
+| File | Mermaid blocks |
+| --- | ---: |
+| concepts/part1-first-steps/chapter1-introduction-to-apache-spark/03_spark_components.md | 1 |
+| concepts/part1-first-steps/chapter1-introduction-to-apache-spark/05_spark_vm_setup.md | 1 |
+| concepts/part1-first-steps/chapter1-introduction-to-apache-spark/chapter1_overview.md | 1 |
+| concepts/part1-first-steps/chapter2-spark-fundamentals/01_spark_shell.md | 1 |
+| concepts/part1-first-steps/chapter2-spark-fundamentals/04_transformations.md | 1 |
+| concepts/part1-first-steps/chapter2-spark-fundamentals/05_double_rdd_functions.md | 1 |
+| concepts/part1-first-steps/chapter3-writing-spark-applications/01_spark_ide_project_setup.md | 1 |
+| concepts/part1-first-steps/chapter3-writing-spark-applications/02_loading_json.md | 1 |
+| concepts/part1-first-steps/chapter3-writing-spark-applications/03_filtering_and_aggregating.md | 1 |
+| concepts/part1-first-steps/chapter3-writing-spark-applications/06_uberjars.md | 1 |
+| concepts/part1-first-steps/chapter3-writing-spark-applications/chapter3_overview.md | 1 |
+| concepts/part1-first-steps/chapter4-spark-api-in-depth/02_data_partitioning.md | 1 |
+| concepts/part1-first-steps/chapter4-spark-api-in-depth/04_grouping_and_sorting.md | 1 |
+| concepts/part1-first-steps/chapter4-spark-api-in-depth/06_rdd_lineage_and_dag.md | 1 |
+| concepts/part1-first-steps/chapter4-spark-api-in-depth/chapter4_overview.md | 1 |
+| concepts/part2-spark-family/chapter5-sparkling-queries-spark-sql/02_datasets.md | 1 |
+| concepts/part2-spark-family/chapter6-ingesting-data-spark-streaming/03_window_operations.md | 1 |
+| concepts/part2-spark-family/chapter6-ingesting-data-spark-streaming/05_performance_tuning.md | 1 |
+| concepts/part2-spark-family/chapter7-getting-smart-with-mllib/01_ml_basics.md | 1 |
+| concepts/part2-spark-family/chapter7-getting-smart-with-mllib/02_linear_algebra.md | 1 |
+| concepts/part2-spark-family/chapter7-getting-smart-with-mllib/03_feature_scaling.md | 1 |
+| concepts/part2-spark-family/chapter7-getting-smart-with-mllib/04_mean_normalization.md | 1 |
+| concepts/part2-spark-family/chapter7-getting-smart-with-mllib/05_linear_regression.md | 1 |
+| concepts/part2-spark-family/chapter7-getting-smart-with-mllib/06_regularization.md | 1 |
+| concepts/part2-spark-family/chapter7-getting-smart-with-mllib/chapter7_overview.md | 1 |
+| concepts/part2-spark-family/chapter8-ml-classification-and-clustering/01_spark_ml_library.md | 1 |
+| concepts/part2-spark-family/chapter8-ml-classification-and-clustering/02_logistic_regression.md | 1 |
+| concepts/part2-spark-family/chapter8-ml-classification-and-clustering/03_decision_trees.md | 1 |
+| concepts/part2-spark-family/chapter8-ml-classification-and-clustering/04_random_forests.md | 1 |
+| concepts/part2-spark-family/chapter8-ml-classification-and-clustering/05_kmeans_clustering.md | 1 |
+| concepts/part2-spark-family/chapter8-ml-classification-and-clustering/06_cross_validation.md | 1 |
+| concepts/part2-spark-family/chapter8-ml-classification-and-clustering/chapter8_overview.md | 1 |
+| concepts/part2-spark-family/chapter9-connecting-dots-graphx/02_transforming_joining_graphs.md | 1 |
+| concepts/part2-spark-family/chapter9-connecting-dots-graphx/03_shortest_paths.md | 1 |
+| concepts/part2-spark-family/chapter9-connecting-dots-graphx/04_pagerank.md | 1 |
+| concepts/part2-spark-family/chapter9-connecting-dots-graphx/05_connected_components.md | 1 |
+| concepts/part2-spark-family/chapter9-connecting-dots-graphx/06_astar_search_algorithm.md | 1 |
+| concepts/part3-spark-ops/chapter10-running-spark/04_configuring_spark.md | 1 |
+| concepts/part3-spark-ops/chapter11-spark-standalone-cluster/01_standalone_cluster_components.md | 1 |
+| concepts/part3-spark-ops/chapter11-spark-standalone-cluster/05_amazon_ec2_deployment.md | 1 |
+| concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/01_yarn_architecture.md | 1 |
+| concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/03_mesos_architecture.md | 1 |
+| concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/04_mesos_resource_scheduling.md | 1 |
+| concepts/part4-bringing-it-together/chapter13-realtime-dashboard/01_realtime_dashboard_architecture.md | 1 |
+| concepts/part4-bringing-it-together/chapter13-realtime-dashboard/04_d3js_visualization.md | 1 |
+| concepts/part4-bringing-it-together/chapter14-deep-learning-spark-h2o/01_h2o_framework.md | 1 |
+| Curriculum_DeepDives/accumulators.md | 1 |
+| Curriculum_DeepDives/actions.md | 1 |
+| Curriculum_DeepDives/broadcast-variables.md | 1 |
+| Curriculum_DeepDives/catalyst-optimizer.md | 1 |
+| Curriculum_DeepDives/cross-validation.md | 1 |
+| Curriculum_DeepDives/data-partitioning.md | 1 |
+| Curriculum_DeepDives/dataframes.md | 1 |
+| Curriculum_DeepDives/datasets.md | 1 |
+| Curriculum_DeepDives/decision-trees.md | 1 |
+| Curriculum_DeepDives/deep-learning-concepts.md | 1 |
+| Curriculum_DeepDives/graphx-api.md | 1 |
+| Curriculum_DeepDives/hive-metastore.md | 1 |
+| Curriculum_DeepDives/job-and-resource-scheduling.md | 1 |
+| Curriculum_DeepDives/joining-data.md | 1 |
+| Curriculum_DeepDives/kafka-integration.md | 1 |
+| Curriculum_DeepDives/kmeans-clustering.md | 1 |
+| Curriculum_DeepDives/linear-regression.md | 1 |
+| Curriculum_DeepDives/logistic-regression.md | 1 |
+| Curriculum_DeepDives/mapreduce-shortcomings.md | 1 |
+| Curriculum_DeepDives/mesos-architecture.md | 1 |
+| Curriculum_DeepDives/pair-rdds.md | 1 |
+| Curriculum_DeepDives/pre-distributed.md | 1 |
+| Curriculum_DeepDives/pre-formats.md | 1 |
+| Curriculum_DeepDives/pre-functional.md | 1 |
+| Curriculum_DeepDives/pre-hdfs.md | 1 |
+| Curriculum_DeepDives/pre-sparksession.md | 1 |
+| Curriculum_DeepDives/random-forests.md | 1 |
+| Curriculum_DeepDives/rdd-lineage-and-dag.md | 1 |
+| Curriculum_DeepDives/rdds.md | 1 |
+| Curriculum_DeepDives/running-applications.md | 1 |
+| Curriculum_DeepDives/shuffling.md | 1 |
+| Curriculum_DeepDives/spark_hands_on_setup_guide.md | 1 |
+| Curriculum_DeepDives/spark-cluster-types.md | 1 |
+| Curriculum_DeepDives/spark-components.md | 1 |
+| Curriculum_DeepDives/spark-history-server.md | 1 |
+| Curriculum_DeepDives/spark-ml-library.md | 1 |
+| Curriculum_DeepDives/spark-runtime-architecture.md | 1 |
+| Curriculum_DeepDives/spark-stages-and-tasks.md | 1 |
+| Curriculum_DeepDives/spark-streaming-components.md | 1 |
+| Curriculum_DeepDives/spark-submit.md | 1 |
+| Curriculum_DeepDives/spark-web-ui.md | 1 |
+| Curriculum_DeepDives/sql-queries.md | 1 |
+| Curriculum_DeepDives/standalone-cluster-components.md | 1 |
+| Curriculum_DeepDives/transformations.md | 1 |
+| Curriculum_DeepDives/tungsten-performance.md | 1 |
+| Curriculum_DeepDives/window-operations.md | 1 |
+| Curriculum_DeepDives/yarn-resource-scheduling.md | 1 |
+| fules/detailed_concepts_study_guide_v2.0.md | 5 |

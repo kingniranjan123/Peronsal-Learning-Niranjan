@@ -575,14 +575,15 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
 .educational-visual {
   margin:22px 0; padding:18px; border:1px solid #2563EB55; border-radius:8px;
   background:linear-gradient(180deg,#F8FBFF,#EEF6FF); color:#111827; overflow:auto;
+  max-width:1726px;
 }
-.educational-visual svg { width:100%; min-width:900px; height:auto; display:block; }
+.educational-visual svg { width:100%; min-width:900px; max-height:620px; height:auto; display:block; }
 .educational-visual-title { color:#0F172A; font-size:1.05rem; font-weight:800; margin-bottom:12px; }
 .curated-diagram {
   margin:22px 0; padding:16px; border:1px solid #2563EB55; border-radius:8px;
-  background:#F8FBFF; color:#111827;
+  background:#F8FBFF; color:#111827; max-width:1726px; overflow:auto;
 }
-.curated-diagram img { width:100%; display:block; border-radius:6px; border:1px solid #BFDBFE; background:#fff; }
+.curated-diagram img { width:100%; max-height:620px; object-fit:contain; display:block; border-radius:6px; border:1px solid #BFDBFE; background:#fff; }
 .curated-diagram-caption { margin-top:10px; color:#475569; font-size:.88rem; line-height:1.6; }
 
 </style>
@@ -3342,6 +3343,11 @@ function enhanceEducationalVisuals(container) {
 
 function injectCuratedConceptVisual(container, topicId) {
   const curated = {
+    'spark-revolution': {
+      src: 'assets/concept-diagrams/spark-revolution-architecture.svg',
+      title: 'Spark Revolution Architecture: MapReduce disk cycles versus Spark in-memory DAG execution',
+      caption: 'This diagram shows the exact shift Chapter 1 is teaching: MapReduce repeatedly writes intermediate data to HDFS between chained jobs, while Spark keeps reusable RDD and DataFrame partitions in executor memory and lets the driver schedule optimized DAG stages.'
+    },
     'rdds': {
       src: 'assets/concept-diagrams/rdd-runtime-architecture.png',
       title: 'RDD Runtime Architecture: where lineage, tasks, memory, BlockManager, and shuffle fit',

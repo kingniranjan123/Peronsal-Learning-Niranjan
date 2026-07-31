@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1726" height="931" viewBox="0 0 1726 931" role="img" aria-labelledby="title desc">
+  <title id="title">Spark Revolution: MapReduce disk-bound processing versus Spark in-memory DAG processing</title>
+  <desc id="desc">A bounded architecture diagram comparing Hadoop MapReduce, which repeatedly writes and reads HDFS between jobs, with Apache Spark, which keeps reusable RDD and DataFrame partitions in executor memory and schedules optimized DAG stages.</desc>
+  <defs>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+    <marker id="arrowDark" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#1f2937"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#1d4ed8"/>
+    </marker>
+    <style>
+      .page { fill:#ffffff; }
+      .title { font: 800 42px Arial, Helvetica, sans-serif; fill:#111827; }
+      .subtitle { font: 500 20px Arial, Helvetica, sans-serif; fill:#475569; }
+      .panel-title { font: 800 30px Arial, Helvetica, sans-serif; fill:#111827; }
+      .panel-subtitle { font: 600 17px Arial, Helvetica, sans-serif; fill:#475569; }
+      .label { font: 700 20px Arial, Helvetica, sans-serif; fill:#111827; }
+      .small { font: 600 15px Arial, Helvetica, sans-serif; fill:#334155; }
+      .tiny { font: 600 13px Arial, Helvetica, sans-serif; fill:#475569; }
+      .caption { font: 700 18px Arial, Helvetica, sans-serif; fill:#334155; }
+      .mr { fill:#fff7ed; stroke:#f97316; stroke-width:2; }
+      .spark { fill:#eff6ff; stroke:#2563eb; stroke-width:2; }
+      .storage { fill:#fef2f2; stroke:#ef4444; stroke-width:2; }
+      .memory { fill:#f5f3ff; stroke:#7c3aed; stroke-width:2; }
+      .compute { fill:#ecfdf5; stroke:#16a34a; stroke-width:2; }
+      .job { fill:#fff; stroke:#94a3b8; stroke-width:2; }
+      .stage { fill:#f8fafc; stroke:#2563eb; stroke-width:2; }
+      .warn { fill:#fff1f2; stroke:#dc2626; stroke-width:2; }
+      .good { fill:#f0fdf4; stroke:#16a34a; stroke-width:2; }
+      .line { stroke:#1f2937; stroke-width:3; fill:none; marker-end:url(#arrowDark); }
+      .blue-line { stroke:#1d4ed8; stroke-width:3; fill:none; marker-end:url(#arrowBlue); }
+      .dash { stroke-dasharray:10 9; }
+    </style>
+  </defs>
+
+  <rect class="page" x="0" y="0" width="1726" height="931"/>
+  <text class="title" x="863" y="55" text-anchor="middle">Spark Revolution: From Disk-Bound Jobs to In-Memory DAG Execution</text>
+  <text class="subtitle" x="863" y="91" text-anchor="middle">The same iterative workload moves from repeated HDFS writes to cached executor memory and optimized stages.</text>
+
+  <rect x="74" y="125" width="752" height="666" rx="20" class="mr" filter="url(#softShadow)"/>
+  <text class="panel-title" x="450" y="173" text-anchor="middle">Hadoop MapReduce - Disk Bound</text>
+  <text class="panel-subtitle" x="450" y="203" text-anchor="middle">Each chained job must persist intermediate output before the next job can read it.</text>
+
+  <rect x="145" y="245" width="190" height="74" rx="12" class="job"/>
+  <text class="label" x="240" y="275" text-anchor="middle">Map Task</text>
+  <text class="tiny" x="240" y="299" text-anchor="middle">Job 1 reads blocks</text>
+
+  <rect x="376" y="245" width="190" height="74" rx="12" class="storage"/>
+  <text class="label" x="471" y="275" text-anchor="middle">HDFS</text>
+  <text class="tiny" x="471" y="299" text-anchor="middle">write intermediate</text>
+
+  <rect x="607" y="245" width="150" height="74" rx="12" class="job"/>
+  <text class="label" x="682" y="275" text-anchor="middle">Reduce</text>
+  <text class="tiny" x="682" y="299" text-anchor="middle">Job 1 output</text>
+
+  <path class="line" d="M335 282 L368 282"/>
+  <path class="line" d="M566 282 L599 282"/>
+
+  <rect x="198" y="408" width="190" height="74" rx="12" class="storage"/>
+  <text class="label" x="293" y="438" text-anchor="middle">HDFS</text>
+  <text class="tiny" x="293" y="462" text-anchor="middle">read again</text>
+
+  <rect x="441" y="408" width="190" height="74" rx="12" class="job"/>
+  <text class="label" x="536" y="438" text-anchor="middle">Next Map</text>
+  <text class="tiny" x="536" y="462" text-anchor="middle">Job 2 starts</text>
+
+  <path class="line" d="M682 319 C682 370 293 356 293 399"/>
+  <path class="line" d="M388 445 L433 445"/>
+
+  <rect x="181" y="570" width="538" height="108" rx="14" class="warn"/>
+  <text class="caption" x="450" y="607" text-anchor="middle">Why iterative algorithms suffer</text>
+  <text class="small" x="450" y="638" text-anchor="middle">Logistic regression, K-Means, PageRank, and graph jobs revisit the same data repeatedly.</text>
+  <text class="small" x="450" y="666" text-anchor="middle">MapReduce pays disk and job startup cost on every pass.</text>
+
+  <rect x="900" y="125" width="752" height="666" rx="20" class="spark" filter="url(#softShadow)"/>
+  <text class="panel-title" x="1276" y="173" text-anchor="middle">Apache Spark - In-Memory DAG</text>
+  <text class="panel-subtitle" x="1276" y="203" text-anchor="middle">The driver builds a DAG, executors cache partitions, and stages reuse memory.</text>
+
+  <rect x="966" y="236" width="610" height="104" rx="14" class="spark"/>
+  <text class="label" x="1271" y="270" text-anchor="middle">Driver JVM</text>
+  <text class="tiny" x="1271" y="297" text-anchor="middle">SparkSession / SparkContext creates lineage, DAG, stages, and tasks</text>
+  <text class="tiny" x="1271" y="320" text-anchor="middle">Lazy transformations wait until an action triggers execution</text>
+
+  <rect x="978" y="405" width="176" height="86" rx="12" class="stage"/>
+  <text class="label" x="1066" y="438" text-anchor="middle">Stage 1</text>
+  <text class="tiny" x="1066" y="463" text-anchor="middle">map + filter</text>
+
+  <rect x="1217" y="405" width="176" height="86" rx="12" class="memory"/>
+  <text class="label" x="1305" y="438" text-anchor="middle">Cache</text>
+  <text class="tiny" x="1305" y="463" text-anchor="middle">RDD / DataFrame</text>
+
+  <rect x="1456" y="405" width="146" height="86" rx="12" class="stage"/>
+  <text class="label" x="1529" y="438" text-anchor="middle">Stage 2</text>
+  <text class="tiny" x="1529" y="463" text-anchor="middle">reduce/join</text>
+
+  <path class="blue-line" d="M1066 340 L1066 397"/>
+  <path class="blue-line" d="M1154 448 L1209 448"/>
+  <path class="blue-line" d="M1393 448 L1448 448"/>
+  <path class="blue-line dash" d="M1305 405 C1305 358 1110 363 1110 397"/>
+  <path class="blue-line dash" d="M1305 491 C1305 542 1529 543 1529 499"/>
+
+  <rect x="985" y="570" width="586" height="108" rx="14" class="good"/>
+  <text class="caption" x="1278" y="607" text-anchor="middle">Why Spark feels revolutionary</text>
+  <text class="small" x="1278" y="638" text-anchor="middle">Reusable partitions stay in executor RAM through the BlockManager.</text>
+  <text class="small" x="1278" y="666" text-anchor="middle">Only shuffle boundaries require data movement; narrow transformations are pipelined.</text>
+
+  <rect x="251" y="825" width="1224" height="62" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  <text class="caption" x="863" y="863" text-anchor="middle">Result: iterative and interactive workloads avoid repeated disk cycles, often reaching up to 100x faster in-memory execution.</text>
+</svg>

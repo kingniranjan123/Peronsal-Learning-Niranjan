@@ -13,15 +13,7 @@ To solve this, the AMPLab researchers conceptualized a new data structure: the R
 By 2010, Spark was open-sourced, and by 2013, it had been donated to the Apache Software Foundation, quickly becoming a Top-Level Project. Benchmarks showed astounding results: Spark could run logistic regression up to 100x faster than Hadoop MapReduce in memory, and even 10x faster when running on disk (thanks to a more efficient execution engine and DAG optimization). This revolution transformed industries. Financial institutions used it for real-time fraud detection; e-commerce giants used it for interactive recommendation engines; and healthcare companies used it for rapid genomic sequencing analysis. Spark proved that big data didn't have to be slow data.
 
 ## Flow Diagram
-```bash
-# Architecture Diagram
-# (See MD source for diagram code)
-graph TD
-    A[Data in Storage (HDFS/S3)] -->|Read| B(MapReduce Phase 1)
-    B -->|Write to Disk| C[HDFS Intermediate]
-    C -->|Read from Disk| D(MapReduce Phase 2)
-    D -->|Write to Disk| E[HDFS In...
-```
+The portal renders this section with a bounded architecture diagram that compares the old MapReduce execution loop with Spark's in-memory DAG execution model. The key idea is simple: MapReduce repeatedly writes intermediate data to HDFS between jobs, while Spark keeps reusable partitions in executor memory and schedules the remaining work as optimized stages.
 
 ## Data Visualization
 | Processing Model | Intermediate Data Storage | Speed (Iterative ML) | Suitability | Example Algorithm |

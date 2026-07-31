@@ -1,842 +1,381 @@
-[
-  {
-    "file": "Curriculum_DeepDives\\accumulators.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 536,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "Curriculum_DeepDives\\actions.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 564,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "Curriculum_DeepDives\\broadcast-variables.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 458,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\catalyst-optimizer.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 819,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\cross-validation.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 545,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\data-partitioning.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 526,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\dataframes.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 583,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\datasets.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 752,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\decision-trees.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 519,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\deep-learning-concepts.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 555,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\graphx-api.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 612,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\hive-metastore.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 587,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\job-and-resource-scheduling.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 521,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\joining-data.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 518,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\kafka-integration.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 740,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\kmeans-clustering.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 538,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\linear-regression.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 571,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\logistic-regression.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 615,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\mapreduce-shortcomings.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 576,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\mesos-architecture.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 545,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\pair-rdds.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 528,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\pre-distributed.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 274,
-    "first": "flowchart LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\pre-formats.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 282,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\pre-functional.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 411,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "Curriculum_DeepDives\\pre-hdfs.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 516,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\pre-sparksession.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 288,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\random-forests.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 569,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\rdd-lineage-and-dag.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 621,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\rdds.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 802,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\running-applications.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 647,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\shuffling.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 453,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-cluster-types.md",
-    "block": 6,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 584,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-components.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 612,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-history-server.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 506,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-ml-library.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 649,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-revolution.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 588,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-runtime-architecture.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 784,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-stages-and-tasks.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 627,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-streaming-components.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 614,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-submit.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 628,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\spark-web-ui.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 574,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\sql-queries.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 479,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\standalone-cluster-components.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 621,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\transformations.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 601,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\tungsten-performance.md",
-    "block": 5,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 619,
-    "first": "graph TD"
-  },
-  {
-    "file": "Curriculum_DeepDives\\window-operations.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 534,
-    "first": "graph LR"
-  },
-  {
-    "file": "Curriculum_DeepDives\\yarn-resource-scheduling.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 733,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter1-introduction-to-apache-spark\\03_spark_components.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 676,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter1-introduction-to-apache-spark\\05_spark_vm_setup.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 857,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter1-introduction-to-apache-spark\\chapter1_overview.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 880,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter2-spark-fundamentals\\01_spark_shell.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 669,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter2-spark-fundamentals\\02_rdds.md",
-    "block": 1,
-    "lang": "scala",
-    "kind": "mermaid",
-    "chars": 410,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter2-spark-fundamentals\\04_transformations.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 409,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter2-spark-fundamentals\\05_double_rdd_functions.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 224,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\01_spark_ide_project_setup.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 716,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\02_loading_json.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 710,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\03_filtering_and_aggregating.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 807,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\06_uberjars.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 192,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter3-writing-spark-applications\\chapter3_overview.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 548,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter4-spark-api-in-depth\\02_data_partitioning.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 231,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter4-spark-api-in-depth\\04_grouping_and_sorting.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 551,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter4-spark-api-in-depth\\06_rdd_lineage_and_dag.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 225,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part1-first-steps\\chapter4-spark-api-in-depth\\chapter4_overview.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 401,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter5-sparkling-queries-spark-sql\\01_dataframes.md",
-    "block": 1,
-    "lang": "python",
-    "kind": "mermaid",
-    "chars": 702,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter5-sparkling-queries-spark-sql\\02_datasets.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 192,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter6-ingesting-data-spark-streaming\\03_window_operations.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 231,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter6-ingesting-data-spark-streaming\\05_performance_tuning.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 400,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\01_ml_basics.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 405,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\02_linear_algebra.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 328,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\03_feature_scaling.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 345,
-    "first": "graph LR"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\04_mean_normalization.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 310,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\05_linear_regression.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 231,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\06_regularization.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 340,
-    "first": "graph LR"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter7-getting-smart-with-mllib\\chapter7_overview.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 315,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\01_spark_ml_library.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 647,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\02_logistic_regression.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 233,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\03_decision_trees.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 560,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\04_random_forests.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 509,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\05_kmeans_clustering.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 394,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\06_cross_validation.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 719,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter8-ml-classification-and-clustering\\chapter8_overview.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 605,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\02_transforming_joining_graphs.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 234,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\03_shortest_paths.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 228,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\04_pagerank.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 192,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\05_connected_components.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 328,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part2-spark-family\\chapter9-connecting-dots-graphx\\06_astar_search_algorithm.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 184,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter10-running-spark\\04_configuring_spark.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 231,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter10-running-spark\\05_spark_web_ui.md",
-    "block": 1,
-    "lang": "python",
-    "kind": "mermaid",
-    "chars": 482,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter11-spark-standalone-cluster\\01_standalone_cluster_components.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 1190,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter11-spark-standalone-cluster\\03_running_applications.md",
-    "block": 1,
-    "lang": "bash",
-    "kind": "mermaid",
-    "chars": 942,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter11-spark-standalone-cluster\\05_amazon_ec2_deployment.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 318,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter11-spark-standalone-cluster\\chapter11_overview.md",
-    "block": 1,
-    "lang": "bash",
-    "kind": "mermaid",
-    "chars": 781,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\01_yarn_architecture.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 136,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\03_mesos_architecture.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 83,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\04_mesos_resource_scheduling.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 445,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\05_running_spark_with_docker.md",
-    "block": 1,
-    "lang": "bash",
-    "kind": "mermaid",
-    "chars": 919,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part3-spark-ops\\chapter12-running-on-yarn-and-mesos\\chapter12_overview.md",
-    "block": 1,
-    "lang": "bash",
-    "kind": "mermaid",
-    "chars": 1030,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "concepts\\part4-bringing-it-together\\chapter13-realtime-dashboard\\01_realtime_dashboard_architecture.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 914,
-    "first": "sequenceDiagram"
-  },
-  {
-    "file": "concepts\\part4-bringing-it-together\\chapter13-realtime-dashboard\\04_d3js_visualization.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 232,
-    "first": "graph TD"
-  },
-  {
-    "file": "concepts\\part4-bringing-it-together\\chapter14-deep-learning-spark-h2o\\01_h2o_framework.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 413,
-    "first": "graph TD"
-  },
-  {
-    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
-    "block": 1,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 391,
-    "first": "graph TD"
-  },
-  {
-    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
-    "block": 3,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 721,
-    "first": "graph TD"
-  },
-  {
-    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
-    "block": 4,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 511,
-    "first": "graph LR"
-  },
-  {
-    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
-    "block": 6,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 434,
-    "first": "graph LR"
-  },
-  {
-    "file": "fules\\detailed_concepts_study_guide_v2.0.md",
-    "block": 7,
-    "lang": "mermaid",
-    "kind": "mermaid",
-    "chars": 328,
-    "first": "graph LR"
-  }
-]
+{
+  "total": 98,
+  "files": [
+    {
+      "file": "concepts/part1-first-steps/chapter1-introduction-to-apache-spark/03_spark_components.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter1-introduction-to-apache-spark/05_spark_vm_setup.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter1-introduction-to-apache-spark/chapter1_overview.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter2-spark-fundamentals/01_spark_shell.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter2-spark-fundamentals/04_transformations.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter2-spark-fundamentals/05_double_rdd_functions.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter3-writing-spark-applications/01_spark_ide_project_setup.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter3-writing-spark-applications/02_loading_json.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter3-writing-spark-applications/03_filtering_and_aggregating.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter3-writing-spark-applications/06_uberjars.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter3-writing-spark-applications/chapter3_overview.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter4-spark-api-in-depth/02_data_partitioning.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter4-spark-api-in-depth/04_grouping_and_sorting.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter4-spark-api-in-depth/06_rdd_lineage_and_dag.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part1-first-steps/chapter4-spark-api-in-depth/chapter4_overview.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter5-sparkling-queries-spark-sql/02_datasets.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter6-ingesting-data-spark-streaming/03_window_operations.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter6-ingesting-data-spark-streaming/05_performance_tuning.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter7-getting-smart-with-mllib/01_ml_basics.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter7-getting-smart-with-mllib/02_linear_algebra.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter7-getting-smart-with-mllib/03_feature_scaling.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter7-getting-smart-with-mllib/04_mean_normalization.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter7-getting-smart-with-mllib/05_linear_regression.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter7-getting-smart-with-mllib/06_regularization.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter7-getting-smart-with-mllib/chapter7_overview.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter8-ml-classification-and-clustering/01_spark_ml_library.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter8-ml-classification-and-clustering/02_logistic_regression.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter8-ml-classification-and-clustering/03_decision_trees.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter8-ml-classification-and-clustering/04_random_forests.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter8-ml-classification-and-clustering/05_kmeans_clustering.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter8-ml-classification-and-clustering/06_cross_validation.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter8-ml-classification-and-clustering/chapter8_overview.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter9-connecting-dots-graphx/02_transforming_joining_graphs.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter9-connecting-dots-graphx/03_shortest_paths.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter9-connecting-dots-graphx/04_pagerank.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter9-connecting-dots-graphx/05_connected_components.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part2-spark-family/chapter9-connecting-dots-graphx/06_astar_search_algorithm.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part3-spark-ops/chapter10-running-spark/04_configuring_spark.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part3-spark-ops/chapter11-spark-standalone-cluster/01_standalone_cluster_components.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part3-spark-ops/chapter11-spark-standalone-cluster/05_amazon_ec2_deployment.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/01_yarn_architecture.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/03_mesos_architecture.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part3-spark-ops/chapter12-running-on-yarn-and-mesos/04_mesos_resource_scheduling.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part4-bringing-it-together/chapter13-realtime-dashboard/01_realtime_dashboard_architecture.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part4-bringing-it-together/chapter13-realtime-dashboard/04_d3js_visualization.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "concepts/part4-bringing-it-together/chapter14-deep-learning-spark-h2o/01_h2o_framework.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/accumulators.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/actions.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/broadcast-variables.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/catalyst-optimizer.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/cross-validation.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/data-partitioning.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/dataframes.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/datasets.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/decision-trees.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/deep-learning-concepts.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/graphx-api.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/hive-metastore.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/job-and-resource-scheduling.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/joining-data.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/kafka-integration.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/kmeans-clustering.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/linear-regression.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/logistic-regression.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/mapreduce-shortcomings.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/mesos-architecture.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/pair-rdds.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/pre-distributed.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/pre-formats.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/pre-functional.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/pre-hdfs.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/pre-sparksession.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/random-forests.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/rdd-lineage-and-dag.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/rdds.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/running-applications.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/shuffling.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark_hands_on_setup_guide.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark-cluster-types.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark-components.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark-history-server.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark-ml-library.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark-runtime-architecture.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark-stages-and-tasks.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark-streaming-components.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark-submit.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/spark-web-ui.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/sql-queries.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/standalone-cluster-components.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/transformations.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/tungsten-performance.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/window-operations.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "Curriculum_DeepDives/yarn-resource-scheduling.md",
+      "mermaidBlocks": 1
+    },
+    {
+      "file": "fules/detailed_concepts_study_guide_v2.0.md",
+      "mermaidBlocks": 5
+    }
+  ]
+}
