@@ -351,6 +351,25 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg-de
 .arch-node { background:var(--bg-deep); border:1px solid var(--border-2); border-radius:var(--radius-sm); padding:8px 14px; font-size:.78rem; font-weight:600; text-align:center; }
 .arch-node.highlight { border-color:var(--accent); color:var(--accent-2); }
 .arch-arrow { color:var(--text-3); font-size:1.1rem; }
+.project-brief-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px; }
+.project-brief-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.project-brief-card h4 { color:var(--text-1); font-size:.95rem; margin-bottom:8px; }
+.project-brief-card p, .project-brief-card li { color:var(--text-2); line-height:1.65; font-size:.88rem; }
+.project-brief-card ul { margin:0; padding-left:18px; }
+.project-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.project-link { display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border-radius:6px; border:1px solid #3B82F650; background:#3B82F61A; color:#DBEAFE; text-decoration:none; font-size:.8rem; font-weight:700; }
+.project-link:hover { background:#3B82F630; text-decoration:none; }
+.project-architecture-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:16px; }
+.project-part-card { background:#0B1324; border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:8px; padding:14px; }
+.project-part-card h4 { color:var(--text-1); font-size:.9rem; margin-bottom:6px; }
+.project-part-card p { color:var(--text-2); line-height:1.55; font-size:.82rem; }
+.command-stack { display:grid; gap:14px; }
+.command-card { border:1px solid var(--border); border-radius:8px; overflow:hidden; background:var(--bg-card); }
+.command-card-title { padding:12px 16px; color:var(--text-1); font-weight:800; border-bottom:1px solid var(--border); background:var(--bg-deep); }
+.command-card-desc { padding:12px 16px 0; color:var(--text-2); line-height:1.55; font-size:.86rem; }
+@media (max-width: 900px) {
+  .project-brief-grid, .project-architecture-grid { grid-template-columns:1fr; }
+}
 
 /* Infra step */
 .infra-step {
@@ -2789,6 +2808,131 @@ print("Trained 30,000 models in parallel using Spark + Pandas UDFs")`},
 // ═══════════════════════════════════════════════════════════
 //  LOGIN
 // ═══════════════════════════════════════════════════════════
+const PROJECT_SOFTWARE_LINKS = [
+  {label:'Python for Windows', url:'https://www.python.org/downloads/windows/'},
+  {label:'Apache Spark downloads', url:'https://spark.apache.org/downloads.html'},
+  {label:'Eclipse Temurin JDK', url:'https://adoptium.net/temurin/releases'},
+  {label:'Docker Desktop for Windows', url:'https://docs.docker.com/desktop/setup/install/windows-install/'},
+  {label:'Apache JMeter', url:'https://jmeter.apache.org/download_jmeter.cgi'}
+];
+
+const PROJECT_PLAYBOOKS = {
+  p1: {
+    aim:'Build a recommender that predicts user/movie ratings and produces top-N movie suggestions for each user.',
+    problem:'A streaming or media business must personalize the catalog. The core problem is sparse feedback: most users rate or watch only a tiny fraction of available titles, so we infer hidden user preferences from historical interactions.',
+    questions:['Which unseen movies should each user see next?','Which movies are similar because users rate them similarly?','Can we keep RMSE below the project target while generating recommendations quickly?','How do we handle new users and cold-start items?'],
+    data:[{label:'MovieLens 25M official page', url:'https://grouplens.org/datasets/movielens/25m/', file:'data/raw/ml-25m/ratings.csv, movies.csv, tags.csv'},{label:'MovieLens all datasets', url:'https://grouplens.org/datasets/movielens/', file:'Use ml-latest-small.zip for quick tests'}],
+    parts:[['Raw zone','Store the downloaded MovieLens zip and extracted CSV files exactly as received.'],['Bronze reader','Load ratings, movies, and tags with Spark and lock expected types.'],['Feature/model layer','Train ALS on userId, movieId, and rating; tune rank, regParam, and maxIter.'],['Evaluation layer','Measure RMSE and inspect recommendations for known users.'],['Serving output','Write top-N recommendations as Parquet or CSV for an API/dashboard.']],
+    download:'mkdir data\\raw data\\bronze data\\silver data\\gold notebooks src\\projects\\p1_netflix\nInvoke-WebRequest -Uri "https://files.grouplens.org/datasets/movielens/ml-25m.zip" -OutFile "data\\raw\\ml-25m.zip"\nExpand-Archive -Path "data\\raw\\ml-25m.zip" -DestinationPath "data\\raw" -Force',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark pandas pyarrow findspark\n$env:PYSPARK_PYTHON="$PWD\\.venv\\Scripts\\python.exe"\nspark-submit src\\projects\\p1_netflix\\recommendations_als.py --input data\\raw\\ml-25m --output data\\gold\\p1_recommendations',
+    files:['src/projects/p1_netflix/recommendations_als.py','data/raw/ml-25m/ratings.csv','data/gold/p1_recommendations/','notebooks/p1_recommendation_eda.ipynb'],
+    checks:['ratings count is about 25M for the full dataset','RMSE prints after evaluation','top-10 recommendations are written per user','cold-start rows are dropped or separately handled']
+  },
+  p2: {
+    aim:'Analyze taxi demand and price-per-mile patterns so a marketplace can predict high-demand windows and locations.',
+    problem:'Ride platforms need to know where demand will exceed supply. Public taxi trips act as a proxy for urban mobility demand, with features by time, pickup zone, dropoff zone, distance, and trip duration.',
+    questions:['Which hours and zones have the highest demand?','Where does price per mile rise above baseline?','Can a regression model predict a surge-like multiplier?','What data quality filters are needed before modeling?'],
+    data:[{label:'NYC TLC official trip records', url:'https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page', file:'data/raw/nyc_taxi/yellow_tripdata_YYYY-MM.parquet'},{label:'AWS Open Data Registry mirror', url:'https://registry.opendata.aws/nyc-tlc-trip-records-pds/', file:'Optional cloud source for S3 labs'}],
+    parts:[['Raw parquet','Download monthly TLC parquet files.'],['Quality filters','Remove zero distance, impossible fare, impossible duration, and null location records.'],['Feature engineering','Create hour, day, weekend, rush-hour, duration, and baseline price features.'],['Modeling','Train GBT regression for surge multiplier.'],['Output','Write zone-hour predictions for BI or API consumption.']],
+    download:'mkdir data\\raw\\nyc_taxi data\\gold\\p2_surge src\\projects\\p2_uber\nInvoke-WebRequest -Uri "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet" -OutFile "data\\raw\\nyc_taxi\\yellow_tripdata_2024-01.parquet"\nInvoke-WebRequest -Uri "https://d37ci6vzurychx.cloudfront.net/trip-data/taxi_zone_lookup.csv" -OutFile "data\\raw\\nyc_taxi\\taxi_zone_lookup.csv"',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark pandas pyarrow\nspark-submit src\\projects\\p2_uber\\surge_pricing.py --input data\\raw\\nyc_taxi --output data\\gold\\p2_surge',
+    files:['src/projects/p2_uber/surge_pricing.py','data/raw/nyc_taxi/yellow_tripdata_2024-01.parquet','data/raw/nyc_taxi/taxi_zone_lookup.csv','data/gold/p2_surge/'],
+    checks:['invalid trips are filtered','baseline rates exist by hour/day','model produces prediction column','highest predicted zones can be ranked']
+  },
+  p3: {
+    aim:'Build a streaming sentiment pipeline that classifies social posts and aggregates sentiment over time.',
+    problem:'Brands and operations teams need near-real-time public reaction signals. The pipeline ingests text, cleans it, classifies sentiment, and publishes minute-level aggregates.',
+    questions:['What terms or hashtags are trending?','Is sentiment moving positive or negative by minute?','How do late events affect windows?','Can the dashboard separate raw events from aggregates?'],
+    data:[{label:'X API v2 filtered stream docs', url:'https://docs.x.com/x-api/posts/filtered-stream/introduction', file:'Live source, requires developer account and bearer token'},{label:'Sentiment140 Kaggle dataset', url:'https://www.kaggle.com/datasets/kazanova/sentiment140', file:'data/raw/sentiment140/training.1600000.processed.noemoticon.csv'}],
+    parts:[['Ingestion','Use X API or replay Sentiment140 rows into Kafka.'],['Stream buffer','Kafka decouples producers and Spark consumers.'],['NLP cleaning','Normalize case, remove URLs, mentions, and punctuation.'],['Model inference','Apply a trained classifier or rule-based baseline.'],['Dashboard output','Write sentiment windows to Elasticsearch, Parquet, or console.']],
+    download:'mkdir data\\raw\\sentiment140 data\\gold\\p3_sentiment src\\projects\\p3_sentiment\npip install kaggle\n# Put kaggle.json in $env:USERPROFILE\\.kaggle first, then run:\nkaggle datasets download -d kazanova/sentiment140 -p data\\raw\\sentiment140 --unzip',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark kafka-python pandas\nspark-submit src\\projects\\p3_sentiment\\sentiment_batch.py --input data\\raw\\sentiment140 --output data\\gold\\p3_sentiment',
+    files:['src/projects/p3_sentiment/sentiment_batch.py','src/projects/p3_sentiment/stream_from_kafka.py','data/raw/sentiment140/','data/gold/p3_sentiment/'],
+    checks:['input text is cleaned','sentiment labels map to readable values','windowed aggregates are produced','checkpoint path is configured for streaming']
+  },
+  p4: {
+    aim:'Turn clickstream events into sessions, funnels, conversion metrics, and product behavior analytics.',
+    problem:'E-commerce teams need to understand where users abandon the journey. Spark is useful because event data grows quickly and sessionization needs ordered per-user windows.',
+    questions:['How many sessions reach product, cart, checkout, and purchase?','Which pages drive conversion?','Which traffic sources produce low-quality sessions?','How long does a typical purchase journey take?'],
+    data:[{label:'Kaggle multi-category eCommerce behavior', url:'https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store', file:'data/raw/ecommerce/*.csv'},{label:'UCI Online Retail fallback', url:'https://archive.ics.uci.edu/dataset/352/online%2Bretail', file:'Smaller transactional fallback dataset'}],
+    parts:[['Events','Raw view, cart, remove, and purchase events.'],['Sessionization','Build sessions using 30-minute inactivity gaps.'],['Funnel facts','Create one row per session with each funnel step flag.'],['Aggregates','Calculate conversion, revenue, and abandonment rates.'],['BI output','Write Parquet tables for dashboard tools.']],
+    download:'mkdir data\\raw\\ecommerce data\\gold\\p4_clickstream src\\projects\\p4_clickstream\npip install kaggle\nkaggle datasets download -d mkechinov/ecommerce-behavior-data-from-multi-category-store -p data\\raw\\ecommerce --unzip',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark pandas pyarrow\nspark-submit src\\projects\\p4_clickstream\\session_funnel.py --input data\\raw\\ecommerce --output data\\gold\\p4_clickstream',
+    files:['src/projects/p4_clickstream/session_funnel.py','data/raw/ecommerce/*.csv','data/gold/p4_clickstream/funnel_sessions/','data/gold/p4_clickstream/product_metrics/'],
+    checks:['session_id is stable per user journey','funnel counts decrease logically by step','purchase revenue matches raw totals','output partitions are readable']
+  },
+  p5: {
+    aim:'Detect suspicious transactions with scalable feature engineering and a fraud classification model.',
+    problem:'Fraud is rare, imbalanced, and costly. This project joins identity and transaction data, builds behavior features, and optimizes recall without flooding analysts with false positives.',
+    questions:['Which transactions look abnormal?','How do we handle class imbalance?','What threshold catches fraud while controlling false positives?','Which features explain the fraud score?'],
+    data:[{label:'IEEE-CIS Fraud Detection', url:'https://www.kaggle.com/competitions/ieee-fraud-detection', file:'data/raw/fraud/train_transaction.csv and train_identity.csv'},{label:'PaySim synthetic fraud dataset', url:'https://www.kaggle.com/datasets/ealaxi/paysim1', file:'Simpler fallback for local experiments'}],
+    parts:[['Raw transactions','Transaction amount, time, product, card, and address fields.'],['Identity join','Attach device/browser/email identity features.'],['Behavior windows','Create card velocity and amount-ratio features.'],['Classifier','Train RandomForest or GBT and tune threshold.'],['Alert output','Write high-risk transactions for analyst review.']],
+    download:'mkdir data\\raw\\fraud data\\gold\\p5_fraud src\\projects\\p5_fraud\npip install kaggle\nkaggle competitions download -c ieee-fraud-detection -p data\\raw\\fraud\nExpand-Archive -Path data\\raw\\fraud\\ieee-fraud-detection.zip -DestinationPath data\\raw\\fraud -Force',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark pandas pyarrow\nspark-submit src\\projects\\p5_fraud\\fraud_detection.py --input data\\raw\\fraud --output data\\gold\\p5_fraud',
+    files:['src/projects/p5_fraud/fraud_detection.py','data/raw/fraud/train_transaction.csv','data/raw/fraud/train_identity.csv','data/gold/p5_fraud/scored_transactions/'],
+    checks:['fraud label distribution is printed','identity join does not duplicate TransactionID','AUC and recall are reported','top scored transactions are written']
+  },
+  p6: {
+    aim:'Process sensor readings, compute air-quality indicators, and detect abnormal city zones.',
+    problem:'Smart-city telemetry is high volume and time-sensitive. Spark Structured Streaming can aggregate readings by sensor and time window while preserving late-data handling.',
+    questions:['Which sensors report unhealthy pollutant levels?','Where are rolling averages increasing?','Which readings are anomalous compared with recent history?','What should a city dashboard show first?'],
+    data:[{label:'Open Air Chicago dataset catalog', url:'https://catalog.data.gov/dataset/open-air-chicago-individual-measurements', file:'data/raw/iot/open_air_chicago.csv'},{label:'Open Air Chicago city page', url:'https://www.chicago.gov/city/en/depts/cdph/supp_info/Environment/open-air-chicago.html', file:'Sensor program context'}],
+    parts:[['Sensor source','CSV batch download or Kafka replay of sensor measurements.'],['Schema enforcement','Cast timestamps, pollutant readings, and coordinates.'],['Window aggregation','Compute five-minute and hourly rolling statistics.'],['Anomaly layer','Flag high pollutant readings or sudden spikes.'],['Dashboard output','Write map-ready readings and alerts.']],
+    download:'mkdir data\\raw\\iot data\\gold\\p6_iot src\\projects\\p6_iot\n# Download the CSV from the Data.gov catalog and save as:\n# data\\raw\\iot\\open_air_chicago.csv',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark pandas pyarrow\nspark-submit src\\projects\\p6_iot\\sensor_quality.py --input data\\raw\\iot --output data\\gold\\p6_iot',
+    files:['src/projects/p6_iot/sensor_quality.py','data/raw/iot/open_air_chicago.csv','data/gold/p6_iot/sensor_windows/','data/gold/p6_iot/alerts/'],
+    checks:['timestamp parsing succeeds','rolling averages exist per sensor','alerts include location fields','bad/null sensor rows are quarantined']
+  },
+  p7: {
+    aim:'Analyze public GitHub event data to find active developers, trending repositories, and event patterns.',
+    problem:'Developer ecosystems create a huge JSON event stream. This project teaches nested JSON parsing, event filtering, aggregations, and Parquet outputs with an approachable real dataset.',
+    questions:['Which repositories receive the most stars?','Who are the most active push-event actors?','Which event types dominate an hour or day?','How does schema inference work on nested events?'],
+    data:[{label:'GH Archive official site', url:'https://www.gharchive.org/', file:'data/raw/gharchive/YYYY-MM-DD-H.json.gz'},{label:'GitHub event types documentation', url:'https://docs.github.com/en/rest/using-the-rest-api/github-event-types', file:'Event payload interpretation'}],
+    parts:[['Hourly archive','Download one or more .json.gz files.'],['JSON reader','Infer nested schema, then select stable fields.'],['Event filters','Build WatchEvent, PushEvent, and PullRequestEvent facts.'],['Aggregates','Rank repositories, actors, and event types.'],['Output','Write Parquet tables for repeatable analysis.']],
+    download:'mkdir data\\raw\\gharchive data\\gold\\p7_github src\\projects\\p7_github\nInvoke-WebRequest -Uri "https://data.gharchive.org/2024-01-01-0.json.gz" -OutFile "data\\raw\\gharchive\\2024-01-01-0.json.gz"\nInvoke-WebRequest -Uri "https://data.gharchive.org/2024-01-01-1.json.gz" -OutFile "data\\raw\\gharchive\\2024-01-01-1.json.gz"',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark pandas pyarrow\nspark-submit src\\projects\\p7_github\\github_activity.py --input data\\raw\\gharchive --output data\\gold\\p7_github',
+    files:['src/projects/p7_github/github_activity.py','data/raw/gharchive/*.json.gz','data/gold/p7_github/top_repositories/','data/gold/p7_github/event_counts/'],
+    checks:['Spark reads compressed JSON directly','event counts by type are non-zero','repo.name and actor.login are populated','Parquet outputs can be re-read']
+  },
+  p8: {
+    aim:'Predict whether a patient is likely to be readmitted within 30 days and produce a reviewable risk score.',
+    problem:'Hospitals want to allocate follow-up care to patients most likely to return. This project emphasizes careful healthcare data handling, explainable features, and conservative validation.',
+    questions:['Which patients are high risk for readmission?','Which clinical and demographic features are predictive?','How do we avoid leakage from post-discharge data?','What threshold should prioritize recall?'],
+    data:[{label:'UCI diabetes readmission dataset', url:'https://archive.ics.uci.edu/ml/datasets/diabetes%2B130-us%2Bhospitals%2Bfor%2Byears%2B1999-2008', file:'data/raw/healthcare/diabetic_data.csv'},{label:'MIMIC-III PhysioNet', url:'https://physionet.org/content/mimiciii/', file:'Credentialed alternative for advanced learners'}],
+    parts:[['Clinical raw data','Use de-identified patient encounter rows.'],['Cleaning','Handle missing values and categorical codes.'],['Feature engineering','Build age, stay length, procedures, medications, and diagnosis features.'],['Risk model','Train GBT or logistic regression for readmission label.'],['Clinical output','Write patient risk scores for review, not automatic care decisions.']],
+    download:'mkdir data\\raw\\healthcare data\\gold\\p8_readmission src\\projects\\p8_readmission\n# Download diabetic_data.csv from the UCI page and save it here:\n# data\\raw\\healthcare\\diabetic_data.csv',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark pandas pyarrow\nspark-submit src\\projects\\p8_readmission\\readmission_model.py --input data\\raw\\healthcare\\diabetic_data.csv --output data\\gold\\p8_readmission',
+    files:['src/projects/p8_readmission/readmission_model.py','data/raw/healthcare/diabetic_data.csv','data/gold/p8_readmission/risk_scores/','data/gold/p8_readmission/model_metrics.json'],
+    checks:['no protected health information is introduced','target label is <30 readmission only','precision/recall are reported','risk output includes model probability and threshold']
+  },
+  p9: {
+    aim:'Build a log analytics pipeline that parses web logs, calculates service health metrics, and flags abnormal error windows.',
+    problem:'Operations teams need to detect failure spikes before customers report them. Spark streaming or micro-batch jobs summarize massive logs into small APM tables.',
+    questions:['What is the request volume per minute?','Which URLs and status codes dominate errors?','When does error rate exceed a threshold?','Which IPs create unusual load?'],
+    data:[{label:'NASA HTTP access logs official archive', url:'https://ita.ee.lbl.gov/html/contrib/NASA-HTTP.html', file:'data/raw/logs/NASA_access_log_Jul95.gz'},{label:'Apache JMeter official download', url:'https://jmeter.apache.org/download_jmeter.cgi', file:'Optional synthetic load generator'}],
+    parts:[['Raw logs','Use NASA logs or generate Apache/Nginx logs with JMeter.'],['Parser','Convert combined log text to structured columns.'],['Metric windows','Aggregate request count, error count, bytes, and unique IPs.'],['Anomaly rules','Flag high 5xx rate or traffic spikes.'],['APM output','Write service health tables for Kibana/Grafana.']],
+    download:'mkdir data\\raw\\logs data\\gold\\p9_logs src\\projects\\p9_logs\nInvoke-WebRequest -Uri "ftp://ita.ee.lbl.gov/traces/NASA_access_log_Jul95.gz" -OutFile "data\\raw\\logs\\NASA_access_log_Jul95.gz"\nInvoke-WebRequest -Uri "ftp://ita.ee.lbl.gov/traces/NASA_access_log_Aug95.gz" -OutFile "data\\raw\\logs\\NASA_access_log_Aug95.gz"',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark pandas pyarrow\nspark-submit src\\projects\\p9_logs\\log_apm.py --input data\\raw\\logs --output data\\gold\\p9_logs',
+    files:['src/projects/p9_logs/log_apm.py','data/raw/logs/*.gz','data/gold/p9_logs/error_windows/','data/gold/p9_logs/url_metrics/'],
+    checks:['parser rejects malformed lines safely','status-code counts match raw sample','error-rate windows are produced','top failing URLs are visible']
+  },
+  p10: {
+    aim:'Forecast demand for item-store combinations so inventory teams can plan replenishment and reduce stockouts.',
+    problem:'Retail demand varies by item, store, calendar events, price, and promotions. Spark lets us parallelize feature generation and forecasting across thousands of SKUs.',
+    questions:['What will each item-store sell over the next 28 days?','Which categories are seasonal?','Where are forecasts uncertain?','How can forecasts feed purchasing decisions?'],
+    data:[{label:'M5 Forecasting Accuracy Kaggle competition', url:'https://www.kaggle.com/competitions/m5-forecasting-accuracy', file:'data/raw/m5/sales_train_evaluation.csv, calendar.csv, sell_prices.csv'},{label:'M5 data page', url:'https://www.kaggle.com/c/m5-forecasting-accuracy/data', file:'Dataset description and files'}],
+    parts:[['Raw sales matrix','Wide daily sales by item and store.'],['Long format','Melt day columns into item-store-date rows.'],['Calendar join','Add events, holidays, weekdays, and SNAP flags.'],['Forecasting','Train grouped models or feature-based regressors.'],['Planning output','Write forecast intervals for downstream supply planning.']],
+    download:'mkdir data\\raw\\m5 data\\gold\\p10_demand src\\projects\\p10_demand\npip install kaggle\nkaggle competitions download -c m5-forecasting-accuracy -p data\\raw\\m5\nExpand-Archive -Path data\\raw\\m5\\m5-forecasting-accuracy.zip -DestinationPath data\\raw\\m5 -Force',
+    run:'python -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npip install pyspark pandas pyarrow prophet\nspark-submit src\\projects\\p10_demand\\demand_forecast.py --input data\\raw\\m5 --output data\\gold\\p10_demand',
+    files:['src/projects/p10_demand/demand_forecast.py','data/raw/m5/sales_train_evaluation.csv','data/raw/m5/calendar.csv','data/raw/m5/sell_prices.csv','data/gold/p10_demand/forecasts/'],
+    checks:['wide-to-long conversion preserves total sales','calendar join has no missing dates','forecast has 28 future rows per item-store','forecast output includes lower/upper bounds']
+  }
+};
+
+PROJECTS.forEach(p => {
+  p.playbook = PROJECT_PLAYBOOKS[p.id] || {};
+});
+
 function doLogin() {
   const u = document.getElementById('login-user').value.trim();
   const p = document.getElementById('login-pass').value.trim();
@@ -3558,10 +3702,91 @@ function showInfra(sectionId) {
 }
 
 // ─── Project page ────────────────────────────────────────────────────────────
+function projectLinksHtml(items) {
+  return `<div class="project-links">${(items||[]).map(x =>
+    `<a class="project-link" href="${escHtml(x.url)}" target="_blank" rel="noopener">${escHtml(x.label)}</a>`
+  ).join('')}</div>`;
+}
+
+function projectListHtml(items) {
+  return `<ul>${(items||[]).map(x => `<li>${escHtml(x)}</li>`).join('')}</ul>`;
+}
+
+function projectPartsHtml(parts) {
+  return `<div class="project-architecture-grid">${(parts||[]).map(([title,desc]) => `
+    <div class="project-part-card">
+      <h4>${escHtml(title)}</h4>
+      <p>${escHtml(desc)}</p>
+    </div>`).join('')}</div>`;
+}
+
+function projectDataTableHtml(rows) {
+  return `<div class="data-table-wrap"><table class="data-table">
+    <thead><tr><th>Source</th><th>Where it lands locally</th></tr></thead>
+    <tbody>${(rows||[]).map(r => `<tr>
+      <td><a href="${escHtml(r.url)}" target="_blank" rel="noopener">${escHtml(r.label)}</a></td>
+      <td><code>${escHtml(r.file)}</code></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function projectCommandCard(title, desc, src) {
+  return `<div class="command-card">
+    <div class="command-card-title">${escHtml(title)}</div>
+    <div class="command-card-desc">${escHtml(desc)}</div>
+    ${codeBlock({lang:'powershell', label:'PowerShell', src})}
+  </div>`;
+}
+
+function buildProjectPlaybookSections(p, pb) {
+  return `
+    <div class="section-divider"></div>
+    <div class="section">
+      <div class="section-title"><span class="s-icon">&#128506;</span> Project Execution Playbook</div>
+      <div class="project-brief-grid">
+        <div class="project-brief-card"><h4>What are we aiming to achieve?</h4><p>${escHtml(pb.aim || p.desc)}</p></div>
+        <div class="project-brief-card"><h4>What problem are we solving?</h4><p>${escHtml(pb.problem || p.useCase || p.desc)}</p></div>
+        <div class="project-brief-card"><h4>What questions are we addressing?</h4>${projectListHtml(pb.questions || [])}</div>
+        <div class="project-brief-card"><h4>Software to install</h4><p>Install these once for the project track, then use the project-specific commands below.</p>${projectLinksHtml(PROJECT_SOFTWARE_LINKS)}</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span class="s-icon">&#127959;</span> Detailed Architecture Parts</div>
+      ${projectPartsHtml(pb.parts || [])}
+      <div class="info-box tip"><strong>Architecture rule:</strong> Keep the raw source, cleaning layer, feature/model layer, and output layer separate. This is what lets you debug data quality independently from model quality.</div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span class="s-icon">&#128230;</span> Data Sources, Hyperlinks, and Local File Locations</div>
+      ${projectDataTableHtml(pb.data || [])}
+      ${projectLinksHtml(pb.data || [])}
+      <div class="info-box tip"><strong>Local convention:</strong> Keep raw files under <code>data/raw</code>, transformed datasets under <code>data/silver</code>, final outputs under <code>data/gold</code>, and project code under <code>src/projects</code>.</div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span class="s-icon">&#128300;</span> Copy-Paste Commands</div>
+      <div class="command-stack">
+        ${projectCommandCard('1. Create folders and download the dataset', 'Run from the repository root in Windows PowerShell. Kaggle commands require a Kaggle API token at %USERPROFILE%\\.kaggle\\kaggle.json.', pb.download || '')}
+        ${projectCommandCard('2. Install dependencies and run the Spark job', 'This creates a local virtual environment, installs PySpark dependencies, and runs the project job once the implementation file exists.', pb.run || '')}
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span class="s-icon">&#128203;</span> Execution Plan and Validation Checklist</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div class="step-content"><div class="step-title">Confirm the business question</div><div class="step-desc">${escHtml((pb.questions || [])[0] || p.desc)}</div></div></li>
+        <li><div class="step-num">2</div><div class="step-content"><div class="step-title">Download and place data</div><div class="step-desc">Use the exact local file paths listed above, then keep raw files immutable.</div></div></li>
+        <li><div class="step-num">3</div><div class="step-content"><div class="step-title">Build the pipeline parts</div><div class="step-desc">Implement the source reader, cleaning layer, feature/model layer, and output writer as separate functions.</div></div></li>
+        <li><div class="step-num">4</div><div class="step-content"><div class="step-title">Run locally first</div><div class="step-desc">Use a one-file or one-month sample before moving to ${escHtml(p.cloud)}.</div></div></li>
+        <li><div class="step-num">5</div><div class="step-content"><div class="step-title">Validate outputs</div><div class="step-desc">${projectListHtml(pb.checks || [])}</div></div></li>
+        <li><div class="step-num">6</div><div class="step-content"><div class="step-title">Expected files to create</div><div class="step-desc">${projectListHtml(pb.files || [])}</div></div></li>
+      </ol>
+    </div>
+  `;
+}
+
 function showProject(projId) {
   const p = PROJECTS.find(x=>x.id===projId);
   if (!p) return;
   setActiveTopicEl(document.getElementById('topic-proj-'+projId));
+  const pb = p.playbook || {};
 
   const archNodes = p.arch.map((n,i) => {
     const hl = i === Math.floor(p.arch.length/2);
@@ -3626,6 +3851,7 @@ function showProject(projId) {
       </ol>
     </div>
   `;
+  html += buildProjectPlaybookSections(p, pb);
   render(html);
 }
 
