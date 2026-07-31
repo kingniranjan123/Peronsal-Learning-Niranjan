@@ -1,14 +1,15 @@
 # 🔥 Master Class: Linear Algebra — Distributed Matrices, SVD, BLAS/LAPACK, Breeze, and Apache Arrow
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471)</em></div>
 
 Linear algebra sits at the mathematical core of virtually every machine learning algorithm, from principal component analysis to neural network gradient descent. Apache Spark's MLlib exposes a suite of **distributed matrix abstractions** — `RowMatrix`, `IndexedRowMatrix`, `CoordinateMatrix`, and `BlockMatrix` — each designed for a different structural assumption about how your data is shaped and how densely it is populated. These are not wrappers around a single monolithic matrix stored on the driver; they are genuine distributed data structures whose rows or blocks live as RDD partitions across the cluster, enabling linear algebra at a scale that no single machine could accommodate.
 
-The problem these abstractions solve is deceptively simple to state but technically brutal to implement: how do you perform operations like matrix multiplication, singular value decomposition (SVD), or Gram matrix computation when the matrix has, say, 10 billion rows and 50,000 columns? The answer is to exploit the mathematical structure of each operation — that matrix-vector products can be expressed as independent row dot-products, that the Gram matrix `A^T A` decomposes naturally across partitions, and that the top-k singular vectors of a massive matrix can be computed by solving a much smaller dense eigenproblem on the driver after a distributed reduction pass. Spark's linear algebra stack orchestrates exactly this split-level computation: distributed work on the executors via the JVM and RDD operations, and dense local computation on the driver via **Breeze** (Scala's numerical computing library) backed by **BLAS/LAPACK** native routines. Recent versions further integrate **Apache Arrow** column vectors for zero-copy data transfer between JVM and Python worker processes, eliminating serialization overhead in PySpark-based linear algebra workflows. [Ref: 451](spark_book.pdf#page=451)
+The problem these abstractions solve is deceptively simple to state but technically brutal to implement: how do you perform operations like matrix multiplication, singular value decomposition (SVD), or Gram matrix computation when the matrix has, say, 10 billion rows and 50,000 columns? The answer is to exploit the mathematical structure of each operation — that matrix-vector products can be expressed as independent row dot-products, that the Gram matrix `A^T A` decomposes naturally across partitions, and that the top-k singular vectors of a massive matrix can be computed by solving a much smaller dense eigenproblem on the driver after a distributed reduction pass. Spark's linear algebra stack orchestrates exactly this split-level computation: distributed work on the executors via the JVM and RDD operations, and dense local computation on the driver via **Breeze** (Scala's numerical computing library) backed by **BLAS/LAPACK** native routines. Recent versions further integrate **Apache Arrow** column vectors for zero-copy data transfer between JVM and Python worker processes, eliminating serialization overhead in PySpark-based linear algebra workflows. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -20,7 +21,7 @@ BLAS (Basic Linear Algebra Subprograms) and LAPACK (Linear Algebra PACKage) are 
 
 Apache Arrow enters this picture as the serialization format for the JVM-to-Python boundary. When PySpark calls `toArrow()` on a DataFrame containing feature vectors, Spark serializes the column-oriented data into Arrow's in-memory columnar format without copying individual values — the Arrow buffer is handed to the Python process via a memory-mapped file or socket, and NumPy/pandas can read it with zero deserialization overhead. For linear algebra workloads that bridge Spark preprocessing and scikit-learn or NumPy model fitting, this reduces Python worker startup overhead from seconds (with pickle serialization) to milliseconds.
 
-```
+```scala
 Driver JVM Executor JVMs (RDD Partitions)
 ┌──────────────────────────────────┐ ┌─────────────────────────────────────┐
 │ SparkContext / DAGScheduler │ │ Partition 0: RDD[Vector] rows 0..k │
@@ -43,7 +44,7 @@ RDD[MatrixEntry] RDD[((blockRow,blockCol), Matrix)]
 │(1,2,0.3) │─────────────▶│ dense │ sparse │
 │(3,8,1.1) │ ├───────────┼───────────┤
 │ ... │ │ B(1,0) │ B(1,1) │
-└───────────────┘ └───────────┴───────────┘ [Ref: 462](spark_book.pdf#page=462)
+└───────────────┘ └───────────┴───────────┘ 
 ```
 
 ### Key Internal Components
@@ -54,23 +55,23 @@ RDD[MatrixEntry] RDD[((blockRow,blockCol), Matrix)]
 
 - **Breeze + netlib-java BLAS/LAPACK Bridge:** Breeze's `DenseMatrix` operations (`*`, `\`, `svd`) dispatch through netlib-java's JNI layer to native BLAS routines. The JNI call overhead is negligible for matrices larger than ~100×100, but for tiny matrices (e.g., 10×10 local aggregations) pure-JVM Breeze is faster due to JNI call setup cost.
 
-- **Apache Arrow IPC Format:** Arrow represents columnar batches as a sequence of `RecordBatch` messages, each containing a schema and flat memory buffers for validity bitmaps, offsets, and values. Spark's `ArrowConverters.toBatchIterator()` converts an RDD partition of InternalRow objects into Arrow `RecordBatch` objects in a single pass, achieving throughput of ~1 GB/s on modern hardware — versus ~50 MB/s for Python pickle serialization. [Ref: 469](spark_book.pdf#page=469)
+- **Apache Arrow IPC Format:** Arrow represents columnar batches as a sequence of `RecordBatch` messages, each containing a schema and flat memory buffers for validity bitmaps, offsets, and values. Spark's `ArrowConverters.toBatchIterator()` converts an RDD partition of InternalRow objects into Arrow `RecordBatch` objects in a single pass, achieving throughput of ~1 GB/s on modern hardware — versus ~50 MB/s for Python pickle serialization. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Gram Matrix Memory Explosion at Scale
 
 When calling `RowMatrix.computeSVD(k, computeU = true)` on a matrix with `n` features, Spark must materialize the full `n × n` Gram matrix on the driver. At `n = 50,000` (a common NLP embedding dimension), the Gram matrix requires `50,000² × 8 bytes ≈ 20 GB` of driver heap memory. The default driver memory is 1 GB — this computation will throw `java.lang.OutOfMemoryError: Java heap space` without `--driver-memory 24g` or higher. The error is silent about the root cause; you will see a generic OOM in the driver logs. The fix is either to increase driver memory, to reduce `n` via feature selection before SVD, or to switch to iterative Krylov methods (e.g., ARPACK via `spark.ml.feature.PCA` with `setK` small) that avoid materializing the full Gram matrix.
 
-The subtler trap is that `computeU = true` requires a second full pass over the RDD to compute the left singular vectors `U = A V Σ^{-1}`. If the input `RowMatrix` was not cached (`.cache()` called before `computeSVD`), Spark recomputes the entire RDD lineage twice — once for the Gram matrix reduction and once for the `U` computation. On a 100-node cluster with 500 GB of input data, this doubles your wall-clock time and doubles your cloud compute cost. Always call `.cache()` on the input `RowMatrix` before invoking `computeSVD`. [Ref: 459](spark_book.pdf#page=459)
+The subtler trap is that `computeU = true` requires a second full pass over the RDD to compute the left singular vectors `U = A V Σ^{-1}`. If the input `RowMatrix` was not cached (`.cache()` called before `computeSVD`), Spark recomputes the entire RDD lineage twice — once for the Gram matrix reduction and once for the `U` computation. On a 100-node cluster with 500 GB of input data, this doubles your wall-clock time and doubles your cloud compute cost. Always call `.cache()` on the input `RowMatrix` before invoking `computeSVD`. 
 
 ### Native BLAS Detection Failure and the Silent Fallback
 
-Spark silently falls back to the pure-JVM reference BLAS implementation (`F2jBLAS`) when native libraries are not found on the executor classpath. This fallback is single-threaded and has no SIMD optimization — a 1000×1000 DGEMM takes ~500ms in F2jBLAS versus ~5ms in OpenBLAS with AVX-512. The failure is logged at INFO level (`Using F2j BLAS`) rather than WARN or ERROR, so it is trivially missed in production deployments. To verify native BLAS is loaded, grep executor logs for `"NativeSystemBLAS"` or `"NativeRefBLAS"`. The correct fix is to pre-install `libopenblas-dev` on all worker nodes and set `OPENBLAS_NUM_THREADS=1` to prevent OpenBLAS from spawning thread pools that compete with Spark's task threads — running OpenBLAS with its default thread count inside a multi-task executor causes thread oversubscription and can reduce throughput by 40%. [Ref: 463](spark_book.pdf#page=463)
+Spark silently falls back to the pure-JVM reference BLAS implementation (`F2jBLAS`) when native libraries are not found on the executor classpath. This fallback is single-threaded and has no SIMD optimization — a 1000×1000 DGEMM takes ~500ms in F2jBLAS versus ~5ms in OpenBLAS with AVX-512. The failure is logged at INFO level (`Using F2j BLAS`) rather than WARN or ERROR, so it is trivially missed in production deployments. To verify native BLAS is loaded, grep executor logs for `"NativeSystemBLAS"` or `"NativeRefBLAS"`. The correct fix is to pre-install `libopenblas-dev` on all worker nodes and set `OPENBLAS_NUM_THREADS=1` to prevent OpenBLAS from spawning thread pools that compete with Spark's task threads — running OpenBLAS with its default thread count inside a multi-task executor causes thread oversubscription and can reduce throughput by 40%. 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 📊 Performance Characteristics
 
@@ -81,11 +82,11 @@ Spark silently falls back to the pure-JVM reference BLAS implementation (`F2jBLA
 | `BlockMatrix.multiply(B)` | O(blocks · localBlock³) | Yes | Requires matching inner dimension block sizes; mis-match throws `IllegalArgumentException` |
 | `RowMatrix.computeSVD(k)` | O(m·n·k) + O(n³) driver | No (treeReduce) | 2 passes over RDD if `computeU=true`; cache input to avoid double recomputation |
 | `IndexedRowMatrix.toCoordinateMatrix()` | O(m·n) | No | Explodes dense rows to (row,col,val) triples; only use for sparse downstream ops |
-| Arrow `toArrow()` conversion | O(rows) | No | ~1 GB/s throughput; avoids pickle; requires `spark.sql.execution.arrow.pyspark.enabled=true` | [Ref: 453](spark_book.pdf#page=453)
+| Arrow `toArrow()` conversion | O(rows) | No | ~1 GB/s throughput; avoids pickle; requires `spark.sql.execution.arrow.pyspark.enabled=true` | 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
+## 💻 Code Examples 
 
 ### Example 1: Distributed Gram Matrix and Truncated SVD on a RowMatrix
 
@@ -137,12 +138,12 @@ leftVectors.rows
  .zipWithIndex() // (Vector, Long) — re-attach row index
  .map { case (vec, idx) => (idx, vec.toArray) }
  .toDF("id", "embedding")
- .write.parquet("/data/svd_embeddings") [Ref: 464](spark_book.pdf#page=464)
+ .write.parquet("/data/svd_embeddings") 
 ```
 
 > **Mastery Note:** The `computeGramianMatrix()` call inside `computeSVD` uses `treeAggregate` with a depth of 2 by default, meaning partial `n×n` Gram matrices are summed in a two-level tree rather than shuffled to the driver in a single reduce. At `n = 200`, each partial Gram matrix is `200 × 200 × 8 = 320 KB` — trivially small. At `n = 10,000`, each partial becomes ~800 MB, and `treeAggregate` depth must be increased via `RowMatrix.computeSVD`'s internal `brzSvd` path to avoid driver memory pressure. The `svd.V` right singular vectors live entirely on the driver as a `DenseMatrix`; broadcast them to executors if you need to project new data into the SVD space without rerunning the decomposition.
 
---- [Ref: 471](spark_book.pdf#page=471)
+---
 
 ### Example 2: CoordinateMatrix for Sparse User-Item Ratings → BlockMatrix Multiplication
 

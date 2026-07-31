@@ -1,16 +1,17 @@
 # 🔥 Master Class: Resilient Distributed Datasets (RDDs)
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
 
 Resilient Distributed Datasets (RDDs) are the foundational distributed data abstraction upon which all of Apache Spark is built. An RDD is an immutable, partitioned collection of records that can be operated on in parallel across a cluster. Every DataFrame, Dataset, and Structured Streaming micro-batch in modern Spark ultimately compiles down to an RDD execution plan — making RDDs not just a legacy API but the bedrock layer of the entire computation model.
 
 RDDs exist to solve the fundamental problem of distributed fault-tolerant computation without requiring expensive data replication at rest. Before Spark, frameworks like Hadoop MapReduce achieved fault tolerance by writing intermediate data to HDFS after every transformation, producing massive I/O amplification. RDDs instead track their lineage — a directed acyclic graph (DAG) of the transformations that produced them — and replay only the failed partition's lineage on a healthy node in the event of a failure. This lineage-based recovery model makes RDDs orders of magnitude faster to recover than checkpoint-based systems.
 
-The RDD API exposes two categories of operations: **transformations**, which are lazy and return a new RDD without triggering computation (e.g., `map`, `filter`, `flatMap`, `reduceByKey`), and **actions**, which trigger the DAGScheduler to materialize results to the driver or to storage (e.g., `collect`, `count`, `saveAsTextFile`). This distinction is not cosmetic — it is the engine's primary mechanism for pipeline fusion, stage boundary determination, and task scheduling. [Ref: 451](spark_book.pdf#page=451)
+The RDD API exposes two categories of operations: **transformations**, which are lazy and return a new RDD without triggering computation (e.g., `map`, `filter`, `flatMap`, `reduceByKey`), and **actions**, which trigger the DAGScheduler to materialize results to the driver or to storage (e.g., `collect`, `count`, `saveAsTextFile`). This distinction is not cosmetic — it is the engine's primary mechanism for pipeline fusion, stage boundary determination, and task scheduling. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ The **Tungsten execution engine** underpins physical execution. For RDD-based co
 
 Network serialization at the shuffle boundary converts RDD partition data into byte streams. Kryo serialization (`spark.serializer=org.apache.spark.serializer.KryoSerializer`) is typically 3–10x faster and 3–5x more compact than Java serialization for user-defined types, and is strongly recommended for any RDD pipeline involving custom case classes or domain objects. Failure to register classes with the `KryoRegistrator` causes Kryo to fall back to Java-compatible mode, silently negating its performance benefit.
 
-```
+```scala
 Driver JVM Executor JVM (Worker Node)
 ┌──────────────────────────────────┐ ┌────────────────────────────────────────┐
 │ SparkContext │ │ Unified Memory Manager │
@@ -42,7 +43,7 @@ Driver JVM Executor JVM (Worker Node)
  ┌─────────────────────────────────────────┐
  │ Map output files written to local disk │
  │ Reduce tasks fetch via BlockManager RPC │
- └─────────────────────────────────────────┘ [Ref: 464](spark_book.pdf#page=464)
+ └─────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -50,25 +51,25 @@ Driver JVM Executor JVM (Worker Node)
 - **DAGScheduler:** Translates the RDD lineage DAG into a physical execution plan of `Stage` objects, splitting on wide dependencies (shuffles). It also handles task retry on `FetchFailedException` and speculative execution of straggler tasks when `spark.speculation=true`.
 - **BlockManager:** The distributed storage subsystem that manages RDD cache blocks, shuffle map outputs, and broadcast variables. Each executor has a `BlockManager` that communicates with the driver's `BlockManagerMaster` via Netty RPC. Cache eviction uses LRU policy within the storage memory region.
 - **ShuffleManager (`SortShuffleManager`):** Controls how map-side shuffle output is written and how reduce-side tasks fetch data. Since Spark 1.6, the default `SortShuffleManager` writes a single indexed shuffle file per map task (rather than one file per reducer), dramatically reducing the number of open file handles and OS-level file descriptor pressure at scale.
-- **Lineage Graph (RDD Dependencies):** Each RDD holds a list of `Dependency` objects — either `NarrowDependency` (each child partition depends on one or a few parent partitions, allowing pipeline fusion) or `ShuffleDependency` (each child partition depends on all parent partitions, requiring a full shuffle). This distinction is what the DAGScheduler uses to determine stage boundaries. [Ref: 452](spark_book.pdf#page=452)
+- **Lineage Graph (RDD Dependencies):** Each RDD holds a list of `Dependency` objects — either `NarrowDependency` (each child partition depends on one or a few parent partitions, allowing pipeline fusion) or `ShuffleDependency` (each child partition depends on all parent partitions, requiring a full shuffle). This distinction is what the DAGScheduler uses to determine stage boundaries. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 461](spark_book.pdf#page=461)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Narrow vs. Wide Dependencies: The Stage Boundary Contract
 
 The most architecturally significant decision in RDD design is the classification of dependencies. A **narrow dependency** (produced by `map`, `filter`, `union`, `coalesce`) allows the DAGScheduler to fuse multiple transformations into a single pipeline stage with no network transfer — tasks process records one-by-one through the entire transformation chain in a single JVM stack frame. A **wide dependency** (produced by `groupByKey`, `reduceByKey`, `join`, `repartition`) forces a shuffle: all map-side output is written to disk, partitioned by key hash, and then fetched by reduce-side tasks across the network.
 
-The critical failure mode here is misusing `groupByKey` instead of `reduceByKey`. `groupByKey` sends all values for each key across the network before aggregation, producing `java.lang.OutOfMemoryError: GC overhead limit exceeded` on executors when key cardinality is low and value lists are large. `reduceByKey` applies a combiner locally on the map side (analogous to MapReduce's combiner), reducing shuffle data volume by up to 90% for common aggregations. Always prefer `reduceByKey`, `aggregateByKey`, or `combineByKey` over `groupByKey` for any reduction operation. [Ref: 469](spark_book.pdf#page=469)
+The critical failure mode here is misusing `groupByKey` instead of `reduceByKey`. `groupByKey` sends all values for each key across the network before aggregation, producing `java.lang.OutOfMemoryError: GC overhead limit exceeded` on executors when key cardinality is low and value lists are large. `reduceByKey` applies a combiner locally on the map side (analogous to MapReduce's combiner), reducing shuffle data volume by up to 90% for common aggregations. Always prefer `reduceByKey`, `aggregateByKey`, or `combineByKey` over `groupByKey` for any reduction operation. 
 
 ### Caching Strategy and Partition Count Sizing
 
 Calling `rdd.cache()` registers the RDD with the `BlockManager` at `MEMORY_AND_DISK` (or `MEMORY_ONLY` for `.cache()`), but the data is not materialized until an action is triggered. A common anti-pattern is caching an RDD that is used only once, which wastes both computation (to fill the cache) and memory (to hold blocks that could have been evicted and recomputed). Cache exclusively when an RDD is consumed by two or more downstream actions or branches in the DAG.
 
-Partition count is equally critical. With too few partitions (under-parallelism), executor cores sit idle and individual tasks process enormous data volumes, causing GC pauses exceeding several seconds. With too many partitions (over-parallelism), task scheduling overhead from the `TaskScheduler` dominates useful work — each task launch carries a ~1ms overhead on the driver, meaning 1,000,000 partitions adds ~17 minutes of pure scheduling cost. The empirically proven target is **2–4 partitions per available CPU core across the cluster**, with individual partition sizes between 128MB and 512MB for most workloads. [Ref: 453](spark_book.pdf#page=453)
+Partition count is equally critical. With too few partitions (under-parallelism), executor cores sit idle and individual tasks process enormous data volumes, causing GC pauses exceeding several seconds. With too many partitions (over-parallelism), task scheduling overhead from the `TaskScheduler` dominates useful work — each task launch carries a ~1ms overhead on the driver, meaning 1,000,000 partitions adds ~17 minutes of pure scheduling cost. The empirically proven target is **2–4 partitions per available CPU core across the cluster**, with individual partition sizes between 128MB and 512MB for most workloads. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
 ## 📊 Performance Characteristics
 
@@ -81,9 +82,9 @@ Partition count is equally critical. With too few partitions (under-parallelism)
 | `join` (unsorted RDDs) | O(n + m) | Yes | Hash join at shuffle; both sides fully shuffled unless one is broadcast |
 | `coalesce(n, shuffle=false)` | O(n) | No | Narrow; merges partitions locally — can cause uneven task sizes |
 | `repartition(n)` | O(n) | Yes | Full shuffle; guarantees uniform partition sizing |
-| `cache` (MEMORY_ONLY) | O(n) | No | Materializes on first action; LRU eviction may trigger recomputation | [Ref: 463](spark_book.pdf#page=463)
+| `cache` (MEMORY_ONLY) | O(n) | No | Materializes on first action; LRU eviction may trigger recomputation | 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 💻 Code Examples
 

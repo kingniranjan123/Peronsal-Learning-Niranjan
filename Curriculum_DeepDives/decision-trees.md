@@ -1,14 +1,15 @@
 # 🔥 Master Class: Decision Trees
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463)</em></div>
 Decision Trees are the foundational algorithm of modern machine learning, serving as the atomic units for powerful ensemble methods like Random Forests and Gradient-Boosted Trees (GBTs). In a single-node environment, constructing a decision tree is relatively straightforward: you sort the features and recursively partition the data to maximize information gain. However, in Apache Spark, this naive approach collapses. Sorting an entire dataset per node across a distributed cluster of petabytes is computationally impossible due to massive network shuffling and memory constraints. 
 
 Spark MLlib solves this via a revolutionary data-parallel architecture adapted from the PLANET algorithm. Instead of sorting raw data, Spark uses a distributed histogram-based approach. It discretizes continuous features into a fixed number of bins (buckets) before training begins. Then, it builds the tree level by level. At each level, executors compute aggregated statistics (histograms) for every feature, bin, and active node using local data partitions. 
 
-These statistics are aggregated via a highly optimized tree-reduce operation and sent to the driver, which evaluates the best splits globally. This architecture transforms an I/O-bound sorting problem into a CPU-bound counting problem, enabling Spark to train deep trees on massive datasets without crippling the network. Understanding this mechanism is critical for tuning performance and preventing catastrophic memory failures at scale. [Ref: 451](spark_book.pdf#page=451)
+These statistics are aggregated via a highly optimized tree-reduce operation and sent to the driver, which evaluates the best splits globally. This architecture transforms an I/O-bound sorting problem into a CPU-bound counting problem, enabling Spark to train deep trees on massive datasets without crippling the network. Understanding this mechanism is critical for tuning performance and preventing catastrophic memory failures at scale. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 Spark builds decision trees using a breadth-first, level-by-level strategy. The journey begins with the Analysis phase, where MLlib samples the dataset to determine approximate quantiles for continuous features. This allows the system to discretize all continuous features into a maximum of `maxBins` discrete buckets. This quantization is critical: it reduces the search space for potential splits from every unique value in the dataset $O(N)$ to exactly $O(B)$ where $B$ is `maxBins`.
@@ -17,7 +18,7 @@ Once the features are binned, the execution transitions to iterative MapReduce-s
 
 The aggregation of these local histograms is where Spark's network serialization comes into play. Instead of sending raw data, executors send their aggregated histograms to the driver using `treeAggregate`. This operation uses a multi-level reduction tree, serialized via Kryo, to prevent the driver from being overwhelmed by a flood of incoming statistics. Once the driver receives the global histograms, it calculates the Gini impurity or variance reduction for all possible splits. It selects the optimal split condition for each active node, updates the tree topology, and broadcasts the new tree structure back to the executors to begin processing the next level.
 
-```
+```scala
 Driver JVM (Coordinator) Worker Executor JVM (Data Nodes)
 ┌───────────────────────────┐ ┌──────────────────────────────────┐
 │ MLlib Tree Optimizer │ │ Tungsten Execution Engine │
@@ -33,29 +34,29 @@ Driver JVM (Coordinator) Worker Executor JVM (Data Nodes)
 │ ┌─────────────────────┐ │ │ ┌────────────────────────────┐ │
 │ │ Broadcast New Tree │──┼────────────▶│ │ NodeIdCache (RDD[Array]) │ │
 │ └─────────────────────┘ │ Tree state │ └────────────────────────────┘ │
-└───────────────────────────┘ └──────────────────────────────────┘ [Ref: 464](spark_book.pdf#page=464)
+└───────────────────────────┘ └──────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **Feature Discretizer:** A preprocessing component that scans a sample of the data to find quantiles, converting continuous floats into integer bin indices. This avoids sorting features at every node and allows the use of dense integer arrays for rapid indexing.
 - **Histogram Aggregator:** A deeply nested array `[nodeIndex][featureIndex][binIndex]` containing the sufficient statistics. It is the primary data structure built by executors and reduced over the network to evaluate split impurities.
 - **NodeIdCache:** A specialized distributed cache (persisted in memory/disk) that tracks which tree node each training row currently belongs to. It prevents executors from having to traverse the tree from the root for every row at deeper levels.
-- **Impurity Calculator:** The driver-side module that consumes global histograms to calculate Gini, Entropy, or Variance metrics. It evaluates the exact information gain for every possible bin split boundary in sub-millisecond time. [Ref: 452](spark_book.pdf#page=452)
+- **Impurity Calculator:** The driver-side module that consumes global histograms to calculate Gini, Entropy, or Variance metrics. It evaluates the exact information gain for every possible bin split boundary in sub-millisecond time. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 461](spark_book.pdf#page=461)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### maxBins vs Driver Memory Exhaustion (OOM)
-A critical parameter in Spark's tree implementation is `maxBins`. While increasing `maxBins` improves the granularity of splits (potentially leading to better model accuracy by capturing finer patterns in continuous data), it exponentially inflates the memory footprint during the `treeAggregate` phase. The driver must hold the global histogram in memory, which scales as $O(N_{active} \times F \times B \times S)$, where $N_{active}$ is the number of active nodes, $F$ is features, $B$ is `maxBins`, and $S$ is the size of the stats object. At deeper tree levels, $N_{active}$ doubles. If you have 5,000 features and set `maxBins` to 512, the driver will almost certainly crash with a `java.lang.OutOfMemoryError: Java heap space` or suffer catastrophic GC pauses. The anti-pattern is blindly increasing `maxBins` to match local tools like scikit-learn without configuring driver memory accordingly. [Ref: 469](spark_book.pdf#page=469)
+A critical parameter in Spark's tree implementation is `maxBins`. While increasing `maxBins` improves the granularity of splits (potentially leading to better model accuracy by capturing finer patterns in continuous data), it exponentially inflates the memory footprint during the `treeAggregate` phase. The driver must hold the global histogram in memory, which scales as $O(N_{active} \times F \times B \times S)$, where $N_{active}$ is the number of active nodes, $F$ is features, $B$ is `maxBins`, and $S$ is the size of the stats object. At deeper tree levels, $N_{active}$ doubles. If you have 5,000 features and set `maxBins` to 512, the driver will almost certainly crash with a `java.lang.OutOfMemoryError: Java heap space` or suffer catastrophic GC pauses. The anti-pattern is blindly increasing `maxBins` to match local tools like scikit-learn without configuring driver memory accordingly. 
 
 ### The maxMemoryInMB Threshold and Multi-Pass Degradation
-To prevent driver OOM, Spark MLlib introduces a safety valve parameter: `maxMemoryInMB` (defaulting to 256 MB). When the estimated size of the histogram for a given tree level exceeds this threshold, Spark stops processing all nodes simultaneously. Instead, it groups the nodes and processes them in multiple sequential passes over the training dataset. A common performance pitfall on modern, high-RAM clusters is leaving this default untouched. If you are building deep trees (e.g., depth 15+) and the executors have 32GB of RAM, leaving `maxMemoryInMB` at 256 MB forces Spark to launch dozens of separate Spark jobs (passes) for a single level, repeatedly scanning the same data. By tuning this parameter up to 1024 MB or 2048 MB, you allow Spark to compute all histograms in a single pass, often reducing wall-clock training time by 40-60%. [Ref: 453](spark_book.pdf#page=453)
+To prevent driver OOM, Spark MLlib introduces a safety valve parameter: `maxMemoryInMB` (defaulting to 256 MB). When the estimated size of the histogram for a given tree level exceeds this threshold, Spark stops processing all nodes simultaneously. Instead, it groups the nodes and processes them in multiple sequential passes over the training dataset. A common performance pitfall on modern, high-RAM clusters is leaving this default untouched. If you are building deep trees (e.g., depth 15+) and the executors have 32GB of RAM, leaving `maxMemoryInMB` at 256 MB forces Spark to launch dozens of separate Spark jobs (passes) for a single level, repeatedly scanning the same data. By tuning this parameter up to 1024 MB or 2048 MB, you allow Spark to compute all histograms in a single pass, often reducing wall-clock training time by 40-60%. 
 
 ### Categorical Feature Cardinality and the $2^{C-1}$ Explosion
-When dealing with categorical features, Spark does not require one-hot encoding; it can split directly on categorical subsets. However, finding the optimal categorical split is computationally intensive. If a categorical feature has $C$ categories, there are $2^{C-1} - 1$ possible ways to partition them into two sets. For high-cardinality features (e.g., zip codes, user IDs), this search space explodes exponentially. Spark handles this gracefully for binary classification and regression by ordering categories by their impurity/target mean and then treating them like continuous bins (reducing the search to $O(C)$). But for multi-class classification, this trick doesn't work, and Spark must evaluate all subsets. The system inherently limits categorical cardinality to `maxBins` (if $C > maxBins$, it throws an error). The pitfall is failing to use StringIndexer effectively or trying to feed high-cardinality IDs directly into the tree, leading to staggering CPU consumption on the driver and excessively wide histograms. [Ref: 458](spark_book.pdf#page=458)
+When dealing with categorical features, Spark does not require one-hot encoding; it can split directly on categorical subsets. However, finding the optimal categorical split is computationally intensive. If a categorical feature has $C$ categories, there are $2^{C-1} - 1$ possible ways to partition them into two sets. For high-cardinality features (e.g., zip codes, user IDs), this search space explodes exponentially. Spark handles this gracefully for binary classification and regression by ordering categories by their impurity/target mean and then treating them like continuous bins (reducing the search to $O(C)$). But for multi-class classification, this trick doesn't work, and Spark must evaluate all subsets. The system inherently limits categorical cardinality to `maxBins` (if $C > maxBins$, it throws an error). The pitfall is failing to use StringIndexer effectively or trying to feed high-cardinality IDs directly into the tree, leading to staggering CPU consumption on the driver and excessively wide histograms. 
 
---- [Ref: 463](spark_book.pdf#page=463)
+---
 
 ## 📊 Performance Characteristics
 

@@ -1,16 +1,17 @@
 # 🔥 Master Class: Spark Streaming Components
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Apache Spark Streaming is a micro-batch stream processing engine built on top of the core Spark execution model. Rather than processing each event individually like a true event-at-a-time system (e.g., Apache Flink), Spark Streaming discretizes a continuous data stream into a sequence of small, bounded RDDs — called a **Discretized Stream (DStream)** — and processes each micro-batch using the full power of the Spark DAGScheduler and Tungsten execution engine. This architecture trades ultra-low latency (sub-10ms) for extreme fault tolerance, exactly-once semantics via the write-ahead log, and seamless integration with the existing Spark batch ecosystem.
 
 The system is composed of six interlocking components: the **StreamingContext** (the top-level coordinator), the **ReceiverTracker** (data ingestion manager), the **JobGenerator** (micro-batch scheduler), the **DStreamGraph** (lazy transformation DAG), **BlockRDD** (the bridge between streaming and core Spark), and the **Write-Ahead Log** (the durability guarantee). Understanding each component individually and — critically — how they interact at runtime is the difference between writing a Spark Streaming job that works in a demo and one that survives a 72-hour production outage without data loss or duplicate processing.
 
-Spark Streaming's architecture made a deliberate bet: reuse the mature, battle-tested Spark engine rather than rebuild a new runtime from scratch. Every micro-batch is a standard Spark job submitted to the cluster. This means all of Spark's optimizations — Catalyst pushdown, Tungsten whole-stage codegen, off-heap memory management — apply directly to streaming workloads, at the cost of a minimum latency floor dictated by the batch interval (typically 500ms–2s in production). [Ref: 451](spark_book.pdf#page=451)
+Spark Streaming's architecture made a deliberate bet: reuse the mature, battle-tested Spark engine rather than rebuild a new runtime from scratch. Every micro-batch is a standard Spark job submitted to the cluster. This means all of Spark's optimizations — Catalyst pushdown, Tungsten whole-stage codegen, off-heap memory management — apply directly to streaming workloads, at the cost of a minimum latency floor dictated by the batch interval (typically 500ms–2s in production). 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ At the end of every batch interval, the **JobGenerator** fires a `GenerateJobs` 
 
 Checkpoint metadata (batch timestamps, DStream graph, configuration) is serialized via Java serialization (not Kryo, notably) and written to the configured checkpoint directory at every batch interval. This metadata enables Driver recovery: a crashed Driver can reconstruct the entire DStreamGraph, re-query which batches were incomplete, and reprocess them using blocks retrieved from the WAL, achieving exactly-once guarantees end-to-end.
 
-```
+```scala
 Driver JVM
 ┌──────────────────────────────────────────────────────────────────┐
 │ StreamingContext │
@@ -57,7 +58,7 @@ Executor JVM (Receiver) Executor JVM (Compute)
 │ │ (sealed every │ │
 │ │ blockInterval)│ │
 │ └────────────────┘ │
-└──────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
+└──────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -68,23 +69,23 @@ Executor JVM (Receiver) Executor JVM (Compute)
 
 - **DStreamGraph:** A directed acyclic graph of `DStream` objects where edges represent data dependencies (parent → child transformation). It is *not* evaluated at transformation-definition time. Each node's `compute(validTime: Time)` method is called recursively by `generateJobs`, building the RDD DAG on-demand for every batch. Output DStreams (`foreachRDD`, `print`, `saveAsTextFiles`) are the graph's "sink" nodes and trigger job submission.
 
-- **BlockRDD:** A concrete RDD subclass (`org.apache.spark.streaming.rdd.BlockRDD`) whose partitions are `BlockRDDPartition` instances containing a single `BlockId`. When a task reads a partition, it calls `SparkEnv.get.blockManager.get(blockId)` first (memory/disk local), then falls back to fetching from a remote executor's `BlockManager`, and finally falls back to the WAL if the block has been evicted — providing a three-tier fault-tolerant read path. [Ref: 452](spark_book.pdf#page=452)
+- **BlockRDD:** A concrete RDD subclass (`org.apache.spark.streaming.rdd.BlockRDD`) whose partitions are `BlockRDDPartition` instances containing a single `BlockId`. When a task reads a partition, it calls `SparkEnv.get.blockManager.get(blockId)` first (memory/disk local), then falls back to fetching from a remote executor's `BlockManager`, and finally falls back to the WAL if the block has been evicted — providing a three-tier fault-tolerant read path. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 461](spark_book.pdf#page=461)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Back-Pressure Trap: When Receivers Outpace Processing
 
 A critical, non-obvious failure mode in Spark Streaming is receiver ingestion outpacing batch processing speed. Without back-pressure enabled, the `ReceiverTracker` accumulates an unbounded backlog of blocks. Each queued batch consumes off-heap BlockManager memory (configured by `spark.memory.fraction`) and on-heap metadata in the Driver. Within minutes to hours, the Driver OOMs with `java.lang.OutOfMemoryError: Java heap space` from the growing `HashMap[Time, Seq[BlockId]]`, or executors begin spilling to disk, degrading throughput catastrophically.
 
-The remedy is enabling `spark.streaming.backpressure.enabled = true`, which activates the `RateController` subsystem. After each batch completes, the `RateEstimator` (a PID controller implementation in `DirectKafkaRateController`) computes a new maximum ingestion rate based on processing time vs. batch interval ratio. This rate is pushed back to each `ReceiverSupervisor` via RPC, which then calls `receiver.setMaxRate(rate)`. The PID controller prevents oscillation — a naive on/off throttle would cause the system to alternate between overload and idle, but the PID derivative term dampens this. [Ref: 464](spark_book.pdf#page=464)
+The remedy is enabling `spark.streaming.backpressure.enabled = true`, which activates the `RateController` subsystem. After each batch completes, the `RateEstimator` (a PID controller implementation in `DirectKafkaRateController`) computes a new maximum ingestion rate based on processing time vs. batch interval ratio. This rate is pushed back to each `ReceiverSupervisor` via RPC, which then calls `receiver.setMaxRate(rate)`. The PID controller prevents oscillation — a naive on/off throttle would cause the system to alternate between overload and idle, but the PID derivative term dampens this. 
 
 ### WAL and the Exactly-Once Illusion
 
-The WAL provides exactly-once *processing* guarantees only when combined with idempotent or transactional *sinks*. The WAL ensures that on Driver recovery, every block that was acknowledged to the source can be replayed from durable storage. However, if the batch partially completed before the crash — some tasks succeeded, some failed — and the output action (e.g., a JDBC write or Kafka produce) is not idempotent, you will produce duplicates. The WAL protects the *input* side; the *output* side requires a separate strategy. For Kafka output, this means using the Kafka transactional producer (`spark.kafka.transactions.enabled`). For databases, it means using upsert semantics keyed on the batch timestamp and record offset. Applications that rely solely on WAL for end-to-end exactly-once without addressing sink idempotency are silently producing duplicates in production — this is the most common correctness bug in Spark Streaming deployments. [Ref: 455](spark_book.pdf#page=455)
+The WAL provides exactly-once *processing* guarantees only when combined with idempotent or transactional *sinks*. The WAL ensures that on Driver recovery, every block that was acknowledged to the source can be replayed from durable storage. However, if the batch partially completed before the crash — some tasks succeeded, some failed — and the output action (e.g., a JDBC write or Kafka produce) is not idempotent, you will produce duplicates. The WAL protects the *input* side; the *output* side requires a separate strategy. For Kafka output, this means using the Kafka transactional producer (`spark.kafka.transactions.enabled`). For databases, it means using upsert semantics keyed on the batch timestamp and record offset. Applications that rely solely on WAL for end-to-end exactly-once without addressing sink idempotency are silently producing duplicates in production — this is the most common correctness bug in Spark Streaming deployments. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
 ## 📊 Performance Characteristics
 
@@ -95,9 +96,9 @@ The WAL provides exactly-once *processing* guarantees only when combined with id
 | BlockRDD partition read (WAL fallback) | O(blockSize) | No | 10–100× slower; involves HDFS/S3 network round-trip |
 | DStreamGraph.generateJobs() | O(DStream nodes) | No | Pure Driver-side DAG construction; typically <5ms for graphs with <50 nodes |
 | Checkpoint serialization (Java) | O(graph size) | No | Java serialization is 5–10× slower than Kryo; can add 50–200ms to batch latency for complex graphs |
-| reduceByKeyAndWindow (sliding) | O(k) where k = #keys | Yes | Inverse reduce with `spark.streaming.checkpointInterval` amortizes per-window cost | [Ref: 462](spark_book.pdf#page=462)
+| reduceByKeyAndWindow (sliding) | O(k) where k = #keys | Yes | Inverse reduce with `spark.streaming.checkpointInterval` amortizes per-window cost | 
 
---- [Ref: 469](spark_book.pdf#page=469)
+---
 
 ## 💻 Code Examples
 

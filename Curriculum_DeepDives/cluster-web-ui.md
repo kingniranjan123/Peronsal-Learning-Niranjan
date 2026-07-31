@@ -1,15 +1,16 @@
 # 🔥 Master Class: Cluster Web UI
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 At its core, the Apache Spark Web UI is a purpose-built instrumentation and observability plane that transforms opaque, highly distributed computations into a transparent, navigable Directed Acyclic Graph (DAG) of stages and tasks. When engineers submit a massively parallel job across thousands of executor cores, the physical execution can deviate wildly from the logical plan due to data skew, memory pressure, or network I/O bottlenecks. The Web UI exists to expose the critical delta between what you *told* Spark to do through your declarative DataFrame API, and what Spark is *actually* doing at the physical JVM level.
 
 Historically, debugging distributed MapReduce jobs required manually aggregating and grepping through text-based log files scattered across hundreds of distinct physical nodes. Spark revolutionized this diagnostic lifecycle by embedding a lightweight Jetty web server directly into the Driver JVM. This server listens to internal execution events—such as stage completion, task failure, hardware metrics, and shuffle block writes—and materializes them into a rich, interactive graphical interface. For production engineering, relying solely on job success or failure is fundamentally insufficient. The UI provides the granular, millisecond-level telemetry necessary to diagnose Out-Of-Memory (OOM) errors, identify straggler tasks caused by uneven partitioning, and validate the efficacy of Catalyst optimizer rules like predicate pushdown and broadcast joins.
 
-Whether you are viewing the live UI on port `4040` during active execution or parsing historical runs via the standalone Spark History Server on port `18080`, the underlying mechanics remain identical. Mastery of the Cluster Web UI is not merely about clicking through to the "Stages" tab to watch progress bars fill; it is about reading the subtle metric signatures—like elevated Garbage Collection (GC) time, Tungsten whole-stage codegen timings, or exorbitant shuffle spill to disk—that dictate the difference between an elegant, cost-efficient pipeline and a brittle, resource-intensive anti-pattern. [Ref: 451](spark_book.pdf#page=451)
+Whether you are viewing the live UI on port `4040` during active execution or parsing historical runs via the standalone Spark History Server on port `18080`, the underlying mechanics remain identical. Mastery of the Cluster Web UI is not merely about clicking through to the "Stages" tab to watch progress bars fill; it is about reading the subtle metric signatures—like elevated Garbage Collection (GC) time, Tungsten whole-stage codegen timings, or exorbitant shuffle spill to disk—that dictate the difference between an elegant, cost-efficient pipeline and a brittle, resource-intensive anti-pattern. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 463](spark_book.pdf#page=463)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -21,7 +22,7 @@ For live applications, the `AppStatusListener` maintains a materialized view of 
 
 For completed applications, the architecture shifts to the Spark History Server. During active execution, the `EventLoggingListener` intercepts the exact same stream of bus events and serializes them using Spark's `JsonProtocol` into a continuous JSON event log file, persisting it to HDFS, S3, or local storage. Later, when a user accesses an old application on the History Server, the `FsHistoryProvider` parses this monolithic JSON log file, rebuilds the `AppStatusListener` state from scratch, and serves the UI identically to the live Driver. This deterministic replay mechanism ensures visual fidelity between live monitoring and post-mortem analysis.
 
-```
+```scala
 Driver JVM (Live UI) Worker Executor JVM
 ┌─────────────────────────────────────────────────┐ ┌──────────────────────┐
 │ DAGScheduler / TaskScheduler │ │ Task Execution │
@@ -42,26 +43,26 @@ Driver JVM (Live UI) Worker Executor JVM
 │ ┌──────────────────┐ │ ┌──────────────────────┐
 │ │ Jetty Web Server │◀─── (HTTP 4040/18080) ────┼─────│ Spark History Server │
 │ └──────────────────┘ │ └──────────────────────┘
-└─────────────────────────────────────────────────┘ [Ref: 470](spark_book.pdf#page=470)
+└─────────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **LiveListenerBus:** A heavily optimized, asynchronous event dispatcher inside the Driver. It acts as the nervous system, decoupling high-speed execution scheduling from metric reporting and UI view materialization.
 - **AppStatusListener:** The primary state engine that aggregates raw, low-level bus events into structured UI entities (Jobs, Stages, Tasks, RDDs). It manages memory footprint by aggressively evicting old data based on retention configurations.
 - **EventLoggingListener:** Intercepts bus events and serializes them to persistent remote storage using robust JSON formatting, establishing the audit trail required for History Server post-execution reconstruction.
-- **Spark History Server (FsHistoryProvider):** A standalone web daemon that continuously polls remote storage for new event logs. It parses the JSON, replays the event stream to reconstruct the `AppStatusListener` state, and mounts the UI without needing the original active Driver JVM. [Ref: 452](spark_book.pdf#page=452)
+- **Spark History Server (FsHistoryProvider):** A standalone web daemon that continuously polls remote storage for new event logs. It parses the JSON, replays the event stream to reconstruct the `AppStatusListener` state, and mounts the UI without needing the original active Driver JVM. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 464](spark_book.pdf#page=464)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### History Server OOM and Event Log Bloat
-In production environments, a massive Spark application executing tens of thousands of tasks will generate gigabytes of raw event log data. Because the History Server must read, parse, and reconstruct the entire application state in its own JVM heap to render the UI, massive event logs routinely cause History Server Out-Of-Memory (OOM) crashes. This is a severe anti-pattern. If you have jobs executing millions of micro-tasks (often due to extreme over-partitioning or unbounded long-running streaming), the JSON event log size scales linearly. Expert engineers mitigate this by enabling `spark.ui.retainedTasks` and `spark.eventLog.rolling.enabled`, which aggressively cap the in-memory UI state and chunk the persistent logs. Failure to configure these limits results in an observability layer that buckles under its own weight, rendering post-mortem debugging impossible. [Ref: 455](spark_book.pdf#page=455)
+In production environments, a massive Spark application executing tens of thousands of tasks will generate gigabytes of raw event log data. Because the History Server must read, parse, and reconstruct the entire application state in its own JVM heap to render the UI, massive event logs routinely cause History Server Out-Of-Memory (OOM) crashes. This is a severe anti-pattern. If you have jobs executing millions of micro-tasks (often due to extreme over-partitioning or unbounded long-running streaming), the JSON event log size scales linearly. Expert engineers mitigate this by enabling `spark.ui.retainedTasks` and `spark.eventLog.rolling.enabled`, which aggressively cap the in-memory UI state and chunk the persistent logs. Failure to configure these limits results in an observability layer that buckles under its own weight, rendering post-mortem debugging impossible. 
 
 ### Adaptive Query Execution (AQE) UI Shifting
-With the introduction of Adaptive Query Execution (AQE) in Spark 3.x, the Web UI dynamic behavior introduces a common pitfall for traditional Spark developers. Historically, the DAG of stages presented in the UI was static; once planned, it did not change. Under AQE, Catalyst actively monitors runtime statistics (like materialized shuffle map sizes) and optimizes the physical plan mid-flight. Consequently, when viewing the SQL or Stages tab, you will routinely see stages suddenly marked as "Skipped" or "Cancelled," replaced dynamically by newly injected stages (e.g., when AQE converts a Sort-Merge Join to a Broadcast Hash Join). This shifting UI is not a bug or a failure; it is the visual signature of dynamic optimization. Misinterpreting canceled AQE stages as job failures is a ubiquitous junior-level mistake. [Ref: 459](spark_book.pdf#page=459)
+With the introduction of Adaptive Query Execution (AQE) in Spark 3.x, the Web UI dynamic behavior introduces a common pitfall for traditional Spark developers. Historically, the DAG of stages presented in the UI was static; once planned, it did not change. Under AQE, Catalyst actively monitors runtime statistics (like materialized shuffle map sizes) and optimizes the physical plan mid-flight. Consequently, when viewing the SQL or Stages tab, you will routinely see stages suddenly marked as "Skipped" or "Cancelled," replaced dynamically by newly injected stages (e.g., when AQE converts a Sort-Merge Join to a Broadcast Hash Join). This shifting UI is not a bug or a failure; it is the visual signature of dynamic optimization. Misinterpreting canceled AQE stages as job failures is a ubiquitous junior-level mistake. 
 
---- [Ref: 469](spark_book.pdf#page=469)
+---
 
 ## 📊 Performance Characteristics
 

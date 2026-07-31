@@ -1,14 +1,15 @@
 # 🔥 Master Class: Spark Submit
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
 Apache Spark's `spark-submit` is far more than a simple execution wrapper; it is the critical orchestration gateway that bridges local user environments with massively distributed cluster managers like YARN, Kubernetes, or Mesos. At its core, it is a sophisticated JVM launcher and configuration parser that resolves classpaths, manages dependencies, and negotiates the initialization of the Spark Driver and its subsequent Executors. The problem it solves is abstraction: data engineers need a unified mechanism to deploy highly tuned, distributed applications across wildly disparate resource managers without writing boilerplate deployment code for each specific backend API.
 
 When a user invokes `spark-submit`, they are initiating a complex multi-phase bootstrap process. This process translates high-level resource requests (e.g., `--executor-memory 4G`) into cluster-specific container allocation protocols. Understanding this mechanism is vital because the vast majority of production failures—such as dependency conflicts, container OOM kills, and class-loading deadlocks—originate not in the Catalyst optimizer or Tungsten engine, but in the exact sequence of JVM configurations constructed during the `spark-submit` phase.
 
-Beyond simply shipping code, `spark-submit` enforces strict isolation and staging. It ensures that application dependencies (JARs, Python files, native archives) are securely bundled, uploaded to distributed storage, and safely localized to worker nodes before execution begins. Mastery of this deployment gateway is the absolute prerequisite to achieving stability in large-scale data pipelines. An improperly submitted Spark application will suffer from severe resource starvation, network timeouts, or immediate JVM termination, regardless of how perfectly the internal SQL logic is optimized. [Ref: 451](spark_book.pdf#page=451)
+Beyond simply shipping code, `spark-submit` enforces strict isolation and staging. It ensures that application dependencies (JARs, Python files, native archives) are securely bundled, uploaded to distributed storage, and safely localized to worker nodes before execution begins. Mastery of this deployment gateway is the absolute prerequisite to achieving stability in large-scale data pipelines. An improperly submitted Spark application will suffer from severe resource starvation, network timeouts, or immediate JVM termination, regardless of how perfectly the internal SQL logic is optimized. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 462](spark_book.pdf#page=462)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 The architecture of `spark-submit` operates through a phased bootstrap sequence that directly dictates how JVMs will be instantiated across the cluster. When executed, the `spark-submit` bash script identifies the Spark home directory, sets up the initial classpath, and invokes the Java `org.apache.spark.deploy.SparkSubmit` class. This primary JVM process immediately parses the provided arguments using the internal `SparkSubmitArguments` utility, meticulously merging command-line flags with static configurations found in `spark-defaults.conf`. Crucially, this phase determines the execution environment architecture based on the `--deploy-mode` (Client vs. Cluster) and `--master` specifications.
@@ -19,7 +20,7 @@ In **Cluster Mode**, the architecture forks dramatically, focusing on resilience
 
 Once this Driver is running within the cluster, it dynamically requests additional YARN containers to spin up Executor JVMs. These JVMs are where Tungsten's memory pools (heap and off-heap) are established, and where Catalyst's physical plans will ultimately execute via Whole-Stage Code Generation. Because the Driver is now a YARN-managed container, it benefits from YARN's native retry mechanisms and is completely immune to edge-node disconnections, making it the definitive standard for production data engineering.
 
-```
+```scala
 Edge Node (Client) Cluster Manager (YARN/K8s) Worker Node
 ┌─────────────────────────┐ ┌─────────────────────────┐ ┌───────────────────────┐
 │ spark-submit (bash) │ RPC │ ResourceManager │ │ NodeManager │
@@ -37,30 +38,30 @@ Edge Node (Client) Cluster Manager (YARN/K8s) Worker Node
  │ │ - Task Threads │ │
  │ │ - Tungsten Memory │ │
  │ └───────────────────┘ │
- └───────────────────────┘ [Ref: 469](spark_book.pdf#page=469)
+ └───────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **`SparkSubmit` Class:** The core Scala entry point that parses command-line arguments, merges defaults, and resolves dependencies via Ivy before delegating to the specific cluster manager client.
 - **ClusterManager Client:** A pluggable interface (e.g., YARN's `Client.scala` or the K8s `Submit.scala`) responsible for translating Spark resource requests into native cluster API calls and staging files.
 - **Dependency Resolver:** Downloads `--packages` from Maven repositories, resolves transitive dependencies, and dynamically constructs the execution classpath before the Driver JVM starts.
-- **ApplicationMaster (YARN specific):** The first container launched in cluster mode that encapsulates the Spark Driver, handling dynamic allocation and maintaining heartbeat connections with the ResourceManager. [Ref: 452](spark_book.pdf#page=452)
+- **ApplicationMaster (YARN specific):** The first container launched in cluster mode that encapsulates the Spark Driver, handling dynamic allocation and maintaining heartbeat connections with the ResourceManager. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Dependency Hell and Classloader Precedence
 One of the most insidious failures in Spark engineering is the JVM classpath collision. When `spark-submit` stages an application, it merges Spark's internal JARs with the user-provided application JARs into a single classpath. If your application relies on a different version of a ubiquitous library (like Jackson, Guava, or Netty) than Spark's internal Catalyst optimizer uses, the JVM's default parent-first classloader will load Spark's older version, leading to `NoSuchMethodError` or `ClassNotFoundException` at runtime.
 
-Senior engineers attempt to resolve this by heavily configuring classloader behavior during submission. Setting `spark.executor.userClassPathFirst=true` and `spark.driver.userClassPathFirst=true` forces the JVM to load user-provided JARs before Spark's core libraries. However, this is a dangerous double-edged sword; if user JARs inadvertently override critical internal Spark dependencies, it can crash the Tungsten execution engine entirely. The ultimate mastery lies in using the Maven Shade Plugin to relocate (shade) conflicting packages into a unique namespace during the build phase, completely circumventing `spark-submit` classloader conflicts at the root. [Ref: 470](spark_book.pdf#page=470)
+Senior engineers attempt to resolve this by heavily configuring classloader behavior during submission. Setting `spark.executor.userClassPathFirst=true` and `spark.driver.userClassPathFirst=true` forces the JVM to load user-provided JARs before Spark's core libraries. However, this is a dangerous double-edged sword; if user JARs inadvertently override critical internal Spark dependencies, it can crash the Tungsten execution engine entirely. The ultimate mastery lies in using the Maven Shade Plugin to relocate (shade) conflicting packages into a unique namespace during the build phase, completely circumventing `spark-submit` classloader conflicts at the root. 
 
 ### YARN Memory Overhead vs. JVM Heap
 A critical deployment pitfall involves misunderstanding how `spark-submit` memory flags translate into actual Linux container limits. When you specify `--executor-memory 4G`, you are only setting the internal JVM heap size (`-Xmx4G`). You are completely ignoring the off-heap memory required by Tungsten for vectorized execution, NIO direct buffers for shuffle network I/O, and the JVM metaspace for class metadata.
 
-The YARN NodeManager strictly monitors the total physical memory of the isolated container. If the Spark Executor exceeds the total allocated memory (Heap + `spark.executor.memoryOverhead`), YARN will instantly kill the container, resulting in the dreaded `Exit code: 137 / 143`. The memory overhead defaults to just 10% of the heap or 384MB (whichever is larger). In workloads with heavy PySpark UDFs, intensive Parquet reading, or Tungsten off-heap allocations, this 10% is vastly insufficient. You must explicitly configure `spark.executor.memoryOverhead` or `spark.memory.offHeap.size` in the `spark-submit` call to account for the JVM's native memory footprint, drastically reducing arbitrary container termination and improving shuffle stability by up to 80%. [Ref: 455](spark_book.pdf#page=455)
+The YARN NodeManager strictly monitors the total physical memory of the isolated container. If the Spark Executor exceeds the total allocated memory (Heap + `spark.executor.memoryOverhead`), YARN will instantly kill the container, resulting in the dreaded `Exit code: 137 / 143`. The memory overhead defaults to just 10% of the heap or 384MB (whichever is larger). In workloads with heavy PySpark UDFs, intensive Parquet reading, or Tungsten off-heap allocations, this 10% is vastly insufficient. You must explicitly configure `spark.executor.memoryOverhead` or `spark.memory.offHeap.size` in the `spark-submit` call to account for the JVM's native memory footprint, drastically reducing arbitrary container termination and improving shuffle stability by up to 80%. 
 
---- [Ref: 459](spark_book.pdf#page=459)
+---
 
 ## 📊 Performance Characteristics
 
@@ -69,7 +70,7 @@ The YARN NodeManager strictly monitors the total physical memory of the isolated
 | **Local Mode Launch** | O(1) | No | Single JVM for Driver and Executor; minimal overhead, excellent for testing but no parallelism beyond local CPU cores. |
 | **YARN Client Launch** | O(N) | No | Driver starts immediately locally; N Executors negotiated over RPC. High network latency risk for the Driver. |
 | **YARN Cluster Launch** | O(N+M) | No | High latency startup. Uploads JARs to HDFS (O(M) size), allocates AM, then allocates N Executors. Safest for production. |
-| **Kubernetes Submit** | O(N) | No | Direct API server requests to spin up Driver Pod, which dynamically requests N Executor Pods via K8s API. | [Ref: 464](spark_book.pdf#page=464)
+| **Kubernetes Submit** | O(N) | No | Direct API server requests to spin up Driver Pod, which dynamically requests N Executor Pods via K8s API. | 
 
 ---
 

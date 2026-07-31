@@ -1,16 +1,17 @@
 # 🔥 Master Class: Logistic Regression in Apache Spark
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Logistic Regression is the workhorse of probabilistic classification in production ML systems. Unlike linear regression, which predicts continuous values, logistic regression maps a linear combination of features to a probability in the range (0, 1) using the **sigmoid function** (binary case) or the **softmax function** (multinomial case). Spark MLlib implements logistic regression as a distributed, in-memory optimizer that exploits the cluster's full parallelism, making it suitable for datasets with billions of rows and millions of sparse features — a regime where single-node scikit-learn simply fails.
 
 Logistic regression exists in Spark's MLlib because the gradient of the logistic loss function is embarrassingly parallel across training samples. Each worker can compute its local gradient shard independently, and the driver aggregates them into a global gradient update — a pattern that maps perfectly onto Spark's RDD/DataFrame partitioning model. The result is a scalable, numerically stable, regularized classifier that Catalyst can optimize end-to-end through its physical planning phase.
 
-The implementation lives in `org.apache.spark.ml.classification.LogisticRegression` and supports L1, L2, and ElasticNet regularization, threshold tuning, probability calibration, and per-class weighting — all on top of Spark's Tungsten binary memory format. Understanding these internals separates engineers who *use* logistic regression from those who *master* it. [Ref: 451](spark_book.pdf#page=451)
+The implementation lives in `org.apache.spark.ml.classification.LogisticRegression` and supports L1, L2, and ElasticNet regularization, threshold tuning, probability calibration, and per-class weighting — all on top of Spark's Tungsten binary memory format. Understanding these internals separates engineers who *use* logistic regression from those who *master* it. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ The optimizer itself is **L-BFGS** (Limited-memory Broyden–Fletcher–Goldfarb
 
 For **multinomial** (softmax) mode, the weight matrix grows from a single vector of size `numFeatures` to a matrix of shape `numClasses × numFeatures`. The memory footprint is proportional, and gradient aggregation cost scales linearly with `numClasses`. Spark automatically selects binary mode when `numClasses == 2` and multinomial otherwise, though you can force multinomial binary classification via `setFamily("multinomial")`.
 
-```
+```scala
 Training Data Partitions (Executors) Driver JVM
 ┌────────────────────────────────────┐ ┌─────────────────────────────────┐
 │ Executor 1 │ │ L-BFGS / OWLQN Optimizer │
@@ -42,7 +43,7 @@ Training Data Partitions (Executors) Driver JVM
 │ │ local loss + ∂L/∂W (shard N) │──┘ └──────┘ └──────┘
 │ └──────────────────────────────┘
 └────────────────────────────────────┘
- Off-heap Tungsten memory (UnsafeRow) [Ref: 463](spark_book.pdf#page=463)
+ Off-heap Tungsten memory (UnsafeRow) 
 ```
 
 ### Key Internal Components
@@ -53,23 +54,23 @@ Training Data Partitions (Executors) Driver JVM
 
 - **Tungsten `UnsafeRow` Format:** Each training row is stored as a compact binary blob in off-heap memory. The feature vector — typically a sparse `SparseVector` — is accessed via pointer arithmetic rather than Java deserialization. This eliminates millions of short-lived `Object` allocations per iteration, keeping GC overhead below 5% of total training time.
 
-- **Broadcast of Weight Vector:** At each optimizer iteration, the driver broadcasts the current weight vector `W_t` to all executors using Spark's `SparkContext.broadcast()`. For a model with 1M features, this vector is 8MB (doubles) — small enough to fit in executor memory and be efficiently cached via Torrent broadcast. [Ref: 452](spark_book.pdf#page=452)
+- **Broadcast of Weight Vector:** At each optimizer iteration, the driver broadcasts the current weight vector `W_t` to all executors using Spark's `SparkContext.broadcast()`. For a model with 1M features, this vector is 8MB (doubles) — small enough to fit in executor memory and be efficiently cached via Torrent broadcast. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 461](spark_book.pdf#page=461)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Feature Scaling Trap
 
 Logistic regression with L2 regularization is **not scale-invariant**. A feature with values in the range [0, 1,000,000] will receive a much smaller regularization penalty than a feature in [0, 1], causing the optimizer to systematically under-regularize large-magnitude features and producing a model that overfits those dimensions. Spark's `LogisticRegression` has `standardization = true` by default, which internally standardizes features to zero mean and unit variance *before* computing gradients — but the reported coefficients are on the original scale. If you set `standardization = false` with L2 regularization on raw features, expect degraded accuracy and convergence in 3–5× more iterations (meaning 3–5× longer training time and proportionally higher cluster cost).
 
-The less obvious trap is when using **sparse features** (e.g., TF-IDF vectors or one-hot encoded categoricals). Standardization computes `stddev` across all samples for each feature dimension. For a vocabulary of 500,000 terms where 99.9% of entries are zero, the mean is near-zero but the stddev computation still iterates over all non-zero entries — which is correct but can be slower than expected. The standardization pass adds roughly one full data scan on top of the gradient iterations. [Ref: 464](spark_book.pdf#page=464)
+The less obvious trap is when using **sparse features** (e.g., TF-IDF vectors or one-hot encoded categoricals). Standardization computes `stddev` across all samples for each feature dimension. For a vocabulary of 500,000 terms where 99.9% of entries are zero, the mean is near-zero but the stddev computation still iterates over all non-zero entries — which is correct but can be slower than expected. The standardization pass adds roughly one full data scan on top of the gradient iterations. 
 
 ### Multinomial vs Binary Mode: Hidden Memory Cliff
 
-When you switch from binary to multinomial logistic regression with `numClasses = 100`, the weight matrix jumps from `numFeatures` elements to `100 × numFeatures` elements. For a model with 500,000 features, this is 50M doubles = **400MB** of weight state on the driver. The L-BFGS optimizer stores `m` correction pairs (default `m = 10`), adding another `20 × 400MB = 8GB` of Hessian approximation state — all in the **driver's JVM heap**. A driver with `-Xmx4g` will throw `OutOfMemoryError: Java heap space` with no warning before training starts. The failure is non-obvious because Spark's UI shows executors healthy while the driver silently OOMs during the optimizer's line search. Always size your driver heap as `numClasses × numFeatures × 8 bytes × (2m + 3)` where `m` is `lbfgsNumCorrections`. [Ref: 455](spark_book.pdf#page=455)
+When you switch from binary to multinomial logistic regression with `numClasses = 100`, the weight matrix jumps from `numFeatures` elements to `100 × numFeatures` elements. For a model with 500,000 features, this is 50M doubles = **400MB** of weight state on the driver. The L-BFGS optimizer stores `m` correction pairs (default `m = 10`), adding another `20 × 400MB = 8GB` of Hessian approximation state — all in the **driver's JVM heap**. A driver with `-Xmx4g` will throw `OutOfMemoryError: Java heap space` with no warning before training starts. The failure is non-obvious because Spark's UI shows executors healthy while the driver silently OOMs during the optimizer's line search. Always size your driver heap as `numClasses × numFeatures × 8 bytes × (2m + 3)` where `m` is `lbfgsNumCorrections`. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
 ## 📊 Performance Characteristics
 
@@ -80,9 +81,9 @@ When you switch from binary to multinomial logistic regression with `numClasses 
 | Model broadcast (per iter) | O(F) | No | Torrent broadcast; cached on executors after first iteration |
 | Prediction (transform) | O(N × F) | No | Dot product per row; Tungsten vectorized; no shuffle needed |
 | ROC AUC computation | O(N log N) | Yes | Requires global sort of (score, label) pairs across partitions |
-| `classWeightCol` reweighting | O(N) | No | Applied as per-row multiplier during cost function evaluation | [Ref: 462](spark_book.pdf#page=462)
+| `classWeightCol` reweighting | O(N) | No | Applied as per-row multiplier during cost function evaluation | 
 
---- [Ref: 469](spark_book.pdf#page=469)
+---
 
 ## 💻 Code Examples
 

@@ -1,16 +1,17 @@
 # 🔥 Master Class: Grouping and Sorting
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Grouping and sorting are among the most computationally expensive operations in distributed data processing, and Apache Spark's implementation of these primitives exposes the full complexity of distributed systems engineering. When you call `groupBy` on a DataFrame, you are not merely applying a SQL `GROUP BY` clause — you are triggering a shuffle: a full network redistribution of data across all executor JVMs, routed by a hash partition function applied to the grouping key. Every row in every partition is serialized, transmitted over the network, and deserialized on the receiving executor. This is why a naive `groupBy` on a billion-row dataset can consume 90% of a job's wall-clock time.
 
 `orderBy` (the DataFrame alias for `sortBy`) imposes a total order across the entire dataset. This requires a two-phase approach: a local sort within each partition followed by a range-partition shuffle that guarantees global ordering. `sortWithinPartitions`, by contrast, applies a local sort without a shuffle, making it dramatically cheaper when you only need order within each partition — for example, before writing sorted Parquet files for efficient downstream range scans.
 
-The secondary sort pattern and data skew in grouping are the two most critical production concerns in this domain. Secondary sort allows you to control both which partition a row lands on (via the primary key) and the order of records within that partition (via a secondary key), enabling streaming aggregation patterns that avoid materializing entire groups in memory. Data skew — where a minority of keys account for the majority of rows — can cause individual tasks to run 100× longer than their peers, stalling stage completion and triggering out-of-memory errors on the hot executor. [Ref: 451](spark_book.pdf#page=451)
+The secondary sort pattern and data skew in grouping are the two most critical production concerns in this domain. Secondary sort allows you to control both which partition a row lands on (via the primary key) and the order of records within that partition (via a secondary key), enabling streaming aggregation patterns that avoid materializing entire groups in memory. Data skew — where a minority of keys account for the majority of rows — can cause individual tasks to run 100× longer than their peers, stalling stage completion and triggering out-of-memory errors on the hot executor. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -20,7 +21,7 @@ The shuffle itself is managed by the **ShuffleManager** (default: `SortShuffleMa
 
 The **Whole-Stage Code Generation** (Tungsten's WSCG) fuses the sort, hash map probing, and aggregation steps into a single tight Java bytecode loop per stage, eliminating virtual method dispatch and per-row object allocation. This is why `explain(mode="codegen")` reveals that a `groupBy` with a simple `sum` compiles down to a single generated class rather than a chain of iterator calls. `spark.sql.codegen.wholeStage=true` (default) is the configuration that enables this.
 
-```
+```scala
 Driver JVM Shuffle Service / Executors
 ┌──────────────────────────────┐ ┌────────────────────────────────────────────┐
 │ Catalyst Optimizer │ │ Executor A (Map Side) │
@@ -38,7 +39,7 @@ Driver JVM Shuffle Service / Executors
 │ └──────────────────────┘ │ │ │ Merge partial aggregates │ │
 └──────────────────────────────┘ │ │ Output: one row per group key │ │
  │ └──────────────────────────────────────┘ │
- └────────────────────────────────────────────┘ [Ref: 462](spark_book.pdf#page=462)
+ └────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -46,25 +47,25 @@ Driver JVM Shuffle Service / Executors
 - **HashAggregateExec:** The primary physical operator for grouped aggregation. It allocates a `BytesToBytesMap` (Tungsten's off-heap hash map) to store partial aggregates as raw `UnsafeRow` binary data. When the map exceeds `spark.memory.fraction` × executor heap, it spills sorted runs to disk and merges them — identical in mechanics to an external merge sort.
 - **SortShuffleManager:** Writes map-side output as a single sorted file with an index, enabling O(1) seek access for reducers. Bypass-merge mode activates for small partition counts (≤ `spark.shuffle.sort.bypassMergeThreshold`, default 200) to avoid the sort overhead when no map-side combine is needed.
 - **RangePartitioner:** Used exclusively by `orderBy`. It samples up to `spark.sql.execution.rangeExchange.sampleSizePerPartition` (default 1,000,000) rows from the dataset to build a split-point array that approximates equal-weight partitions. Sampling is a map-side operation and does not trigger an additional shuffle.
-- **UnsafeRow (Tungsten Binary Format):** The internal row representation for in-memory and shuffle operations. Stores data as compact, aligned bytes with a bitset for null tracking. Eliminates JVM object overhead (no field pointers, no boxing), reducing GC pressure by 60–80% compared to generic `Row` objects in legacy RDD-based code. [Ref: 469](spark_book.pdf#page=469)
+- **UnsafeRow (Tungsten Binary Format):** The internal row representation for in-memory and shuffle operations. Stores data as compact, aligned bytes with a bitset for null tracking. Eliminates JVM object overhead (no field pointers, no boxing), reducing GC pressure by 60–80% compared to generic `Row` objects in legacy RDD-based code. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Data Skew in groupBy: The Silent Job Killer
 
 Data skew occurs when the distribution of grouping keys is highly non-uniform — for example, 80% of rows share a single `user_id` in a user-activity table. Spark's hash partitioner assigns all rows with the same key to the same reduce task, so that one task processes millions of rows while its siblings process thousands. The stage cannot complete until the slowest task finishes, making the 99th-percentile task latency the effective job latency. At sufficient scale, the skewed task will exceed executor heap, triggering a `java.lang.OutOfMemoryError: GC overhead limit exceeded` or a shuffle spill that causes 10–50× slowdown on that task.
 
-The canonical mitigation is the **salting technique**: append a random integer suffix (e.g., 0–9) to the skewed key during a first-pass aggregation, compute partial aggregates across the salted keys, then strip the salt and perform a second aggregation. This spreads the hot key across 10 reduce tasks. Spark 3.x introduced **Adaptive Query Execution (AQE)** with `spark.sql.adaptive.skewJoin.enabled=true`, which can detect and split skewed partitions at runtime for joins — but AQE's skew handling applies to joins, not arbitrary `groupBy` aggregations, so manual salting remains the standard fix for aggregation skew. [Ref: 459](spark_book.pdf#page=459)
+The canonical mitigation is the **salting technique**: append a random integer suffix (e.g., 0–9) to the skewed key during a first-pass aggregation, compute partial aggregates across the salted keys, then strip the salt and perform a second aggregation. This spreads the hot key across 10 reduce tasks. Spark 3.x introduced **Adaptive Query Execution (AQE)** with `spark.sql.adaptive.skewJoin.enabled=true`, which can detect and split skewed partitions at runtime for joins — but AQE's skew handling applies to joins, not arbitrary `groupBy` aggregations, so manual salting remains the standard fix for aggregation skew. 
 
 ### sortWithinPartitions vs orderBy: Knowing When Global Order Is Unnecessary
 
 `orderBy` guarantees a globally sorted output — a single total ordering across all rows in all output partitions. Achieving this requires a range-partition shuffle (O(N log N) globally, with network I/O proportional to the full dataset size). `sortWithinPartitions` sorts within each partition independently without any shuffle, completing in O(P × (N/P) log(N/P)) time on the map side, where P is the partition count. The two operations are not interchangeable, and choosing `orderBy` when `sortWithinPartitions` suffices is a common and costly mistake.
 
-A concrete example: writing a dataset to Parquet for downstream range-scan queries. If each Parquet file will be read independently (the typical case in columnar analytics), `sortWithinPartitions` produces sorted files with well-organized row groups, enabling Parquet's `min/max` statistics to facilitate predicate pushdown on each file individually. Using `orderBy` here adds a full shuffle for no additional benefit, often doubling job runtime on large datasets. The only scenario where `orderBy` is truly necessary is when the consuming process requires a single, globally ordered stream — such as writing a globally partitioned index. [Ref: 463](spark_book.pdf#page=463)
+A concrete example: writing a dataset to Parquet for downstream range-scan queries. If each Parquet file will be read independently (the typical case in columnar analytics), `sortWithinPartitions` produces sorted files with well-organized row groups, enabling Parquet's `min/max` statistics to facilitate predicate pushdown on each file individually. Using `orderBy` here adds a full shuffle for no additional benefit, often doubling job runtime on large datasets. The only scenario where `orderBy` is truly necessary is when the consuming process requires a single, globally ordered stream — such as writing a globally partitioned index. 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 📊 Performance Characteristics
 
@@ -73,11 +74,11 @@ A concrete example: writing a dataset to Parquet for downstream range-scan queri
 | `groupBy().agg()` | O(N) amortized | Yes (2-stage) | Partial aggregation reduces shuffle payload to O(K) groups; spills if map > memory |
 | `orderBy()` | O(N log N) | Yes (range partition) | Requires sampling pass; produces globally sorted output across all partitions |
 | `sortWithinPartitions()` | O((N/P) log(N/P)) per partition | No | Pure map-side sort; O(1) network cost; ideal for pre-sorted file writes |
-| `groupBy().agg()` with skew | O(N) worst-case single task | Yes | Hot-key task serializes GC; mitigate via salting or AQE skew join split | [Ref: 453](spark_book.pdf#page=453)
+| `groupBy().agg()` with skew | O(N) worst-case single task | Yes | Hot-key task serializes GC; mitigate via salting or AQE skew join split | 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
+## 💻 Code Examples 
 
 ### Example 1: Two-Phase Partial Aggregation and the HashAggregateExec Execution Plan
 
@@ -117,7 +118,7 @@ result = (
 # HashAggregate (partial=false) ← reduce-side final merge
 result.explain(mode="formatted")
 
-result.write.parquet("/output/user_spend_summary/") [Ref: 464](spark_book.pdf#page=464)
+result.write.parquet("/output/user_spend_summary/") 
 ```
 
 > **Mastery Note:** The `explain(mode="formatted")` output will show two `HashAggregate` nodes separated by an `Exchange` node. The first `HashAggregate` runs with `partial=true` on each executor's local data, building a Tungsten `BytesToBytesMap` of partial sums/counts. Only the O(K) partial aggregate rows cross the network, not the O(N) input rows. If you see `SortAggregate` instead of `HashAggregate`, it means the aggregate function is not hash-combinable (e.g., `collect_list`) and Spark fell back to a sort-based approach, which is 3–5× slower. The `.select("user_id", "amount")` before `.groupBy` is critical: Catalyst's `ColumnPruning` rule will eliminate all other columns from the shuffle, reducing per-shuffle-record size and Netty transfer volume.

@@ -1,16 +1,17 @@
 # 🔥 Master Class: Uberjars — Fat JARs, Classpath Conflicts, and Distributed Classloading in Apache Spark
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 An uberjar (also called a "fat JAR" or "assembly JAR") is a single, self-contained Java Archive that bundles your application code together with every transitive dependency it requires at runtime. In the context of Apache Spark, uberjars solve a fundamental distribution problem: when Spark submits a job to a cluster — whether YARN, Kubernetes, or standalone — the driver and every executor must have access to identical classpath resources. Without an uberjar, you would need to manually provision each node with every library your job depends on, a process that is error-prone, slow, and incompatible with elastic autoscaling environments where nodes may be provisioned on-demand.
 
 The uberjar pattern emerged from the reality that Spark's distributed execution model requires bytecode to be physically shipped from the driver to executors. When you pass `--jars` or set `spark.jars`, Spark uploads those files to HDFS or the Kubernetes staging area and redistributes them via the `BlockManager`. A single fat JAR simplifies this to one atomic operation. The trade-off is significant: combining dozens of dependency JARs into one archive introduces class relocation conflicts, Metaspace inflation, and classloading races that can silently corrupt runtime behavior in ways that are extraordinarily difficult to diagnose without deep JVM knowledge.
 
-Production Spark engineering demands you understand not just *how* to build an uberjar, but *what happens inside the JVM* when that JAR is loaded — across every executor, simultaneously, under GC pressure. [Ref: 451](spark_book.pdf#page=451)
+Production Spark engineering demands you understand not just *how* to build an uberjar, but *what happens inside the JVM* when that JAR is loaded — across every executor, simultaneously, under GC pressure. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -20,7 +21,7 @@ On the executor side, the TaskScheduler instructs executors to fetch the JAR via
 
 The Catalyst optimizer's code generation phase — Whole-Stage CodeGen — dynamically compiles generated query plans into JVM bytecode at runtime using Janino. These generated classes are loaded into the executor's classloader alongside your uberjar's classes. If your uberjar has relocated or shadowed a version of a library that Janino or the Catalyst runtime expects (e.g., `com.google.common` from Guava), a `NoSuchMethodError` or `ClassCastException` emerges at plan execution time, not at job submission — making the failure appear non-deterministic. Kryo serialization compounds this: Kryo resolves class names to `Class` objects via `Class.forName()`, which uses the current thread's context classloader. If the uberjar's classloader hierarchy is misconfigured, Kryo silently falls back to Java serialization, inflating shuffle payload sizes by 3–5× and crashing on non-`Serializable` types.
 
-```
+```scala
 spark-submit (Driver JVM)
 ┌────────────────────────────────────────────────────────────┐
 │ Bootstrap ClassLoader │
@@ -43,7 +44,7 @@ spark-submit (Driver JVM)
  │ (managed memory) │ │ (managed memory) │
  └──────────────────┘ └──────────────────┘
  Whole-Stage CodeGen Whole-Stage CodeGen
- (Janino → new Klass structs) (Janino → new Klass structs) [Ref: 462](spark_book.pdf#page=462)
+ (Janino → new Klass structs) (Janino → new Klass structs) 
 ```
 
 ### Key Internal Components
@@ -54,25 +55,25 @@ spark-submit (Driver JVM)
 
 - **sbt-assembly / Maven Shade Plugin:** Build-time tools that merge all dependency JARs into a single archive. Both support *relocation* (rewriting bytecode to move packages to new namespaces, e.g., `com.google.common` → `shaded.com.google.common`) to isolate your dependency versions from Spark's own dependencies that co-exist on the classpath.
 
-- **Metaspace (JVM Native Memory):** The off-heap region storing class metadata (`Klass`, `Method`, `ConstantPool` structures). Unlike the PermGen of JDK 7, Metaspace grows dynamically. Each unique loaded class consumes memory here permanently until its classloader is GC'd. Fat JARs with many classes that are never actually instantiated still incur Metaspace cost upon first reference during classpath scanning by frameworks like Spring or Jackson's `ObjectMapper`. [Ref: 469](spark_book.pdf#page=469)
+- **Metaspace (JVM Native Memory):** The off-heap region storing class metadata (`Klass`, `Method`, `ConstantPool` structures). Unlike the PermGen of JDK 7, Metaspace grows dynamically. Each unique loaded class consumes memory here permanently until its classloader is GC'd. Fat JARs with many classes that are never actually instantiated still incur Metaspace cost upon first reference during classpath scanning by frameworks like Spring or Jackson's `ObjectMapper`. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Classpath Conflict: The "Jar Hell" Failure Mode
 
 When two JARs inside your uberjar contain the same fully-qualified class name — for example, `org.apache.commons.lang3.StringUtils` from `commons-lang3:3.9` (your dependency) and `commons-lang3:3.4` (Spark's internal dependency) — the classloader loads whichever version appears first in the JAR's internal entry order. This is non-deterministic across build runs if `mergeStrategy` is not set explicitly in sbt-assembly. The loaded class may have a different binary API than the caller expects, producing a `NoSuchMethodError` at runtime that references a method that exists in the wrong version.
 
-The insidious failure mode is that unit tests pass (running against your build classpath with your version first) while the cluster job fails (Spark's version wins at runtime). The fix requires either shading the conflicting dependency — rewriting all bytecode references with a tool like `jarjar` — or explicitly excluding your version and relying on Spark's bundled copy with `provided` scope. Shading is safer for libraries like Guava, Protobuf, and Jackson, which Spark ships internally and which undergo frequent breaking API changes between minor versions. [Ref: 459](spark_book.pdf#page=459)
+The insidious failure mode is that unit tests pass (running against your build classpath with your version first) while the cluster job fails (Spark's version wins at runtime). The fix requires either shading the conflicting dependency — rewriting all bytecode references with a tool like `jarjar` — or explicitly excluding your version and relying on Spark's bundled copy with `provided` scope. Shading is safer for libraries like Guava, Protobuf, and Jackson, which Spark ships internally and which undergo frequent breaking API changes between minor versions. 
 
 ### Metaspace Pressure and Container Eviction in Kubernetes
 
 A 70MB uberjar containing Jackson, Guava, Protobuf, Kryo, Avro, and Hive metastore client can load 45,000+ classes, consuming 500–700MB of Metaspace. On Kubernetes, an executor pod configured with `executor.memory=4g` and no explicit native memory overhead will have its container memory limit set to approximately 4.4GB by Spark's default overhead formula (`spark.executor.memoryOverhead = max(executor.memory × 0.10, 384MB)`). With 700MB of Metaspace, 300MB of JVM internal structures, and 4GB of heap, the process's actual RSS easily exceeds 5GB, triggering `OOMKilled` with exit code 137. The pod restarts, the task retries, and the Spark UI shows mysterious "executor lost" events rather than an explicit OOM.
 
-The correct fix is to set `spark.executor.memoryOverheadFactor` to account for Metaspace (typically 0.20–0.30 for large uberjars) and to explicitly bound Metaspace with `-XX:MaxMetaspaceSize=512m`. Setting `MaxMetaspaceSize` without adequate overhead causes `OutOfMemoryError: Metaspace`, but at least produces a diagnosable JVM error rather than a silent container kill. [Ref: 463](spark_book.pdf#page=463)
+The correct fix is to set `spark.executor.memoryOverheadFactor` to account for Metaspace (typically 0.20–0.30 for large uberjars) and to explicitly bound Metaspace with `-XX:MaxMetaspaceSize=512m`. Setting `MaxMetaspaceSize` without adequate overhead causes `OutOfMemoryError: Metaspace`, but at least produces a diagnosable JVM error rather than a silent container kill. 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 📊 Performance Characteristics
 
@@ -83,11 +84,11 @@ The correct fix is to set `spark.executor.memoryOverheadFactor` to account for M
 | Class loading into Metaspace | O(n_classes) | No | Lazy per first-reference; framework scanners (Spring, Jackson) eagerly load all |
 | Kryo class registration lookup | O(1) amortized | No | Degrades to O(n) scan if unregistered; fallback to Java serialization kills shuffle perf |
 | Shade relocation bytecode rewrite | O(n_class_files) | No | Build-time only; zero runtime cost once JAR is assembled |
-| Duplicate class merge at assembly | O(n_entries) | No | Incorrect `MergeStrategy` silently drops classes; validate with `jarjar inspect` | [Ref: 453](spark_book.pdf#page=453)
+| Duplicate class merge at assembly | O(n_entries) | No | Incorrect `MergeStrategy` silently drops classes; validate with `jarjar inspect` | 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
+## 💻 Code Examples 
 
 ### Example 1: Correct sbt-assembly Configuration with Shading and Merge Strategies
 
@@ -172,7 +173,7 @@ lazy val root = (project in file("."))
  // Including it doubles startup time and triggers "incompatible Scala binary" warnings.
  assemblyOption in assembly :=
  (assemblyOption in assembly).value.copy(includeScala = false)
- ) [Ref: 464](spark_book.pdf#page=464)
+ ) 
 ```
 
 > **Mastery Note:** The `ShadeRule.rename(...).inAll` directive is critical — without `.inAll`, only classes in the *directly matched dependency* are relocated, but transitive dependencies that call into Guava's API are not rewritten, leaving dangling references to the original `com.google.common` namespace that collide with Spark's Guava. The `META-INF/services` concat strategy is the most commonly forgotten: discarding SPI descriptors silently breaks Jackson's `ObjectMapper` module discovery, producing `InvalidDefinitionException` that manifests only when serializing certain types, not during `SparkSession` initialization. Always validate your assembly with `jar tf myapp-assembly.jar | grep -c "\.class"` — if the class count drops significantly between builds, a `MergeStrategy.discard` is silently removing class files.

@@ -1,16 +1,17 @@
 # 🔥 Master Class: K-Means Clustering in Apache Spark
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 K-Means is the most widely deployed unsupervised machine learning algorithm in distributed data systems, and Apache Spark's `MLlib` implementation exposes a battle-hardened, distributed version of Lloyd's algorithm capable of operating on datasets with billions of rows across thousands of partitions. The algorithm's goal is deceptively simple: partition *n* observations into *k* clusters such that each observation belongs to the cluster with the nearest mean (centroid), minimizing the within-cluster sum of squared distances (WCSS), also called inertia. Yet achieving this at petabyte scale requires deep architectural choices that span the Driver's DAG planning, executor-level memory management, and network-efficient centroid aggregation.
 
 The reason K-Means exists as a first-class citizen in Spark MLlib (rather than a pure user-land implementation) is that its inner loop — the assignment step — requires broadcasting small centroid vectors to every partition, while the update step requires a distributed reduce. Without framework-level support for efficient broadcast variables and tree-based aggregation, a naive implementation would saturate the network with O(n·k·d) bytes per iteration. Spark's implementation collapses this to a single broadcast of k·d floating-point values followed by a shuffle-free treeReduce that computes new centroids in O(log P) rounds where P is the number of partitions.
 
-The algorithm converges iteratively: in each round, every executor assigns its local data points to the nearest centroid using Euclidean distance, accumulates per-cluster sums and counts locally, and ships those partial aggregates to the Driver — never the raw data. The Driver recomputes centroids and broadcasts them back. This continues until either the centroid shift falls below `tol` (default 1e-4) or `maxIter` (default 20) is exhausted. [Ref: 451](spark_book.pdf#page=451)
+The algorithm converges iteratively: in each round, every executor assigns its local data points to the nearest centroid using Euclidean distance, accumulates per-cluster sums and counts locally, and ships those partial aggregates to the Driver — never the raw data. The Driver recomputes centroids and broadcasts them back. This continues until either the centroid shift falls below `tol` (default 1e-4) or `maxIter` (default 20) is exhausted. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -20,7 +21,7 @@ Once initialization completes, the main iteration loop begins. Each iteration is
 
 After all tasks complete, the partial aggregates — k pairs of (sum-vector, count) — are combined using `RDD.treeAggregate` with a merge depth of 2. `treeAggregate` differs critically from `aggregate` in that it performs a binary tree reduction on the executors before sending results to the Driver, reducing Driver ingestion from P messages to log₂(P) messages. The Driver divides each sum vector by its count to produce new centroids, computes the centroid shift (maximum L2 distance between old and new centroids), and repeats the loop if convergence has not been reached. The Catalyst optimizer is not involved in this loop — MLlib's K-Means operates below the DataFrame abstraction at the RDD level after the initial `fit` triggers a `dataset.rdd` conversion through the `RowToVector` internal transformer.
 
-```
+```scala
 Driver JVM
 ┌──────────────────────────────────────────────────────┐
 │ KMeans.fit() │
@@ -49,7 +50,7 @@ Driver JVM
 │ └──────────────────────────────────────────────┘ │
 │ (No shuffle — assignment is embarrassingly │
 │ parallel; data never leaves its partition) │
-└─────────────────────────────────────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
+└─────────────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -60,23 +61,23 @@ Driver JVM
 
 - **BLAS `DDOT` / `DAXPY`:** MLlib delegates distance computation to native BLAS (OpenBLAS or MKL via `netlib-java`). If native libraries are absent, it falls back to pure-Java F2J, which is 3–10× slower. Verify with `com.github.fommil.netlib.BLAS.getInstance().getClass().getName()` at startup.
 
-- **`KMeansModel.clusterCenters`:** An `Array[Vector]` on the Driver holding the final k centroids. `transform(df)` is a single map-side operation — it broadcasts centroids and assigns each row its nearest cluster, producing a `prediction` column with no shuffle. [Ref: 470](spark_book.pdf#page=470)
+- **`KMeansModel.clusterCenters`:** An `Array[Vector]` on the Driver holding the final k centroids. `transform(df)` is a single map-side operation — it broadcasts centroids and assigns each row its nearest cluster, producing a `prediction` column with no shuffle. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 457](spark_book.pdf#page=457)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Empty Cluster Problem and Degenerate Initialization
 
 When using random initialization (not k-means++), it is common for two initial centroids to land in the same dense region, leaving a distant cluster entirely unclaimed. After the first assignment step, that centroid receives zero points. Spark's implementation handles this by retaining the centroid unchanged (it does not reinitialize or steal a point from the largest cluster, as some implementations do). The result is a model with effectively k-1 meaningful clusters, and the WCSS will be higher than optimal. This manifests silently — `KMeansModel` will report k cluster centers, but one will be a stale initialization point with a count of zero in the training summary. Always inspect `model.summary.clusterSizes` and assert that no cluster has zero members.
 
-The k-means++ (`initMode = "k-means||"`, the default) reduces this risk dramatically but does not eliminate it. With k-means||, Spark runs `initSteps` (default 2) over-sampling passes, then runs a small K-Means on the O(k × initSteps) candidate centroids on the Driver to select the final k starting points. If `initSteps` is set to 1 on very non-spherical data, the over-sampling may still produce clumped candidates. Production pipelines should always run K-Means with at least 3 different random seeds and select the run with minimum WCSS. [Ref: 461](spark_book.pdf#page=461)
+The k-means++ (`initMode = "k-means||"`, the default) reduces this risk dramatically but does not eliminate it. With k-means||, Spark runs `initSteps` (default 2) over-sampling passes, then runs a small K-Means on the O(k × initSteps) candidate centroids on the Driver to select the final k starting points. If `initSteps` is set to 1 on very non-spherical data, the over-sampling may still produce clumped candidates. Production pipelines should always run K-Means with at least 3 different random seeds and select the run with minimum WCSS. 
 
 ### Choosing k: The Elbow Method vs. Silhouette Score
 
-The most dangerous mistake in unsupervised learning is treating k as a hyperparameter to be guessed once and never validated. The elbow method — plotting WCSS against k and looking for a "kink" — is computationally cheap (one `KMeans.fit` per candidate k) but subjectively ambiguous; real-world datasets rarely produce a clean elbow. The silhouette score is a more principled metric, ranging from -1 (wrong cluster) to +1 (perfectly clustered), defined as `(b - a) / max(a, b)` where `a` is the mean intra-cluster distance and `b` is the mean nearest-cluster distance. Spark's `ClusteringEvaluator` computes a distributed silhouette using the squared Euclidean distance by default, which avoids the O(n²) all-pairs computation by exploiting the identity `‖x - y‖² = ‖x‖² - 2xᵀy + ‖y‖²`. This reduces the per-point computation from O(n) to O(k), making large-scale silhouette evaluation feasible. In practice, silhouette computation for n=100M with k=50 takes roughly the same wall-clock time as one K-Means iteration. [Ref: 464](spark_book.pdf#page=464)
+The most dangerous mistake in unsupervised learning is treating k as a hyperparameter to be guessed once and never validated. The elbow method — plotting WCSS against k and looking for a "kink" — is computationally cheap (one `KMeans.fit` per candidate k) but subjectively ambiguous; real-world datasets rarely produce a clean elbow. The silhouette score is a more principled metric, ranging from -1 (wrong cluster) to +1 (perfectly clustered), defined as `(b - a) / max(a, b)` where `a` is the mean intra-cluster distance and `b` is the mean nearest-cluster distance. Spark's `ClusteringEvaluator` computes a distributed silhouette using the squared Euclidean distance by default, which avoids the O(n²) all-pairs computation by exploiting the identity `‖x - y‖² = ‖x‖² - 2xᵀy + ‖y‖²`. This reduces the per-point computation from O(n) to O(k), making large-scale silhouette evaluation feasible. In practice, silhouette computation for n=100M with k=50 takes roughly the same wall-clock time as one K-Means iteration. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
 ## 📊 Performance Characteristics
 
@@ -87,11 +88,11 @@ The most dangerous mistake in unsupervised learning is treating k as a hyperpara
 | Centroid Update (treeAggregate) | O(n · d + k · d · log P) | No (tree reduce) | Driver never sees raw data; only k·d partial sums |
 | `transform` (predict) | O(n · k · d) | No | Single broadcast + map; no shuffle whatsoever |
 | Silhouette Score | O(n · k · d) | No | Cluster-stat broadcast + per-point O(k) computation |
-| BisectingKMeans Fit | O(n · d · log k) | No per split (global shuffle between levels) | Divisive; each bisect is 2-means on a subset | [Ref: 458](spark_book.pdf#page=458)
+| BisectingKMeans Fit | O(n · d · log k) | No per split (global shuffle between levels) | Divisive; each bisect is 2-means on a subset | 
 
---- [Ref: 462](spark_book.pdf#page=462)
+---
 
-## 💻 Code Examples [Ref: 469](spark_book.pdf#page=469)
+## 💻 Code Examples 
 
 ### Example 1: Full K-Means Pipeline with k-means|| Initialization and Model Persistence
 

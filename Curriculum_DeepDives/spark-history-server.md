@@ -1,16 +1,17 @@
 # 🔥 Master Class: Spark History Server
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
 
 The Spark History Server (SHS) is the post-mortem observability layer of the Spark ecosystem. While the Spark UI embedded in the Driver JVM provides a live view of a running application, the History Server reconstructs that same UI from persisted event logs after the application terminates. Every Spark application that has `spark.eventLog.enabled=true` writes a structured stream of JSON-encoded `SparkListenerEvent` objects to a configurable directory — this stream is the event log, and the History Server is its reader.
 
 The SHS exists because production Spark workloads are ephemeral. Drivers die, YARN containers are reclaimed, and Kubernetes pods are deleted. Without a durable, queryable record of execution — stage timelines, task metrics, shuffle read/write sizes, GC times, SQL physical plans — diagnosing regressions and tail-latency problems becomes guesswork. The History Server turns the raw event-log stream into a fully interactive UI, including the SQL tab with physical plan visualization, the stages tab with task distribution histograms, and the environment tab listing every effective configuration parameter.
 
-The SHS is not just a log viewer. It maintains its own in-process key-value store (KVStore), serves a REST API used by external monitoring systems, and supports pluggable backends for storing parsed application metadata. Understanding its internals is essential for operating Spark at scale, where thousands of completed applications must remain queryable without exhausting the History Server's heap. [Ref: 451](spark_book.pdf#page=451)
+The SHS is not just a log viewer. It maintains its own in-process key-value store (KVStore), serves a REST API used by external monitoring systems, and supports pluggable backends for storing parsed application metadata. Understanding its internals is essential for operating Spark at scale, where thousands of completed applications must remain queryable without exhausting the History Server's heap. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 461](spark_book.pdf#page=461)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ The KVStore is the critical internal component for scalability. By default it is
 
 Rolling event logs, introduced to address the problem of enormous single-file event logs that can reach tens of GBs for long-running streaming jobs, partition the log stream into fixed-size files. When `spark.eventLog.rolling.enabled=true` and a file exceeds `spark.eventLog.rolling.maxFileSize` (default 128MB), the current file is closed and a new one opened in the same application directory. The History Server replays all rolling files in order, correctly reconstructing a unified application view across the file boundaries.
 
-```
+```scala
 Driver JVM (Application Process)
 ┌────────────────────────────────────────────┐
 │ LiveListenerBus │
@@ -62,7 +63,7 @@ Driver JVM (Application Process)
  │ │ └──────────┘ └──────────────┘ │ │
  │ └─────────────────────────────────┘ │
  │ Jetty HTTP Server → REST API / UI │
- └───────────────────────────────────────┘ [Ref: 464](spark_book.pdf#page=464)
+ └───────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -73,23 +74,23 @@ Driver JVM (Application Process)
 
 - **`KVStore` / `ElementTrackingStore`:** The in-process database abstraction. `ElementTrackingStore` wraps either `InMemoryStore` or `LevelDBKVStore` and enforces per-entity retention limits (e.g., max 10,000 tasks per stage, controlled by `spark.ui.retainedTasks`). When a limit is breached, the oldest entries are evicted. For LevelDB, the underlying storage uses a column-family-like key prefix scheme with Kryo serialization, making range scans by stage ID or job ID extremely efficient.
 
-- **`AppStatusListener`:** The replay listener that consumes a sequence of `SparkListenerEvent` objects (either live from the `LiveListenerBus` or replayed from a log file) and mutates the KVStore accordingly. It is shared between the live Driver UI and the SHS replay path, ensuring behavioral parity between live and historical views. [Ref: 452](spark_book.pdf#page=452)
+- **`AppStatusListener`:** The replay listener that consumes a sequence of `SparkListenerEvent` objects (either live from the `LiveListenerBus` or replayed from a log file) and mutates the KVStore accordingly. It is shared between the live Driver UI and the SHS replay path, ensuring behavioral parity between live and historical views. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 462](spark_book.pdf#page=462)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### S3 Event Log Consistency and Listing Latency
 
 S3 is an eventually-consistent object store (prior to S3 Strong Consistency released in 2020, but `list` operations on prefixes can still exhibit high latency at scale). The `FsHistoryProvider` polls the event log directory using the configured filesystem's `listStatus` call. On HDFS this is a single NameNode RPC; on S3 with millions of completed application directories, a recursive `list` can take minutes and throttle other S3 operations due to request-rate limits. The fix is to use `spark.history.fs.eventLog.rolling.maxFilesToRetain` to bound directory size, enable S3 directory-level event log paths instead of flat files (`spark.eventLog.dir=s3a://bucket/spark-logs/`), and configure the S3A committer with `fs.s3a.list.version=2` for strongly-consistent listings.
 
-A silent failure mode: if the History Server's IAM role or S3A credentials lack `s3:ListBucket` permission on the prefix, `listStatus` returns an empty array rather than throwing an exception. The SHS silently shows no applications. Always verify permissions with `hadoop fs -ls s3a://bucket/spark-logs/` from the SHS host before diagnosing log parsing issues. [Ref: 469](spark_book.pdf#page=469)
+A silent failure mode: if the History Server's IAM role or S3A credentials lack `s3:ListBucket` permission on the prefix, `listStatus` returns an empty array rather than throwing an exception. The SHS silently shows no applications. Always verify permissions with `hadoop fs -ls s3a://bucket/spark-logs/` from the SHS host before diagnosing log parsing issues. 
 
 ### KVStore Heap Explosion Under Default Configuration
 
-With `InMemoryStore` (the default), every replayed application's full state — including all task metrics for every stage — lives in the JVM heap. A single application with 100 stages × 1,000 tasks per stage × 200 bytes of metrics per task consumes ~20MB of heap. With `spark.history.retainedApplications=50` (default), the SHS can hold 50 applications in memory simultaneously, consuming ~1GB of heap just for task metrics — before accounting for SQL plan objects, executor metrics, and the Jetty thread pool. Setting `spark.history.store.path` to a fast local NVMe directory and switching to the LevelDB backend reduces resident heap to less than 512MB regardless of how many applications have been loaded, because only the index (not the full data) is cached in memory. The LevelDB disk store adds ~50–100ms latency per application page load due to disk seeks, which is imperceptible to humans but must be considered in SHS REST API automation. [Ref: 455](spark_book.pdf#page=455)
+With `InMemoryStore` (the default), every replayed application's full state — including all task metrics for every stage — lives in the JVM heap. A single application with 100 stages × 1,000 tasks per stage × 200 bytes of metrics per task consumes ~20MB of heap. With `spark.history.retainedApplications=50` (default), the SHS can hold 50 applications in memory simultaneously, consuming ~1GB of heap just for task metrics — before accounting for SQL plan objects, executor metrics, and the Jetty thread pool. Setting `spark.history.store.path` to a fast local NVMe directory and switching to the LevelDB backend reduces resident heap to less than 512MB regardless of how many applications have been loaded, because only the index (not the full data) is cached in memory. The LevelDB disk store adds ~50–100ms latency per application page load due to disk seeks, which is imperceptible to humans but must be considered in SHS REST API automation. 
 
---- [Ref: 459](spark_book.pdf#page=459)
+---
 
 ## 📊 Performance Characteristics
 
@@ -100,9 +101,9 @@ With `InMemoryStore` (the default), every replayed application's full state — 
 | SHS directory scan (S3) | O(n/1000) paged | No | S3 ListObjectsV2 returns 1000 keys/page; high latency at scale |
 | Log replay (single app) | O(e) in event count | No | Sequential read; replay rate ~500k events/sec on modern hardware |
 | KVStore range query (LevelDB) | O(log n + k) | No | LevelDB LSM-tree index; k = result set size |
-| Rolling log file rotation | O(1) | No | New file opened; prior file closed and fsync'd atomically | [Ref: 463](spark_book.pdf#page=463)
+| Rolling log file rotation | O(1) | No | New file opened; prior file closed and fsync'd atomically | 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 💻 Code Examples
 

@@ -1,14 +1,15 @@
 # 🔥 Master Class: Discretized Streams DStreams
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 471](spark_book.pdf#page=471) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464)</em></div>
 Apache Spark's Discretized Streams (DStreams) represent the foundational abstraction for processing continuous data streams within the Spark ecosystem. Before DStreams, stream processing engines typically relied on continuous operator models, which processed events one at a time. This legacy architecture struggled with fault tolerance, dynamic load balancing, and unifying batch and streaming paradigms. DStreams introduced a paradigm shift by breaking continuous streaming data into a sequence of small, deterministic, and immutable micro-batches, each physically represented as a Resilient Distributed Dataset (RDD).
 
 This micro-batching architecture fundamentally bridges the gap between batch and stream processing. By treating a stream as a continuous series of discrete RDDs, DStreams leverage the robust execution engine of Spark Core, natively inheriting its fault tolerance, memory management, and scalable distributed execution. Every operation applied to a DStream translates directly into physical transformations on the underlying RDDs, executed seamlessly across the worker nodes by the standard TaskScheduler.
 
-The existence of DStreams solves the critical distributed systems problem of exactly-once semantics and state recovery without requiring separate, fragile recovery mechanisms. Although newer abstractions like Structured Streaming have emerged utilizing Catalyst and Tungsten optimizations natively, understanding DStreams remains absolutely crucial for legacy systems, complex custom state management, and grasping the foundational mechanics of micro-batch stream processing architecture. [Ref: 451](spark_book.pdf#page=451)
+The existence of DStreams solves the critical distributed systems problem of exactly-once semantics and state recovery without requiring separate, fragile recovery mechanisms. Although newer abstractions like Structured Streaming have emerged utilizing Catalyst and Tungsten optimizations natively, understanding DStreams remains absolutely crucial for legacy systems, complex custom state management, and grasping the foundational mechanics of micro-batch stream processing architecture. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 At its core, a DStream is represented as a sequence of RDDs arriving at discrete time intervals known as the batch interval. The architectural heart of DStreams is the `StreamingContext`, which orchestrates continuous execution. When a DStream application starts, a `Receiver` is instantiated as a long-running task on an Executor JVM. This receiver continuously ingests data from sources (like Flume or sockets), blocks it into data chunks, and replicates these blocks to the `BlockManager` across multiple executors to ensure fault tolerance. The receiver reports the block metadata back to the `ReceiverTracker` residing in the Driver JVM.
@@ -17,7 +18,7 @@ The `JobGenerator` acts as the system's internal clock. At every batch interval,
 
 Because DStreams map directly to standard RDDs, they operate largely outside the Catalyst optimizer and Tungsten execution engine found in Spark SQL. Consequently, serialization overhead and JVM garbage collection on the heap can become significant bottlenecks. To mitigate this, DStreams rely heavily on Kryo serialization for network shuffling and off-heap memory configurations to reduce GC pressure. The RDD lineage guarantees fault tolerance—if a partition is lost, it can be recomputed from the original replicated blocks. However, for stateful operations (`updateStateByKey`), lineage chains grow infinitely, necessitating Checkpointing to HDFS to periodically truncate the dependency graph and prevent catastrophic `StackOverflowError` failures during DAG resolution.
 
-```
+```scala
 Driver JVM Worker Executor JVM (Receiver)
 ┌─────────────────────────────────┐ ┌─────────────────────────────┐
 │ StreamingContext │ │ Receiver Task │
@@ -41,30 +42,30 @@ Driver JVM Worker Executor JVM (Receiver)
  │ ┌──────────────────────┐ │
  │ │ BlockManager (Cache) │ │
  │ └──────────────────────┘ │
- └─────────────────────────────┘ [Ref: 469](spark_book.pdf#page=469)
+ └─────────────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **StreamingContext:** The main entry point for DStream functionality, responsible for setting the batch interval, managing the lifecycle of the application, and launching the underlying execution daemons.
 - **ReceiverTracker:** Resides on the Driver JVM and manages the execution of `Receiver` tasks on executors, tracking the metadata of the received data blocks to assemble the micro-batch RDDs.
 - **JobGenerator:** The clock-driven component that fires at each batch interval, translating the logical `DStreamGraph` and tracked blocks into a physical Spark job submitted to the SparkContext.
-- **DStreamGraph:** Represents the logical dependency graph of the DStreams and their transformations, serving as the blueprint for generating the corresponding physical RDD DAGs for every micro-batch. [Ref: 452](spark_book.pdf#page=452)
+- **DStreamGraph:** Represents the logical dependency graph of the DStreams and their transformations, serving as the blueprint for generating the corresponding physical RDD DAGs for every micro-batch. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Checkpointing and State Lineage Truncation
 In DStreams, stateful operations like `updateStateByKey` or `mapWithState` continuously incorporate new data into a persisted state object across micro-batches. Because Spark achieves fault tolerance by tracking RDD lineage, the lineage of a stateful DStream grows infinitely with each batch interval. Without intervention, this ever-growing dependency chain eventually exceeds the JVM stack limits, causing a `StackOverflowError` on the driver during `DAGScheduler` planning, and makes application recovery impossibly slow as the entire history must be recomputed from epoch zero.
 
-To solve this, Spark requires Checkpointing for stateful DStreams. The checkpoint mechanism periodically serializes the materialized state data to a durable storage system like HDFS, cutting the logical lineage graph. A severe pitfall is misconfiguring this checkpoint interval. If set too low (e.g., every micro-batch), constant HDFS I/O will throttle throughput and cause batch processing times to easily exceed the batch interval, crashing the application. The optimal interval is typically 5-10 times the slide interval of the DStream, balancing I/O overhead against recovery latency. [Ref: 471](spark_book.pdf#page=471)
+To solve this, Spark requires Checkpointing for stateful DStreams. The checkpoint mechanism periodically serializes the materialized state data to a durable storage system like HDFS, cutting the logical lineage graph. A severe pitfall is misconfiguring this checkpoint interval. If set too low (e.g., every micro-batch), constant HDFS I/O will throttle throughput and cause batch processing times to easily exceed the batch interval, crashing the application. The optimal interval is typically 5-10 times the slide interval of the DStream, balancing I/O overhead against recovery latency. 
 
 ### The Receiver-Based vs. Direct Approach (Kafka)
 The integration between DStreams and Kafka represents a major architectural crossroads with massive performance implications. The legacy "Receiver-based" approach uses a long-running receiver task on an executor to consume Kafka messages, storing them in the `BlockManager` using a Write Ahead Log (WAL) to ensure zero data loss. This architecture inherently decouples Kafka partitions from Spark partitions, requiring an immediate shuffle to repartition the data for processing, introducing immense network overhead and high latency.
 
-The expert-level evolution is the "Direct Approach". In this model, the driver directly queries Kafka for the latest offsets at every batch interval. Spark tasks are scheduled to read directly from Kafka, mapping a Kafka partition exactly to an RDD partition on a strict one-to-one basis. This architecture completely eliminates the need for WALs, avoids the initial data shuffle, and leverages Kafka's intrinsic replication for fault tolerance. Failing to utilize the Direct API in modern DStream architectures results in a 40-50% performance penalty due to redundant WAL I/O and unnecessary initial network shuffling. [Ref: 453](spark_book.pdf#page=453)
+The expert-level evolution is the "Direct Approach". In this model, the driver directly queries Kafka for the latest offsets at every batch interval. Spark tasks are scheduled to read directly from Kafka, mapping a Kafka partition exactly to an RDD partition on a strict one-to-one basis. This architecture completely eliminates the need for WALs, avoids the initial data shuffle, and leverages Kafka's intrinsic replication for fault tolerance. Failing to utilize the Direct API in modern DStream architectures results in a 40-50% performance penalty due to redundant WAL I/O and unnecessary initial network shuffling. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
 ## 📊 Performance Characteristics
 
@@ -73,7 +74,7 @@ The expert-level evolution is the "Direct Approach". In this model, the driver d
 | `map` / `filter` | O(N) | No | Executes locally on the Executor; requires Kryo serialization for optimal heap usage to avoid GC pauses. |
 | `updateStateByKey` | O(N) where N is total keys | Yes | Scans the *entire* historical state every batch; highly inefficient for sparse updates. |
 | `mapWithState` | O(U) where U is updated keys | Yes | Only iterates over keys updated in the current batch; reduces CPU/memory pressure by up to 10x vs updateStateByKey. |
-| `reduceByKeyAndWindow` | O(N) | Yes | Uses an "inverse reduce" function to avoid recomputing window overlap, significantly boosting sliding window performance. | [Ref: 464](spark_book.pdf#page=464)
+| `reduceByKeyAndWindow` | O(N) | Yes | Uses an "inverse reduce" function to avoid recomputing window overlap, significantly boosting sliding window performance. | 
 
 ---
 

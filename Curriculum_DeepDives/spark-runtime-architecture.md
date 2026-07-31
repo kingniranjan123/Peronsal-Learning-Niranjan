@@ -1,16 +1,17 @@
 # 🔥 Master Class: Spark Runtime Architecture
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
 
 Apache Spark's runtime architecture is a carefully layered distributed system built on the JVM, designed to execute DAGs of computation reliably across hundreds or thousands of machines. At the center of every Spark application is a strict separation between two roles: the **Driver** and the **Executor**. The Driver is the brain — it runs the user's main function, instantiates the `SparkContext`, analyzes the DAG via the Catalyst optimizer, and breaks that DAG into a sequence of `Stage`s and `Task`s through the `DAGScheduler`. The Executors are the muscle — JVM processes launched on worker nodes that receive serialized `Task` objects, execute them against partitioned data, and return results or shuffle output back through the cluster.
 
 This architecture is not arbitrary. By centralizing scheduling and metadata in the Driver and pushing all data-plane computation to Executors, Spark achieves a clean fault-boundary: if an Executor dies, the Driver can re-schedule its Tasks on surviving Executors using lineage information from the RDD DAG. The Driver itself is a single point of failure, which is why high-availability Driver modes (e.g., Yarn cluster mode with AM failover, Kubernetes with restart policies) are mandatory for production deployments.
 
-Understanding Spark's runtime deeply means understanding its JVM memory layout, how memory is partitioned between execution and storage within each Executor, how shuffle data flows through the `BlockManager`, and how `MapOutputTracker` coordinates the location of that shuffle data. Without this knowledge, you cannot correctly configure a production cluster, diagnose `OutOfMemoryError`s, or tune for throughput and latency simultaneously. [Ref: 451](spark_book.pdf#page=451)
+Understanding Spark's runtime deeply means understanding its JVM memory layout, how memory is partitioned between execution and storage within each Executor, how shuffle data flows through the `BlockManager`, and how `MapOutputTracker` coordinates the location of that shuffle data. Without this knowledge, you cannot correctly configure a production cluster, diagnose `OutOfMemoryError`s, or tune for throughput and latency simultaneously. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 461](spark_book.pdf#page=461)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ Inside the Executor JVM, memory is managed by the **Unified Memory Manager** (in
 
 The **Tungsten execution engine** operates primarily off-heap in the **DirectMemory** region (managed via `sun.misc.Unsafe`), storing binary-encoded rows in a compact format that avoids Java object overhead — a `String` field that costs 48+ bytes as a Java object costs exactly its character count in Tungsten binary format. Whole-Stage CodeGen collapses the entire operator pipeline into a single compiled JVM method, eliminating virtual dispatch and iterator overhead between operators, reducing the CPU cost of a query pipeline by 2-5x compared to interpreted execution.
 
-```
+```scala
 Driver JVM Worker Node 1 (Executor JVM)
 ┌────────────────────────────────┐ ┌──────────────────────────────────────────────┐
 │ SparkContext │ │ CoarseGrainedExecutorBackend │
@@ -46,7 +47,7 @@ Driver JVM Worker Node 1 (Executor JVM)
  │ │ Thread Pool (spark.executor.cores) │ │
  │ │ Task 0 │ Task 1 │ Task 2 │ Task 3 │ │
  │ └──────────────────────────────────────┘ │
- └──────────────────────────────────────────────┘ [Ref: 464](spark_book.pdf#page=464)
+ └──────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -57,25 +58,25 @@ Driver JVM Worker Node 1 (Executor JVM)
 
 - **MapOutputTracker:** A fault-tolerant metadata service that tracks the location of every shuffle map output. The `MapOutputTrackerMaster` runs in the Driver; each Executor has a `MapOutputTrackerWorker` that fetches shuffle metadata via RPC. When a reduce Task starts, it queries the tracker to learn which Executor holds each mapper's output and opens direct Netty connections to fetch shuffle blocks — this is the **shuffle read** phase.
 
-- **CoarseGrainedSchedulerBackend:** Maintains a long-lived RPC connection to each Executor. "Coarse-grained" means Executors are not released between Tasks — they hold their JVM process and memory allocation for the entire application lifetime, unlike fine-grained resource managers that deallocate between Tasks. This is the dominant model for all production cluster managers (YARN, K8s, Standalone). [Ref: 452](spark_book.pdf#page=452)
+- **CoarseGrainedSchedulerBackend:** Maintains a long-lived RPC connection to each Executor. "Coarse-grained" means Executors are not released between Tasks — they hold their JVM process and memory allocation for the entire application lifetime, unlike fine-grained resource managers that deallocate between Tasks. This is the dominant model for all production cluster managers (YARN, K8s, Standalone). 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 462](spark_book.pdf#page=462)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Executor Memory Misconfiguration and Silent OOM Eviction
 
 The most destructive misconfiguration in Spark is setting `spark.memory.fraction` too high relative to the JVM heap, starving the garbage collector. The JVM heap is managed by the G1GC (default since JDK 9), which requires headroom to operate — typically 20-30% free heap. If `spark.executor.memory=8g` and `spark.memory.fraction=0.6`, then Spark claims 4.7GB (after subtracting 300MB reserved). If Execution Memory builds large sort buffers simultaneously across all cores, live JVM objects fill the remaining heap, triggering a `java.lang.OutOfMemoryError: GC overhead limit exceeded` — not the more diagnosable Spark OOM exception.
 
-A subtler failure: when Execution Memory pressure evicts Storage Memory blocks, Spark does **not** log a warning at the default log level. You will see re-computation of cached DataFrames in the Spark UI (stages executing that should have been skipped), with no obvious error. The metric to watch is `Storage Memory Used` in the Executors tab — if it drops mid-job, eviction is occurring. Set `spark.memory.storageFraction=0.5` to reserve half the Spark pool for Storage and reduce eviction risk, accepting higher spill probability for aggregation. [Ref: 469](spark_book.pdf#page=469)
+A subtler failure: when Execution Memory pressure evicts Storage Memory blocks, Spark does **not** log a warning at the default log level. You will see re-computation of cached DataFrames in the Spark UI (stages executing that should have been skipped), with no obvious error. The metric to watch is `Storage Memory Used` in the Executors tab — if it drops mid-job, eviction is occurring. Set `spark.memory.storageFraction=0.5` to reserve half the Spark pool for Storage and reduce eviction risk, accepting higher spill probability for aggregation. 
 
 ### Shuffle Fetch Failures and MapOutputTracker Inconsistency
 
 When an Executor dies mid-shuffle, its map output files are lost. The `MapOutputTrackerMaster` detects the dead Executor (via the heartbeat timeout `spark.network.timeout`, default 120s) and invalidates its map output entries. The Stage that produced those outputs is re-submitted as a **FetchFailed** recovery — but only the specific map Tasks whose outputs were lost are re-run, not the entire Stage. This is controlled by `spark.stage.maxConsecutiveAttempts` (default 4).
 
-The dangerous edge case is an Executor that is alive but under extreme GC pressure — it responds to heartbeats but fails to serve shuffle blocks within `spark.shuffle.io.connectionTimeout` (default 120s). The reducer receives a `FetchFailed` exception (`org.apache.spark.shuffle.FetchFailedException`), which the DAGScheduler interprets as a potential Executor loss. If the Executor is not actually dead, the Stage is retried unnecessarily, causing cascading delays. Monitoring GC time per Executor in the Spark UI (Executors tab → GC Time column) above 10% of task time is the diagnostic signal. [Ref: 455](spark_book.pdf#page=455)
+The dangerous edge case is an Executor that is alive but under extreme GC pressure — it responds to heartbeats but fails to serve shuffle blocks within `spark.shuffle.io.connectionTimeout` (default 120s). The reducer receives a `FetchFailed` exception (`org.apache.spark.shuffle.FetchFailedException`), which the DAGScheduler interprets as a potential Executor loss. If the Executor is not actually dead, the Stage is retried unnecessarily, causing cascading delays. Monitoring GC time per Executor in the Spark UI (Executors tab → GC Time column) above 10% of task time is the diagnostic signal. 
 
---- [Ref: 459](spark_book.pdf#page=459)
+---
 
 ## 📊 Performance Characteristics
 
@@ -84,9 +85,9 @@ The dangerous edge case is an Executor that is alive but under extreme GC pressu
 | `map` / `filter` / `select` | O(N/P) per partition | No | Pipelined by Tungsten; no data movement. Whole-Stage CodeGen fuses all operators into one JVM method. |
 | `groupByKey` / `reduceByKey` | O(N log N) sort + O(N) aggregate | Yes | Sort-based shuffle (SortShuffleManager). Each mapper writes one sorted file + index. Reducer fetches and merges. |
 | Broadcast Join | O(N) probe side, O(M) build side | No (for probe) | Driver collects small table, serializes via `TorrentBroadcast` (BitTorrent-like P2P), cached in Executor BlockManager. Threshold: `spark.sql.autoBroadcastJoinThreshold` default 10MB. |
-| Sort-Merge Join | O(N log N + M log M) | Yes (both sides) | Both sides sorted by join key in shuffle. Requires two full shuffles. Avoidable with bucket tables that pre-sort data at write time. | [Ref: 463](spark_book.pdf#page=463)
+| Sort-Merge Join | O(N log N + M log M) | Yes (both sides) | Both sides sorted by join key in shuffle. Requires two full shuffles. Avoidable with bucket tables that pre-sort data at write time. | 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 💻 Code Examples
 

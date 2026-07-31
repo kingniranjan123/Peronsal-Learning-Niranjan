@@ -1,12 +1,13 @@
 # 🔥 Master Class: Deep Learning Concepts
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 Distributed deep learning in Apache Spark bridges the critical gap between massive-scale data processing and computationally intensive neural network training. Historically, data engineers were forced to extract data from Spark clusters, serialize it to network storage, and load it into isolated GPU clusters for deep learning tasks using TensorFlow or PyTorch. This bifurcated architectural divide created massive network I/O bottlenecks, data governance nightmares, and agonizingly slow iteration cycles. Spark addresses this by deeply integrating deep learning workloads directly into its distributed execution engine. 
 
-By leveraging barrier execution mode, Project Hydrogen, and frameworks like HorovodRunner or the Spark Torch Distributor, Spark allows neural networks to train concurrently across executor nodes without intermediate data staging. This paradigm fundamentally shifts the problem from moving data to the compute, to bringing the deep learning compute directly to the data residing in the JVM's Tungsten memory or distributed partitions. Mastering deep learning concepts in Spark requires understanding how to synchronize gradients across Spark executors, how to manage JVM-to-Python memory transfers via Apache Arrow, and how to orchestrate distributed Stochastic Gradient Descent (SGD) without overwhelming the Spark Driver node. [Ref: 451](spark_book.pdf#page=451)
+By leveraging barrier execution mode, Project Hydrogen, and frameworks like HorovodRunner or the Spark Torch Distributor, Spark allows neural networks to train concurrently across executor nodes without intermediate data staging. This paradigm fundamentally shifts the problem from moving data to the compute, to bringing the deep learning compute directly to the data residing in the JVM's Tungsten memory or distributed partitions. Mastering deep learning concepts in Spark requires understanding how to synchronize gradients across Spark executors, how to manage JVM-to-Python memory transfers via Apache Arrow, and how to orchestrate distributed Stochastic Gradient Descent (SGD) without overwhelming the Spark Driver node. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 To seamlessly integrate deep learning with Spark's inherently map-reduce-style execution model, Spark employs Project Hydrogen, a major architectural shift that introduces "Barrier Execution Mode." Standard Spark tasks are independent and isolated; if a task fails, the DAGScheduler simply retries it on another node. However, distributed deep learning relies on Message Passing Interface (MPI) or Ring-AllReduce protocols (like NVIDIA NCCL), which strictly demand that all training tasks run simultaneously and communicate continuously. Barrier Execution Mode overrides the default task scheduling by launching a specialized barrier stage where all tasks are gang-scheduled. They start together and wait for each other at synchronization barriers. If a single task fails, the entire stage is aborted and retried, ensuring gradient synchronization remains consistent across all executor nodes.
@@ -15,7 +16,7 @@ Beneath the scheduling layer, data transfer between Spark’s JVM-based Tungsten
 
 During distributed training, Spark executors utilize physical GPU resources assigned via Spark's resource scheduling API. The actual neural network gradient synchronization bypasses the Spark Driver and DAGScheduler entirely. Instead, tools like Horovod establish peer-to-peer TCP or RDMA connections directly between the Spark executors. Each executor computes local gradients on its partition of the DataFrame, and the Ring-AllReduce algorithm aggregates these gradients across the cluster in parallel. This eliminates the traditional Parameter Server bottleneck and maintains an optimal O(1) communication footprint relative to the cluster size.
 
-```
+```scala
 Driver JVM Worker Executor JVM 1 (GPU 0)
 ┌─────────────────────────┐ ┌───────────────────────────────────┐
 │ SparkContext │────┐ │ TaskContext (Barrier Task) │
@@ -42,30 +43,30 @@ Worker Executor JVM 2 (GPU 1) │ │ Bypasses Spark Driver
 │ │ Python Worker (PyTorch/TF) │ │
 │ │ - Computes Local Gradients │ │
 │ └───────────────────────────────┘ │
-└───────────────────────────────────┘ [Ref: 462](spark_book.pdf#page=462)
+└───────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **BarrierTaskContext:** A specialized Spark task context introduced in Project Hydrogen that enables gang-scheduling. It provides a `barrier()` method that forces all tasks in a stage to pause and wait until all peers have reached the exact same execution point, allowing MPI-based communication to initialize safely.
 - **Apache Arrow In-Memory Format:** A cross-language, columnar memory format used for zero-copy data transfer between the Spark JVM and Python worker processes. It circumvents the costly Kryo/Java serialization phases, which is critically important for feeding high-throughput GPU training loops without starvation.
 - **Spark Resource Manager (GPU Scheduling):** The subsystem responsible for discovering, allocating, and isolating hardware accelerators. It binds specific GPU UUIDs to Spark tasks, ensuring that concurrent PyTorch processes do not collide over VRAM allocations on the same physical bare-metal node.
-- **Ring-AllReduce Protocol:** The distributed communication algorithm (typically powered by NVIDIA NCCL and wrapped by frameworks like Horovod) that aggregates neural network gradients across executors. It structures executors in a logical ring, dividing gradient tensors into small chunks to optimize network bandwidth utilization. [Ref: 469](spark_book.pdf#page=469)
+- **Ring-AllReduce Protocol:** The distributed communication algorithm (typically powered by NVIDIA NCCL and wrapped by frameworks like Horovod) that aggregates neural network gradients across executors. It structures executors in a logical ring, dividing gradient tensors into small chunks to optimize network bandwidth utilization. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Impedance Mismatch of Data Shuffling and Epochs
 One of the most complex challenges in distributed deep learning on Spark is the conceptual mismatch between a Spark RDD/DataFrame pipeline and the concept of an "epoch" in deep learning. In traditional DL, an epoch represents a full pass over a static, randomly shuffled dataset. In Spark, data is distributed across partitions, and executing a global shuffle (using `ORDER BY RAND()` or similar Catalyst functions) for every single epoch is catastrophically expensive. It forces Catalyst to perform a massive physical hash-shuffle, writing terabytes of intermediate data to disk and completely stalling the GPU training loops while the network is saturated.
 
-A critical anti-pattern is attempting to execute Catalyst-based global shuffles within the training loop. Expert Spark engineers solve this by leveraging "local shuffling" or partition-level sampling. When using Petastorm or RayOnSpark, Spark DataFrames are materialized into distributed Parquet stores, allowing PyTorch's native `DataLoader` to stream and locally shuffle row groups. When inline training via HorovodRunner is strictly required, engineers must rely on sampling from static RDD partitions locally. They accept a slight stochastic degradation in the gradient descent trajectory in exchange for avoiding a Spark shuffle stage that would decimate network IO and crash the executor JVMs with out-of-disk errors. [Ref: 459](spark_book.pdf#page=459)
+A critical anti-pattern is attempting to execute Catalyst-based global shuffles within the training loop. Expert Spark engineers solve this by leveraging "local shuffling" or partition-level sampling. When using Petastorm or RayOnSpark, Spark DataFrames are materialized into distributed Parquet stores, allowing PyTorch's native `DataLoader` to stream and locally shuffle row groups. When inline training via HorovodRunner is strictly required, engineers must rely on sampling from static RDD partitions locally. They accept a slight stochastic degradation in the gradient descent trajectory in exchange for avoiding a Spark shuffle stage that would decimate network IO and crash the executor JVMs with out-of-disk errors. 
 
 ### Executor Memory Sizing and Off-Heap Contention
 When deploying Deep Learning models via Spark, memory management transitions from a purely JVM-centric tuning exercise to a complex tripartite balancing act between JVM Heap, JVM Off-Heap (Tungsten), and Python process memory. A pervasive failure scenario occurs when data scientists configure `spark.executor.memory` to consume 90% of the node's RAM, leaving insufficient overhead for the PyTorch/TensorFlow Python worker processes. When the Python process initiates memory mapping via Apache Arrow to ingest training batches, the OS Out-Of-Memory (OOM) killer abruptly terminates the Python worker, causing a cryptic "Lost task" error in the Spark UI.
 
-To prevent this, production workloads must heavily restrict the JVM heap size. You must meticulously configure `spark.executor.memoryOverhead` to account for both the Apache Arrow shared memory buffer and the Python runtime's tensor allocations. Furthermore, when integrating with GPUs, Pin-Memory (page-locked memory) allocated by PyTorch for faster PCIe transfers to the GPU will further strain the OS RAM. The JVM metaspace, Tungsten off-heap, Python RAM, and CUDA pinned memory must all coexist peacefully. Miscalculating this equation often leads to silent NodeManager kills by YARN or Kubernetes OOMKilled statuses that are notoriously difficult to debug from the Spark Driver logs. [Ref: 463](spark_book.pdf#page=463)
+To prevent this, production workloads must heavily restrict the JVM heap size. You must meticulously configure `spark.executor.memoryOverhead` to account for both the Apache Arrow shared memory buffer and the Python runtime's tensor allocations. Furthermore, when integrating with GPUs, Pin-Memory (page-locked memory) allocated by PyTorch for faster PCIe transfers to the GPU will further strain the OS RAM. The JVM metaspace, Tungsten off-heap, Python RAM, and CUDA pinned memory must all coexist peacefully. Miscalculating this equation often leads to silent NodeManager kills by YARN or Kubernetes OOMKilled statuses that are notoriously difficult to debug from the Spark Driver logs. 
 
---- [Ref: 453](spark_book.pdf#page=453)
+---
 
 ## 📊 Performance Characteristics
 
@@ -74,11 +75,11 @@ To prevent this, production workloads must heavily restrict the JVM heap size. Y
 | **Horovod Ring-AllReduce** | O(1) per node | No | Network bandwidth bound. The size of the neural network gradients determines overhead, not the number of Spark executors. |
 | **Arrow DataFrame to Pandas** | O(N/P) | No | Zero-copy vectorization. Requires `spark.sql.execution.arrow.pyspark.enabled=true`. Avoids expensive Py4J serialization overhead. |
 | **Global Dataset Shuffle (Epoch)** | O(N log N) | Yes | **EXTREMELY EXPENSIVE**. Avoid Catalyst global shuffles inside training loops; use local dataset shuffling instead to prevent GPU starvation. |
-| **Model Inference via Pandas UDF** | O(N/P) | No | Highly parallelizable. Use Iterator-based Pandas UDFs to amortize heavy model loading costs across large partition batches. | [Ref: 457](spark_book.pdf#page=457)
+| **Model Inference via Pandas UDF** | O(N/P) | No | Highly parallelizable. Use Iterator-based Pandas UDFs to amortize heavy model loading costs across large partition batches. | 
 
---- [Ref: 461](spark_book.pdf#page=461)
+---
 
-## 💻 Code Examples [Ref: 464](spark_book.pdf#page=464)
+## 💻 Code Examples 
 
 ### Example 1: High-Performance Distributed Inference via Iterator Pandas UDF
 

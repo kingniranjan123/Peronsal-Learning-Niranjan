@@ -1,16 +1,17 @@
 # 🔥 Master Class: Streaming Performance Tuning
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Apache Spark Structured Streaming is a fault-tolerant, exactly-once stream processing engine built on top of the Spark SQL execution engine. Unlike the deprecated DStream API, Structured Streaming models an unbounded data stream as a continuously appended, unbounded table — every micro-batch or continuous trigger reads new rows, processes them through the Catalyst optimizer's full pipeline, and commits results atomically via a Write-Ahead Log (WAL) and checkpoint mechanism. This architectural decision means streaming queries inherit the full power of Catalyst predicate pushdown, Tungsten binary format, and Whole-Stage CodeGen — but it also means that the same performance failure modes that plague batch jobs (data skew, excessive shuffle, GC pressure) are amplified in streaming because they repeat on every trigger.
 
 Performance tuning Structured Streaming is fundamentally about controlling throughput, latency, and state growth across three axes simultaneously. An untuned streaming job will eventually exhibit one of three failure modes: **trigger stacking** (a micro-batch takes longer than its trigger interval, causing a perpetual queue backlog), **state store explosion** (stateful aggregations accumulate unbounded state in the executor JVM heap or RocksDB, causing OOM or compaction stalls), or **offset surge** (a source delivers data faster than the job can process it, causing runaway memory consumption in the shuffle service). Mastering streaming performance requires understanding exactly where in the execution pipeline each control knob intervenes — from the `StreamExecution` thread on the driver down to RocksDB block cache tuning on each executor.
 
-The six mechanisms covered in this Master Class — backpressure via `maxOffsetsPerTrigger`, trigger interval selection, RocksDB state store configuration, stateful join watermark tuning, and asynchronous progress tracking — form a complete defensive perimeter. Together they prevent any single dimension of the streaming system from becoming the bottleneck that cascades into a full job failure. [Ref: 451](spark_book.pdf#page=451)
+The six mechanisms covered in this Master Class — backpressure via `maxOffsetsPerTrigger`, trigger interval selection, RocksDB state store configuration, stateful join watermark tuning, and asynchronous progress tracking — form a complete defensive perimeter. Together they prevent any single dimension of the streaming system from becoming the bottleneck that cascades into a full job failure. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ The RocksDB state store fundamentally changes the memory model for stateful stre
 
 Trigger intervals and the async progress tracking API are the final layer. Setting `Trigger.ProcessingTime("30 seconds")` tells `MicroBatchExecution` to sleep until the interval boundary if the batch completes early, which is essential for cost control in cloud environments where you pay per executor-second. Async progress tracking (`spark.sql.streaming.asyncProgressTrackingEnabled = true`), introduced in Spark 3.5, decouples the WAL commit from the processing loop: the driver commits offsets to the checkpoint store asynchronously in a separate thread while the next batch begins constructing. This alone reduces trigger-to-trigger latency overhead by 15–40% on high-throughput pipelines.
 
-```
+```scala
 Driver JVM (StreamExecution Thread)
 ┌────────────────────────────────────────────────────────┐
 │ MicroBatchExecution.constructNextBatch() │
@@ -58,7 +59,7 @@ Executor JVM (Task Thread Pool)
 └────────────────────────────────────────────────────────┘
  │ shuffle write (sort-based, Kryo)
  ▼
-ShuffleManager (External Shuffle Service or Spark shuffle) [Ref: 463](spark_book.pdf#page=463)
+ShuffleManager (External Shuffle Service or Spark shuffle) 
 ```
 
 ### Key Internal Components
@@ -69,23 +70,23 @@ ShuffleManager (External Shuffle Service or Spark shuffle) [Ref: 463](spark_book
 
 - **`RocksDBStateStore`:** An implementation of the `StateStore` trait backed by embedded RocksDB (via JNI). Each state store instance is pinned to a single executor and partition. On trigger commit, it flushes the MemTable to an SST file and uploads a snapshot delta to the checkpoint directory via Hadoop FileSystem, enabling state recovery on executor failure. The LSM compaction background thread competes with task execution for CPU and must be monitored.
 
-- **`WatermarkTracker`:** A driver-side component that aggregates per-partition event-time watermark values reported by each task (via `TaskContext.getLocalProperty`) and advances the global watermark. This global watermark gates state expiry in `mapGroupsWithState` and determines when stream-stream join state buffers can be evicted, making accurate watermark estimation the single most important factor in preventing state unbounded growth. [Ref: 470](spark_book.pdf#page=470)
+- **`WatermarkTracker`:** A driver-side component that aggregates per-partition event-time watermark values reported by each task (via `TaskContext.getLocalProperty`) and advances the global watermark. This global watermark gates state expiry in `mapGroupsWithState` and determines when stream-stream join state buffers can be evicted, making accurate watermark estimation the single most important factor in preventing state unbounded growth. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 457](spark_book.pdf#page=457)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Trigger Stacking and the Backpressure Illusion
 
 Structured Streaming has **no built-in backpressure mechanism analogous to Spark Streaming's `spark.streaming.backpressure.enabled`**. If you do not explicitly set `maxOffsetsPerTrigger`, the `KafkaMicroBatchReader` will read every available record up to Kafka's latest offset in a single batch. During a traffic spike — say, a 10x surge from 1M to 10M events per minute — the first over-sized batch will take 10x longer to process, during which Kafka accumulates another 10M records. By the time the second batch starts, consumer lag is 20M records, and the job has entered an unrecoverable death spiral that only a manual offset reset can fix.
 
-The correct approach is to set `maxOffsetsPerTrigger` to the number of records your job can sustainably process in one trigger interval under peak load. If your trigger is 30 seconds and you can process 500K records/trigger under normal conditions, set `maxOffsetsPerTrigger = 300000` to leave a safety margin. This creates a soft ceiling that allows the job to drain accumulated lag gradually during normal periods. Monitor `inputRowsPerSecond` vs `processedRowsPerSecond` in the streaming query progress JSON — when the former exceeds the latter for more than 3 consecutive batches, you have a compounding lag problem. [Ref: 461](spark_book.pdf#page=461)
+The correct approach is to set `maxOffsetsPerTrigger` to the number of records your job can sustainably process in one trigger interval under peak load. If your trigger is 30 seconds and you can process 500K records/trigger under normal conditions, set `maxOffsetsPerTrigger = 300000` to leave a safety margin. This creates a soft ceiling that allows the job to drain accumulated lag gradually during normal periods. Monitor `inputRowsPerSecond` vs `processedRowsPerSecond` in the streaming query progress JSON — when the former exceeds the latter for more than 3 consecutive batches, you have a compounding lag problem. 
 
 ### RocksDB Compaction and Write Amplification
 
-The most insidious streaming failure in stateful jobs is **RocksDB compaction stalls**. Under high write throughput, RocksDB's LSM compaction background thread falls behind, causing write stalls that block the `StateStoreSaveExec` node — this appears in the Spark UI as an executor task stuck at near-100% duration with no progress. The root cause is almost always insufficient RocksDB write buffer configuration. The default `writeBufferSizeMB = 64MB` and `maxWriteBufferNumber = 2` mean RocksDB stops accepting writes when both 64MB MemTables are full and compaction hasn't caught up. Setting `writeBufferSizeMB = 256` and `maxWriteBufferNumber = 4` increases the in-memory write buffer to 1GB per state partition, providing enough headroom for compaction to catch up during high-ingestion bursts without stalling task execution. Always co-locate RocksDB SST files on NVMe local instance storage, never EBS or network-attached storage, since random read amplification on HDD or high-latency block storage causes 10–100x lookup degradation. [Ref: 464](spark_book.pdf#page=464)
+The most insidious streaming failure in stateful jobs is **RocksDB compaction stalls**. Under high write throughput, RocksDB's LSM compaction background thread falls behind, causing write stalls that block the `StateStoreSaveExec` node — this appears in the Spark UI as an executor task stuck at near-100% duration with no progress. The root cause is almost always insufficient RocksDB write buffer configuration. The default `writeBufferSizeMB = 64MB` and `maxWriteBufferNumber = 2` mean RocksDB stops accepting writes when both 64MB MemTables are full and compaction hasn't caught up. Setting `writeBufferSizeMB = 256` and `maxWriteBufferNumber = 4` increases the in-memory write buffer to 1GB per state partition, providing enough headroom for compaction to catch up during high-ingestion bursts without stalling task execution. Always co-locate RocksDB SST files on NVMe local instance storage, never EBS or network-attached storage, since random read amplification on HDD or high-latency block storage causes 10–100x lookup degradation. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
 ## 📊 Performance Characteristics
 
@@ -96,11 +97,11 @@ The most insidious streaming failure in stateful jobs is **RocksDB compaction st
 | Stream-stream join (with watermark) | O(N × M) worst case per batch | Yes | Both sides buffer in state store; watermark controls eviction and shuffle occurs on join key |
 | `flatMapGroupsWithState` | O(N + S) | No | User-defined state; arbitrary logic; no optimizer visibility; must manage expiry manually |
 | `dropDuplicates` with watermark | O(N + S) | No | State holds seen keys per watermark window; without watermark, state is unbounded and OOM-certain |
-| Kafka offset commit (WAL) | O(P) — P = partition count | No | Driver-side I/O; async tracking removes this from the critical path of next-batch construction | [Ref: 458](spark_book.pdf#page=458)
+| Kafka offset commit (WAL) | O(P) — P = partition count | No | Driver-side I/O; async tracking removes this from the critical path of next-batch construction | 
 
---- [Ref: 462](spark_book.pdf#page=462)
+---
 
-## 💻 Code Examples [Ref: 469](spark_book.pdf#page=469)
+## 💻 Code Examples 
 
 ### Example 1: Backpressure via `maxOffsetsPerTrigger` with Lag-Adaptive Throttling
 

@@ -1,12 +1,13 @@
 # 🔥 Master Class: Loading Json
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
 JSON (JavaScript Object Notation) is the undisputed lingua franca of the modern web, serving as the default payload format for REST APIs, microservices, and NoSQL document stores. However, from the perspective of distributed big data processing engines like Apache Spark, JSON is objectively terrible. It is a text-based, row-oriented, schema-less format that requires significant CPU cycles to parse and offers no built-in indexing, compression, or columnar execution advantages. Despite these profound architectural mismatches, loading JSON is one of the most common operations in Spark pipelines because data engineering inevitably starts exactly where software engineering ends.
 
-When Spark loads a JSON file, it must translate a sequence of raw UTF-8 encoded characters into a strictly typed, structured tabular format. Because JSON lacks an embedded schema, Spark is forced to either perform an expensive two-pass operation across the cluster (one pass to infer the schema, a second to actually parse the data) or rely on the data engineer to strictly define the schema upfront. This fundamental characteristic completely alters the I/O profile and memory footprint of your Spark jobs compared to reading self-describing, columnar formats like Parquet or ORC. The Catalyst optimizer must work aggressively to map nested, variable-typed JSON hierarchies into strict relational structs, and failure to understand this translation process leads directly to silent data loss, massive memory bloat, and broken physical execution plans. [Ref: 451](spark_book.pdf#page=451)
+When Spark loads a JSON file, it must translate a sequence of raw UTF-8 encoded characters into a strictly typed, structured tabular format. Because JSON lacks an embedded schema, Spark is forced to either perform an expensive two-pass operation across the cluster (one pass to infer the schema, a second to actually parse the data) or rely on the data engineer to strictly define the schema upfront. This fundamental characteristic completely alters the I/O profile and memory footprint of your Spark jobs compared to reading self-describing, columnar formats like Parquet or ORC. The Catalyst optimizer must work aggressively to map nested, variable-typed JSON hierarchies into strict relational structs, and failure to understand this translation process leads directly to silent data loss, massive memory bloat, and broken physical execution plans. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 When you invoke `spark.read.json()`, the physical execution engine does not treat the JSON file as a native data structure. Instead, the `FileScanRDD` delegates the file reading to the Hadoop `TextInputFormat`. This InputFormat splits the raw text files across HDFS or S3 block boundaries (typically 128MB chunks) and streams raw strings into the worker JVMs. Spark then utilizes the Jackson Streaming API (specifically `JsonParser`) to tokenize the character stream in memory. Unlike DOM-based JSON parsers that load the entire document into the JVM heap—which would immediately trigger OutOfMemoryErrors at scale—Jackson processes the text token-by-token (e.g., `START_OBJECT`, `FIELD_NAME`, `VALUE_STRING`).
@@ -15,7 +16,7 @@ If schema inference is enabled (which is the default behavior if no schema is pr
 
 Once the global schema is finalized, the actual data loading job begins. The Catalyst physical plan generates a `FileSourceScanExec` node that streams the text data into the Jackson parser once again. This time, as Jackson emits tokens, Spark immediately attempts to cast them into the Catalyst internal data types (like `UTF8String`, `IntegerData`, or `ArrayData`). These parsed values are then directly encoded into Tungsten’s `UnsafeRow` binary format, bypassing standard Java object creation to minimize Garbage Collection (GC) overhead. Tungsten places this binary data into off-heap memory, preparing it for Whole-Stage CodeGen execution in downstream operations.
 
-```
+```scala
 Driver JVM Worker Executor JVM
 ┌────────────────────────────────┐ ┌───────────────────────────────────────────────┐
 │ DAGScheduler │ │ Executor Thread Pool │
@@ -33,26 +34,26 @@ Driver JVM Worker Executor JVM
 └────────────────────────────────┘ │ │ │ ▼ │ │
  │ │ │ Tungsten UnsafeRow (Off-Heap Binary) │ │
  └──────│ └─────────────────────────────────────────┘ │
- └───────────────────────────────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
+ └───────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **Hadoop TextInputFormat:** The underlying layer responsible for interpreting the raw bytes from storage (HDFS/S3) and splitting them by newline characters. This guarantees that Spark can divide massive files into parallel partitions without breaking records, provided each JSON object is strictly on a single line.
 - **Jackson Streaming API:** The low-level Java library (`fasterxml.jackson`) that Spark relies on to convert raw string lines into structured tokens. It is highly optimized for stream processing and operates with minimal memory footprint, preventing the executor heap from exploding.
 - **Catalyst RowConverter:** The critical translation layer that maps Jackson's generic JSON tokens into strict Catalyst internal types. It enforces the schema constraints and handles the logic for dealing with missing fields, nulls, and type casting errors during the read phase.
-- **Tungsten UnsafeRow:** The final destination of the loaded data. UnsafeRow stores the data in a raw binary format (off-heap) that is CPU cache-friendly and completely avoids the JVM garbage collector, allowing downstream Catalyst operations to run at bare-metal speeds. [Ref: 452](spark_book.pdf#page=452)
+- **Tungsten UnsafeRow:** The final destination of the loaded data. UnsafeRow stores the data in a raw binary format (off-heap) that is CPU cache-friendly and completely avoids the JVM garbage collector, allowing downstream Catalyst operations to run at bare-metal speeds. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 459](spark_book.pdf#page=459)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Multi-Line Concurrency Trap
-One of the most devastating pitfalls in Spark JSON processing occurs when engineers encounter JSON objects that span multiple lines and casually enable the `multiLine=true` option. While this option allows Spark to successfully parse pretty-printed JSON, it fundamentally breaks Spark’s distributed processing architecture. When `multiLine` is enabled, the underlying `TextInputFormat` can no longer rely on newline characters (`\n`) as safe block boundaries. Because a single JSON object might straddle two different 128MB HDFS/S3 blocks, Spark cannot safely split the file. Consequently, Catalyst forces a single executor task to read the entire multi-line JSON file sequentially from start to finish. If you attempt to load a 50GB multi-line JSON file, you will completely lose all parallel processing capabilities. A single executor will attempt to process all 50GBs, inevitably resulting in massive Garbage Collection pauses, Task timeouts, and devastating `java.lang.OutOfMemoryError: Java heap space` failures. To master Spark, you must ensure upstream systems emit NDJSON (Newline Delimited JSON), where each complete JSON object exists strictly on a single line. [Ref: 464](spark_book.pdf#page=464)
+One of the most devastating pitfalls in Spark JSON processing occurs when engineers encounter JSON objects that span multiple lines and casually enable the `multiLine=true` option. While this option allows Spark to successfully parse pretty-printed JSON, it fundamentally breaks Spark’s distributed processing architecture. When `multiLine` is enabled, the underlying `TextInputFormat` can no longer rely on newline characters (`\n`) as safe block boundaries. Because a single JSON object might straddle two different 128MB HDFS/S3 blocks, Spark cannot safely split the file. Consequently, Catalyst forces a single executor task to read the entire multi-line JSON file sequentially from start to finish. If you attempt to load a 50GB multi-line JSON file, you will completely lose all parallel processing capabilities. A single executor will attempt to process all 50GBs, inevitably resulting in massive Garbage Collection pauses, Task timeouts, and devastating `java.lang.OutOfMemoryError: Java heap space` failures. To master Spark, you must ensure upstream systems emit NDJSON (Newline Delimited JSON), where each complete JSON object exists strictly on a single line. 
 
 ### Corrupt Record Handling and Silent Data Loss
-When Spark encounters a JSON record that violates the provided schema (e.g., an integer field contains a string, or the JSON is completely malformed), its behavior is governed by the `mode` option. By default, Spark operates in `PERMISSIVE` mode. In this mode, Spark does not fail the job. Instead, it sets the conflicting fields to `null` and attempts to place the entire original, unparsed raw JSON string into a designated error column. However, there is a massive caveat: if you provide an explicit schema but fail to explicitly include this error column (configured via `columnNameOfCorruptRecord`, defaulting to `_corrupt_record`) in your `StructType`, Spark will simply drop the corrupted data entirely. The task will succeed, the Spark UI will show green, but you will experience silent data loss in production. Senior Spark engineers always define the `_corrupt_record` column in their manual schemas, cache the loaded DataFrame, and immediately run a filter to identify, log, and alert on corrupt records before continuing the data pipeline. [Ref: 453](spark_book.pdf#page=453)
+When Spark encounters a JSON record that violates the provided schema (e.g., an integer field contains a string, or the JSON is completely malformed), its behavior is governed by the `mode` option. By default, Spark operates in `PERMISSIVE` mode. In this mode, Spark does not fail the job. Instead, it sets the conflicting fields to `null` and attempts to place the entire original, unparsed raw JSON string into a designated error column. However, there is a massive caveat: if you provide an explicit schema but fail to explicitly include this error column (configured via `columnNameOfCorruptRecord`, defaulting to `_corrupt_record`) in your `StructType`, Spark will simply drop the corrupted data entirely. The task will succeed, the Spark UI will show green, but you will experience silent data loss in production. Senior Spark engineers always define the `_corrupt_record` column in their manual schemas, cache the loaded DataFrame, and immediately run a filter to identify, log, and alert on corrupt records before continuing the data pipeline. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
 ## 📊 Performance Characteristics
 
@@ -61,9 +62,9 @@ When Spark encounters a JSON record that violates the provided schema (e.g., an 
 | Schema Inference | O(N) | Yes | Requires a full scan of all data across the cluster. Enormous I/O and network overhead. |
 | Single-line Read | O(N/P) | No | Highly parallelizable across P partitions. Line boundaries align safely with block splits. |
 | Multi-line Read | O(N) | No | Zero parallelism per file. Pinned to 1 executor. Will cause OOM on large files. |
-| Predicate Pushdown | O(N) | No | Unlike Parquet, JSON pushdown still requires Jackson to parse the entire row first. Only saves Tungsten conversion. | [Ref: 461](spark_book.pdf#page=461)
+| Predicate Pushdown | O(N) | No | Unlike Parquet, JSON pushdown still requires Jackson to parse the entire row first. Only saves Tungsten conversion. | 
 
---- [Ref: 469](spark_book.pdf#page=469)
+---
 
 ## 💻 Code Examples
 

@@ -1,14 +1,15 @@
 # 🔥 Master Class: Mean Normalization
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 471](spark_book.pdf#page=471) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
 Mean normalization is a fundamental feature scaling technique that re-centers data around a zero mean and optionally scales it to a unit variance or specific range. In the context of distributed computing, particularly when training massive machine learning models across a cluster, mean normalization is not merely a mathematical convenience—it is an absolute necessity for numerical stability and gradient descent convergence. Without it, optimization algorithms like L-BFGS or stochastic gradient descent will oscillate violently or require prohibitively small learning rates when features span radically different magnitudes.
 
 Within Apache Spark, executing mean normalization on terabyte-scale datasets is a complex orchestration problem. It requires computing global statistics—specifically the mean and standard deviation for every feature column—across thousands of distributed partitions, and then broadcasting those statistics back to the worker nodes for the actual transformation phase. This two-pass process is highly sensitive to data skew, network I/O, and serialization overhead. 
 
-Spark MLlib provides the `StandardScaler` to perform mean normalization (setting `withMean=true`). However, unlike single-node frameworks like Pandas or Scikit-Learn, Spark must perform these calculations using distributed aggregations over Resilient Distributed Datasets (RDDs) or DataFrames. Understanding how Catalyst optimizes these aggregations and how Tungsten manages the in-memory representation of feature vectors is critical for scaling ML pipelines without encountering catastrophic out-of-memory (OOM) errors or GC pauses. [Ref: 451](spark_book.pdf#page=451)
+Spark MLlib provides the `StandardScaler` to perform mean normalization (setting `withMean=true`). However, unlike single-node frameworks like Pandas or Scikit-Learn, Spark must perform these calculations using distributed aggregations over Resilient Distributed Datasets (RDDs) or DataFrames. Understanding how Catalyst optimizes these aggregations and how Tungsten manages the in-memory representation of feature vectors is critical for scaling ML pipelines without encountering catastrophic out-of-memory (OOM) errors or GC pauses. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 461](spark_book.pdf#page=461)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 When you invoke a mean normalization transformation in Spark SQL or MLlib, the execution engine does not simply iterate over the data. Instead, the Catalyst optimizer intercepts the logical plan and splits the operation into two distinct phases: a statistical aggregation phase and a distributed transformation phase. During the Analysis phase, Catalyst identifies the feature columns (often represented as `VectorUDT`—Vector User Defined Types). In the Logical Optimization phase, it constructs an aggregation tree to compute the global mean and variance using a highly optimized, numerically stable single-pass algorithm (like Welford's online algorithm) pushed down to the executors.
@@ -17,7 +18,7 @@ At the Physical Planning level, Catalyst selects a `HashAggregateExec` strategy 
 
 Once the global means are computed at the Driver JVM, they are broadcasted to all Worker Executor JVMs via a TorrentBroadcast mechanism. For the transformation phase, Tungsten generates code that maps over the vectorized readers, subtracting the broadcasted mean from each element. If the data is stored in Parquet format, Spark utilizes dictionary encoding and run-length encoding (RLE) to accelerate the scanning process. The network serialization for broadcasting the statistical models relies heavily on Kryo serialization rather than standard Java serialization, drastically reducing the byte footprint over the wire and deserialization latency on the worker nodes.
 
-```
+```scala
 Driver JVM Worker Executor JVMs
 ┌─────────────────────────────────┐ ┌─────────────────────────────────────────┐
 │ Spark MLlib / Catalyst │ │ Tungsten Execution Engine │
@@ -32,30 +33,30 @@ Driver JVM Worker Executor JVMs
 │ └───────────────────────────┘ │ │ │ ├─ Receive Broadcasted Mean │ │
 └─────────────────────────────────┘ │ │ └─ Vector Subtraction (SIMD) │ │
  │ └───────────────────────────────────┘ │
- └─────────────────────────────────────────┘ [Ref: 469](spark_book.pdf#page=469)
+ └─────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **VectorUDT (User Defined Type):** The internal representation used by Spark MLlib to store dense and sparse vectors. It interfaces directly with Catalyst, allowing complex vector math to be evaluated within SQL execution plans.
 - **Welford's Algorithm Aggregator:** A numerically stable algorithm used internally by `StandardScalerModel` and `MultivariateOnlineSummarizer` to compute the running mean and variance in a single distributed pass without floating-point cancellation errors.
 - **TorrentBroadcast:** The peer-to-peer broadcast protocol Spark uses to distribute the computed mean vectors (which can be megabytes in size for high-dimensional data) to all executors simultaneously, avoiding driver network bottlenecks.
-- **Whole-Stage Codegen (WSCG):** Tungsten's mechanism for fusing the vector subtraction operations into a single loop, eliminating virtual function calls and leveraging CPU cache lines for optimal vector processing speeds. [Ref: 452](spark_book.pdf#page=452)
+- **Whole-Stage Codegen (WSCG):** Tungsten's mechanism for fusing the vector subtraction operations into a single loop, eliminating virtual function calls and leveraging CPU cache lines for optimal vector processing speeds. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Sparse Vector Densification Explosion
 A massive, often catastrophic anti-pattern occurs when applying mean normalization to sparse data (such as TF-IDF feature vectors). By definition, mean normalization subtracts a non-zero mean from every element. Consequently, every structural zero in a `SparseVector` becomes a non-zero value (specifically, `0.0 - mean`). This forces Spark to implicitly cast all `SparseVector` structures into `DenseVector` structures during the transformation phase. 
 
-If you are dealing with a 100,000-dimensional sparse feature space (e.g., text n-grams) where each row previously occupied a few kilobytes, mean normalization will inflate the memory footprint of each row to nearly a megabyte. This sudden densification causes severe JVM heap exhaustion, leading to prolonged Garbage Collection (GC) spirals and eventual `java.lang.OutOfMemoryError: Java heap space` crashes. Elite Spark engineers know to never set `withMean=true` on highly sparse datasets; instead, they rely strictly on variance scaling (`withStd=true`) or use algorithms like MaxAbsScaler which preserve sparsity. [Ref: 471](spark_book.pdf#page=471)
+If you are dealing with a 100,000-dimensional sparse feature space (e.g., text n-grams) where each row previously occupied a few kilobytes, mean normalization will inflate the memory footprint of each row to nearly a megabyte. This sudden densification causes severe JVM heap exhaustion, leading to prolonged Garbage Collection (GC) spirals and eventual `java.lang.OutOfMemoryError: Java heap space` crashes. Elite Spark engineers know to never set `withMean=true` on highly sparse datasets; instead, they rely strictly on variance scaling (`withStd=true`) or use algorithms like MaxAbsScaler which preserve sparsity. 
 
 ### Broadcasting High-Dimensional Means
 Another critical failure mode involves the Catalyst optimizer and the size of the mean vector. When the feature space reaches hundreds of millions of dimensions (common in deep learning embeddings or large categorical hashings), the computed mean vector itself becomes incredibly large. The Driver JVM must gather these partial aggregates, compute the final massive array, and broadcast it. 
 
-If the size of the mean vector exceeds `spark.broadcast.blockSize` (default 4MB) significantly, or approaches the `spark.driver.maxResultSize` limit, the driver will either spend excessive time serializing the object via Kryo or crash entirely. Furthermore, storing a massive broadcast variable in the BlockManager of every executor reduces the available storage memory for RDD caching. A senior engineer mitigates this by increasing driver memory, ensuring Kryo is enforced (`spark.serializer=org.apache.spark.serializer.KryoSerializer`), and strictly monitoring the Executor memory overhead in the Spark UI to accommodate the broadcast metadata. [Ref: 455](spark_book.pdf#page=455)
+If the size of the mean vector exceeds `spark.broadcast.blockSize` (default 4MB) significantly, or approaches the `spark.driver.maxResultSize` limit, the driver will either spend excessive time serializing the object via Kryo or crash entirely. Furthermore, storing a massive broadcast variable in the BlockManager of every executor reduces the available storage memory for RDD caching. A senior engineer mitigates this by increasing driver memory, ensuring Kryo is enforced (`spark.serializer=org.apache.spark.serializer.KryoSerializer`), and strictly monitoring the Executor memory overhead in the Spark UI to accommodate the broadcast metadata. 
 
---- [Ref: 459](spark_book.pdf#page=459)
+---
 
 ## 📊 Performance Characteristics
 
@@ -64,7 +65,7 @@ If the size of the mean vector exceeds `spark.broadcast.blockSize` (default 4MB)
 | **Statistics Aggregation** | O(N * D) | Yes (Reduce) | N = rows, D = dimensions. Uses tree reduction to minimize shuffle data transfer. |
 | **Vector Transformation** | O(N * D) | No | Purely map-side operation. Highly parallelizable via WSCG. |
 | **Sparse Densification** | O(N * D_total) | No | Explodes memory complexity from D_active to D_total per row. Causes severe GC overhead. |
-| **Model Broadcasting** | O(D) | No | Uses TorrentBroadcast. Network bound by the dimensionality (D) of the feature space. | [Ref: 464](spark_book.pdf#page=464)
+| **Model Broadcasting** | O(D) | No | Uses TorrentBroadcast. Network bound by the dimensionality (D) of the feature space. | 
 
 ---
 

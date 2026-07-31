@@ -1,16 +1,17 @@
 # 🔥 Master Class: Sparkling Water API
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Sparkling Water is the official H2O.ai bridge library that lets Apache Spark and the H2O machine-learning runtime share the same JVM process and—critically—the same physical memory pages. Without Sparkling Water, a data scientist would be forced to serialize a Spark DataFrame to disk or over the network, deserialize it inside a separate H2O cluster, train a model, serialize the MOJO artifact back, and then reload it inside Spark for scoring. That round-trip costs minutes of wall-clock time and gigabytes of intermediate I/O. Sparkling Water collapses this pipeline: data lives in one place, and both runtimes read it directly.
 
 The library ships in two flavors. **Internal backend** launches H2O worker nodes directly inside each Spark executor JVM—H2O and Spark threads share the same heap. **External backend** connects Spark to a separately managed H2O cluster, which is preferred when H2O's aggressive off-heap memory usage (H2O stores its `H2OFrame` data in a custom off-heap binary format called the *H2O Store*) would otherwise compete with Spark's execution memory pool and cause GC storms. Choosing the wrong backend for a workload is the single most common production failure mode for Sparkling Water deployments.
 
-The API surface is intentionally minimal: `H2OContext`, the conversion implicits/methods between `H2OFrame` and Spark `DataFrame`, the `H2OAutoML` estimator that plugs into a `Pipeline`, and the `H2OMOJOModel` transformer for low-latency inference. Understanding each piece—and the JVM plumbing beneath each—is the difference between a proof-of-concept and a production ML platform. [Ref: 451](spark_book.pdf#page=451)
+The API surface is intentionally minimal: `H2OContext`, the conversion implicits/methods between `H2OFrame` and Spark `DataFrame`, the `H2OAutoML` estimator that plugs into a `Pipeline`, and the `H2OMOJOModel` transformer for low-latency inference. Understanding each piece—and the JVM plumbing beneath each—is the difference between a proof-of-concept and a production ML platform. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ The Catalyst optimizer has no visibility into H2O operations. When you call `h2o
 
 AutoML uses H2O's `AutoML` Java API under the hood, which runs entirely on the H2O cluster—not on the Spark DAGScheduler. The Spark driver thread blocks on `trainModels()` via H2O's Future mechanism while H2O's internal scheduler trains and cross-validates up to `maxModels` models. The resulting leaderboard `ModelMetrics` objects live in the DKV. When you call `getBestModel()`, the winning model is serialized into a MOJO (Model ObJect, Optimized)—a self-contained zip file containing the model tree structure and scoring logic in H2O's portable binary format. The MOJO has no JVM dependency: it is scored by the `h2o-genmodel.jar` runtime, which uses hand-optimized bytecode that bypasses reflection and achieves throughput within 2–5x of native compiled C++ inference code.
 
-```
+```scala
 Driver JVM
 ┌────────────────────────────────────────────────────────────────┐
 │ SparkSession │
@@ -60,7 +61,7 @@ AutoML Flow (runs on H2O cluster, not Spark DAGScheduler):
 Structured Streaming MOJO Scoring:
 Kafka ──▶ readStream ──▶ H2OMOJOModel.transform() ──▶ writeStream
  (Micro-batch) (h2o-genmodel.jar, (Delta / Kafka)
- no H2OContext needed) [Ref: 463](spark_book.pdf#page=463)
+ no H2OContext needed) 
 ```
 
 ### Key Internal Components
@@ -71,23 +72,23 @@ Kafka ──▶ readStream ──▶ H2OMOJOModel.transform() ──▶ writeStr
 
 - **MOJO Runtime (`h2o-genmodel.jar`):** The self-contained scoring engine for exported models. It implements `EasyPredictModelWrapper`, which accepts a `RowData` object and returns a `AbstractPrediction`. In Structured Streaming, `H2OMOJOModel` wraps this into a Spark `Transformer` that applies `EasyPredictModelWrapper.predict()` row-by-row inside a `mapPartitions` closure, broadcasting the MOJO bytes to each executor via Spark's `broadcast` variable mechanism—avoiding repeated deserialization per row.
 
-- **`H2OAutoML` Spark Estimator:** Implements Spark's `Estimator[H2OMOJOModel]` interface, making it a first-class `Pipeline` stage. Internally it converts the training `DataFrame` to an `H2OFrame`, delegates to `water.automl.AutoML`, blocks the Spark driver thread until `maxRuntimeSecs` or `maxModels` is reached, exports the winning model as a MOJO, wraps it in `H2OMOJOModel`, and returns it. The entire H2O training computation is invisible to the Spark UI—no Spark jobs appear during training. [Ref: 470](spark_book.pdf#page=470)
+- **`H2OAutoML` Spark Estimator:** Implements Spark's `Estimator[H2OMOJOModel]` interface, making it a first-class `Pipeline` stage. Internally it converts the training `DataFrame` to an `H2OFrame`, delegates to `water.automl.AutoML`, blocks the Spark driver thread until `maxRuntimeSecs` or `maxModels` is reached, exports the winning model as a MOJO, wraps it in `H2OMOJOModel`, and returns it. The entire H2O training computation is invisible to the Spark UI—no Spark jobs appear during training. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 457](spark_book.pdf#page=457)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Internal Backend Memory War
 
 In internal backend mode, H2O nodes and Spark executors compete for the same executor JVM heap. H2O's `MemoryManager` aggressively pre-allocates memory up to `sys.ai.h2o.heartbeat.benchmark.interval` and uses its own GC heuristics separate from the JVM GC. A common failure pattern is configuring `spark.executor.memory=8g` without accounting for H2O's overhead: H2O pre-allocates roughly 10% of the JVM heap for metadata plus allocates `NewChunk` buffers in the JVM heap during frame ingestion. With both Spark's shuffle buffers and H2O's frame ingestion active simultaneously, the executor hits `java.lang.OutOfMemoryError: Java heap space` during the `asH2OFrame` conversion on large partitions.
 
-The production solution is to use external backend mode or to configure `spark.ext.h2o.sys.ai.h2o.mainDriver.memory` explicitly, set `spark.executor.memoryOverhead` to at least 15% of executor memory, and reduce `spark.sql.shuffle.partitions` to lower peak Spark memory pressure during the conversion window. [Ref: 461](spark_book.pdf#page=461)
+The production solution is to use external backend mode or to configure `spark.ext.h2o.sys.ai.h2o.mainDriver.memory` explicitly, set `spark.executor.memoryOverhead` to at least 15% of executor memory, and reduce `spark.sql.shuffle.partitions` to lower peak Spark memory pressure during the conversion window. 
 
 ### MOJO Scoring Latency vs. Throughput Tradeoff
 
-`H2OMOJOModel` in Structured Streaming applies `EasyPredictModelWrapper.predict()` inside a `mapPartitions` UDF. Each executor deserializes the MOJO bytes once per partition (from the broadcast variable) and reuses the `EasyPredictModelWrapper` instance across all rows in that partition—this is the `transformSchema`-safe, thread-local pattern. However, GBM and XGBoost MOJOs score at different rates: a GBM MOJO with 500 trees scores approximately 50,000–100,000 rows/second per executor core, while a deep learning MOJO is 10–20x slower due to matrix multiplication overhead. Stacked Ensemble MOJOs chain multiple base model scorers sequentially; with 5 base models, throughput drops to roughly 10,000–20,000 rows/second per core. For sub-100ms latency SLAs, constrain AutoML to `include_algos=["GBM", "XGBoost"]` and export only tree-based MOJOs. [Ref: 464](spark_book.pdf#page=464)
+`H2OMOJOModel` in Structured Streaming applies `EasyPredictModelWrapper.predict()` inside a `mapPartitions` UDF. Each executor deserializes the MOJO bytes once per partition (from the broadcast variable) and reuses the `EasyPredictModelWrapper` instance across all rows in that partition—this is the `transformSchema`-safe, thread-local pattern. However, GBM and XGBoost MOJOs score at different rates: a GBM MOJO with 500 trees scores approximately 50,000–100,000 rows/second per executor core, while a deep learning MOJO is 10–20x slower due to matrix multiplication overhead. Stacked Ensemble MOJOs chain multiple base model scorers sequentially; with 5 base models, throughput drops to roughly 10,000–20,000 rows/second per core. For sub-100ms latency SLAs, constrain AutoML to `include_algos=["GBM", "XGBoost"]` and export only tree-based MOJOs. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
 ## 📊 Performance Characteristics
 
@@ -96,11 +97,11 @@ The production solution is to use external backend mode or to configure `spark.e
 | `asH2OFrame(df)` | O(n × c) | No | Full data transcode from Tungsten UnsafeRow to H2O NewChunk; ~200–400 MB/s per executor core |
 | `asDataFrame(frame)` | O(1) setup, O(n) scan | No | Wraps DKV chunks in thin Spark partitions; read throughput ~500–800 MB/s per core on local executor |
 | `H2OAutoML.fit()` | O(models × folds × n) | No (H2O-internal) | Invisible to Spark DAGScheduler; all computation runs on H2O cluster; driver thread blocks |
-| `H2OMOJOModel.transform()` | O(n × trees) per row | No | GBM: ~50K–100K rows/s/core; DL: ~5K–10K rows/s/core; Stacked Ensemble: ~10K–20K rows/s/core | [Ref: 458](spark_book.pdf#page=458)
+| `H2OMOJOModel.transform()` | O(n × trees) per row | No | GBM: ~50K–100K rows/s/core; DL: ~5K–10K rows/s/core; Stacked Ensemble: ~10K–20K rows/s/core | 
 
---- [Ref: 462](spark_book.pdf#page=462)
+---
 
-## 💻 Code Examples [Ref: 469](spark_book.pdf#page=469)
+## 💻 Code Examples 
 
 ### Example 1: H2OContext Initialization with Internal vs. External Backend Selection
 

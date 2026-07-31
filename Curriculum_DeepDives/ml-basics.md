@@ -1,15 +1,16 @@
 # 🔥 Master Class: Ml Basics
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Apache Spark's MLlib (specifically the `spark.ml` DataFrame-based API) represents a paradigm shift in distributed machine learning, moving away from RDD-based monolithic algorithms toward modular, unified pipelines. Historically, scaling machine learning models meant manually orchestrating data parallelization, handling fragile serialization, and writing bespoke parameter synchronization logic. Spark MLlib exists to solve this by providing a standardized API for distributed featurization, model training, and evaluation that integrates natively with Spark SQL's Catalyst optimizer and Tungsten execution engine.
 
 At its core, Spark ML abstracts the machine learning workflow into Transformers, Estimators, Evaluators, and Pipelines. However, underneath these high-level constructs, MLlib translates machine learning algorithms into distributed mathematical operations—such as block matrix multiplications, tree-based split aggregations, and gradient descents—that operate on RDDs of `org.apache.spark.ml.linalg.Vector`. This abstraction allows data scientists to write scikit-learn-style pipelines while leveraging Spark's immense distributed computing power. The fundamental problem it solves is the transition from local-memory prototyping to petabyte-scale production without rewriting the underlying algorithmic implementations.
 
-By leveraging DataFrames, MLlib implicitly benefits from off-heap memory management and vectorized execution. Features are assembled into optimized binary formats, preventing the massive Garbage Collection (GC) overhead that plagued early RDD-based ML implementations. This architecture enables Spark ML to process massive feature spaces efficiently across thousands of executor JVMs. [Ref: 451](spark_book.pdf#page=451)
+By leveraging DataFrames, MLlib implicitly benefits from off-heap memory management and vectorized execution. Features are assembled into optimized binary formats, preventing the massive Garbage Collection (GC) overhead that plagued early RDD-based ML implementations. This architecture enables Spark ML to process massive feature spaces efficiently across thousands of executor JVMs. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 463](spark_book.pdf#page=463)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -19,7 +20,7 @@ During the execution of an algorithm like Logistic Regression or a Random Forest
 
 Catalyst optimization phases (Analysis, Logical Optimization, Physical Planning, and Code Generation) play a surprisingly vital role in ML execution. While Catalyst doesn't optimize the gradient math itself, it fiercely optimizes the data preparation steps—predicate pushdown, column pruning, and Whole-Stage CodeGen are applied to the feature engineering phases. Tungsten's vectorized readers pull data straight from Parquet into CPU registers for featurization. Furthermore, Spark ML utilizes optimized BLAS (Basic Linear Algebra Subprograms) and LAPACK libraries via `netlib-java` at the executor level, ensuring that matrix multiplications and vector dot products run close to bare-metal speed using hardware-specific SIMD instructions.
 
-```
+```scala
 Driver JVM Worker Executor JVMs
 ┌───────────────────────────────────┐ ┌────────────────────────────────────┐
 │ Pipeline (Estimators/Transformers)│ │ Executor 1 (Partition 0-1) │
@@ -34,28 +35,28 @@ Driver JVM Worker Executor JVMs
 │ │ Catalyst + Tungsten Codegen │ │ │ │ Tungsten Off-Heap Memory │ │
 │ └───────────────────────────────┘ │ │ │ (Dense/Sparse Vectors) │ │
 └───────────────────────────────────┘ │ └────────────────────────────────┘ │
- └────────────────────────────────────┘ [Ref: 452](spark_book.pdf#page=452)
+ └────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **Estimators:** Algorithms that are fit on a DataFrame to produce a Model (which is a Transformer). Internally, they trigger heavy shuffling and `treeAggregate` actions to compute global statistics or model weights.
 - **Transformers:** Deterministic functions that append new columns (e.g., predictions or scaled features) to a DataFrame. They rely on Tungsten's Whole-Stage Codegen for rapid row-by-row mapping without breaking the Catalyst execution pipeline.
 - **Vector UDTs:** The foundational data structures (`DenseVector` and `SparseVector`) that compress feature arrays. They avoid the immense JVM object creation overhead that would occur if standard arrays were used.
-- **BLAS Native Bindings:** A critical performance layer via `netlib-java` that hooks into native C/Fortran libraries for low-level matrix math. If native libraries are missing, it silently falls back to a severely bottlenecked Java implementation. [Ref: 458](spark_book.pdf#page=458)
+- **BLAS Native Bindings:** A critical performance layer via `netlib-java` that hooks into native C/Fortran libraries for low-level matrix math. If native libraries are missing, it silently falls back to a severely bottlenecked Java implementation. 
 
---- [Ref: 464](spark_book.pdf#page=464)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 455](spark_book.pdf#page=455)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Sparse vs. Dense Vector Memory Trap
 One of the most insidious performance traps in Spark ML involves the mismanagement of vector types. Feature engineering pipelines often generate sparse data—such as One-Hot Encoding (OHE) of high-cardinality categorical variables or TF-IDF for text. If an engineer inadvertently forces a conversion from a `SparseVector` to a `DenseVector` via an intermediate transformer, the memory footprint of the DataFrame will explode exponentially. A dataset that comfortably occupies 10 GB in sparse format can bloat to terabytes in dense format, instantly exhausting JVM heap space and causing massive Garbage Collection (GC) pauses followed by fatal `OutOfMemoryError`s.
 
-This failure mode is particularly common when chaining multiple preprocessing steps. Catalyst cannot save you here because ML vectors are treated as opaque blobs by the SQL optimizer. To avoid this, senior Spark engineers rigorously monitor the sparsity fraction of their vectors and selectively apply algorithms optimized for sparse operations. Algorithms like Random Forest and Naive Bayes in Spark heavily leverage sparse structures, but feeding dense vectors into them artificially degrades performance. [Ref: 459](spark_book.pdf#page=459)
+This failure mode is particularly common when chaining multiple preprocessing steps. Catalyst cannot save you here because ML vectors are treated as opaque blobs by the SQL optimizer. To avoid this, senior Spark engineers rigorously monitor the sparsity fraction of their vectors and selectively apply algorithms optimized for sparse operations. Algorithms like Random Forest and Naive Bayes in Spark heavily leverage sparse structures, but feeding dense vectors into them artificially degrades performance. 
 
 ### Iterative Algorithms and Checkpointing Checkmates
 A fundamental reality of Spark ML is that algorithms like Alternating Least Squares (ALS) or Deep Learning gradient descents are heavily iterative, meaning they recursively compute over the same distributed dataset. Because Spark relies on lazy evaluation and lineage tracking, the DAG of an iterative ML algorithm grows linearly with each iteration. By the 20th iteration, the DAG becomes so massive that the Driver JVM's metaspace and heap are overwhelmed just tracking the task dependencies, resulting in a stack overflow in the DAGScheduler.
 
-The professional mitigation is `checkpointing`. By persisting the DataFrame to reliable storage (like HDFS or S3) and truncating the DAG lineage every few iterations, the engine drops the historical dependency graph and starts fresh. However, the pitfall is that checkpointing forces materialization and I/O writes. If applied indiscriminately, network and disk I/O will cripple the training time. Balancing the checkpoint interval (typically every 5-10 iterations) against memory pressure is a delicate art that defines robust production ML pipelines. [Ref: 469](spark_book.pdf#page=469)
+The professional mitigation is `checkpointing`. By persisting the DataFrame to reliable storage (like HDFS or S3) and truncating the DAG lineage every few iterations, the engine drops the historical dependency graph and starts fresh. However, the pitfall is that checkpointing forces materialization and I/O writes. If applied indiscriminately, network and disk I/O will cripple the training time. Balancing the checkpoint interval (typically every 5-10 iterations) against memory pressure is a delicate art that defines robust production ML pipelines. 
 
 ---
 

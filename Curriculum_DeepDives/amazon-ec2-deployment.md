@@ -1,16 +1,17 @@
 # 🔥 Master Class: Amazon EC2 Deployment for Apache Spark
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471)</em></div>
 
 Running Apache Spark on Amazon EC2 is not simply a matter of provisioning virtual machines and copying a JAR file. Every architectural decision — instance family selection, storage topology, cluster management strategy, and network configuration — has a direct, measurable impact on job throughput, fault tolerance, and monthly cloud spend. EC2 gives you the full spectrum from fully managed EMR clusters to raw self-managed deployments, and understanding what happens beneath each abstraction is what separates engineers who tolerate Spark from engineers who master it.
 
 Spark's execution model maps directly onto EC2's resource hierarchy. The Driver JVM runs on the master node, coordinating the DAGScheduler and TaskScheduler. Executor JVMs run on worker nodes, each consuming a configurable slice of instance vCPUs and memory. EC2's instance types determine the physical ceiling for JVM heap, off-heap (Tungsten) memory, local NVMe throughput for shuffle spill, and network bandwidth for shuffle data movement. Choosing an `r6g.4xlarge` (64 GiB, Graviton3) versus an `m5d.4xlarge` (64 GiB, Intel Xeon) is not equivalent — core clock speeds, memory bandwidth, NVMe latency, and per-hour pricing all differ, and each dimension hits a different Spark subsystem.
 
-The economic dimension is equally critical. EC2 On-Demand pricing is the floor; Spot Instances can reduce compute costs by 60–90%, but they introduce interruption risk that must be handled at the cluster level. AWS EMR's Instance Fleet mode was specifically designed to absorb Spot interruptions by maintaining a pool of diversified instance types and automatic replacement. Understanding how EMR's YARN Resource Manager interacts with Spot interruption notices — via the 2-minute EC2 termination signal — and how Spark's speculative execution and task retry logic responds to that signal is foundational knowledge for any production deployment. [Ref: 451](spark_book.pdf#page=451)
+The economic dimension is equally critical. EC2 On-Demand pricing is the floor; Spot Instances can reduce compute costs by 60–90%, but they introduce interruption risk that must be handled at the cluster level. AWS EMR's Instance Fleet mode was specifically designed to absorb Spot interruptions by maintaining a pool of diversified instance types and automatic replacement. Understanding how EMR's YARN Resource Manager interacts with Spot interruption notices — via the 2-minute EC2 termination signal — and how Spark's speculative execution and task retry logic responds to that signal is foundational knowledge for any production deployment. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -20,7 +21,7 @@ Tungsten's off-heap memory manager operates outside the JVM heap within the exec
 
 Shuffle data is the central bottleneck in EC2 deployments. Spark's `SortShuffleManager` writes shuffle files to the local disk of each executor's EC2 instance. On instance types with NVMe storage (e.g., `m5d`, `c5d`, `r6id`), shuffle write throughput can reach 3+ GB/s, while EBS `gp3` volumes are capped at 1,000 MB/s (16,000 IOPS). The `ExternalShuffleService`, enabled by default in EMR, decouples shuffle file serving from executor JVMs, allowing YARN to reclaim executor containers while shuffle data remains readable — critical for dynamic allocation on Spot clusters. S3A's `fs.s3a.fast.upload` multipart upload pipeline (controlled by `fs.s3a.multipart.size` and `fs.s3a.fast.upload.buffer`) determines the throughput ceiling for writing Parquet/ORC output to S3, and misconfiguration is the single largest source of slow write performance in production.
 
-```
+```scala
 EMR Master Node (m5.xlarge) EMR Core / Task Nodes
 ┌───────────────────────────────┐ ┌────────────────────────────────────┐
 │ YARN ResourceManager │◀────────────│ YARN NodeManager │
@@ -45,7 +46,7 @@ EMR Master Node (m5.xlarge) EMR Core / Task Nodes
  │ Instance Fleet: replace interrupted instance with │
  │ next available type from diversified pool │
  │ EMR → resubmit YARN container → Spark task retry │
- └──────────────────────────────────────────────────────┘ [Ref: 462](spark_book.pdf#page=462)
+ └──────────────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -53,25 +54,25 @@ EMR Master Node (m5.xlarge) EMR Core / Task Nodes
 - **YarnAllocator (Driver JVM):** Negotiates executor container placement with the YARN ResourceManager. Tracks blacklisted nodes (via `spark.blacklist.enabled`) and avoids scheduling tasks on hosts that have returned repeated task failures — essential for handling degraded Spot instances before the 2-minute termination signal arrives.
 - **ExternalShuffleService (NodeManager plugin):** A long-lived daemon on each worker node that serves shuffle blocks independently of executor JVM lifetime. Enabled by `spark.shuffle.service.enabled=true` and required for dynamic executor allocation on YARN; without it, executor deallocation destroys shuffle files and forces full-stage recomputation.
 - **S3AFileSystem + Magic Committer:** The `hadoop-aws` S3A connector implements a `FileOutputCommitter` replacement called the Magic Committer (`fs.s3a.committer.name=magic`), which writes task output directly to the final S3 path using multipart upload, eliminating the two-phase rename-on-commit pattern that caused O(n) LIST + COPY + DELETE operations and severe job commit latency at scale.
-- **EMR Instance Fleet:** An EMR cluster provisioning strategy that specifies target capacity in vCPU-hours and allows multiple instance types (e.g., `r6g.2xlarge`, `r6gd.2xlarge`, `r6i.2xlarge`) to satisfy that capacity. The Fleet controller bids on Spot pools with the lowest interruption probability across multiple Availability Zones, providing the interruption rate and price stability unavailable from a single instance type. [Ref: 469](spark_book.pdf#page=469)
+- **EMR Instance Fleet:** An EMR cluster provisioning strategy that specifies target capacity in vCPU-hours and allows multiple instance types (e.g., `r6g.2xlarge`, `r6gd.2xlarge`, `r6i.2xlarge`) to satisfy that capacity. The Fleet controller bids on Spot pools with the lowest interruption probability across multiple Availability Zones, providing the interruption rate and price stability unavailable from a single instance type. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Spot Interruption and Task Retry Asymmetry
 
 Spark's default task retry count (`spark.task.maxFailures=4`) is designed for transient executor failures, not for the coordinated loss of multiple executors simultaneously. When a Spot interruption hits an entire Spot fleet of the same instance type (a correlated interruption event during an AZ capacity crunch), tens of executors can vanish within seconds. If all executors holding shuffle map output for a stage disappear, Spark must recompute the entire upstream stage — not just retry the downstream tasks. This is a fetch failure cascade: the DAGScheduler receives `FetchFailed` exceptions, marks the shuffle map stage as failed, and resubmits it. With `spark.stage.maxConsecutiveAttempts=4`, a large cluster hit by three consecutive interruption waves will abort the job with `Job aborted due to stage failure`.
 
-The correct mitigation is multi-layered. First, use Instance Fleet with at least four distinct instance families across two Availability Zones, reducing the probability of correlated interruption below 1%. Second, enable `spark.shuffle.service.enabled=true` so that shuffle files survive individual executor terminations. Third, configure `spark.task.maxFailures=8` for Spot-heavy clusters. Fourth, for shuffle-heavy pipelines exceeding 500 GB of shuffle write, consider enabling Delta Lake's `OPTIMIZE` or persisting intermediate DataFrames to S3 as Parquet checkpoints to truncate lineage depth and eliminate multi-stage recomputation risk. [Ref: 459](spark_book.pdf#page=459)
+The correct mitigation is multi-layered. First, use Instance Fleet with at least four distinct instance families across two Availability Zones, reducing the probability of correlated interruption below 1%. Second, enable `spark.shuffle.service.enabled=true` so that shuffle files survive individual executor terminations. Third, configure `spark.task.maxFailures=8` for Spot-heavy clusters. Fourth, for shuffle-heavy pipelines exceeding 500 GB of shuffle write, consider enabling Delta Lake's `OPTIMIZE` or persisting intermediate DataFrames to S3 as Parquet checkpoints to truncate lineage depth and eliminate multi-stage recomputation risk. 
 
 ### EBS-Optimized Storage vs. Instance NVMe: The Shuffle Spill Decision
 
 EBS `gp3` volumes deliver deterministic IOPS (up to 16,000) and throughput (up to 1,000 MB/s) via a dedicated EBS-optimized network path, but this path competes with S3A network traffic on instances without sufficient network bandwidth. On a `m5.4xlarge` (10 Gbps), saturating EBS at 1 GB/s leaves only 2.5 Gbps for S3A reads and writes. Instances with NVMe (instance store) bypass the network entirely: `r6id.4xlarge` ships with 950 GB NVMe delivering 2.5 GB/s sequential write with sub-100µs latency. For workloads with shuffle spill exceeding 10 GB per executor, instance store NVMe reduces shuffle sort time by 60–70% compared to `gp3`.
 
-The failure mode is subtle: EBS volumes can throttle silently. When an executor's shuffle write exceeds the provisioned IOPS, EBS queues I/O and the executor's task thread blocks. The Spark UI shows tasks in the "RUNNING" state with zero input/output rates — misleadingly suggesting computation rather than I/O stall. Identifying this requires correlating CloudWatch's `VolumeQueueLength` metric (target: below 1) with Spark UI task duration. If `VolumeQueueLength` spikes above 10 during shuffle write phases, the volume is saturated and you should migrate the shuffle directory to instance NVMe or increase `gp3` provisioned throughput. [Ref: 463](spark_book.pdf#page=463)
+The failure mode is subtle: EBS volumes can throttle silently. When an executor's shuffle write exceeds the provisioned IOPS, EBS queues I/O and the executor's task thread blocks. The Spark UI shows tasks in the "RUNNING" state with zero input/output rates — misleadingly suggesting computation rather than I/O stall. Identifying this requires correlating CloudWatch's `VolumeQueueLength` metric (target: below 1) with Spark UI task duration. If `VolumeQueueLength` spikes above 10 during shuffle write phases, the volume is saturated and you should migrate the shuffle directory to instance NVMe or increase `gp3` provisioned throughput. 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 📊 Performance Characteristics
 
@@ -82,11 +83,11 @@ The failure mode is subtle: EBS volumes can throttle silently. When an executor'
 | Sort-Merge Join (large-large) | O(n log n) per side | Yes | Both sides sorted and merged; shuffle write is 2× total input size; network is the bottleneck above 1 TB |
 | Broadcast Join (small-large) | O(n) broadcast + O(n) probe | No | Driver collects small table, serializes via Kryo, pushes to all executors via BlockManager; fails above 8–10 GB |
 | Spark SQL Write to S3 (Magic Committer) | O(tasks) | No | Eliminates O(n) LIST+RENAME; task commit is a single S3 CompleteMultipartUpload call; 10–100× faster job commit |
-| Dynamic Partition Insert (S3 output) | O(partitions × files) | Yes | Each partition key triggers a separate output stream; high-cardinality partitioning causes S3 throttling (3,500 PUT/s limit per prefix) | [Ref: 453](spark_book.pdf#page=453)
+| Dynamic Partition Insert (S3 output) | O(partitions × files) | Yes | Each partition key triggers a separate output stream; high-cardinality partitioning causes S3 throttling (3,500 PUT/s limit per prefix) | 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
+## 💻 Code Examples 
 
 ### Example 1: EMR Instance Fleet Configuration with Spot Diversification (Boto3)
 
@@ -201,12 +202,12 @@ response = emr.run_job_flow(
  ],
 )
 
-print(f"Cluster ID: {response['JobFlowId']}") [Ref: 464](spark_book.pdf#page=464)
+print(f"Cluster ID: {response['JobFlowId']}") 
 ```
 
 > **Mastery Note:** The `CAPACITY_OPTIMIZED` allocation strategy instructs EC2's Spot API to select the pool with the deepest available capacity rather than the lowest spot price. For long-running Spark jobs (>30 minutes), this reduces interruption probability by 3–5× compared to `LOWEST_PRICE` strategy, at the cost of a 5–15% price premium — a worthwhile tradeoff since a single Spot interruption on a 2-hour job triggers full-stage recomputation, costing more in wall-clock time than the price savings. The `WeightedCapacity` model means Fleet honors vCPU-hour targets regardless of which instance type it picks, so Spark's executor count stays stable across the heterogeneous pool. The `SWITCH_TO_ON_DEMAND` fallback ensures the cluster bootstraps even during AZ capacity crunches.
 
---- [Ref: 471](spark_book.pdf#page=471)
+---
 
 ### Example 2: S3A Connector Tuning for High-Throughput Parquet I/O
 

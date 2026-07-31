@@ -1,14 +1,15 @@
 # 🔥 Master Class: Linear Regression in Apache Spark
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Linear Regression is the foundational supervised learning algorithm that models a continuous response variable as a weighted linear combination of input features. In a single-machine context, the Ordinary Least Squares (OLS) solution is found analytically by inverting the Gram matrix `(XᵀX)⁻¹Xᵀy`. At scale, this matrix inversion is intractable — a dataset with `p` features produces a `p×p` matrix whose dense inversion costs `O(p³)` FLOPs and requires the entire design matrix to reside in driver memory. Spark's `LinearRegression` estimator solves this by distributing gradient computation across executors, materializing only compact sufficient statistics on the driver, and delegating the final parameter update to a high-performance numerical optimizer.
 
-Spark's ML implementation (`org.apache.spark.ml.regression.LinearRegression`) supports three solving strategies: L-BFGS (default), normal equation (exact OLS for moderate `p`), and auto-selection. It natively supports L1 (Lasso), L2 (Ridge), and ElasticNet regularization, and computes a full suite of diagnostics — RMSE, MAE, R², and residual standard error — without a second pass over the data. Understanding *why* each solver exists, what it costs, and when it breaks is the difference between a practitioner who fits models and an engineer who ships reliable ML pipelines. [Ref: 451](spark_book.pdf#page=451)
+Spark's ML implementation (`org.apache.spark.ml.regression.LinearRegression`) supports three solving strategies: L-BFGS (default), normal equation (exact OLS for moderate `p`), and auto-selection. It natively supports L1 (Lasso), L2 (Ridge), and ElasticNet regularization, and computes a full suite of diagnostics — RMSE, MAE, R², and residual standard error — without a second pass over the data. Understanding *why* each solver exists, what it costs, and when it breaks is the difference between a practitioner who fits models and an engineer who ships reliable ML pipelines. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -18,7 +19,7 @@ When the **normal equation solver** is selected (`solver = "normal"`), the drive
 
 **Tungsten** accelerates the executor-side gradient computation via Whole-Stage Codegen: Spark fuses the `VectorAssembler` transformation, the dot product `wᵀxᵢ`, the residual `(wᵀxᵢ - yᵢ)`, and the gradient accumulation `xᵢ · residualᵢ` into a single tight JVM loop with no intermediate object allocation. Feature vectors are stored in **Tungsten's binary off-heap format** (UnsafeRow), eliminating Java object header overhead and GC pressure during the inner loop. The `StandardScaler` applied internally (when `standardization = true`) is fused into this same loop.
 
-```
+```scala
 Driver JVM Executor JVM (×N)
 ┌──────────────────────────────┐ ┌──────────────────────────────────┐
 │ LinearRegression.fit() │ │ Partition [0..k] │
@@ -42,7 +43,7 @@ Driver JVM Executor JVM (×N)
 │ │ (Breeze / LAPACK) │ │
 │ │ w* = argmin L(w) │ │
 │ └──────────────────────┘ │
-└──────────────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
+└──────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -50,23 +51,23 @@ Driver JVM Executor JVM (×N)
 - **`InstanceWeight` accumulator:** Each training row carries an optional `weightCol` value. Spark accumulates `Σwᵢ`, `Σwᵢ·yᵢ`, and `Σwᵢ·yᵢ²` alongside the gradient, enabling weighted OLS in a single pass without replication.
 - **`MultivariateOnlineSummarizer`:** Computes per-feature mean and variance in a single streaming pass using Welford's numerically stable algorithm. The resulting statistics drive internal standardization and are surfaced in `LinearRegressionTrainingSummary`.
 - **Breeze L-BFGS (`breeze.optimize.LBFGS`):** Holds `m` correction pairs on the driver. Each `valueAndGradient` call triggers a full Spark job over the dataset. Convergence is declared when `‖g‖ < tol` or `maxIter` is reached.
-- **`LinearRegressionSummary`:** Computed on the training set post-fit via a single additional Spark job. Contains coefficient standard errors (via the diagonal of `(XᵀX)⁻¹σ²`), t-statistics, p-values, R², adjusted R², RMSE, and residuals as a `DataFrame`. [Ref: 452](spark_book.pdf#page=452)
+- **`LinearRegressionSummary`:** Computed on the training set post-fit via a single additional Spark job. Contains coefficient standard errors (via the diagonal of `(XᵀX)⁻¹σ²`), t-statistics, p-values, R², adjusted R², RMSE, and residuals as a `DataFrame`. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 461](spark_book.pdf#page=461)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Feature Collinearity and the Singular Gram Matrix
 
 When two or more features are perfectly or near-perfectly linearly dependent, `XᵀX` becomes singular or nearly singular. In the normal equation path, LAPACK's Cholesky factorization will detect this and throw a `SingularMatrixException` (surfaced as a Spark `SparkException` wrapping a Breeze error). In the L-BFGS path, collinearity manifests more subtly: the loss surface becomes a flat ridge, the gradient norm never decreases below tolerance, and training hits `maxIter` without converging. The coefficients returned will be numerically arbitrary combinations of the collinear directions — individually meaningless but collectively predicting correctly.
 
-The correct remediation is **not** simply adding more L2 regularization (though Ridge does stabilize `XᵀX` by adding `λI`). The correct approach is to detect collinearity via the Variance Inflation Factor (VIF) — any VIF above 10 signals a problem — remove redundant features, or use PCA to project into an orthogonal basis before fitting. Collinearity does not bias predictions but destroys the interpretability of individual coefficients and inflates their standard errors, making hypothesis tests unreliable. [Ref: 464](spark_book.pdf#page=464)
+The correct remediation is **not** simply adding more L2 regularization (though Ridge does stabilize `XᵀX` by adding `λI`). The correct approach is to detect collinearity via the Variance Inflation Factor (VIF) — any VIF above 10 signals a problem — remove redundant features, or use PCA to project into an orthogonal basis before fitting. Collinearity does not bias predictions but destroys the interpretability of individual coefficients and inflates their standard errors, making hypothesis tests unreliable. 
 
 ### The `maxIter` Convergence Trap and Learning Rate Sensitivity
 
-L-BFGS is a second-order method and does not have a user-controlled learning rate — it computes its own step size via Wolfe-condition line search. However, it is sensitive to the *scale* of features: if feature `x₁` ranges in `[0, 1]` and feature `x₂` ranges in `[0, 10⁶]`, the loss surface is a narrow ellipsoid and L-BFGS wastes iterations chasing curvature. Spark's internal standardization (`standardization = true`, the default) mitigates this by standardizing all features to zero mean and unit variance before optimization, then un-standardizing the final coefficients. Disabling `standardization` on heterogeneously-scaled features is a common anti-pattern that increases required iterations by 10–100× and can prevent convergence entirely within the default `maxIter = 100`. [Ref: 455](spark_book.pdf#page=455)
+L-BFGS is a second-order method and does not have a user-controlled learning rate — it computes its own step size via Wolfe-condition line search. However, it is sensitive to the *scale* of features: if feature `x₁` ranges in `[0, 1]` and feature `x₂` ranges in `[0, 10⁶]`, the loss surface is a narrow ellipsoid and L-BFGS wastes iterations chasing curvature. Spark's internal standardization (`standardization = true`, the default) mitigates this by standardizing all features to zero mean and unit variance before optimization, then un-standardizing the final coefficients. Disabling `standardization` on heterogeneously-scaled features is a common anti-pattern that increases required iterations by 10–100× and can prevent convergence entirely within the default `maxIter = 100`. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
 ## 📊 Performance Characteristics
 
@@ -77,9 +78,9 @@ L-BFGS is a second-order method and does not have a user-controlled learning rat
 | Normal equation solve | O(p³) driver | No | LAPACK Cholesky; infeasible for p > ~4000 |
 | L-BFGS update (per iter) | O(m·p) driver | No | m=10 correction pairs default; entirely in driver memory |
 | `LinearRegressionSummary` | O(n·p) | No | One additional Spark job post-fit for residuals/diagnostics |
-| VIF computation (manual) | O(p²·n) | No | Requires fitting p auxiliary regressions; expensive at scale | [Ref: 462](spark_book.pdf#page=462)
+| VIF computation (manual) | O(p²·n) | No | Requires fitting p auxiliary regressions; expensive at scale | 
 
---- [Ref: 469](spark_book.pdf#page=469)
+---
 
 ## 💻 Code Examples
 

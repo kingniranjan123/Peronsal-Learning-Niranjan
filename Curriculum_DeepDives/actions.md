@@ -1,12 +1,13 @@
 # 🔥 Master Class: Actions
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
 Apache Spark separates transformations from actions by design to enable lazy evaluation and profound query optimization. While transformations construct a logical execution plan (the lineage), an action is the definitive trigger that commands the Spark engine to materialize data, compute results, and return them to the driver or write them to persistent storage. Without an action, Spark executes precisely zero instructions on the cluster. 
 
-This strict separation solves the fundamental problem of distributed computing inefficiency. If Spark executed every transformation eagerly, intermediate datasets would constantly spill to disk or flood JVM heap memory, causing crippling IO bottlenecks. Instead, actions act as the forcing function for the Catalyst Optimizer. When an action is invoked, Catalyst analyzes the entire lineage graph backward from the action, performing predicate pushdown, column pruning, and whole-stage code generation. This means actions don't just "run" code; they finalize the optimal execution strategy based on the terminal request. In production, distinguishing between actions that return data to the driver (like `collect()`) and actions that execute completely on executors (like `saveAsTable()`) is the boundary between an application that scales infinitely and one that crashes with an `OutOfMemoryError`. [Ref: 451](spark_book.pdf#page=451)
+This strict separation solves the fundamental problem of distributed computing inefficiency. If Spark executed every transformation eagerly, intermediate datasets would constantly spill to disk or flood JVM heap memory, causing crippling IO bottlenecks. Instead, actions act as the forcing function for the Catalyst Optimizer. When an action is invoked, Catalyst analyzes the entire lineage graph backward from the action, performing predicate pushdown, column pruning, and whole-stage code generation. This means actions don't just "run" code; they finalize the optimal execution strategy based on the terminal request. In production, distinguishing between actions that return data to the driver (like `collect()`) and actions that execute completely on executors (like `saveAsTable()`) is the boundary between an application that scales infinitely and one that crashes with an `OutOfMemoryError`. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 461](spark_book.pdf#page=461)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 When a user invokes an action (e.g., `count()` or `collect()`), it triggers a cascade of internal events beginning at the `SparkContext`. The action translates the user's high-level DataFrame or RDD operations into a `Job`. The `SparkContext` immediately submits this `Job` to the `DAGScheduler`. The `DAGScheduler` analyzes the lineage graph (the RDD dependencies) and splits the job into distinct `Stages` separated by shuffle boundaries. These stages are further divided into discrete `Tasks` based on the number of data partitions. 
@@ -15,7 +16,7 @@ Once the physical plan is finalized, Catalyst hands it over to the Tungsten exec
 
 The `TaskScheduler` then distributes these tasks to the worker JVMs (Executors). Within each Executor JVM, a Task runs in a dedicated thread pool thread, executing the Tungsten-compiled code against its specific partition of data. If the action requires returning data to the driver (like `collect`), the executors serialize the results using the Kryo serializer (if configured) or the default Java serializer, and transmit them over the network via Netty. If the action writes to storage (like `write.parquet`), the task threads write directly to distributed storage (HDFS/S3), bypassing the driver entirely, which is essential for massive scale.
 
-```
+```scala
 Driver JVM Worker Executor JVM (Node 1)
 ┌─────────────────────────────────┐ ┌───────────────────────────────────┐
 │ User Code triggers Action │ │ Executor Thread Pool │
@@ -32,30 +33,30 @@ Driver JVM Worker Executor JVM (Node 1)
  ▲ └───────────────────────────────────┘
  │ (Result Transmission) │ (I/O)
  └───────────────────────────────────────────────▼
- Distributed Storage (S3/HDFS) [Ref: 469](spark_book.pdf#page=469)
+ Distributed Storage (S3/HDFS) 
 ```
 
 ### Key Internal Components
 - **DAGScheduler:** Computes a Directed Acyclic Graph of stages for the submitted job, ensuring operations that don't require a shuffle are pipelined together.
 - **TaskScheduler:** Receives stage tasks from the DAGScheduler and dispatches them to active executors, handling localized data placement and task retries upon failure.
 - **Tungsten Engine:** Executes the physical plan on executors using off-heap memory and Whole-Stage Code Generation to maximize CPU cache utilization and minimize GC pauses.
-- **ResultTask / ShuffleMapTask:** `ResultTask` computes the final result and sends it back to the driver, while `ShuffleMapTask` computes intermediate data and writes it to local disk for a subsequent stage to consume. [Ref: 452](spark_book.pdf#page=452)
+- **ResultTask / ShuffleMapTask:** `ResultTask` computes the final result and sends it back to the driver, while `ShuffleMapTask` computes intermediate data and writes it to local disk for a subsequent stage to consume. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Driver Memory Saturation via Unbounded Actions
 The most catastrophic failure mode in Spark engineering is invoking `collect()` or `take()` on massive datasets without understanding driver memory limits. When `collect()` is called, all executors serialize their partitions and blast them across the network to the Driver JVM. The Driver must allocate heap memory to deserialize and hold the entire dataset simultaneously. If the dataset exceeds `spark.driver.memory` (default 1GB), the driver JVM crashes with a fatal `java.lang.OutOfMemoryError: Java heap space`, terminating the entire application immediately. 
 
-To mitigate this, production pipelines must avoid `collect()` entirely unless the dataset is explicitly aggregated down to a known, trivial size (e.g., thousands of rows). If data must be sampled or extracted, use `limit(n)` combined with `collect()`, or configure `spark.driver.maxResultSize` (default 1GB) to act as a fail-safe. When `maxResultSize` is exceeded, Spark gracefully aborts the job *before* the driver OOMs, returning a `SparkException` that prevents the cluster from hanging. [Ref: 455](spark_book.pdf#page=455)
+To mitigate this, production pipelines must avoid `collect()` entirely unless the dataset is explicitly aggregated down to a known, trivial size (e.g., thousands of rows). If data must be sampled or extracted, use `limit(n)` combined with `collect()`, or configure `spark.driver.maxResultSize` (default 1GB) to act as a fail-safe. When `maxResultSize` is exceeded, Spark gracefully aborts the job *before* the driver OOMs, returning a `SparkException` that prevents the cluster from hanging. 
 
 ### The Hidden Cost of Iterative Actions and Caching
 A subtle but devastating anti-pattern occurs when developers trigger multiple actions on the same lineage without caching. For instance, calling `df.count()`, then `df.show()`, then `df.write.parquet(...)` constitutes three separate actions. Because Spark evaluates lineages lazily, it will recompute the entire DAG from the source files three times. If the DAG includes heavy transformations (like massive joins or UDFs), this triples the compute cost and execution time. 
 
-If a DataFrame is the target of multiple actions, it must be explicitly cached via `df.cache()` or `df.persist(StorageLevel.MEMORY_AND_DISK_DESER)`. However, `cache()` itself is a transformation, not an action. It only takes effect *after* the first action materializes the data into the BlockManager. A common optimization is executing a cheap action like `count()` immediately after `cache()` to force materialization, preventing subsequent complex actions from absorbing the initial compute penalty. [Ref: 459](spark_book.pdf#page=459)
+If a DataFrame is the target of multiple actions, it must be explicitly cached via `df.cache()` or `df.persist(StorageLevel.MEMORY_AND_DISK_DESER)`. However, `cache()` itself is a transformation, not an action. It only takes effect *after* the first action materializes the data into the BlockManager. A common optimization is executing a cheap action like `count()` immediately after `cache()` to force materialization, preventing subsequent complex actions from absorbing the initial compute penalty. 
 
---- [Ref: 464](spark_book.pdf#page=464)
+---
 
 ## 📊 Performance Characteristics
 

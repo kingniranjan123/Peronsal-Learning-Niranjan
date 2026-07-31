@@ -1,13 +1,14 @@
 # 🔥 Master Class: Shuffling
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469) [Ref: 456](spark_book.pdf#page=456) [Ref: 461](spark_book.pdf#page=461) [Ref: 470](spark_book.pdf#page=470)</em></div>
 
 Apache Spark's shuffle mechanism is the foundational physical operation that enables distributed data repartitioning across a cluster, serving as the critical juncture between map and reduce phases. Whenever an operation requires data from multiple partitions to be grouped, joined, or aggregated—such as `groupByKey`, `reduceByKey`, or `join`—Spark must perform an all-to-all network exchange. This operation, while conceptually simple, is arguably the most complex, expensive, and failure-prone subsystem within the entire Spark architecture. It bridges the gap between independent, localized execution and global, synchronized data reduction.
 
-The necessity of the shuffle arises from the inherent partitioning of distributed datasets. Because data is scattered across discrete Executor JVMs, operations that demand global consensus require moving specific keys to specific nodes. Without the shuffle phase, Spark would be constrained to narrow transformations like `map` and `filter`. However, the cost of this data movement involves disk I/O, network I/O, data serialization, and intense JVM heap pressure. Understanding the physical realities of the shuffle—how data is buffered, sorted, spilled to disk, and fetched over the network—is the defining characteristic that separates junior developers who write logically correct code from elite engineers who write performant, production-ready applications capable of handling petabyte-scale workloads without OutOfMemory (OOM) errors. [Ref: 451](spark_book.pdf#page=451)
+The necessity of the shuffle arises from the inherent partitioning of distributed datasets. Because data is scattered across discrete Executor JVMs, operations that demand global consensus require moving specific keys to specific nodes. Without the shuffle phase, Spark would be constrained to narrow transformations like `map` and `filter`. However, the cost of this data movement involves disk I/O, network I/O, data serialization, and intense JVM heap pressure. Understanding the physical realities of the shuffle—how data is buffered, sorted, spilled to disk, and fetched over the network—is the defining characteristic that separates junior developers who write logically correct code from elite engineers who write performant, production-ready applications capable of handling petabyte-scale workloads without OutOfMemory (OOM) errors. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 463](spark_book.pdf#page=463)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -17,7 +18,7 @@ During the Shuffle Write phase, records are inserted into a memory structure—o
 
 On the Shuffle Read side, reduce tasks are scheduled in the subsequent Stage. They query the MapOutputTracker on the Driver to discover the locations of their respective data blocks. The `BlockTransferService` then initiates network fetches—often via Netty—pulling the required partition blocks from the remote Executor's `BlockManager`. If the data volume being fetched exceeds the local memory capacity, the reduce tasks will also spill to disk, utilizing an `ExternalAppendOnlyMap` to perform final aggregations or sorting.
 
-```
+```scala
 Driver JVM Worker 1 Executor JVM
 ┌───────────────────────┐ ┌─────────────────────────────────────────────────────┐
 │ │ │ ┌──────────────┐ Shuffle Write Phase │
@@ -46,32 +47,32 @@ Driver JVM Worker 1 Executor JVM
  │ │ External │──▶ Disk Spill (if needed) │
  │ │ AppendOnlyMap│ │
  │ └──────────────┘ │
- └─────────────────────────────────────────────────────┘ [Ref: 452](spark_book.pdf#page=452)
+ └─────────────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **ShuffleManager:** The pluggable interface managing shuffle operations. The default `SortShuffleManager` handles the logistics of sorting, spilling, and merging map outputs, ensuring that the number of intermediate files remains low and disk I/O is minimized during the write phase.
 - **MapOutputTracker:** A master/slave architecture component where the Master resides on the Driver and Workers reside on Executors. It tracks the physical locations of all map output blocks, acting as a directory service that reduce tasks query to know exactly which nodes to connect to for their data.
 - **ExternalSorter:** A Tungsten-optimized data structure used during the shuffle write phase to buffer records in memory, sort them by partition ID (and optionally by key), and spill them to disk when execution memory is exhausted, eventually merging spills into a single file.
-- **BlockManager:** A key-value store present on every Executor that manages storage (memory and disk) for block data. During shuffle read, the `BlockTransferService` communicates with remote BlockManagers to stream shuffle blocks across the network over Netty connections. [Ref: 458](spark_book.pdf#page=458)
+- **BlockManager:** A key-value store present on every Executor that manages storage (memory and disk) for block data. During shuffle read, the `BlockTransferService` communicates with remote BlockManagers to stream shuffle blocks across the network over Netty connections. 
 
---- [Ref: 464](spark_book.pdf#page=464)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 455](spark_book.pdf#page=455)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Data Skew and the "Straggler" Problem
 
 Data skew represents the most notorious failure mode in distributed shuffling. It occurs when a specific key (or set of keys) in the dataset occurs with vastly higher frequency than others. Because Spark's hash partitioner guarantees that all records with the identical key are routed to the exact same reduce partition, one Executor becomes saddled with a disproportionate volume of data. While 199 tasks might finish in seconds, the 1 "straggler" task processing the skewed key may run for hours, effectively stalling the entire job.
 
-Furthermore, this massive influx of records into a single reduce task exerts immense memory pressure on the JVM heap. If the `ExternalAppendOnlyMap` cannot spill to disk fast enough, or if the overhead of managing the spill files exceeds JVM limits, this inevitably triggers agonizing GC pauses followed by a `java.lang.OutOfMemoryError: Java heap space`. Mitigating skew requires advanced techniques like salting (appending random integers to keys to distribute them) or utilizing broadcast joins to entirely bypass the shuffle phase. [Ref: 459](spark_book.pdf#page=459)
+Furthermore, this massive influx of records into a single reduce task exerts immense memory pressure on the JVM heap. If the `ExternalAppendOnlyMap` cannot spill to disk fast enough, or if the overhead of managing the spill files exceeds JVM limits, this inevitably triggers agonizing GC pauses followed by a `java.lang.OutOfMemoryError: Java heap space`. Mitigating skew requires advanced techniques like salting (appending random integers to keys to distribute them) or utilizing broadcast joins to entirely bypass the shuffle phase. 
 
 ### Shuffle Spilling and Disk I/O Bottlenecks
 
 A subtle but devastating performance killer is excessive shuffle spilling. Spark attempts to perform shuffle writes and reads in-memory, but when the execution memory pool is exhausted, it forcibly flushes the `ExternalSorter` or `ExternalAppendOnlyMap` to the local disk. This process is highly I/O bound. If a map task processes a massive partition, it may spill dozens of times. Each spill requires sorting the in-memory buffer, serializing it, and writing to the OS filesystem, which incurs brutal CPU and disk overhead.
 
-When diagnosing slow stages in the Spark UI, a massive discrepancy between "Shuffle Read Size" and "Spill (Disk)" is a critical red flag. Heavy spilling indicates that the partitions are too large for the allocated Executor memory. Tuning `spark.sql.shuffle.partitions` (often increasing it to reduce per-task data volume) or allocating more `spark.executor.memory` is essential. In extreme cases, relying on Tungsten's off-heap memory can bypass GC overhead during spilling, but it still incurs the physical disk I/O penalty. [Ref: 469](spark_book.pdf#page=469)
+When diagnosing slow stages in the Spark UI, a massive discrepancy between "Shuffle Read Size" and "Spill (Disk)" is a critical red flag. Heavy spilling indicates that the partitions are too large for the allocated Executor memory. Tuning `spark.sql.shuffle.partitions` (often increasing it to reduce per-task data volume) or allocating more `spark.executor.memory` is essential. In extreme cases, relying on Tungsten's off-heap memory can bypass GC overhead during spilling, but it still incurs the physical disk I/O penalty. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
 ## 📊 Performance Characteristics
 
@@ -82,9 +83,9 @@ When diagnosing slow stages in the Spark UI, a massive discrepancy between "Shuf
 | `reduceByKey` | O(N) | Yes | Performs map-side combine before shuffling. Significantly reduces network I/O compared to `groupByKey`. |
 | `groupByKey` | O(N) | Yes | No map-side combine. Transfers all raw records across the network. High risk of OOM and excessive disk spill. |
 | `join` (Sort-Merge) | O(N log N) | Yes | Requires both DataFrames to be hash-partitioned and sorted by the join key. Extremely heavy on network and disk. |
-| `broadcast` join | O(N) | No | Bypasses shuffle entirely by sending the small table to all Executor BlockManagers. Ideal for tables < 10MB (default). | [Ref: 461](spark_book.pdf#page=461)
+| `broadcast` join | O(N) | No | Bypasses shuffle entirely by sending the small table to all Executor BlockManagers. Ideal for tables < 10MB (default). | 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 💻 Code Examples
 

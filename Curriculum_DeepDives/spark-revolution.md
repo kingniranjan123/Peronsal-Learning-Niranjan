@@ -1,16 +1,17 @@
 # 🔥 Master Class: The Spark Revolution — How Spark Rewrote the Rules of Distributed Computing
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Apache Spark emerged from the AMPLab at UC Berkeley in 2009 as a direct response to a fundamental architectural limitation in Hadoop MapReduce: the inability to keep intermediate computation results in memory across processing stages. MapReduce was a brilliant abstraction for its era — it democratized distributed computing by reducing every problem to two functions — but it paid a brutal cost for fault tolerance: every Map output and every Reduce output was written to HDFS before the next stage could begin. For iterative algorithms — machine learning, graph analytics, interactive SQL — this meant a job with ten stages performed ten full round-trips to disk, each carrying the full weight of HDFS replication, serialization, and network I/O.
 
 Spark's foundational insight was the **Resilient Distributed Dataset (RDD)** — a fault-tolerant, lazily-evaluated, in-memory abstraction that tracks lineage instead of materializing data at every stage boundary. Rather than writing shuffle outputs to disk unconditionally, Spark keeps data in executor JVM heap memory across stages, materializing to disk only when memory pressure forces spill or when the job explicitly checkpoints. The practical result: Spark runs iterative ML workloads 10–100× faster than equivalent MapReduce jobs, a figure validated by the original 2012 Zaharia et al. paper on RDDs and subsequently by production deployments at scale.
 
-The revolution was not just about speed. Spark unified four previously separate programming models — batch (RDD/DataFrame), streaming (Structured Streaming), machine learning (MLlib), and graph processing (GraphX) — into a single engine with a single deployment model, eliminating the operational complexity of running Hadoop, Storm, Mahout, and Giraph as separate clusters. [Ref: 451](spark_book.pdf#page=451)
+The revolution was not just about speed. Spark unified four previously separate programming models — batch (RDD/DataFrame), streaming (Structured Streaming), machine learning (MLlib), and graph processing (GraphX) — into a single engine with a single deployment model, eliminating the operational complexity of running Hadoop, Storm, Mahout, and Giraph as separate clusters. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ The **Catalyst optimizer** — Spark SQL's query planning engine — operates in
 
 Network serialization has also been redesigned. MapReduce used Java's default serialization for shuffle data — verbose, slow, and GC-heavy. Spark defaults to **Java serialization** for RDD operations but strongly recommends **Kryo serialization** (`spark.serializer=org.apache.spark.serializer.KryoSerializer`), which is 10× smaller and 3× faster for complex domain objects. For DataFrames and Datasets, Tungsten's `Encoder`-based binary format sidesteps both entirely, storing data as raw bytes that match CPU cache lines and can be operated on without deserialization.
 
-```
+```scala
 MapReduce Execution (3 stages, disk-bound) Spark Execution (3 stages, in-memory DAG)
 ─────────────────────────────────────────── ──────────────────────────────────────────────
 
@@ -49,7 +50,7 @@ MapReduce Execution (3 stages, disk-bound) Spark Execution (3 stages, in-memory 
 
  Disk I/O: 6 full HDFS passes Disk I/O: 1 read + shuffle spill only if OOM
  GC pressure: high (Java serialization per record) GC pressure: low (Tungsten off-heap UnsafeRow)
- Iterative jobs (ML): re-read from disk each pass Iterative jobs (ML): data cached in executor RAM [Ref: 462](spark_book.pdf#page=462)
+ Iterative jobs (ML): re-read from disk each pass Iterative jobs (ML): data cached in executor RAM 
 ```
 
 ### Key Internal Components
@@ -60,25 +61,25 @@ MapReduce Execution (3 stages, disk-bound) Spark Execution (3 stages, in-memory 
 
 - **Catalyst Query Optimizer:** A Scala-based extensible optimizer that operates on immutable `LogicalPlan` trees using a fixed-point rule application engine. It applies over 50 built-in optimization rules (e.g., `PushDownPredicates`, `CollapseProject`, `ReorderJoin`) and allows third-party data sources to inject custom rules via the `DataSourceV2` API.
 
-- **BlockManager & ShuffleManager:** The `BlockManager` (one per executor + one on Driver) manages storage of RDD blocks, shuffle blocks, and broadcast variables using a configurable store (`MemoryStore`, `DiskStore`, or `ExternalBlockStore`). The `ShuffleManager` (defaulting to `SortShuffleManager` since Spark 1.2) manages how shuffle map output is written, indexed, and fetched — using shuffle index files to allow `O(1)` partition location lookup rather than scanning all output files. [Ref: 469](spark_book.pdf#page=469)
+- **BlockManager & ShuffleManager:** The `BlockManager` (one per executor + one on Driver) manages storage of RDD blocks, shuffle blocks, and broadcast variables using a configurable store (`MemoryStore`, `DiskStore`, or `ExternalBlockStore`). The `ShuffleManager` (defaulting to `SortShuffleManager` since Spark 1.2) manages how shuffle map output is written, indexed, and fetched — using shuffle index files to allow `O(1)` partition location lookup rather than scanning all output files. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Lazy Evaluation Is Not Optional — It Is the Performance Model
 
 Every Spark transformation (`map`, `filter`, `join`, `groupBy`) is **lazy**: calling it does not execute anything. It appends a node to the logical plan tree. Only when an **action** is invoked (`collect`, `count`, `write`, `foreach`) does Spark submit the job to the cluster. This design is not merely a convenience — it is what allows Catalyst to see the entire computation before generating a physical plan. A common anti-pattern is calling `.count()` inside a loop to "check progress" on a streaming transformation, which submits a full job per loop iteration. Similarly, collecting a large RDD to the Driver with `.collect()` on a dataset larger than driver heap (default 1–4 GB) throws `java.lang.OutOfMemoryError: GC overhead limit exceeded` on the Driver JVM. The safe alternative for large datasets is `.write.parquet(...)` or `.toLocalIterator()` for chunked consumption.
 
-A second failure mode occurs when developers treat Spark transformations as sequential imperative code. Calling `rdd.filter(...).map(...).count()` looks like three operations but is compiled into a single stage. Inserting a `.cache()` call in the middle of such a chain without a subsequent action that triggers caching means the cached block never materializes — the data is re-computed from source on each downstream action. Cache only after an action that forces the data to be computed and before multiple downstream consumers that would each trigger a full recomputation. [Ref: 459](spark_book.pdf#page=459)
+A second failure mode occurs when developers treat Spark transformations as sequential imperative code. Calling `rdd.filter(...).map(...).count()` looks like three operations but is compiled into a single stage. Inserting a `.cache()` call in the middle of such a chain without a subsequent action that triggers caching means the cached block never materializes — the data is re-computed from source on each downstream action. Cache only after an action that forces the data to be computed and before multiple downstream consumers that would each trigger a full recomputation. 
 
 ### The Shuffle Is the Performance Boundary — Treat It as a First-Class Concern
 
 A shuffle occurs whenever Spark must redistribute data across partitions — `groupByKey`, `reduceByKey`, `join` between un-colocated datasets, `repartition`, and `distinct` all trigger shuffles. A shuffle involves three physical phases: **map-side write** (each task writes sorted partition files and an index file to local disk), **network transfer** (reducers fetch their partitions from all map outputs), and **reduce-side merge** (reducers merge-sort or hash-aggregate the fetched blocks). The cost is not just I/O — it introduces a **stage barrier**, meaning all map tasks must complete before any reduce task can start. A single straggler mapper delays the entire stage.
 
-`groupByKey` is the canonical anti-pattern: it ships all values for each key across the network to a single reducer, which must buffer them all in memory before emitting output. For aggregations, `reduceByKey` or `aggregateByKey` pre-aggregate on the mapper side, reducing shuffle data volume by up to 90% for high-cardinality keys. At the physical planning level, Catalyst automatically applies **partial aggregation** (map-side combine) when it detects `groupBy().agg()` patterns, but only for declarative aggregations using built-in functions — custom Python UDAFs bypass this optimization entirely and always produce full shuffles. [Ref: 463](spark_book.pdf#page=463)
+`groupByKey` is the canonical anti-pattern: it ships all values for each key across the network to a single reducer, which must buffer them all in memory before emitting output. For aggregations, `reduceByKey` or `aggregateByKey` pre-aggregate on the mapper side, reducing shuffle data volume by up to 90% for high-cardinality keys. At the physical planning level, Catalyst automatically applies **partial aggregation** (map-side combine) when it detects `groupBy().agg()` patterns, but only for declarative aggregations using built-in functions — custom Python UDAFs bypass this optimization entirely and always produce full shuffles. 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 📊 Performance Characteristics
 
@@ -91,11 +92,11 @@ A shuffle occurs whenever Spark must redistribute data across partitions — `gr
 | `broadcastHashJoin` | O(n) build + O(m) probe | No | No shuffle; requires one side ≤ `spark.sql.autoBroadcastJoinThreshold` (default 10 MB) |
 | `repartition(n)` | O(n) | Yes | Full shuffle to redistribute; use `coalesce` to reduce partitions without shuffle |
 | `cache()` / `persist()` | O(n) first action | No | Materializes RDD to memory on first action; skips recompute on subsequent actions |
-| `distinct()` | O(n log n) | Yes | Internally implemented as `reduceByKey(_ => 1)` — costs a full shuffle | [Ref: 453](spark_book.pdf#page=453)
+| `distinct()` | O(n log n) | Yes | Internally implemented as `reduceByKey(_ => 1)` — costs a full shuffle | 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
+## 💻 Code Examples 
 
 ### Example 1: MapReduce Word Count vs Spark Word Count — Illuminating the DAG
 
@@ -150,7 +151,7 @@ word_counts.explain(mode="formatted")
 # +- *(1) Generate explode(split(value#0, , -1)), ...
 
 # Step 4: Action — THIS triggers job submission to DAGScheduler
-word_counts.write.mode("overwrite").parquet("hdfs:///output/word_counts") [Ref: 464](spark_book.pdf#page=464)
+word_counts.write.mode("overwrite").parquet("hdfs:///output/word_counts") 
 ```
 
 > **Mastery Note:** The `explain(mode="formatted")` output reveals Catalyst's most important optimization here: `HashAggregate` appears **twice** — once as `partial_sum` on the mapper side (Stage 1, no shuffle) and once as the final `sum` on the reducer side (Stage 2, post-shuffle). This is **partial aggregation** (analogous to a Combiner in MapReduce), and Catalyst inserts it automatically for declarative aggregations. In the MapReduce model, you had to manually implement a `Combiner` class. Also notice `*(1)` — the asterisk prefix signals that this operator participates in **Whole-Stage Code Generation**: the filter, generate, and partial aggregation are fused into a single compiled JVM method with no virtual dispatch per row, delivering 2–5× throughput over interpreted execution.

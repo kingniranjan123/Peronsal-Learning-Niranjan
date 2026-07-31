@@ -1,16 +1,17 @@
 # 🔥 Master Class: Transformations — Lazy vs Eager, Narrow vs Wide, and DAG Construction
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 A transformation in Apache Spark is any operation that produces a new Dataset or RDD from an existing one without immediately executing any computation. The decisive design choice that separates Spark from MapReduce is **lazy evaluation**: when you call `map`, `filter`, `flatMap`, `groupBy`, or `join` on a Dataset, Spark records the intended operation as a node in a **Directed Acyclic Graph (DAG)** but moves no data and executes no JVM bytecode for data processing. Only when a downstream **action** — such as `collect`, `count`, `save`, or `foreach` — is invoked does the DAGScheduler compile the accumulated logical plan into physical stages and submit tasks to executors.
 
 This deferred execution model exists for a critical engineering reason: it gives the Catalyst optimizer a complete, global view of the computation before any byte is read from storage. Catalyst can reorder filters, collapse projections, eliminate redundant shuffles, and inject predicate pushdown rules precisely because no transformation has yet committed to a physical execution path. The result is that a naively written chain of ten transformations often executes faster than a hand-optimized two-step MapReduce job, because Catalyst sees the whole picture at once.
 
-Understanding transformations also means understanding their **cost boundary**: the distinction between *narrow* and *wide* transformations is the single most important factor governing shuffle I/O, stage boundaries, task scheduling overhead, and out-of-memory failures in production Spark jobs. [Ref: 451](spark_book.pdf#page=451)
+Understanding transformations also means understanding their **cost boundary**: the distinction between *narrow* and *wide* transformations is the single most important factor governing shuffle I/O, stage boundaries, task scheduling overhead, and out-of-memory failures in production Spark jobs. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ Wide transformations — `groupBy`, `join` (sort-merge or shuffle-hash variants)
 
 The **ShuffleWriter** serializes rows using either Kryo (if configured via `spark.serializer=org.apache.spark.serializer.KryoSerializer`) or Java serialization (the default, which is 3–10× slower and produces 2–5× larger payloads). Every wide transformation is therefore a candidate for serialization tuning.
 
-```
+```scala
 Driver JVM
 ┌──────────────────────────────────────────────────────────┐
 │ Unresolved Logical Plan │
@@ -58,7 +59,7 @@ Executor JVM (per Worker Node)
 │ │ groupBy agg │ │ groupBy agg │ │
 │ │ [heap/UnsafeRow] [heap/UnsafeRow] │
 │ └──────────────┘ └──────────────┘ │
-└──────────────────────────────────────────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
+└──────────────────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -69,25 +70,25 @@ Executor JVM (per Worker Node)
 
 - **SortShuffleManager:** The default shuffle implementation since Spark 1.2. On the map side, it sorts records by partition ID using Tungsten's `UnsafeExternalSorter`, which spills to disk when the sort buffer exceeds `spark.shuffle.spill.numElementsForceSpillThreshold`. On the reduce side, blocks are merged via an iterator-based merge sort. The alternative `BypassMergeSortShuffleManager` skips sorting when the number of reduce partitions is below `spark.shuffle.sort.bypassMergeThreshold` (default 200).
 
-- **Tungsten UnsafeRow:** The binary row format used throughout execution. Rows are stored in raw memory (on-heap or off-heap) as a fixed-length null bitset followed by fixed-length fields and a variable-length section. Comparisons, hashing, and copies operate directly on raw bytes via `sun.misc.Unsafe`, bypassing object deserialization entirely and enabling SIMD-friendly memory access patterns. [Ref: 470](spark_book.pdf#page=470)
+- **Tungsten UnsafeRow:** The binary row format used throughout execution. Rows are stored in raw memory (on-heap or off-heap) as a fixed-length null bitset followed by fixed-length fields and a variable-length section. Comparisons, hashing, and copies operate directly on raw bytes via `sun.misc.Unsafe`, bypassing object deserialization entirely and enabling SIMD-friendly memory access patterns. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Lazy Evaluation Is Not Free — The Hidden Cost of Re-computation
 
 Lazy evaluation means that every time an **action** is called on an un-cached Dataset, Spark re-executes the entire lineage from scratch. A common anti-pattern is calling `count()` followed by `show()` on the same complex Dataset: Spark runs the full transformation chain twice. The fix is `cache()` or `persist(StorageLevel.MEMORY_AND_DISK_SER)` between the two actions. The failure mode is subtle: in a streaming or iterative ML workload, un-cached DataFrames that are referenced multiple times in a loop can trigger exponential recomputation, turning an O(n) algorithm into O(n²) in terms of tasks submitted.
 
-The Spark UI's SQL tab will show duplicate plan subtrees as separate query IDs, which is the diagnostic signal. Cache aggressively at reuse points, verify with `df.storageLevel`, and unpersist when the data is no longer needed to reclaim executor memory. A Dataset that is `.persist()`'d but never `.unpersist()`'d will eventually evict other cached partitions via LRU eviction in the `BlockManager`, causing unexpected recomputation elsewhere in the application. [Ref: 459](spark_book.pdf#page=459)
+The Spark UI's SQL tab will show duplicate plan subtrees as separate query IDs, which is the diagnostic signal. Cache aggressively at reuse points, verify with `df.storageLevel`, and unpersist when the data is no longer needed to reclaim executor memory. A Dataset that is `.persist()`'d but never `.unpersist()`'d will eventually evict other cached partitions via LRU eviction in the `BlockManager`, causing unexpected recomputation elsewhere in the application. 
 
 ### Wide Transformations and the Shuffle Partition Trap
 
 `spark.sql.shuffle.partitions` defaults to **200**, which is fine for a 10 GB dataset but catastrophically wrong at both extremes. At small scale (< 1 GB), 200 shuffle tasks means 200 tiny output files and 200 task-launch round-trips to the Driver, creating scheduling overhead that can exceed computation time by 10×. At large scale (> 1 TB), 200 partitions means each shuffle partition holds 5 GB of data, which will spill to disk repeatedly under the default 0.6 `spark.memory.fraction` and trigger `java.lang.OutOfMemoryError: GC overhead limit exceeded` in the TaskMemoryManager.
 
-The correct formula is to target 100–200 MB per shuffle partition. At 1 TB with 200 MB targets, set `spark.sql.shuffle.partitions = 5120`. Spark 3.0+ introduced **Adaptive Query Execution (AQE)**, which dynamically coalesces shuffle partitions at runtime using `spark.sql.adaptive.coalescePartitions.enabled=true`, largely automating this tuning. Without AQE, the misconfigured shuffle partition count is the #1 source of both OOM errors and inexplicable slowness in production Spark jobs. [Ref: 464](spark_book.pdf#page=464)
+The correct formula is to target 100–200 MB per shuffle partition. At 1 TB with 200 MB targets, set `spark.sql.shuffle.partitions = 5120`. Spark 3.0+ introduced **Adaptive Query Execution (AQE)**, which dynamically coalesces shuffle partitions at runtime using `spark.sql.adaptive.coalescePartitions.enabled=true`, largely automating this tuning. Without AQE, the misconfigured shuffle partition count is the #1 source of both OOM errors and inexplicable slowness in production Spark jobs. 
 
---- [Ref: 471](spark_book.pdf#page=471)
+---
 
 ## 📊 Performance Characteristics
 
@@ -100,11 +101,11 @@ The correct formula is to target 100–200 MB per shuffle partition. At 1 TB wit
 | `join` (SortMerge) | O(n log n) | Yes | Wide; both sides sorted and merged; requires full shuffle of both datasets; dominant cost in multi-table pipelines |
 | `join` (Broadcast) | O(n) | No | Narrow after broadcast; the small table is serialized and sent to every executor once via `TorrentBroadcast`; threshold: `spark.sql.autoBroadcastJoinThreshold` |
 | `distinct` | O(n log n) | Yes | Internally a `groupBy` on all columns; consider `dropDuplicates(subset)` to limit the grouping key and reduce shuffle volume |
-| `repartition(n)` | O(n) | Yes | Full round-robin shuffle to exactly n partitions; use `coalesce(n)` (narrow) when reducing partition count to avoid a shuffle | [Ref: 453](spark_book.pdf#page=453)
+| `repartition(n)` | O(n) | Yes | Full round-robin shuffle to exactly n partitions; use `coalesce(n)` (narrow) when reducing partition count to avoid a shuffle | 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
+## 💻 Code Examples 
 
 ### Example 1: Narrow Transformation Chain — Catalyst Pipeline and Predicate Pushdown
 
@@ -149,7 +150,7 @@ val enriched = projected
 enriched.show(20, truncate = false)
 
 // Examine the physical plan to verify predicate pushdown and column pruning
-enriched.explain(mode = "extended") // Look for "PushedFilters" and "ReadSchema" in the output [Ref: 469](spark_book.pdf#page=469)
+enriched.explain(mode = "extended") // Look for "PushedFilters" and "ReadSchema" in the output 
 ```
 
 > **Mastery Note:** When you run `enriched.explain("extended")`, look for `PushedFilters: [IsNotNull(event_date), GreaterThanOrEqual(event_date,2024-06-01), LessThan(event_date,2024-07-01)]` inside the `FileScan parquet` node — this confirms the filter has been pushed below the scan operator. The `ReadSchema` field will list only the three selected columns, confirming ColumnPruning. Together, these two Catalyst rules can reduce physical I/O by 95%+ on a 50-column dataset filtered to 5% of rows. A senior engineer always validates these with `explain` before running production jobs on large datasets, because a single missing pushdown can turn a 2-minute job into a 45-minute scan.

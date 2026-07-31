@@ -1,16 +1,17 @@
 # 🔥 Master Class: Running Spark with Docker
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Apache Spark was designed in an era of bare-metal clusters and static resource managers like YARN and Mesos. Docker fundamentally disrupts that model by abstracting the host OS into isolated, reproducible, portable units of compute. When you containerize Spark, you gain three critical properties that bare-metal deployments cannot provide: **environment reproducibility** (the exact same JVM version, native libraries, and Python environment on every node), **resource isolation** (Linux cgroups enforce hard CPU and memory limits so one runaway executor cannot starve another), and **deployment portability** (the same image runs on a developer's laptop, a CI pipeline, and a production Kubernetes cluster without change).
 
 The challenge is that Spark's execution model — a long-lived JVM Driver coordinating many short-lived Executor JVMs — does not map trivially onto Docker's single-process-per-container philosophy. Each Spark executor is a full JVM process that allocates heap memory (controlled by `spark.executor.memory`), off-heap memory (Tungsten's `sun.misc.Unsafe` allocations via `spark.memory.offHeap.size`), and shuffle spill disk. When cgroup memory limits are set incorrectly, the Linux kernel OOM killer terminates the container silently, producing a cryptic `ExecutorLostFailure` in the Driver with no stack trace. Getting the interplay between JVM heap, Tungsten off-heap, overhead memory (`spark.executor.memoryOverhead`), and the container's cgroup limit right is the single most common production failure point.
 
-Docker also introduces a layered filesystem (OverlayFS on modern Linux kernels) that has direct implications for Spark's shuffle and spill I/O. Shuffle data written to a container's writable layer goes through OverlayFS copy-on-write semantics, adding latency on every first write. Production deployments always mount shuffle directories as Docker volumes backed by a host path, bypassing OverlayFS entirely and recovering the full sequential write throughput of the underlying disk. [Ref: 451](spark_book.pdf#page=451)
+Docker also introduces a layered filesystem (OverlayFS on modern Linux kernels) that has direct implications for Spark's shuffle and spill I/O. Shuffle data written to a container's writable layer goes through OverlayFS copy-on-write semantics, adding latency on every first write. Production deployments always mount shuffle directories as Docker volumes backed by a host path, bypassing OverlayFS entirely and recovering the full sequential write throughput of the underlying disk. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ Spark's Tungsten engine allocates memory in two zones: the JVM heap (managed by 
 
 Image layering strategy directly impacts cluster startup latency. Docker images are built in layers. If the JRE base layer, the Spark distribution layer, and the application JAR layer are all in one `RUN` command, any change to the application JAR invalidates and re-downloads the entire multi-gigabyte image on every worker node. The correct approach is to separate layers by change frequency: `FROM openjdk:17-slim` → `ADD spark-3.x.tgz` → `COPY app.jar`. The first two layers are cached permanently on workers; only the 50MB application JAR layer is re-pulled on each deployment, reducing cold-start time from 10+ minutes to under 30 seconds.
 
-```
+```scala
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ Docker Host (Linux Kernel) │
 │ │
@@ -52,7 +53,7 @@ Image layering strategy directly impacts cluster startup latency. Docker images 
 │ │ Layer 2 (RO): spark-3.5.0 distribution ← Cached on workers │ │
 │ │ Layer 1 (RO): openjdk:17-slim base ← Cached permanently │ │
 │ └──────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘ [Ref: 462](spark_book.pdf#page=462)
+└─────────────────────────────────────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -60,25 +61,25 @@ Image layering strategy directly impacts cluster startup latency. Docker images 
 - **cgroup v2 Memory Controller:** Enforces `memory.max` (hard limit that triggers OOM kill) and `memory.high` (soft limit that triggers memory reclaim). Spark's total container footprint must include JVM heap, metaspace, off-heap Tungsten buffers, and the JVM's internal thread stacks (~512KB per thread × executor cores).
 - **UseContainerSupport (JVM flag):** Enabled by default in Java 8u191+. Makes the JVM query `/sys/fs/cgroup/memory/memory.limit_in_bytes` (cgroup v1) or `/sys/fs/cgroup/memory.max` (cgroup v2) to correctly size GC ergonomics, heap defaults, and CPU thread pools relative to container limits, not host limits.
 - **OverlayFS Writable Layer:** Each container has a private copy-on-write writable layer managed by OverlayFS. First writes to a file require copying the page from the lower read-only layer, adding latency. Shuffle spill data must be redirected to host-mounted volumes (`-v /mnt/fast-disk:/spark/shuffle`) to avoid this penalty entirely.
-- **Docker BuildKit Layer Cache:** Each `RUN`, `COPY`, and `ADD` instruction in a Dockerfile creates a new immutable layer. BuildKit caches layers by their instruction hash; changing a later instruction only invalidates layers from that point forward, making image rebuild and distribution to workers proportional to the size of changed layers only. [Ref: 469](spark_book.pdf#page=469)
+- **Docker BuildKit Layer Cache:** Each `RUN`, `COPY`, and `ADD` instruction in a Dockerfile creates a new immutable layer. BuildKit caches layers by their instruction hash; changing a later instruction only invalidates layers from that point forward, making image rebuild and distribution to workers proportional to the size of changed layers only. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Memory Overhead Misconfiguration Trap
 
 The single most dangerous Spark-on-Docker misconfiguration is setting the Docker container memory limit equal to `spark.executor.memory`. When `spark.executor.memory=4g`, the JVM heap is 4GB. However, the JVM itself requires additional native memory for metaspace (class metadata, ~200–400MB for Spark's classpath), code cache (JIT-compiled native code, ~256MB), and direct NIO buffers. Spark adds `spark.executor.memoryOverhead` (default: `max(executor_memory * 0.1, 384MB)`) to account for this. If `offHeap` is enabled, Tungsten claims another `spark.memory.offHeap.size` bytes of native memory. All of this counts toward the cgroup limit.
 
-The failure is silent and lethal: the Linux kernel OOM killer sends `SIGKILL` to the container, bypassing the JVM's shutdown hooks. The Spark Driver receives `ExecutorLostFailure(executor 2, exit code: 137)`. Exit code 137 = 128 + 9 (SIGKILL), which is the canonical signature of a cgroup OOM kill. The correct formula: **Container limit = `executor.memory` + `memoryOverhead` + `offHeap.size` + 256MB (code cache buffer)**. For a 4g executor with defaults and no off-heap: container limit = 4g + 768MB + 256MB = **~5.1GB**. [Ref: 459](spark_book.pdf#page=459)
+The failure is silent and lethal: the Linux kernel OOM killer sends `SIGKILL` to the container, bypassing the JVM's shutdown hooks. The Spark Driver receives `ExecutorLostFailure(executor 2, exit code: 137)`. Exit code 137 = 128 + 9 (SIGKILL), which is the canonical signature of a cgroup OOM kill. The correct formula: **Container limit = `executor.memory` + `memoryOverhead` + `offHeap.size` + 256MB (code cache buffer)**. For a 4g executor with defaults and no off-heap: container limit = 4g + 768MB + 256MB = **~5.1GB**. 
 
 ### Network Mode and Spark's Internal Communication
 
 Spark Executors and the Driver communicate over RPC (Netty-based, port 7078 by default) and must be able to resolve each other's hostnames bidirectionally. Docker's default bridge network uses NAT, and containers advertise their internal Docker network IPs to the Driver. If the Driver is on the host network or in a different subnet, Executor RPC connections fail with `org.apache.spark.SparkException: Could not find CoarseGrainedSchedulerBackend` after the `spark.network.timeout` (default 120s).
 
-In docker-compose multi-container setups, all Spark services must be on the same user-defined bridge network. User-defined networks provide DNS resolution by container name, so `spark://spark-master:7077` resolves correctly from any executor container. The `SPARK_LOCAL_IP` and `SPARK_PUBLIC_DNS` environment variables in the Spark container must be set to the container's network alias (not `localhost` or `127.0.0.1`) so that Executors advertise an address the Driver can actually reach. Misconfigurations here produce tasks that appear scheduled in the Spark UI but never produce output. [Ref: 463](spark_book.pdf#page=463)
+In docker-compose multi-container setups, all Spark services must be on the same user-defined bridge network. User-defined networks provide DNS resolution by container name, so `spark://spark-master:7077` resolves correctly from any executor container. The `SPARK_LOCAL_IP` and `SPARK_PUBLIC_DNS` environment variables in the Spark container must be set to the container's network alias (not `localhost` or `127.0.0.1`) so that Executors advertise an address the Driver can actually reach. Misconfigurations here produce tasks that appear scheduled in the Spark UI but never produce output. 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 📊 Performance Characteristics
 
@@ -87,11 +88,11 @@ In docker-compose multi-container setups, all Spark services must be on the same
 | Container cold start | O(image_layers × pull_size) | No | Cached layers skip download; only new layers are pulled. Target <30s with proper layering. |
 | OverlayFS first write | O(page_size) | No | Copy-on-write penalty on first write to any page. Shuffle dirs must use host volumes. |
 | cgroup memory reclaim (`memory.high`) | O(working_set) | No | Triggers `kswapd` to reclaim page cache; adds latency spikes to Tungsten sort phases. |
-| Cross-container shuffle | O(records × serialized_size) | Yes | Same as bare-metal if host-network or host volumes used; 15-30% slower on bridge NAT due to iptables overhead. | [Ref: 453](spark_book.pdf#page=453)
+| Cross-container shuffle | O(records × serialized_size) | Yes | Same as bare-metal if host-network or host volumes used; 15-30% slower on bridge NAT due to iptables overhead. | 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
+## 💻 Code Examples 
 
 ### Example 1: Production-Grade Spark Dockerfile with Correct Layer Ordering
 
@@ -154,7 +155,7 @@ VOLUME ["/opt/spark/work", "/tmp/spark-shuffle"]
 # tini as PID 1 ensures correct signal handling; without it, SIGTERM from
 # 'docker stop' is not forwarded to the JVM and Spark cannot deregister executors.
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"] [Ref: 464](spark_book.pdf#page=464)
+CMD ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"] 
 ```
 
 > **Mastery Note:** The multi-stage build ensures the Maven compiler and full JDK never ship in the runtime image, reducing the final image from ~700MB to ~380MB. The `tini` init process as PID 1 is non-negotiable in production: without it, `docker stop` sends SIGTERM to the Spark JVM, which is intercepted by tini and forwarded correctly, allowing the executor to deregister from the Driver, persist shuffle data markers, and release BlockManager resources gracefully. Without tini, Docker waits 10 seconds (the default stop timeout) then sends SIGKILL, causing the Driver to mark all tasks on that executor as failed and re-submit them. The `VOLUME` declarations ensure that when orchestration tools mount host paths for shuffle directories, the intent is explicit and documented.

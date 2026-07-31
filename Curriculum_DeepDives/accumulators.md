@@ -1,16 +1,17 @@
 # 🔥 Master Class: Accumulators
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Accumulators are Spark's sanctioned mechanism for aggregating values from executor JVMs back to the driver JVM — a one-way, write-only channel from the distributed execution plane to the coordination plane. They exist because Spark's closure serialization model makes it impossible for executors to safely mutate shared driver-side state: closures are serialized, shipped to workers, and executed in isolated JVM processes. Any driver-side variable captured in a closure is copied, not referenced, so mutations to that copy are invisible to the driver. Accumulators break this barrier in a controlled, fault-tolerant way by attaching update aggregation to Spark's task lifecycle.
 
 The original `Accumulator` class (deprecated since Spark 2.0) has been completely replaced by the `AccumulatorV2[IN, OUT]` abstract class, which enforces a disciplined contract: you must implement `add`, `merge`, `reset`, `isZero`, `copy`, and `value`. This API decouples the type of value being added (`IN`) from the type being read back on the driver (`OUT`), enabling rich aggregation structures like histograms, sets of strings, or nested maps — not just numeric summation. Every `AccumulatorV2` must be registered with the `SparkContext` before use so that the `DAGScheduler` and `TaskScheduler` can track it as part of the task result metadata.
 
-Accumulators are natively supported in Spark UI under the "Stages" tab, where per-task delta contributions are displayed alongside task metrics like shuffle read/write bytes and GC time. This makes them a first-class telemetry primitive — but only when used correctly. Misuse leads to silent double-counting, phantom updates, and values that appear correct in development but are corrupted under speculative execution or stage retries in production. [Ref: 451](spark_book.pdf#page=451)
+Accumulators are natively supported in Spark UI under the "Stages" tab, where per-task delta contributions are displayed alongside task metrics like shuffle read/write bytes and GC time. This makes them a first-class telemetry primitive — but only when used correctly. Misuse leads to silent double-counting, phantom updates, and values that appear correct in development but are corrupted under speculative execution or stage retries in production. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 463](spark_book.pdf#page=463)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -20,7 +21,7 @@ Inside each executor, each task thread maintains a `TaskContext` which holds a `
 
 This architecture means the driver's accumulator value is the merge of all successfully committed task deltas, and the merge happens entirely on the driver JVM heap — no shuffle, no disk, no distributed coordination. The cost is proportional to the number of tasks and the size of each delta, not the size of the entire dataset. However, this also means two critical constraints apply: accumulators are **not** fault-tolerant counters (failed tasks may apply their delta multiple times due to retries), and accumulators updated inside transformations (lazy operations) are only executed when an action forces computation — the "lazy semantics trap" that silently produces zero values if the developer reads the accumulator before calling `.count()` or `.collect()`.
 
-```
+```scala
 Driver JVM Executor JVM (Worker Node)
 ┌─────────────────────────────────┐ ┌──────────────────────────────────────┐
 │ SparkContext │ │ Task Thread (Partition N) │
@@ -36,7 +37,7 @@ Driver JVM Executor JVM (Worker Node)
 │ └─────────────────────────┘ │ └──────────────────────────────────────┘
 │ │
 │ accumulator.value │ ← Only readable on driver, after action completes
-└─────────────────────────────────┘ [Ref: 470](spark_book.pdf#page=470)
+└─────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -47,25 +48,25 @@ Driver JVM Executor JVM (Worker Node)
 
 - **`DirectTaskResult` vs `IndirectTaskResult`:** For small results, Spark returns a `DirectTaskResult` containing serialized accumulator deltas inline. For large results exceeding `spark.driver.maxResultSize` (default 1GB), it returns an `IndirectTaskResult` pointing to a BlockManager block. Accumulator deltas are always included in `DirectTaskResult` even for indirect result paths.
 
-- **Speculative Execution Hazard:** When `spark.speculation=true`, Spark may launch duplicate copies of slow tasks. If both the original and speculative task complete, the driver applies *both* deltas — causing double-counting. The `DAGScheduler` kills the slower task but does not retroactively subtract its already-merged delta. [Ref: 452](spark_book.pdf#page=452)
+- **Speculative Execution Hazard:** When `spark.speculation=true`, Spark may launch duplicate copies of slow tasks. If both the original and speculative task complete, the driver applies *both* deltas — causing double-counting. The `DAGScheduler` kills the slower task but does not retroactively subtract its already-merged delta. 
 
---- [Ref: 459](spark_book.pdf#page=459)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 464](spark_book.pdf#page=464)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Lazy Semantics Trap: Reading Before the Action
 
 The most pervasive accumulator bug in production Spark code is reading the accumulator value before the action that triggers its computation has finished. Accumulators live inside transformations — `map`, `filter`, `flatMap` — which are *lazy* by design. When you write `rdd.map(x => { acc.add(1); x })`, no code executes. The DAG is merely extended. The accumulator increments happen only when a downstream action (`count`, `collect`, `saveAsTextFile`) forces evaluation of that stage. Reading `acc.value` after defining the transformation but before calling the action returns zero every time, with no warning, no exception, and no indication that anything went wrong.
 
-A subtler variant of this trap occurs with multi-action pipelines. If you call `.cache()` on an RDD and then trigger two successive actions, the accumulator is only updated during the *first* action (the one that populates the cache). The second action reads from the cache and never touches the accumulator's `add()` path. In a DataFrame pipeline, this manifests when you call `.persist()` and then run both `.count()` and `.show()` — the accumulator will reflect only the records scanned during whichever action materialized the cache first. [Ref: 455](spark_book.pdf#page=455)
+A subtler variant of this trap occurs with multi-action pipelines. If you call `.cache()` on an RDD and then trigger two successive actions, the accumulator is only updated during the *first* action (the one that populates the cache). The second action reads from the cache and never touches the accumulator's `add()` path. In a DataFrame pipeline, this manifests when you call `.persist()` and then run both `.count()` and `.show()` — the accumulator will reflect only the records scanned during whichever action materialized the cache first. 
 
 ### Double-Counting Under Task Retries and Stage Recomputation
 
 Accumulators are **not idempotent**. When a task fails and is retried, Spark launches a new task attempt. If the original failed task had already committed partial work and shipped its delta back to the driver before the failure was detected, that delta is already merged into the canonical accumulator value. The retry task will then add its own delta on top. For transient failures (executor lost, node eviction on cloud spot instances), this produces systematically inflated accumulator values — a counter tracking "records processed" may overcount by 5–15% in a cluster with aggressive spot-instance preemption.
 
-The only reliable safeguard is to treat accumulator values as *approximate* telemetry, not exact counts, in any environment where task retries can occur. For exact counting semantics under failures, use a distributed aggregate (`df.count()`, `rdd.aggregate()`, or a database write with idempotent upsert semantics). The Spark documentation explicitly states: "For accumulator updates performed inside actions only, Spark guarantees that each task's update will only be applied once." Transformations carry no such guarantee. This asymmetry between actions and transformations is not enforced by the API — it is a runtime contract the developer must uphold. [Ref: 461](spark_book.pdf#page=461)
+The only reliable safeguard is to treat accumulator values as *approximate* telemetry, not exact counts, in any environment where task retries can occur. For exact counting semantics under failures, use a distributed aggregate (`df.count()`, `rdd.aggregate()`, or a database write with idempotent upsert semantics). The Spark documentation explicitly states: "For accumulator updates performed inside actions only, Spark guarantees that each task's update will only be applied once." Transformations carry no such guarantee. This asymmetry between actions and transformations is not enforced by the API — it is a runtime contract the developer must uphold. 
 
---- [Ref: 469](spark_book.pdf#page=469)
+---
 
 ## 📊 Performance Characteristics
 

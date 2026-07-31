@@ -1,13 +1,14 @@
 # 🔥 Master Class: Double Rdd Functions
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 In the ecosystem of Apache Spark, processing numerical data at a massive scale introduces a distinct set of mathematical and computational challenges. The `DoubleRDDFunctions` class is Spark's elegant, built-in solution to these challenges. Rather than forcing engineers to write complex, error-prone map-reduce logic for basic statistical operations, Spark exposes an implicit wrapper around any `RDD[Double]` (and by extension, other numeric types). This wrapper seamlessly injects advanced mathematical methods—such as `mean`, `variance`, `stdev`, `histogram`, and `stats`—directly into the foundational RDD API.
 
-The existence of `DoubleRDDFunctions` is rooted in the necessity for numerical stability and distributed efficiency. When calculating statistics like variance over billions of data points, naive algorithms (such as the standard sum of squares) fall victim to catastrophic cancellation and floating-point overflow. Spark solves this by implementing distributed, numerically stable algorithms under the hood, wrapped in an API that feels entirely native to the developer. Understanding the internal mechanics of this class is the bridge between writing functional Spark code and writing highly optimized, production-grade numerical pipelines. This Master Class deconstructs those mechanics, exposing the Catalyst and Tungsten interplay that makes these operations resilient at scale. [Ref: 451](spark_book.pdf#page=451)
+The existence of `DoubleRDDFunctions` is rooted in the necessity for numerical stability and distributed efficiency. When calculating statistics like variance over billions of data points, naive algorithms (such as the standard sum of squares) fall victim to catastrophic cancellation and floating-point overflow. Spark solves this by implementing distributed, numerically stable algorithms under the hood, wrapped in an API that feels entirely native to the developer. Understanding the internal mechanics of this class is the bridge between writing functional Spark code and writing highly optimized, production-grade numerical pipelines. This Master Class deconstructs those mechanics, exposing the Catalyst and Tungsten interplay that makes these operations resilient at scale. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -17,7 +18,7 @@ When a function like `stats()` is invoked, Spark does not simply ship raw data t
 
 Once each partition has computed its local `StatCounter`, Spark must merge these statistics. Rather than a naive `reduce` operation which could overwhelm the Driver JVM's heap (causing an OutOfMemory error on massive clusters), Spark employs a `treeAggregate` strategy. `treeAggregate` performs multi-level partial aggregations on the executors themselves. It combines `StatCounter` objects in a tree-like hierarchy before sending the final, highly compressed payload to the driver. The network serialization of these objects is tightly optimized via Kryo, ensuring that the mathematical state traversing the network is minimal in binary footprint.
 
-```
+```scala
 Driver JVM Worker Executor JVM (Partition 0) Worker Executor JVM (Partition 1)
 ┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐
 │ SparkContext │────┐ │ TaskContext │ │ TaskContext │
@@ -33,26 +34,26 @@ Driver JVM Worker Executor JVM (Partition 0) Worker Executor JVM (Partition 1)
  ┌───────┴───────┐ ┌───────▼───────┐
  │ Result Tuple │◀──────────────────│ treeAggregate │ (Multi-level merge across executors)
  │ (mean, var,..)│ │ Shuffle/Merge │
- └───────────────┘ └───────────────┘ [Ref: 463](spark_book.pdf#page=463)
+ └───────────────┘ └───────────────┘ 
 ```
 
 ### Key Internal Components
 - **`StatCounter`:** The core state machine and foundational workhorse. It efficiently maintains statistical state during a single pass and provides a `merge` function to mathematically combine two `StatCounters` from different network partitions.
 - **Welford's Online Algorithm:** The mathematical bedrock of the `StatCounter`. It computes running variance and standard deviation incrementally, achieving high precision and bypassing the devastating precision loss common in naive variance formulas.
 - **`treeAggregate`:** A specialized Spark execution primitive that reduces data hierarchically. It prevents driver bottlenecks by combining partition results on the worker nodes in a tree structure, drastically reducing network I/O.
-- **Implicit Conversions:** The syntactic sugar injected via `SparkContext` that seamlessly exposes mathematical methods on standard numeric RDDs, blending distributed computing logic with fluid developer ergonomics. [Ref: 470](spark_book.pdf#page=470)
+- **Implicit Conversions:** The syntactic sugar injected via `SparkContext` that seamlessly exposes mathematical methods on standard numeric RDDs, blending distributed computing logic with fluid developer ergonomics. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Numerical Stability & Catastrophic Cancellation
-A ubiquitous pitfall among junior engineers is attempting to compute variance or standard deviation manually using map-reduce paradigms. They typically implement the textbook formula: summing the elements and summing the squares across partitions, then doing the math on the driver. In a distributed environment processing billions of large floating-point numbers, this approach inevitably triggers "catastrophic cancellation"—a massive loss of precision when subtracting two very large, nearly equal floating-point numbers, often resulting in negative variances. `DoubleRDDFunctions` circumvents this entirely by deploying Welford's algorithm within the `StatCounter`. This algorithm dynamically updates the mean and variance incrementally as each element is processed. It guarantees absolute numerical stability regardless of the dataset's scale or the magnitude of the floating-point values being digested, ensuring your analytics remain mathematically sound. [Ref: 459](spark_book.pdf#page=459)
+A ubiquitous pitfall among junior engineers is attempting to compute variance or standard deviation manually using map-reduce paradigms. They typically implement the textbook formula: summing the elements and summing the squares across partitions, then doing the math on the driver. In a distributed environment processing billions of large floating-point numbers, this approach inevitably triggers "catastrophic cancellation"—a massive loss of precision when subtracting two very large, nearly equal floating-point numbers, often resulting in negative variances. `DoubleRDDFunctions` circumvents this entirely by deploying Welford's algorithm within the `StatCounter`. This algorithm dynamically updates the mean and variance incrementally as each element is processed. It guarantees absolute numerical stability regardless of the dataset's scale or the magnitude of the floating-point values being digested, ensuring your analytics remain mathematically sound. 
 
 ### The Multi-Action Anti-Pattern
-Because `DoubleRDDFunctions` exposes convenient, standalone methods like `rdd.mean()`, `rdd.max()`, and `rdd.stdev()`, developers frequently fall into the trap of calling these sequentially on the same dataset. What they fail to realize is that the RDD API lacks the Catalyst optimizer's holistic query planning. Every single one of these method calls triggers a completely independent Spark job and a full Directed Acyclic Graph (DAG) execution. If an RDD is not cached, calling `mean()`, then `max()`, and then `variance()` will read the raw data from storage three distinct times, tripling the I/O bottleneck and devastating performance. The elite engineering solution is to invoke the `rdd.stats()` method, which performs a singular, unified pass over the data. It computes all statistical metrics simultaneously using one `StatCounter` aggregation, yielding massive performance gains. [Ref: 464](spark_book.pdf#page=464)
+Because `DoubleRDDFunctions` exposes convenient, standalone methods like `rdd.mean()`, `rdd.max()`, and `rdd.stdev()`, developers frequently fall into the trap of calling these sequentially on the same dataset. What they fail to realize is that the RDD API lacks the Catalyst optimizer's holistic query planning. Every single one of these method calls triggers a completely independent Spark job and a full Directed Acyclic Graph (DAG) execution. If an RDD is not cached, calling `mean()`, then `max()`, and then `variance()` will read the raw data from storage three distinct times, tripling the I/O bottleneck and devastating performance. The elite engineering solution is to invoke the `rdd.stats()` method, which performs a singular, unified pass over the data. It computes all statistical metrics simultaneously using one `StatCounter` aggregation, yielding massive performance gains. 
 
---- [Ref: 453](spark_book.pdf#page=453)
+---
 
 ## 📊 Performance Characteristics
 
@@ -61,11 +62,11 @@ Because `DoubleRDDFunctions` exposes convenient, standalone methods like `rdd.me
 | `stats()` | O(N) | No | Best practice. Computes mean, variance, min, max, count in a single optimal pass using `treeAggregate`. |
 | `histogram(Int)` | O(N) | No | Computes histogram with evenly spaced buckets. Requires two passes (min/max, then counts) but uses O(1) bucket resolution per element. |
 | `histogram(Array)` | O(N * log B) | No | Uneven buckets. Requires only one pass. Uses binary search (log B) to find the correct bucket for each element. |
-| `mean() / stdev()` | O(N) | No | Under the hood, this evaluates the entire RDD via `stats()`. Repeated calls multiply execution time linearly if data is not cached. | [Ref: 457](spark_book.pdf#page=457)
+| `mean() / stdev()` | O(N) | No | Under the hood, this evaluates the entire RDD via `stats()`. Repeated calls multiply execution time linearly if data is not cached. | 
 
---- [Ref: 461](spark_book.pdf#page=461)
+---
 
-## 💻 Code Examples [Ref: 469](spark_book.pdf#page=469)
+## 💻 Code Examples 
 
 ### Example 1: The Multi-Action Anti-Pattern vs The Single-Pass Mastery
 

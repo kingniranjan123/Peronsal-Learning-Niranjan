@@ -1,16 +1,17 @@
 # 🔥 Master Class: Spark ML Library
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Apache Spark's ML library (`spark.ml`) is a DataFrame-based machine learning framework built on top of the Spark SQL engine, designed to run distributed training, feature engineering, and model evaluation pipelines across clusters of hundreds of nodes. Unlike its predecessor `spark.mllib`, which operated on low-level RDDs, `spark.ml` treats every transformation and estimation as a first-class DataFrame operation, enabling seamless integration with Catalyst query optimization, Tungsten's binary execution engine, and Spark's unified data plane.
 
 The central abstraction is the **Pipeline**: a directed acyclic graph of `Transformer` and `Estimator` stages that converts raw input DataFrames into trained models through a single `fit()` call. Each `Estimator` stage (e.g., `StringIndexer`, `RandomForestClassifier`) learns parameters from the training data, while each `Transformer` (e.g., `Tokenizer`, `VectorAssembler`) applies a stateless mapping. When `Pipeline.fit()` is called, each stage is materialized in order, with intermediate DataFrames flowing through the Catalyst plan without necessarily being fully materialized to disk — the optimizer can collapse adjacent projections into a single physical stage.
 
-The library solves three critical production problems: reproducible preprocessing (by bundling feature engineering with the model into a single serializable artifact), scalable hyperparameter search (via `CrossValidator` and `TrainValidationSplit`), and lifecycle management (via `MLWriter`/`MLReader` and native MLflow integration). These primitives transform Spark from a batch ETL engine into a full ML platform. [Ref: 451](spark_book.pdf#page=451)
+The library solves three critical production problems: reproducible preprocessing (by bundling feature engineering with the model into a single serializable artifact), scalable hyperparameter search (via `CrossValidator` and `TrainValidationSplit`), and lifecycle management (via `MLWriter`/`MLReader` and native MLflow integration). These primitives transform Spark from a batch ETL engine into a full ML platform. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 462](spark_book.pdf#page=462)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ Hyperparameter tuning via `CrossValidator` is architecturally distinct. Given `k
 
 MLflow integration closes the experiment tracking loop. When `mlflow.spark.autolog()` is enabled, the MLflow PySpark flavor intercepts `Pipeline.fit()` calls via Python monkey-patching, logging all `ParamMap` entries as MLflow run parameters, training metrics as run metrics, and the full `PipelineModel` artifact to the configured `mlflow.set_tracking_uri()` artifact store. The model is serialized using `MLWriter` internally and wrapped in an MLflow model format that supports `python_function`, `spark`, and optionally `mleap` flavors for low-latency serving.
 
-```
+```scala
 Driver JVM Executor JVMs
 ┌──────────────────────────────────────┐ ┌───────────────────────────────────┐
 │ Pipeline.fit(trainDF) │ │ Task: Stage 0 (StringIndexer) │
@@ -45,7 +46,7 @@ Driver JVM Executor JVMs
 │ │ MLWriter → Parquet metadata │────┼──────────▶│ stages/2_StandardScalerModel/ │
 │ │ MLflow autolog → Run Params │ │ │ stages/3_GBTClassificationModel/ │
 │ └──────────────────────────────┘ │ └───────────────────────────────────┘
-└──────────────────────────────────────┘ [Ref: 469](spark_book.pdf#page=469)
+└──────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -56,25 +57,25 @@ Driver JVM Executor JVMs
 
 - **`BinaryClassificationEvaluator` / `MulticlassClassificationEvaluator`:** These evaluators compute metrics (AUC-ROC, F1, accuracy) over the predictions DataFrame using Spark aggregations — not local Python loops. This means evaluation scales linearly with data size, and metrics like AUC are computed via distributed trapezoid integration over sorted prediction scores, not by collecting predictions to the driver.
 
-- **`MLWriter` / `MLReader` (Persistence Layer):** The persistence layer uses a two-phase protocol: first writing a `metadata/` JSON directory with the class name, UID, Spark version, and parameter values, then writing stage-specific data directories containing the learned numeric parameters. This separation makes it trivial to inspect or patch model parameters without loading the full Spark model. [Ref: 452](spark_book.pdf#page=452)
+- **`MLWriter` / `MLReader` (Persistence Layer):** The persistence layer uses a two-phase protocol: first writing a `metadata/` JSON directory with the class name, UID, Spark version, and parameter values, then writing stage-specific data directories containing the learned numeric parameters. This separation makes it trivial to inspect or patch model parameters without loading the full Spark model. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Data Leakage Through Incorrect Pipeline Stage Ordering
 
 The most dangerous failure mode in Pipeline API usage is inadvertent data leakage when fit-transform stages that aggregate training statistics (e.g., `StringIndexer`, `StandardScaler`, `Imputer`) are applied *before* train/test splitting rather than *inside* the cross-validation loop. If you call `pipeline.fit(fullDataset)` before splitting, the `StandardScaler` has observed the test set's mean and standard deviation during fitting — an information leak that inflates evaluation metrics by 5–15% in typical tabular benchmarks, producing models that appear production-ready but degrade significantly in deployment.
 
-The correct pattern is to pass the raw (unsplit) training fold into `CrossValidator` or `TrainValidationSplit`, which internally calls `pipeline.fit(trainFold)` on each partition. This guarantees that every preprocessing `Estimator` in the pipeline is blind to validation and test data at all times. A practical sign of leakage is suspiciously high CV scores that do not reproduce on a held-out test set — check the Spark UI's job timeline to see whether a `.fit()` job ran over the full dataset before the CV loop. [Ref: 470](spark_book.pdf#page=470)
+The correct pattern is to pass the raw (unsplit) training fold into `CrossValidator` or `TrainValidationSplit`, which internally calls `pipeline.fit(trainFold)` on each partition. This guarantees that every preprocessing `Estimator` in the pipeline is blind to validation and test data at all times. A practical sign of leakage is suspiciously high CV scores that do not reproduce on a held-out test set — check the Spark UI's job timeline to see whether a `.fit()` job ran over the full dataset before the CV loop. 
 
 ### `CrossValidator` Parallelism and Driver OOM Under Large Parameter Grids
 
 `CrossValidator` with `parallelism > 1` submits multiple Spark jobs concurrently from the driver's Scala `ExecutionContext`. Each concurrent job materializes an intermediate DataFrame representing one fold — meaning `parallelism × folds` DataFrames can be simultaneously alive in executor BlockManagers. On a 64-node cluster running 5-fold CV with `parallelism=10`, this means 50 concurrent DataFrame materializations, each potentially occupying gigabytes of executor memory. The symptom is `java.lang.OutOfMemoryError: GC overhead limit exceeded` on executors or `SparkOutOfMemoryError` in the BlockManager.
 
-The practical limit for `parallelism` on most clusters is 2–4. Beyond that, the marginal speedup from concurrency is offset by executor memory pressure, GC pauses, and shuffle spill to disk. Profile the Spark UI's memory tab: if executor Storage Memory is above 80% during CV, reduce `parallelism`. Additionally, avoid caching the input DataFrame with `df.cache()` during CV unless the dataset fits fully in the executor's `spark.memory.storageFraction` allocation — otherwise the cache eviction during GBT tree building will cause repeated re-scans of the source data, negating the cache benefit entirely. [Ref: 455](spark_book.pdf#page=455)
+The practical limit for `parallelism` on most clusters is 2–4. Beyond that, the marginal speedup from concurrency is offset by executor memory pressure, GC pauses, and shuffle spill to disk. Profile the Spark UI's memory tab: if executor Storage Memory is above 80% during CV, reduce `parallelism`. Additionally, avoid caching the input DataFrame with `df.cache()` during CV unless the dataset fits fully in the executor's `spark.memory.storageFraction` allocation — otherwise the cache eviction during GBT tree building will cause repeated re-scans of the source data, negating the cache benefit entirely. 
 
---- [Ref: 459](spark_book.pdf#page=459)
+---
 
 ## 📊 Performance Characteristics
 
@@ -86,7 +87,7 @@ The practical limit for `parallelism` on most clusters is 2–4. Beyond that, th
 | `PipelineModel.transform()` | O(N) | No | Pure DataFrame projection/scoring; fully WSCG-compiled on executors |
 | `MLWriter.save()` | O(P) where P = parameters | No | Writes metadata as JSON + learned params as Parquet; fast even for large forests |
 | `MLReader.load()` | O(P) | No | Driver reads metadata JSON; stage Parquet is lazy-loaded per executor on first transform |
-| `CrossValidatorModel.avgMetrics` | O(k × n) | No | Metric aggregation is done driver-side over small float arrays | [Ref: 464](spark_book.pdf#page=464)
+| `CrossValidatorModel.avgMetrics` | O(k × n) | No | Metric aggregation is done driver-side over small float arrays | 
 
 ---
 

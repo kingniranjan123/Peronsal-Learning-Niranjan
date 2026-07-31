@@ -1,13 +1,14 @@
 # 🔥 Master Class: Saving Computation State
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 In distributed data processing, intermediate state computation can be exceptionally expensive, especially when evaluating iterative machine learning algorithms, complex graph traversals, or multi-branch data pipelines. Apache Spark employs a lazy evaluation model where transformations are strictly deferred until a terminal action is triggered. While this delayed execution empowers the Catalyst optimizer to perform holistic optimizations like whole-stage code generation and aggressive predicate pushdown across the entire execution plan, it also introduces a severe architectural vulnerability. By default, Spark will recompute the entire lineage graph from the source data for every single terminal action. Saving computation state—primarily through caching (persistence) and checkpointing—is the definitive mechanism for severing this redundant lineage and reusing expensive intermediate computations.
 
-Mastering how to persist data correctly is what separates junior data developers from elite Spark engineers. It is not merely about arbitrarily appending `.cache()` to a DataFrame; it involves a deep understanding of how the distributed BlockManager coordinates memory across the cluster topology. It requires analyzing the serialization overhead incurred by moving Java objects between the JVM heap and off-heap memory, and understanding how the Tungsten execution engine manages the lifecycle of cached data blocks. When applied with precision, saving state drastically reduces CPU cycles, network shuffles, and execution time. When applied improperly, it triggers catastrophic out-of-memory (OOM) errors, massive garbage collection (GC) thrashing, and severely degraded cluster throughput due to uncontrolled disk spilling. [Ref: 451](spark_book.pdf#page=451)
+Mastering how to persist data correctly is what separates junior data developers from elite Spark engineers. It is not merely about arbitrarily appending `.cache()` to a DataFrame; it involves a deep understanding of how the distributed BlockManager coordinates memory across the cluster topology. It requires analyzing the serialization overhead incurred by moving Java objects between the JVM heap and off-heap memory, and understanding how the Tungsten execution engine manages the lifecycle of cached data blocks. When applied with precision, saving state drastically reduces CPU cycles, network shuffles, and execution time. When applied improperly, it triggers catastrophic out-of-memory (OOM) errors, massive garbage collection (GC) thrashing, and severely degraded cluster throughput due to uncontrolled disk spilling. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -17,7 +18,7 @@ If caching deserialized JVM objects (which is the default behavior for raw RDDs)
 
 Checkpointing operates on an entirely distinct architectural paradigm. While caching stores data via the BlockManager and carefully retains the RDD lineage in the DAGScheduler for fault tolerance, checkpointing completely truncates the lineage graph. It forces an immediate execution action that writes the materialized partition data out to a distributed file system (like HDFS, S3, or GCS) as highly compressed sequence files or Parquet chunks. This truncation is absolutely essential for preventing stack overflow exceptions within the DAGScheduler during highly iterative algorithms (such as PageRank or K-Means clustering) and provides absolute, cross-application fault tolerance. The definitive tradeoff is the severe network and disk I/O penalty associated with writing the files across the cluster network.
 
-```
+```scala
 Driver JVM Worker Executor JVM
 ┌─────────────────────────┐ ┌──────────────────────────────────────────────┐
 │ DAGScheduler │ │ ┌────────────────┐ ┌───────────────────────┐ │
@@ -29,30 +30,30 @@ Driver JVM Worker Executor JVM
 │ BlockManagerMaster │◀──(Reports)──│ ┌────────────────┴─┴───────────────────┐ │ │
 └─────────────────────────┘ │ │ │ Serializer (Kryo / Java) │ │ │
  │ │ └────────────────────────────────────┘ │ │
- └──────────────────────────────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
+ └──────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **BlockManager:** A distributed key-value store running on every worker executor and the driver. It manages the physical storage of blocks (data partitions) in memory, on local disk, or in off-heap space, acting as the primary interface for caching.
 - **BlockManagerMaster:** The central coordinator residing strictly on the Driver JVM. It maintains a global, highly concurrent registry of all cached blocks and their physical locations across the cluster, directing downstream tasks to the correct executors to guarantee data locality.
 - **MemoryStore & DiskStore:** The physical storage abstraction layers within the BlockManager. MemoryStore manages data objects on the JVM heap or off-heap memory arrays, while DiskStore manages data safely spilled to local executor disks when memory limits are critically exhausted.
-- **Tungsten Binary Format:** Spark SQL's highly optimized, column-oriented memory management format. It allows caching DataFrames directly in off-heap memory without the massive overhead of JVM object serialization, effectively bypassing Garbage Collection limits and enabling vectorized reads. [Ref: 470](spark_book.pdf#page=470)
+- **Tungsten Binary Format:** Spark SQL's highly optimized, column-oriented memory management format. It allows caching DataFrames directly in off-heap memory without the massive overhead of JVM object serialization, effectively bypassing Garbage Collection limits and enabling vectorized reads. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 457](spark_book.pdf#page=457)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Eviction Cascade and Cache Thrashing
 A notoriously common failure scenario occurs when developers aggressively cache large DataFrames using `MEMORY_ONLY` without deeply understanding the executor memory architecture (specifically the interplay between `spark.memory.fraction` and `spark.memory.storageFraction`). When the allocated storage memory exceeds its designated boundaries, it begins encroaching aggressively on the execution memory space. Once execution memory demands immediate space for critical operations like shuffles or sort-aggregations, the BlockManager employs a strict Least Recently Used (LRU) eviction policy to forcibly drop cached blocks. 
 
-If these evicted blocks are required again in a subsequent job stage, Spark is forced to recompute them completely from the original, unsevered lineage. In iterative ML workloads or wide transformations, this leads to a devastating phenomenon known as "cache thrashing," where the cluster spends more CPU cycles calculating, evicting, and recalculating blocks than performing actual business logic. The fatal anti-pattern here is attempting to cache datasets significantly larger than the cluster's aggregate storage memory. Elite engineers consistently monitor the Spark UI's Storage tab and proactively utilize `MEMORY_AND_DISK` or strategic checkpointing when dataset sizes exceed 60-70% of the heavily contended available memory pool. [Ref: 461](spark_book.pdf#page=461)
+If these evicted blocks are required again in a subsequent job stage, Spark is forced to recompute them completely from the original, unsevered lineage. In iterative ML workloads or wide transformations, this leads to a devastating phenomenon known as "cache thrashing," where the cluster spends more CPU cycles calculating, evicting, and recalculating blocks than performing actual business logic. The fatal anti-pattern here is attempting to cache datasets significantly larger than the cluster's aggregate storage memory. Elite engineers consistently monitor the Spark UI's Storage tab and proactively utilize `MEMORY_AND_DISK` or strategic checkpointing when dataset sizes exceed 60-70% of the heavily contended available memory pool. 
 
 ### Lineage Truncation vs. Block Storage Resilience
 Understanding the deeply fundamental architectural distinction between caching and checkpointing is critical for production stability. Caching is exclusively a BlockManager-level operation; the DAGScheduler meticulously retains the complete logical plan and the entire RDD lineage graph. If an executor randomly dies and a cached block is permanently lost, the DAGScheduler detects the failure and seamlessly resubmits the task to recompute that specific partition from the original source data. This provides high resilience without requiring expensive remote disk writes.
 
-However, in massive iterative algorithms (e.g., GraphX processing, MLlib optimizations), the lineage graph can uncontrollably grow to tens of thousands of nested operations. The DAGScheduler must recursively traverse this massive graph during physical planning, inevitably resulting in catastrophic Driver JVM `StackOverflowError`s. Checkpointing completely truncates this lineage. It physically writes the data to reliable distributed storage and creates a pristine, new `ReliableCheckpointRDD`. The original lineage is permanently discarded and garbage collected. This definitively eliminates Driver memory issues and planning bottlenecks but incurs a massive disk write penalty, meaning it should only be utilized strategically to sever uncontrollably long lineages, never as a substitute for simple, lightweight data reuse. [Ref: 464](spark_book.pdf#page=464)
+However, in massive iterative algorithms (e.g., GraphX processing, MLlib optimizations), the lineage graph can uncontrollably grow to tens of thousands of nested operations. The DAGScheduler must recursively traverse this massive graph during physical planning, inevitably resulting in catastrophic Driver JVM `StackOverflowError`s. Checkpointing completely truncates this lineage. It physically writes the data to reliable distributed storage and creates a pristine, new `ReliableCheckpointRDD`. The original lineage is permanently discarded and garbage collected. This definitively eliminates Driver memory issues and planning bottlenecks but incurs a massive disk write penalty, meaning it should only be utilized strategically to sever uncontrollably long lineages, never as a substitute for simple, lightweight data reuse. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
 ## 📊 Performance Characteristics
 
@@ -61,11 +62,11 @@ However, in massive iterative algorithms (e.g., GraphX processing, MLlib optimiz
 | `cache()` | O(1) Plan | No | Defers physical execution. DF uses `MEMORY_AND_DISK`, RDD uses `MEMORY_ONLY`. |
 | `persist(StorageLevel)` | O(1) Plan | No | Allows fine-grained engineering control over serialization, memory, and disk spilling behavior. |
 | `checkpoint()` | O(N) Write | No (Usually) | Triggers immediate job execution. Truncates DAG lineage entirely and writes to distributed storage. |
-| `localCheckpoint()` | O(N) Write | No | Writes to local executor block disk, not HDFS. Much faster but sacrifices node-failure fault tolerance. | [Ref: 458](spark_book.pdf#page=458)
+| `localCheckpoint()` | O(N) Write | No | Writes to local executor block disk, not HDFS. Much faster but sacrifices node-failure fault tolerance. | 
 
---- [Ref: 462](spark_book.pdf#page=462)
+---
 
-## 💻 Code Examples [Ref: 469](spark_book.pdf#page=469)
+## 💻 Code Examples 
 
 ### Example 1: Strategic Persistence for Multi-Branch Pipelines
 

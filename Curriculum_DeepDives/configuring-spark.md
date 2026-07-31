@@ -1,12 +1,13 @@
 # 🔥 Master Class: Configuring Spark
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 Apache Spark configuration is not merely about assigning arbitrary memory values, tweaking a few executor counts, or ticking off checkboxes before submitting an application; it is the fundamental, low-level language used to negotiate and orchestrate hardware resources within a distributed cluster. It is the precise mechanism by which engineers instruct the Spark JVMs—both the central Driver and the myriad of remote Executors—how to manage complex memory pools, orchestrate network I/O, govern CPU thread scheduling, and dictate binary serialization formats. Spark configuration exists to bridge the massive gap between abstract logical application code (your transformations and actions) and the brutal physical reality of the cluster environment, whether running on YARN, Kubernetes, Mesos, or Standalone managers. 
 
-Without deep, intentional configuration, Spark falls back on safe, highly conservative, and often severely suboptimal default settings. These defaults are designed primarily to prevent OutOfMemory (OOM) crashes on a single developer's laptop, rather than to ruthlessly exploit the compute capacity of a 1,000-node production cluster. The core problem it solves is resource impedance mismatch. A data pipeline that performs aggressive, full-cluster shuffles (like terabyte-scale window functions or massive aggregations) requires fundamentally different memory allocation profiles (e.g., massive off-heap memory, aggressive spilling, and robust network shuffle buffers) than a computationally bound machine learning pipeline (which demands maximal core CPU utilization, localized data caching, and minimal network traversal). Mastering Spark configuration means you dictate precisely how the Catalyst Optimizer constructs query plans, how the Tungsten execution engine manages raw byte allocations, and how the BlockManager evicts data from memory. This mastery is the only way to ensure your application runs predictably, efficiently, and without catastrophic failures under immense, enterprise-grade load. [Ref: 451](spark_book.pdf#page=451)
+Without deep, intentional configuration, Spark falls back on safe, highly conservative, and often severely suboptimal default settings. These defaults are designed primarily to prevent OutOfMemory (OOM) crashes on a single developer's laptop, rather than to ruthlessly exploit the compute capacity of a 1,000-node production cluster. The core problem it solves is resource impedance mismatch. A data pipeline that performs aggressive, full-cluster shuffles (like terabyte-scale window functions or massive aggregations) requires fundamentally different memory allocation profiles (e.g., massive off-heap memory, aggressive spilling, and robust network shuffle buffers) than a computationally bound machine learning pipeline (which demands maximal core CPU utilization, localized data caching, and minimal network traversal). Mastering Spark configuration means you dictate precisely how the Catalyst Optimizer constructs query plans, how the Tungsten execution engine manages raw byte allocations, and how the BlockManager evicts data from memory. This mastery is the only way to ensure your application runs predictably, efficiently, and without catastrophic failures under immense, enterprise-grade load. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 When a Spark application is submitted via the `spark-submit` CLI or initialized programmatically via the `SparkSession.builder`, Spark immediately ingests a complex hierarchy of configurations. It reads from JVM system properties, the global `spark-defaults.conf` file, shell environment variables, and finally, application-level programmatic overrides. This configuration map (`SparkConf`) becomes entirely immutable once the `SparkContext` is fully initialized. The core consequence of these configurations manifests directly in the JVM memory architecture of every node. An executor's memory is divided logically by the Unified Memory Manager into Execution Memory (used for active computations like shuffles, joins, sorts, and aggregations) and Storage Memory (used exclusively for caching/persisting RDDs, DataFrames, and broadcast variables). By default, Spark dynamically shares a specific fraction (configurable via `spark.memory.fraction`, defaulting to 0.6) of the JVM heap between execution and storage. However, aggressive performance tuning often requires managing native off-heap memory (`spark.memory.offHeap.enabled` and `spark.memory.offHeap.size`) to completely bypass JVM Garbage Collection overhead when processing massive columnar datasets.
@@ -15,7 +16,7 @@ Configurations heavily and directly influence the Catalyst Optimizer and the Tun
 
 Finally, network I/O and distributed object serialization are tightly bound to user configuration. By default, Spark may use standard Java serialization for complex data types or closures, which is notoriously bloated, slow, and CPU-intensive. Enforcing Kryo serialization (`spark.serializer`) and specifically configuring its internal buffer sizes (`spark.kryoserializer.buffer.max`) drastically reduces the binary payload size sent across the wire by the ShuffleManager. These configurations determine exactly how effectively Spark's vectorized Parquet readers ingest data from disk directly into Tungsten's binary memory format, bypassing traditional JVM object instantiation entirely and drastically increasing throughput.
 
-```
+```scala
 Driver JVM Worker Executor JVM
 ┌─────────────────┐ ┌──────────────────────┐
 │ SparkSession │ │ Executor Thread Pool │
@@ -31,26 +32,26 @@ Driver JVM Worker Executor JVM
  ▼ │ ├────────────────┤ │
  Tungsten Engine │ │ User / Off-Heap│ │
  (Whole-Stage Codegen) │ └────────────────┘ │
- └──────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
+ └──────────────────────┘ 
 ```
 
 ### Key Internal Components
 - **SparkConf:** The central configuration registry that holds all immutable key-value pairs, initialized exactly once per application, acting as the ultimate source of truth for the `SparkContext`, executors, and all internal subsystems.
 - **Unified Memory Manager:** The internal arbitration component governed by `spark.memory.fraction` and `spark.memory.storageFraction` that dynamically reallocates the JVM heap space between execution tasks (heavy shuffles/sorts) and data persistence (caching).
 - **ShuffleManager:** The I/O subsystem configured by properties like `spark.shuffle.file.buffer` and `spark.reducer.maxSizeInFlight` that meticulously controls how map tasks spill intermediate byte buffers to disk and how reduce tasks fetch them over the network.
-- **Catalyst Rule Executor:** The logical engine that applies configurable optimization rules (such as Adaptive Query Execution via `spark.sql.adaptive.enabled`) during planning phases to structurally mutate the execution DAG based on real-time runtime statistics. [Ref: 470](spark_book.pdf#page=470)
+- **Catalyst Rule Executor:** The logical engine that applies configurable optimization rules (such as Adaptive Query Execution via `spark.sql.adaptive.enabled`) during planning phases to structurally mutate the execution DAG based on real-time runtime statistics. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 457](spark_book.pdf#page=457)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Dynamic Allocation vs. Static Partitioning
-One of the most complex, systemic configuration challenges in production Spark environments is balancing Dynamic Resource Allocation (`spark.dynamicAllocation.enabled`) with static data partitioning configurations. Dynamic allocation allows Spark to autonomously request new executors from the cluster manager (YARN/K8s) when the task backlog grows, or release them when idle. However, if a data engineer leaves `spark.sql.shuffle.partitions` at the default value of 200 while querying a massive 10-terabyte dataset, Spark's DAGScheduler will aggressively request hundreds of executors based on the raw data volume. Yet, because the shuffle parallelism is hardcoded to 200, only 200 tasks will ever execute concurrently during the reduce phase. The remaining hundreds of executors sit completely idle, locked by the application, burning massive cloud compute credits without performing any work. Conversely, setting partitions to 10,000 on a small, tightly constrained 10-node cluster with dynamic allocation disabled causes massive task scheduling overhead and thread thrashing. Engineers must strictly and mathematically correlate their shuffle partitions with the peak anticipated executor core count to maintain efficiency. [Ref: 461](spark_book.pdf#page=461)
+One of the most complex, systemic configuration challenges in production Spark environments is balancing Dynamic Resource Allocation (`spark.dynamicAllocation.enabled`) with static data partitioning configurations. Dynamic allocation allows Spark to autonomously request new executors from the cluster manager (YARN/K8s) when the task backlog grows, or release them when idle. However, if a data engineer leaves `spark.sql.shuffle.partitions` at the default value of 200 while querying a massive 10-terabyte dataset, Spark's DAGScheduler will aggressively request hundreds of executors based on the raw data volume. Yet, because the shuffle parallelism is hardcoded to 200, only 200 tasks will ever execute concurrently during the reduce phase. The remaining hundreds of executors sit completely idle, locked by the application, burning massive cloud compute credits without performing any work. Conversely, setting partitions to 10,000 on a small, tightly constrained 10-node cluster with dynamic allocation disabled causes massive task scheduling overhead and thread thrashing. Engineers must strictly and mathematically correlate their shuffle partitions with the peak anticipated executor core count to maintain efficiency. 
 
 ### The OOM Mirage: Heap vs. Off-Heap Overheads
-A highly common and incredibly frustrating pitfall for intermediate engineers is fundamentally misunderstanding the difference between a `java.lang.OutOfMemoryError: Java heap space` stack trace and a container being silently killed by the OS or YARN/Kubernetes (often exiting abruptly with code 137 or 143). When encountering memory issues, engineers reflexively increase `spark.executor.memory`, which strictly increases the JVM heap allocation. However, Spark's direct network buffers, PySpark (which spins up independent Python worker processes), and heavy native C++ libraries (like RocksDB or native Parquet decoders) consume memory strictly *outside* the JVM heap. If the `spark.executor.memoryOverhead` configuration (which defaults to a mere 10% of executor memory) is not sufficiently padded, the host Operating System or the Kubernetes kubelet will blindly terminate the container for exceeding its hard CGroup limits. This leaves the engineer utterly confused as to why the Spark UI and JVM heap metrics looked perfectly healthy right before the catastrophic crash. Over-allocating JVM heap while starving the overhead memory is a textbook anti-pattern in production Spark engineering. [Ref: 464](spark_book.pdf#page=464)
+A highly common and incredibly frustrating pitfall for intermediate engineers is fundamentally misunderstanding the difference between a `java.lang.OutOfMemoryError: Java heap space` stack trace and a container being silently killed by the OS or YARN/Kubernetes (often exiting abruptly with code 137 or 143). When encountering memory issues, engineers reflexively increase `spark.executor.memory`, which strictly increases the JVM heap allocation. However, Spark's direct network buffers, PySpark (which spins up independent Python worker processes), and heavy native C++ libraries (like RocksDB or native Parquet decoders) consume memory strictly *outside* the JVM heap. If the `spark.executor.memoryOverhead` configuration (which defaults to a mere 10% of executor memory) is not sufficiently padded, the host Operating System or the Kubernetes kubelet will blindly terminate the container for exceeding its hard CGroup limits. This leaves the engineer utterly confused as to why the Spark UI and JVM heap metrics looked perfectly healthy right before the catastrophic crash. Over-allocating JVM heap while starving the overhead memory is a textbook anti-pattern in production Spark engineering. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
 ## 📊 Performance Characteristics
 
@@ -59,11 +60,11 @@ A highly common and incredibly frustrating pitfall for intermediate engineers is
 | `spark.sql.shuffle.partitions` tuning | O(1) config | Yes | Determines exact task parallelism post-shuffle; critical for avoiding large shuffle blocks and executor OOMs. |
 | `spark.memory.fraction` adjustment | O(1) config | No | Dictates the strict boundaries between execution and storage memory; impacts GC pressure drastically. |
 | Enabling `spark.sql.adaptive.enabled` | O(N) runtime | Yes | Dynamically coalesces shuffle partitions, mitigates data skew, and downgrades join strategies at runtime. |
-| Overriding `spark.executor.cores` | O(1) config | No | Controls task concurrency per JVM; setting >5 cores often leads to HDFS I/O bottlenecks and severe GC overhead. | [Ref: 458](spark_book.pdf#page=458)
+| Overriding `spark.executor.cores` | O(1) config | No | Controls task concurrency per JVM; setting >5 cores often leads to HDFS I/O bottlenecks and severe GC overhead. | 
 
---- [Ref: 462](spark_book.pdf#page=462)
+---
 
-## 💻 Code Examples [Ref: 469](spark_book.pdf#page=469)
+## 💻 Code Examples 
 
 ### Example 1: Architecting for High-Throughput Aggregations
 

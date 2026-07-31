@@ -1,16 +1,17 @@
 # 🔥 Master Class: Mesos Architecture
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Apache Mesos is a distributed systems kernel that abstracts CPU, memory, disk, and network resources across an entire datacenter, presenting them as a single unified pool to frameworks that run on top of it. Born out of UC Berkeley's AMPLab in 2009, Mesos was designed to answer a specific, hard problem: how do you efficiently multiplex dozens of heterogeneous workloads — batch analytics, long-running services, machine learning jobs — across thousands of physical machines without partitioning the cluster into isolated silos? Static partitioning wastes 30-50% of cluster capacity in practice; Mesos's answer is fine-grained, dynamic resource sharing via a two-level scheduling model.
 
 Spark on Mesos is one of the most powerful deployment modalities available. Instead of Spark's standalone scheduler or YARN managing resources, Mesos acts as the global arbiter. The Spark driver registers as a Mesos framework, receives resource **offers** from the Mesos master, and launches executor tasks directly on Mesos agents. This architecture allows Spark to coexist on the same machines as Kafka, Cassandra, TensorFlow jobs, and Marathon-managed microservices — all sharing the same physical hardware with strict isolation guarantees and fairness policies enforced at the kernel level.
 
-The central design insight is **separation of concerns**: Mesos handles *where* and *how much* to allocate; individual frameworks decide *what* to run on those resources. This two-level delegation is what makes the system horizontally scalable — the Mesos master never needs to understand Spark's internal scheduling semantics, and Spark never needs to negotiate with Kafka for machine time. [Ref: 451](spark_book.pdf#page=451)
+The central design insight is **separation of concerns**: Mesos handles *where* and *how much* to allocate; individual frameworks decide *what* to run on those resources. This two-level delegation is what makes the system horizontally scalable — the Mesos master never needs to understand Spark's internal scheduling semantics, and Spark never needs to negotiate with Kafka for machine time. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 461](spark_book.pdf#page=461)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ Mesos agents enforce isolation using **cgroups** at the Linux kernel level — e
 
 Frameworks register with the Mesos master by connecting and sending a `SUBSCRIBE` call containing a `FrameworkInfo` protobuf. This protobuf carries the framework's **role** (e.g., `spark`, `marathon`), **failover timeout** (how long the master preserves the framework's resources after a scheduler disconnect), and **capabilities** (e.g., `PARTITION_AWARE`, `MULTI_ROLE`, `GPU_RESOURCES`). The master's **replicated log** — a Paxos-based distributed log built on LevelDB — persists registered framework state, agent registrations, and resource reservations so that a master failover (via ZooKeeper leader election among standby masters) does not lose cluster state.
 
-```
+```scala
 ZooKeeper Ensemble (Leader Election)
  │
  ▼
@@ -52,7 +53,7 @@ ZooKeeper Ensemble (Leader Election)
  │ │ cgroup: Task1 │ │ cgroup: Task3│ │
  │ │ cgroup: Task2 │ │ cgroup: Task4│ │
  │ └───────────────┘ └───────────────┘ │
- └──────────────────────────────────────────┘ [Ref: 469](spark_book.pdf#page=469)
+ └──────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -63,23 +64,23 @@ ZooKeeper Ensemble (Leader Election)
 
 - **Framework Scheduler:** The component that lives inside the application driver (e.g., Spark's `MesosCoarseGrainedSchedulerBackend` or `MesosFineGrainedSchedulerBackend`). It implements the Mesos scheduler HTTP API, managing offer acceptance, task status callbacks, and reschedule logic. Spark's coarse-grained mode acquires executors once and holds them for the application lifetime; fine-grained mode releases resources after every task.
 
-- **ZooKeeper (Leader Election & Discovery):** Mesos masters form a quorum (typically 3 or 5 nodes). ZooKeeper holds a single ephemeral znode containing the active master's endpoint. Frameworks and agents watch this znode — on master failover, they reconnect to the new leader within the `--zk_session_timeout` window (default: 10s). The replicated log reconstructs cluster state from disk, not from ZooKeeper, so ZooKeeper carries no resource state. [Ref: 452](spark_book.pdf#page=452)
+- **ZooKeeper (Leader Election & Discovery):** Mesos masters form a quorum (typically 3 or 5 nodes). ZooKeeper holds a single ephemeral znode containing the active master's endpoint. Frameworks and agents watch this znode — on master failover, they reconnect to the new leader within the `--zk_session_timeout` window (default: 10s). The replicated log reconstructs cluster state from disk, not from ZooKeeper, so ZooKeeper carries no resource state. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Offer Declined / Resource Hoarding Deadlock
 
 A subtle failure mode emerges when Spark is launched in coarse-grained mode with `spark.cores.max` set higher than the cluster can satisfy. The Spark scheduler accepts every offer that arrives, accumulating partial executor slots. Meanwhile, Marathon or another framework is also waiting for offers. Because Spark has accepted (and is holding) large chunks of resources without running tasks yet (executors are still launching), Marathon starves. The Mesos master's DRF sees Spark's dominant share growing and stops offering to it, yet Spark hasn't reached its target executor count.
 
-The fix is two-fold: set `spark.mesos.rejectOfferDuration` (e.g., `120s`) so that Spark refuses offers it cannot use rather than holding them, and configure `spark.executor.cores` and `spark.executor.memory` to match the agent's cgroup granularity. Additionally, using **reservations** (static or dynamic) guarantees Spark always has a minimum resource floor while respecting fairness for other frameworks. Without reservations, Spark in a shared cluster will oscillate between resource starvation and resource monopolization depending on load timing. [Ref: 470](spark_book.pdf#page=470)
+The fix is two-fold: set `spark.mesos.rejectOfferDuration` (e.g., `120s`) so that Spark refuses offers it cannot use rather than holding them, and configure `spark.executor.cores` and `spark.executor.memory` to match the agent's cgroup granularity. Additionally, using **reservations** (static or dynamic) guarantees Spark always has a minimum resource floor while respecting fairness for other frameworks. Without reservations, Spark in a shared cluster will oscillate between resource starvation and resource monopolization depending on load timing. 
 
 ### DRF Weight Misconfiguration and Fairness Collapse
 
-Mesos roles support **weights** — a role with `weight=2.0` receives offers at twice the rate of a role with `weight=1.0` during DRF sorting. A common misconfiguration is assigning very high weights to a production Spark role (`weight=10`) while leaving the Marathon role at the default (`weight=1`). During a burst of Spark job submissions, DRF will allocate 90% of cluster resources to Spark before Marathon even receives its first offer cycle, causing Marathon-managed services (REST APIs, databases) to miss their SLAs. The correct pattern is to use **quota** (`mesos-master --quota`) to guarantee Marathon a minimum resource floor regardless of weights, and to use weights only for *surplus* resource distribution above that floor. Monitor the Mesos UI's `/weights` and `/quota` endpoints — mismatches between configured quota and actual allocation always indicate a scheduling misconfiguration, not a framework bug. [Ref: 455](spark_book.pdf#page=455)
+Mesos roles support **weights** — a role with `weight=2.0` receives offers at twice the rate of a role with `weight=1.0` during DRF sorting. A common misconfiguration is assigning very high weights to a production Spark role (`weight=10`) while leaving the Marathon role at the default (`weight=1`). During a burst of Spark job submissions, DRF will allocate 90% of cluster resources to Spark before Marathon even receives its first offer cycle, causing Marathon-managed services (REST APIs, databases) to miss their SLAs. The correct pattern is to use **quota** (`mesos-master --quota`) to guarantee Marathon a minimum resource floor regardless of weights, and to use weights only for *surplus* resource distribution above that floor. Monitor the Mesos UI's `/weights` and `/quota` endpoints — mismatches between configured quota and actual allocation always indicate a scheduling misconfiguration, not a framework bug. 
 
---- [Ref: 459](spark_book.pdf#page=459)
+---
 
 ## 📊 Performance Characteristics
 
@@ -90,7 +91,7 @@ Mesos roles support **weights** — a role with `weight=2.0` receives offers at 
 | ZooKeeper master failover | O(1) reconnect | No | Agents reconnect within zk_session_timeout (10s default) |
 | Framework re-registration after failover | O(T) state replay | No | T = tasks in replicated log; can be seconds at scale |
 | cgroup enforcement per task | O(1) kernel call | No | `cgroupv2` write; < 1ms; hard memory limit is synchronous OOM |
-| Offer decline propagation | O(A) | No | A = agents; master re-marks refused resources after refuse duration | [Ref: 464](spark_book.pdf#page=464)
+| Offer decline propagation | O(A) | No | A = agents; master re-marks refused resources after refuse duration | 
 
 ---
 

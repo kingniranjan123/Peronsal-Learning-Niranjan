@@ -1,16 +1,17 @@
 # 🔥 Master Class: YARN Resource Scheduling
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 YARN (Yet Another Resource Negotiator) is the cluster operating system layer that sits beneath Apache Spark in every Hadoop-based deployment. When a Spark application launches, the Driver submits a request to the YARN ResourceManager, which allocates Containers — bounded execution environments with a guaranteed slice of CPU (vcores) and memory — across NodeManagers on worker nodes. The ResourceManager does not simply hand out whatever a job asks for; it runs a scheduling pipeline that enforces multi-tenancy fairness, hierarchical capacity guarantees, and access-controlled node placement, all simultaneously.
 
 Understanding YARN scheduling is not optional for production Spark engineers. A misconfigured queue capacity leads to silent starvation where executors never materialise, causing `SparkContext` initialisation to hang until `spark.yarn.am.waitTime` (default 100 seconds) expires with the cryptic error `Application application_XXXX_XXXX failed 2 times`. An incorrect node label expression causes every Container request to be rejected because no labelled node is present in the queue's `accessible-node-labels`. A missing External Shuffle Service causes dynamic allocation to destroy executor Containers mid-job, making shuffle blocks unreachable and triggering a cascade of `FetchFailedException` errors that abort stages.
 
-The five mechanisms covered here — DominantResourceCalculator, node labels, queue hierarchy, preemption policy, and dynamic allocation with ESS — are not independent features. They form an interlocking system: queue hierarchy defines where Containers land, DominantResourceCalculator decides how many are fair, node labels constrain placement, preemption enforces capacity contracts under load, and dynamic allocation determines the Container lifecycle. Mastery of all five is required to reliably operate Spark at scale. [Ref: 451](spark_book.pdf#page=451)
+The five mechanisms covered here — DominantResourceCalculator, node labels, queue hierarchy, preemption policy, and dynamic allocation with ESS — are not independent features. They form an interlocking system: queue hierarchy defines where Containers land, DominantResourceCalculator decides how many are fair, node labels constrain placement, preemption enforces capacity contracts under load, and dynamic allocation determines the Container lifecycle. Mastery of all five is required to reliably operate Spark at scale. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ Node labels partition cluster nodes into disjoint (exclusive) or shared (non-exc
 
 Preemption is the mechanism by which the Capacity Scheduler reclaims Containers from over-capacity queues to give them to under-served queues. When `yarn.scheduler.capacity.preemption.enabled=true`, the `PreemptionManager` runs a background thread (period set by `yarn.resourcemanager.monitor.capacity.preemption.monitoring_interval`, default 3 seconds). It calculates each queue's ideal share, identifies queues exceeding it, and marks excess Containers for reclamation. Marked Containers are first given a grace period (`yarn.resourcemanager.monitor.capacity.preemption.max_wait_before_kill`, default 15 seconds) during which the ApplicationMaster can voluntarily release them. Spark's AM does not implement voluntary preemption, so YARN always kills the Container hard after the grace period, causing the executor to be lost and all in-flight tasks and cached shuffle data on it to be invalidated.
 
-```
+```scala
 ResourceManager JVM
 ┌──────────────────────────────────────────────────────────────────┐
 │ RPC Server (Client/AM/RM protocols) │
@@ -55,7 +56,7 @@ NodeManager JVM (×N worker nodes)
 │ │ BlockManager, │ │ data after Container dies; │ │
 │ │ NettyRpcEnv) │ │ serves to other executors) │ │
 │ └──────────────────────┘ └──────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
+└──────────────────────────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -66,25 +67,25 @@ NodeManager JVM (×N worker nodes)
 
 - **PreemptionManager (`ProportionalCapacityPreemptionPolicy`):** Runs continuously in the ResourceManager, computing delta between ideal and actual queue shares. Triggers kill signals to the NodeManager's `ContainerManager` after a configurable grace period. Spark executors receiving a SIGTERM from YARN log `ExecutorLostFailure (executor X exited caused by 'Container killed by the ApplicationMaster'`.
 
-- **External Shuffle Service (ESS):** An `AuxiliaryService` running inside each NodeManager JVM (class `org.apache.spark.network.yarn.YarnShuffleService`). ESS registers shuffle file metadata in a `LevelDB` store (`spark.shuffle.service.db.enabled=true`) so shuffle data persists even after the executor Container is terminated by dynamic allocation or preemption. Without ESS, dynamic allocation is unsafe: a removed executor takes its shuffle blocks with it. [Ref: 470](spark_book.pdf#page=470)
+- **External Shuffle Service (ESS):** An `AuxiliaryService` running inside each NodeManager JVM (class `org.apache.spark.network.yarn.YarnShuffleService`). ESS registers shuffle file metadata in a `LevelDB` store (`spark.shuffle.service.db.enabled=true`) so shuffle data persists even after the executor Container is terminated by dynamic allocation or preemption. Without ESS, dynamic allocation is unsafe: a removed executor takes its shuffle blocks with it. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Queue Capacity vs. Maximum-Capacity and the Silent Starvation Trap
 
 The Capacity Scheduler distinguishes between a queue's `capacity` (the guaranteed minimum share of cluster resources) and its `maximum-capacity` (the absolute ceiling it can elastically expand to). A Spark job targeting a queue with `capacity=10%` and `maximum-capacity=80%` can burst to 80% when the cluster is idle, but the moment other queues reclaim their guaranteed capacity, the Spark job is preempted back toward 10%. The trap is that Spark's AM interprets a Container kill as an executor failure, counts it against `spark.executor.maxNumFailures`, and aborts the application if too many kills happen in a short window.
 
-Operators frequently set `maximum-capacity=100%` thinking it is purely an upper bound that improves utilisation. In practice, this allows a single queue to monopolise the cluster, leaving zero headroom for guaranteed-capacity queues to even start their ApplicationMasters. The AM itself requires one Container, and if the cluster is at 100% utilisation, that Container never starts. The ResourceManager logs `Queue root.prod is at 100% capacity and cannot accept new applications` and the `spark-submit` process hangs waiting for AM launch. [Ref: 459](spark_book.pdf#page=459)
+Operators frequently set `maximum-capacity=100%` thinking it is purely an upper bound that improves utilisation. In practice, this allows a single queue to monopolise the cluster, leaving zero headroom for guaranteed-capacity queues to even start their ApplicationMasters. The AM itself requires one Container, and if the cluster is at 100% utilisation, that Container never starts. The ResourceManager logs `Queue root.prod is at 100% capacity and cannot accept new applications` and the `spark-submit` process hangs waiting for AM launch. 
 
 ### Dynamic Allocation Executor Idle Timeout and Shuffle Data Loss
 
 Dynamic allocation (`spark.dynamicAllocation.enabled=true`) uses `ExecutorAllocationManager` inside the Driver to request and release executors based on pending task count and executor idle time (`spark.dynamicAllocation.executorIdleTimeout`, default 60 seconds). The AM sends a `releaseContainer` RPC to the ResourceManager when an executor is idle, and the NodeManager immediately terminates the Container. If ESS is not configured, the shuffle files written by that executor — stored in the local filesystem under `yarn.nodemanager.local-dirs` — are deleted when the Container's working directory is cleaned up by the NodeManager's `DeletionService`.
 
-Any subsequent stage that depends on those shuffle blocks will issue a `BlockManagerMasterEndpoint` lookup, receive a negative response because the executor's `BlockManager` is no longer registered, and throw `org.apache.spark.shuffle.FetchFailedException`. After `spark.stage.maxConsecutiveAttempts` (default 4) consecutive fetch failures on the same stage, the entire job aborts. In clusters processing petabytes daily, this failure mode kills dozens of jobs per hour when ESS is missing. Enabling ESS requires three coordinated changes: YARN-side `auxiliary-services`, NodeManager classpath inclusion of the Spark shuffle JAR, and `spark.shuffle.service.enabled=true` on the Spark side. [Ref: 464](spark_book.pdf#page=464)
+Any subsequent stage that depends on those shuffle blocks will issue a `BlockManagerMasterEndpoint` lookup, receive a negative response because the executor's `BlockManager` is no longer registered, and throw `org.apache.spark.shuffle.FetchFailedException`. After `spark.stage.maxConsecutiveAttempts` (default 4) consecutive fetch failures on the same stage, the entire job aborts. In clusters processing petabytes daily, this failure mode kills dozens of jobs per hour when ESS is missing. Enabling ESS requires three coordinated changes: YARN-side `auxiliary-services`, NodeManager classpath inclusion of the Spark shuffle JAR, and `spark.shuffle.service.enabled=true` on the Spark side. 
 
---- [Ref: 453](spark_book.pdf#page=453)
+---
 
 ## 📊 Performance Characteristics
 
@@ -95,11 +96,11 @@ Any subsequent stage that depends on those shuffle blocks will issue a `BlockMan
 | Preemption scan | O(Q × C) per interval | No | C = containers per queue; default 3s interval, can be tuned |
 | Dynamic alloc scale-up | O(pending tasks) | No | `ExecutorAllocationManager` polls every `spark.dynamicAllocation.schedulerBacklogTimeout` (1s) |
 | ESS shuffle read (remote) | O(shuffle blocks) | Yes | Served from NM local disk via Netty; no Container overhead |
-| ESS shuffle write (local) | O(partition count) | No | Written to `yarn.nodemanager.local-dirs` by executor before release | [Ref: 457](spark_book.pdf#page=457)
+| ESS shuffle write (local) | O(partition count) | No | Written to `yarn.nodemanager.local-dirs` by executor before release | 
 
---- [Ref: 461](spark_book.pdf#page=461)
+---
 
-## 💻 Code Examples [Ref: 469](spark_book.pdf#page=469)
+## 💻 Code Examples 
 
 ### Example 1: Capacity Scheduler Queue Configuration with DominantResourceCalculator
 

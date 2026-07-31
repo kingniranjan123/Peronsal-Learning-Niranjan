@@ -1,14 +1,15 @@
 # 🔥 Master Class: Regression and Classification with Deep Learning
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Deep neural networks (DNNs) have historically been associated with unstructured data—images, audio, text—but production Spark environments increasingly deploy DNNs against massive tabular datasets for regression and classification tasks where gradient-boosted trees plateau. The key insight is that when a dataset contains hundreds of millions of rows with high-cardinality categorical features, learned embeddings inside a DNN capture interaction effects that no hand-crafted feature engineering can match. Spark's role in this ecosystem is not to run backpropagation itself—that remains the domain of TensorFlow and PyTorch—but to orchestrate distributed data loading, feature transformation, parallel training, and model lifecycle management at petabyte scale.
 
-The challenge is the impedance mismatch between Spark's batch-parallel, fault-tolerant data model and the synchronous, gradient-synchronization model that deep learning frameworks assume. Bridging this gap requires three subsystems working in concert: **Petastorm** (converting Spark DataFrames into a format that TensorFlow/PyTorch can stream from HDFS or S3), **Horovod** (coordinating all-reduce gradient synchronization across executors using MPI or Gloo), and **MLflow** (versioning trained models, logging hyperparameters, and serving registered artifacts to downstream consumers). Understanding how these three subsystems interact with Spark's DAGScheduler, BlockManager, and executor memory model is the difference between a prototype and a production system. [Ref: 451](spark_book.pdf#page=451)
+The challenge is the impedance mismatch between Spark's batch-parallel, fault-tolerant data model and the synchronous, gradient-synchronization model that deep learning frameworks assume. Bridging this gap requires three subsystems working in concert: **Petastorm** (converting Spark DataFrames into a format that TensorFlow/PyTorch can stream from HDFS or S3), **Horovod** (coordinating all-reduce gradient synchronization across executors using MPI or Gloo), and **MLflow** (versioning trained models, logging hyperparameters, and serving registered artifacts to downstream consumers). Understanding how these three subsystems interact with Spark's DAGScheduler, BlockManager, and executor memory model is the difference between a prototype and a production system. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -18,7 +19,7 @@ Petastorm's `make_batch_reader` opens Parquet files directly from the distribute
 
 During the backward pass, Horovod intercepts each layer's gradient tensor immediately after it is computed (using framework hooks: `tf.GradientTape` callbacks or PyTorch's `register_hook`) and initiates an all-reduce operation across all ranks using the ring-all-reduce algorithm. Ring-all-reduce transmits `2 * (N-1) / N` times the gradient data per rank, making communication cost nearly constant regardless of cluster size—this is what enables linear scaling efficiency of 85–95% on clusters up to 128 GPUs. The reduced gradient is applied to the local model replica before the next mini-batch forward pass. Catalyst and Tungsten play no role in the training loop itself, but they are critical in the upstream feature engineering pipeline: Catalyst's Logical Optimization phase pushes `cast`, `fillna`, and `bucketize` transformations into a single fused physical plan, and Tungsten's Whole-Stage Codegen generates JIT-compiled bytecode that processes feature vectors at near-native speed before Petastorm serializes them to Parquet.
 
-```
+```scala
 Spark Driver JVM
 ┌──────────────────────────────────────────────────────────────┐
 │ SparkContext → DAGScheduler → TaskScheduler │
@@ -59,7 +60,7 @@ Spark Driver JVM
  │ metrics, artifact │
  │ → Model Registry │
  │ (Staging→Prod) │
- └──────────────────────┘ [Ref: 462](spark_book.pdf#page=462)
+ └──────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -70,23 +71,23 @@ Spark Driver JVM
 
 - **Horovod `DistributedOptimizer`:** A wrapper around any Keras or PyTorch optimizer that intercepts `optimizer.apply_gradients` / `optimizer.step`, triggering `hvd.allreduce()` on each gradient tensor before the weight update. Compression codecs (FP16, 1-bit quantization) can reduce all-reduce bandwidth by 50–75%.
 
-- **MLflow `log_model` / Model Registry:** The `mlflow.tensorflow.log_model` call serializes the `SavedModel` artifact, computes an MD5 fingerprint, and writes a `MLmodel` YAML descriptor. The Registry's `MlflowClient.transition_model_version_stage` API implements a promotion pipeline (`None → Staging → Production → Archived`) with atomic version tagging. [Ref: 469](spark_book.pdf#page=469)
+- **MLflow `log_model` / Model Registry:** The `mlflow.tensorflow.log_model` call serializes the `SavedModel` artifact, computes an MD5 fingerprint, and writes a `MLmodel` YAML descriptor. The Registry's `MlflowClient.transition_model_version_stage` API implements a promotion pipeline (`None → Staging → Production → Archived`) with atomic version tagging. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Data Skew in Petastorm Sharding
 
 Petastorm's shard assignment is based on Parquet row-group count, not row count. If your upstream Spark job produces unequal row group sizes—common when `spark.sql.files.maxPartitionBytes` is tuned aggressively—some ranks receive 3–4x more data than others. The slowest rank determines the epoch duration; fast ranks spin-wait at the Horovod barrier, wasting GPU time. This manifests as GPU utilization oscillating between 95% and 15% in YARN's Resource Manager UI. The fix is to repartition the DataFrame to a number of partitions exactly equal to `num_epochs * num_ranks` before writing, and set `parquet.block.size` equal to `target_rows_per_shard * avg_row_bytes`.
 
-A more subtle issue: Petastorm's `make_batch_reader` holds file handles open for the entire training run. On clusters with HDFS NameNode lease timeouts set below 10 minutes (`dfs.datanode.socket.write.timeout`), long epochs trigger `LeaseExpiredException` mid-epoch. The fix is to set `options={'hdfs_driver': 'libhdfs3'}` and increase the lease timeout, or restructure training to close and reopen the reader every N steps. [Ref: 459](spark_book.pdf#page=459)
+A more subtle issue: Petastorm's `make_batch_reader` holds file handles open for the entire training run. On clusters with HDFS NameNode lease timeouts set below 10 minutes (`dfs.datanode.socket.write.timeout`), long epochs trigger `LeaseExpiredException` mid-epoch. The fix is to set `options={'hdfs_driver': 'libhdfs3'}` and increase the lease timeout, or restructure training to close and reopen the reader every N steps. 
 
 ### Horovod Gradient Explosion at Scale
 
-Horovod's default all-reduce averages gradients across all ranks, which means the effective learning rate scales with batch size. A common mistake when scaling from 4 to 32 GPUs is to keep the learning rate constant. With a per-GPU mini-batch of 512, scaling to 32 GPUs gives an effective batch of 16,384—the model sees gradients computed over a 32x larger batch without a learning rate adjustment, causing loss divergence within the first 200 steps. The standard fix is linear scaling: `lr_scaled = base_lr * num_ranks`, paired with a warm-up schedule for the first 5 epochs (Goyal et al., 2017). Horovod's `hvd.callbacks.LearningRateWarmupCallback` implements this automatically; failing to use it in multi-GPU tabular DNN training is the single most common cause of accuracy regression when scaling out. [Ref: 463](spark_book.pdf#page=463)
+Horovod's default all-reduce averages gradients across all ranks, which means the effective learning rate scales with batch size. A common mistake when scaling from 4 to 32 GPUs is to keep the learning rate constant. With a per-GPU mini-batch of 512, scaling to 32 GPUs gives an effective batch of 16,384—the model sees gradients computed over a 32x larger batch without a learning rate adjustment, causing loss divergence within the first 200 steps. The standard fix is linear scaling: `lr_scaled = base_lr * num_ranks`, paired with a warm-up schedule for the first 5 epochs (Goyal et al., 2017). Horovod's `hvd.callbacks.LearningRateWarmupCallback` implements this automatically; failing to use it in multi-GPU tabular DNN training is the single most common cause of accuracy regression when scaling out. 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 📊 Performance Characteristics
 
@@ -97,11 +98,11 @@ Horovod's default all-reduce averages gradients across all ranks, which means th
 | Feature pipeline (Catalyst fused plan) | O(rows) | No | Tungsten Whole-Stage Codegen; ~500M rows/min on 32-core executor |
 | MLflow `log_model` (SavedModel) | O(model size) | No | Serializes to artifact store; 1–5s for 100MB model |
 | Horovod broadcast (initial weights) | O(M) | No | Driver-to-rank fan-out; done once per run via `hvd.broadcast_variables` |
-| Spark DataFrame repartition pre-write | O(rows) | Yes | Required for even shard distribution; triggers a full shuffle stage | [Ref: 453](spark_book.pdf#page=453)
+| Spark DataFrame repartition pre-write | O(rows) | Yes | Required for even shard distribution; triggers a full shuffle stage | 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
+## 💻 Code Examples 
 
 ### Example 1: Feature Engineering Pipeline with Catalyst-Optimized Transformations for Petastorm Ingestion
 
@@ -181,7 +182,7 @@ model_df = model_df.repartition(NUM_RANKS * NUM_EPOCHS)
 # SparkDatasetConverter writes Parquet with Arrow schema metadata
 # that Petastorm uses for type-safe deserialization on the reader side.
 converter = make_spark_converter(model_df)
-print(f"Dataset written: {converter.dataset_size} rows") [Ref: 464](spark_book.pdf#page=464)
+print(f"Dataset written: {converter.dataset_size} rows") 
 ```
 
 > **Mastery Note:** Every `withColumn` call here emits a `Project` node in Catalyst's Logical Plan; the Analyzer collapses all consecutive projections into a single `Project` during the Logical Optimization phase, producing one physical `ProjectExec` that Tungsten's Whole-Stage Codegen fuses into a single JIT-compiled Java class. The `regexp_extract` call is the only expression that cannot be fused into Whole-Stage Codegen (it calls back into the Scala regex engine), so isolating it early and casting to `FloatType` immediately prevents it from propagating through the rest of the plan. The `repartition` at the end triggers a hash-based shuffle—the only shuffle in this pipeline—which is unavoidable but must be budgeted as a one-time cost per training run.

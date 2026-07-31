@@ -1,16 +1,17 @@
 # 🔥 Master Class: GraphX API
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
 
 GraphX is Apache Spark's built-in library for graph-parallel computation, exposing a property graph model on top of the Spark core RDD abstraction. A property graph is a directed multigraph where each vertex and each edge carries an arbitrary user-defined attribute — the vertex property (`VD`) and edge property (`ED`) — typed as Scala generics. Unlike standalone graph engines such as GraphLab or Giraph, GraphX unifies graph computation and relational data processing in a single system: the same data that feeds a machine-learning pipeline can be treated as a graph without serialization or data movement.
 
 GraphX exists because many analytical problems — PageRank, connected components, shortest paths, community detection, knowledge graphs — are fundamentally relational between entities, not just tabular. Traditional RDD operations lack the first-class notion of edges and adjacency. GraphX solves this by introducing `Graph[VD, ED]`, a typed abstraction backed by two specialized RDDs — `VertexRDD[VD]` and `EdgeRDD[ED]` — together with an `EdgeTriplet` view that co-locates vertex attributes with their connecting edge. This co-location is the key insight: instead of joining vertices to edges on every iteration, GraphX materializes the triplet view once and reuses it across supersteps.
 
-The API surface splits into two layers. The higher-level **Pregel API** models iterative graph algorithms as message-passing supersteps, inspired by Google's Bulk Synchronous Parallel model. The lower-level **`aggregateMessages`** primitive gives fine-grained control over what message is sent from each triplet and how messages are merged at the destination vertex. Both layers compile down to the same RDD lineage, so all of Spark's fault-tolerance, speculative execution, and straggler mitigation apply transparently. [Ref: 451](spark_book.pdf#page=451)
+The API surface splits into two layers. The higher-level **Pregel API** models iterative graph algorithms as message-passing supersteps, inspired by Google's Bulk Synchronous Parallel model. The lower-level **`aggregateMessages`** primitive gives fine-grained control over what message is sent from each triplet and how messages are merged at the destination vertex. Both layers compile down to the same RDD lineage, so all of Spark's fault-tolerance, speculative execution, and straggler mitigation apply transparently. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ Tungsten's off-heap memory management does **not** apply natively to GraphX — 
 
 The **Pregel API** models computation as a series of supersteps. In each superstep: (1) active vertices receive messages from the previous round, (2) the vertex program (`vprog`) updates the vertex attribute based on the incoming merged message, (3) `sendMsg` runs on every `EdgeTriplet` and decides whether to generate a message, (4) `mergeMsg` reduces all messages destined for the same vertex using an associative, commutative merge function. A vertex becomes inactive (halts) when it receives no messages. The BSP barrier between supersteps is implemented as an RDD action (`count`) that forces materialization of the updated vertex RDD before the next iteration begins, ensuring exactly-once message delivery per superstep.
 
-```
+```scala
 Graph Construction & Triplet View
 ─────────────────────────────────────────────────────────────────────────
  VertexRDD[VD] EdgeRDD[ED]
@@ -48,7 +49,7 @@ Graph Construction & Triplet View
  └───────────────┬───────────────┘
  ▼
  Updated VertexRDD[VD']
- (written back into new Graph) [Ref: 464](spark_book.pdf#page=464)
+ (written back into new Graph) 
 ```
 
 ### Key Internal Components
@@ -56,23 +57,23 @@ Graph Construction & Triplet View
 - **`VertexRDD[VD]`:** A specialized `RDD[(VertexId, VD)]` that maintains an index structure (`VertexAttributeBlock`) per partition, enabling O(log n) attribute lookup by vertex ID during triplet construction. Supports `aggregateUsingIndex` to efficiently merge incoming messages without a full shuffle.
 - **`EdgeRDD[ED]`:** Backed by `EdgePartition[ED, VD]` objects stored as columnar arrays on the JVM heap. Sorted by source ID to allow binary-search-based adjacency traversal. Edge partitioning strategy is immutable once the graph is constructed.
 - **`EdgeTriplet[VD, ED]`:** An in-memory view combining `srcId`, `srcAttr`, `dstId`, `dstAttr`, and `attr` for a single edge. Generated on-the-fly by joining replicated vertex attributes with the edge arrays; not independently persisted.
-- **Routing Table:** A per-vertex bitset embedded in the `VertexRDD` that tracks which edge partitions reference each vertex. Constructed at graph build time by scanning all edge partitions. Enables efficient vertex attribute broadcast without a full cross-partition join on each iteration. [Ref: 452](spark_book.pdf#page=452)
+- **Routing Table:** A per-vertex bitset embedded in the `VertexRDD` that tracks which edge partitions reference each vertex. Constructed at graph build time by scanning all edge partitions. Enables efficient vertex attribute broadcast without a full cross-partition join on each iteration. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 462](spark_book.pdf#page=462)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Power-Law Degree Distribution and Partition Skew
 
 Real-world graphs — Twitter followers, web link graphs, protein interaction networks — follow power-law degree distributions: a tiny fraction of vertices (hubs) have millions of edges while the vast majority have fewer than ten. With `EdgePartition1D`, all edges from a hub land in a single partition, creating catastrophic skew: one executor runs for hours while others idle. The fix is `PartitionStrategy.EdgePartition2D`, which distributes edges across a `sqrt(numPartitions) × sqrt(numPartitions)` grid, guaranteeing that vertex attribute data is replicated at most `2 * sqrt(numPartitions)` times instead of `numPartitions` times. For a graph with 1,000 partitions, this reduces replication from 1,000x to ~63x, cutting both memory usage and network I/O proportionally.
 
-The pathological failure mode is an OOM on a single executor (with `java.lang.OutOfMemoryError: Java heap space`) when ingesting a power-law graph without setting the correct partition strategy. Because GraphX stores edge arrays on the JVM heap, a single skewed partition holding 50 million edges at 24 bytes each consumes 1.2 GB from a single executor's heap — often exceeding `spark.executor.memory` without any warning until the task crashes and the job retries indefinitely. [Ref: 469](spark_book.pdf#page=469)
+The pathological failure mode is an OOM on a single executor (with `java.lang.OutOfMemoryError: Java heap space`) when ingesting a power-law graph without setting the correct partition strategy. Because GraphX stores edge arrays on the JVM heap, a single skewed partition holding 50 million edges at 24 bytes each consumes 1.2 GB from a single executor's heap — often exceeding `spark.executor.memory` without any warning until the task crashes and the job retries indefinitely. 
 
 ### Pregel Termination and the Active Vertex Trap
 
-Pregel terminates when no messages are generated in a superstep. A common mistake is writing a `sendMsg` function that unconditionally sends a message on every edge every iteration, preventing the algorithm from ever converging. Because the BSP barrier between supersteps is enforced with an RDD `count()` action, each unnecessary superstep materializes the entire vertex and edge RDD — a full job with shuffle — even if only one vertex has meaningfully changed state. For a graph with 100 million edges, an extra superstep costs 30-60 seconds of wall time and generates hundreds of GB of shuffle data. The correct pattern is a **conditional send**: only emit a message when the source vertex's attribute changed in the previous superstep, using a sentinel value to signal quiescence. Additionally, `maxIterations` in `Pregel.apply` acts as a hard cap — always set it to a finite value to prevent runaway jobs on disconnected graphs where certain components never converge. [Ref: 455](spark_book.pdf#page=455)
+Pregel terminates when no messages are generated in a superstep. A common mistake is writing a `sendMsg` function that unconditionally sends a message on every edge every iteration, preventing the algorithm from ever converging. Because the BSP barrier between supersteps is enforced with an RDD `count()` action, each unnecessary superstep materializes the entire vertex and edge RDD — a full job with shuffle — even if only one vertex has meaningfully changed state. For a graph with 100 million edges, an extra superstep costs 30-60 seconds of wall time and generates hundreds of GB of shuffle data. The correct pattern is a **conditional send**: only emit a message when the source vertex's attribute changed in the previous superstep, using a sentinel value to signal quiescence. Additionally, `maxIterations` in `Pregel.apply` acts as a hard cap — always set it to a finite value to prevent runaway jobs on disconnected graphs where certain components never converge. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
 ## 📊 Performance Characteristics
 
@@ -85,9 +86,9 @@ Pregel terminates when no messages are generated in a superstep. A common mistak
 | `graph.pageRank(tol)` | O(E · iterations) | Yes (per superstep) | Typically converges in 10-50 iterations for web-scale graphs |
 | `graph.subgraph(epred, vpred)` | O(E + V) | No | Filter applied locally; no data movement |
 | `graph.joinVertices` | O(V) | Yes | Requires shuffle to align RDD with VertexRDD by vertex ID |
-| `graph.outerJoinVertices` | O(V) | Yes | Same as joinVertices; returns default for missing keys | [Ref: 463](spark_book.pdf#page=463)
+| `graph.outerJoinVertices` | O(V) | Yes | Same as joinVertices; returns default for missing keys | 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 💻 Code Examples
 

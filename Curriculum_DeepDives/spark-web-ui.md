@@ -1,16 +1,17 @@
 # 🔥 Master Class: Spark Web UI — Diagnostics, Profiling, and Production Monitoring
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 The Spark Web UI (default port 4040) is the primary observability surface for every running Spark application. It is not a dashboard bolted on after the fact — it is a first-class architectural component driven by the `SparkListener` event bus that is embedded directly into the `SparkContext`. Every task start, every shuffle write, every executor heartbeat, every SQL plan node produces a structured event that is consumed by the `AppStatusStore` (backed by a key-value `ElementTrackingStore` in-memory, or by the `HistoryServer`'s disk-backed `KVStore`) and rendered into the UI in near-real time.
 
 Understanding the Web UI at an architectural level transforms it from a passive viewer into an active debugging weapon. A senior Spark engineer does not just glance at the timeline — they read the SQL DAG to confirm predicate pushdown occurred, cross-reference Stage metrics to detect data skew at the partition level, inspect the Storage tab to verify broadcast variables haven't been evicted, and watch the Executors tab for the specific GC time ratio that signals imminent OOM. Every number on every tab has a direct causal chain back to a JVM subsystem, a shuffle protocol, or a Catalyst optimizer decision.
 
-The UI also exposes a programmatic REST API under `/api/v1/` and a Java/Scala `SparkListener` extension point that lets you intercept every internal event and build custom monitoring pipelines. This is the mechanism used by tools like Datadog's Spark integration, LinkedIn's Dr. Elephant, and Netflix's Metacat — and it is fully available to application developers without any framework modification. [Ref: 451](spark_book.pdf#page=451)
+The UI also exposes a programmatic REST API under `/api/v1/` and a Java/Scala `SparkListener` extension point that lets you intercept every internal event and build custom monitoring pipelines. This is the mechanism used by tools like Datadog's Spark integration, LinkedIn's Dr. Elephant, and Netflix's Metacat — and it is fully available to application developers without any framework modification. 
 
---- [Ref: 455](spark_book.pdf#page=455)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ Tungsten's Whole-Stage CodeGen collapses multiple physical plan operators into a
 
 The Stages tab metrics come from `TaskMetrics` objects serialized inside `SparkListenerTaskEnd` events. Each `TaskMetrics` record carries: executor deserialize time, JVM GC time (`jvmGCTime`), result serialization time, shuffle read/write bytes and records, input bytes, spill (memory and disk), and peak execution memory. These are aggregated across all tasks in a stage into min/p25/median/p75/max summary statistics — the distribution shape is your skew detector.
 
-```
+```scala
 Driver JVM Executor JVM
 ┌──────────────────────────────────┐ ┌─────────────────────────────────┐
 │ SparkContext │ │ Executor │
@@ -48,7 +49,7 @@ Driver JVM Executor JVM
 │ │ /api/v1/ REST endpoints│ Storage Tab (BlockStatus, RDD info)
 │ │ /stages, /sql, /storage│ Executors Tab (HeartbeatReceiver)
 │ └────────────────────────┘ Environment Tab (SparkConf snapshot)
-└──────────────────────────────────┘ [Ref: 462](spark_book.pdf#page=462)
+└──────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -56,21 +57,21 @@ Driver JVM Executor JVM
 - **`LiveListenerBus`:** Asynchronous multi-queue event dispatcher inside the driver JVM. Decouples event producers (DAGScheduler, TaskScheduler) from consumers (UI, event log, executor management). A full `appStatus` queue (capacity 10,000 events by default) causes events to be dropped with a logged warning — a sign of extreme driver CPU pressure.
 - **`AppStatusStore` / `ElementTrackingStore`:** In-memory key-value store with LRU eviction that holds all live UI state. Bounded to prevent unbounded driver heap growth; when a stage's task list exceeds `spark.ui.retainedTasks` (default 100,000), older task entries are evicted.
 - **`SQLMetric` / `AccumulatorV2`:** Distributed metric objects sent to each task, updated locally (zero contention), and merged into the driver store via heartbeat deltas. The UI displays the last merged snapshot, so values update at heartbeat granularity, not per-row.
-- **`SparkListener` / `SparkListenerBus`:** The public extension point. Any class implementing `SparkListener` and registered via `spark.extraListeners` receives every internal event synchronously on the bus thread — a slow listener stalls the entire bus and can cause dropped events. [Ref: 469](spark_book.pdf#page=469)
+- **`SparkListener` / `SparkListenerBus`:** The public extension point. Any class implementing `SparkListener` and registered via `spark.extraListeners` receives every internal event synchronously on the bus thread — a slow listener stalls the entire bus and can cause dropped events. 
 
---- [Ref: 452](spark_book.pdf#page=452)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Reading Data Skew from Stage Task Duration Distribution
 
-The Stages tab renders a min/median/max bar for every task metric. When the max task duration is 10× or more the median, you have data skew — one or a few partitions are carrying disproportionate data. The anti-pattern is ignoring this because the job eventually completes. At scale, a single skewed task in a 1,000-task stage can extend total stage wall-clock time by 40-60 minutes. The root cause is almost always a high-cardinality join key with a dominant value (e.g., joining on `country_code` when 70% of rows are `US`). The `Shuffle Read` metric breakdown (records vs. bytes) pinpoints this: if one task reads 50M records when the median is 50K, the partition key is the culprit. Fix with salting or `spark.sql.adaptive.skewJoin.enabled=true` (AQE skew join optimization, available Spark 3.0+). [Ref: 459](spark_book.pdf#page=459)
+The Stages tab renders a min/median/max bar for every task metric. When the max task duration is 10× or more the median, you have data skew — one or a few partitions are carrying disproportionate data. The anti-pattern is ignoring this because the job eventually completes. At scale, a single skewed task in a 1,000-task stage can extend total stage wall-clock time by 40-60 minutes. The root cause is almost always a high-cardinality join key with a dominant value (e.g., joining on `country_code` when 70% of rows are `US`). The `Shuffle Read` metric breakdown (records vs. bytes) pinpoints this: if one task reads 50M records when the median is 50K, the partition key is the culprit. Fix with salting or `spark.sql.adaptive.skewJoin.enabled=true` (AQE skew join optimization, available Spark 3.0+). 
 
 ### GC Time Ratio as an OOM Canary
 
-The Executors tab exposes a `GC Time` column alongside `Task Time`. When `GC Time / Task Time` exceeds 10%, the executor is spending more than one second in every ten seconds on garbage collection — a critical threshold. When this ratio exceeds 20-30%, you will see `SparkException: Task failed: ExecutorLostFailure` cascading failures as the JVM enters stop-the-world GC pauses long enough to miss the heartbeat timeout (`spark.executor.heartbeatInterval` default 10s vs `spark.network.timeout` default 120s). The underlying cause is almost always one of three things: (1) too many live Java objects from Python UDFs or non-Tungsten code paths materializing row objects; (2) a broadcast variable larger than the executor's eden space; or (3) insufficient `spark.executor.memoryOverhead` causing the OS to pressure the JVM heap. The fix involves switching to Tungsten-native operations, increasing `spark.memory.fraction`, or enabling G1GC with `-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35`. [Ref: 463](spark_book.pdf#page=463)
+The Executors tab exposes a `GC Time` column alongside `Task Time`. When `GC Time / Task Time` exceeds 10%, the executor is spending more than one second in every ten seconds on garbage collection — a critical threshold. When this ratio exceeds 20-30%, you will see `SparkException: Task failed: ExecutorLostFailure` cascading failures as the JVM enters stop-the-world GC pauses long enough to miss the heartbeat timeout (`spark.executor.heartbeatInterval` default 10s vs `spark.network.timeout` default 120s). The underlying cause is almost always one of three things: (1) too many live Java objects from Python UDFs or non-Tungsten code paths materializing row objects; (2) a broadcast variable larger than the executor's eden space; or (3) insufficient `spark.executor.memoryOverhead` causing the OS to pressure the JVM heap. The fix involves switching to Tungsten-native operations, increasing `spark.memory.fraction`, or enabling G1GC with `-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35`. 
 
---- [Ref: 470](spark_book.pdf#page=470)
+---
 
 ## 📊 Performance Characteristics
 
@@ -82,11 +83,11 @@ The Executors tab exposes a `GC Time` column alongside `Task Time`. When `GC Tim
 | Custom `SparkListener` | Variable | **High if slow** | Runs on bus thread; slow listener drops events after queue fills |
 | `/api/v1/` REST poll | Low | Low | Reads from AppStatusStore; no recomputation |
 | Storage tab RDD scan | O(partitions) | Low | Queries BlockManager status map on driver |
-| HistoryServer replay | O(event log size) | N/A (separate JVM) | Large logs (>5GB) cause slow replay; use compaction | [Ref: 453](spark_book.pdf#page=453)
+| HistoryServer replay | O(event log size) | N/A (separate JVM) | Large logs (>5GB) cause slow replay; use compaction | 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
+## 💻 Code Examples 
 
 ### Example 1: Confirming Predicate Pushdown and Whole-Stage CodeGen via SQL Tab Programmatic API
 
@@ -144,7 +145,7 @@ if executions:
  for metric in node.get("metrics", []):
  print(f" {metric['name']}: {metric['value']}")
 
-spark.stop() [Ref: 464](spark_book.pdf#page=464)
+spark.stop() 
 ```
 
 > **Mastery Note:** The `nodes` array in the REST response maps 1:1 to Catalyst's `SparkPlanInfo` tree. Each `WholeStageCodegen` block proves Tungsten's Whole-Stage CodeGen fused those operators into a single JVM method — typically yielding 2-5× throughput improvement over interpreted execution. If a `HashAggregate` or `SortMergeJoin` appears *outside* a `WholeStageCodegen` wrapper, it means `spark.sql.codegen.wholeStage` was disabled or that operator doesn't support codegen (e.g., Python UDFs). The `number of output rows` metric on a `Filter` node above a `FileScan` node, compared to the scan's `number of files read` vs. total files, quantifies predicate pushdown effectiveness — if rows emitted by scan ≈ rows after filter, pushdown is NOT happening and you are reading excess data.

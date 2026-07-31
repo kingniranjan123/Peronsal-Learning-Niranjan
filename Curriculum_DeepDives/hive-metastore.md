@@ -1,16 +1,17 @@
 # 🔥 Master Class: Hive Metastore
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 The Hive Metastore (HMS) is the persistent, shared catalog that stores all metadata about databases, tables, partitions, schemas, storage locations, and statistics in a Hadoop-ecosystem data lake. In Apache Spark, the metastore is not a Spark invention — Spark borrows and extends the Hive Metastore architecture, wrapping it behind the `SparkSQL Catalog API` to give SQL engines a unified registry of available data assets. Without a metastore, every Spark session would need to re-describe every dataset from scratch; with one, dozens of concurrent Spark applications share a single source of truth about where data lives, how it is partitioned, and what its schema looks like.
 
 The metastore operates as a standalone Thrift service backed by a relational database (MySQL, PostgreSQL, Oracle, or the embedded Derby). Spark's `HiveExternalCatalog` connects to this service via a Thrift client, retrieving table metadata without ever touching the actual data files. This separation of **metadata plane** from **data plane** is the architectural foundation that makes schema-on-read possible: the files live in HDFS or S3, the schema lives in the metastore, and Spark stitches them together at query time through the Catalyst optimizer's Analysis phase.
 
-Choosing the right metastore backend is one of the first production decisions a Spark platform team must make. The embedded Apache Derby metastore (default out-of-the-box) is single-writer, file-local, and completely unsuitable for multi-user clusters — it is strictly a development and testing convenience. Production deployments mandate an external RDBMS-backed Hive Metastore, either self-managed (MySQL/PostgreSQL) or a managed service (AWS Glue Data Catalog, Databricks Unity Catalog, Google Dataplex). [Ref: 451](spark_book.pdf#page=451)
+Choosing the right metastore backend is one of the first production decisions a Spark platform team must make. The embedded Apache Derby metastore (default out-of-the-box) is single-writer, file-local, and completely unsuitable for multi-user clusters — it is strictly a development and testing convenience. Production deployments mandate an external RDBMS-backed Hive Metastore, either self-managed (MySQL/PostgreSQL) or a managed service (AWS Glue Data Catalog, Databricks Unity Catalog, Google Dataplex). 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 461](spark_book.pdf#page=461)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ Physical planning then selects the file format reader — for Parquet, this is t
 
 The `BlockManager` on each executor uses the partition location URIs from the metastore to determine data locality — scheduling tasks on nodes that physically host the HDFS blocks. A stale or missing partition entry in the metastore therefore produces not just a logical gap in query results, but also prevents the TaskScheduler from making locality-aware decisions, forcing remote reads across the network at full rack-transfer cost (~1 GB/s vs. ~10 GB/s local disk).
 
-```
+```scala
 SparkSession (Driver JVM)
 ┌───────────────────────────────────────────────────────────────┐
 │ SparkContext │
@@ -50,7 +51,7 @@ SparkSession (Driver JVM)
 │ │ VectorizedParquet │───▶ ColumnarBatch (off-heap) │
 │ │ Reader (projection) │ BlockManager (locality-aware) │
 │ └─────────────────────┘ │
-└───────────────────────────────────────────────────────────────┘ [Ref: 469](spark_book.pdf#page=469)
+└───────────────────────────────────────────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -61,23 +62,23 @@ SparkSession (Driver JVM)
 
 - **HMS Thrift Service:** A long-running JVM process (class `HiveMetaStore`) exposing a Thrift-over-TCP interface. It is stateless with respect to data and horizontally scalable — multiple HMS instances can point at the same RDBMS backend (using database-level locking) to serve hundreds of concurrent Spark applications.
 
-- **`SchemaTool` & Derby vs. External RDBMS:** Derby (`org.apache.derby.jdbc.EmbeddedDriver`) creates a local `metastore_db/` directory in the working directory. It uses a file lock that prevents any second process from connecting, making it useless for shared clusters. External RDBMS backends use connection pooling (via `c3p0` or HikariCP in newer HMS versions) with `javax.jdo.option.ConnectionURL` pointing at a networked database. Production MySQL deployments should set `datanucleus.connectionPool.maxPoolSize=20` to prevent connection exhaustion under concurrent DDL workloads. [Ref: 452](spark_book.pdf#page=452)
+- **`SchemaTool` & Derby vs. External RDBMS:** Derby (`org.apache.derby.jdbc.EmbeddedDriver`) creates a local `metastore_db/` directory in the working directory. It uses a file lock that prevents any second process from connecting, making it useless for shared clusters. External RDBMS backends use connection pooling (via `c3p0` or HikariCP in newer HMS versions) with `javax.jdo.option.ConnectionURL` pointing at a networked database. Production MySQL deployments should set `datanucleus.connectionPool.maxPoolSize=20` to prevent connection exhaustion under concurrent DDL workloads. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### Partition Discovery: MSCK REPAIR vs. Explicit `ALTER TABLE ADD PARTITION`
 
 When new data is written directly to S3 or HDFS by an external process (a Kafka consumer, a Python ETL job, an `aws s3 cp` command), the Hive Metastore has no knowledge of those new partition directories. Querying the table returns stale, incomplete results with no error — Spark simply reads the partitions it knows about and silently ignores the rest. The two remediation mechanisms are `MSCK REPAIR TABLE` (triggers a full directory scan of the table's root location, reconciling filesystem state with metastore state) and explicit `ALTER TABLE t ADD PARTITION (dt='2024-01-01') LOCATION 's3a://bucket/t/dt=2024-01-01'`.
 
-`MSCK REPAIR TABLE` has O(n) cost where n is the total number of partitions, because it lists every directory under the table root and compares against `SELECT * FROM PARTITIONS WHERE TBL_ID = ?`. On a table with 100,000 date-hour partitions, this scan can take 15-20 minutes and issue thousands of S3 LIST API calls. In contrast, `ALTER TABLE ADD PARTITION` is O(1) — it inserts a single row into `PARTITIONS` and the associated rows into `PARTITION_KEY_VALS`. Production pipelines must always prefer explicit partition registration immediately after writing data, treating `MSCK REPAIR` as an emergency recovery tool only. [Ref: 470](spark_book.pdf#page=470)
+`MSCK REPAIR TABLE` has O(n) cost where n is the total number of partitions, because it lists every directory under the table root and compares against `SELECT * FROM PARTITIONS WHERE TBL_ID = ?`. On a table with 100,000 date-hour partitions, this scan can take 15-20 minutes and issue thousands of S3 LIST API calls. In contrast, `ALTER TABLE ADD PARTITION` is O(1) — it inserts a single row into `PARTITIONS` and the associated rows into `PARTITION_KEY_VALS`. Production pipelines must always prefer explicit partition registration immediately after writing data, treating `MSCK REPAIR` as an emergency recovery tool only. 
 
 ### Statistics Collection and the Cost-Based Optimizer
 
-Spark's Cost-Based Optimizer (CBO), enabled via `spark.sql.cbo.enabled=true`, uses column-level statistics stored in `TAB_COL_STATS` and `PART_COL_STATS` to make join reordering, cardinality estimation, and broadcast join decisions. These statistics are populated by `ANALYZE TABLE t COMPUTE STATISTICS FOR ALL COLUMNS` — a full-scan operation that computes `min`, `max`, `avg_col_len`, `max_col_len`, `num_nulls`, `num_distincts`, and a histogram (if `spark.sql.statistics.histogram.enabled=true`). Without fresh statistics, Catalyst defaults to heuristic row-count estimates of 200 rows per relation, which causes the CBO to systematically choose sort-merge joins over broadcast joins on small tables, adding full shuffle stages that can double query latency. Statistics go stale every time new partitions are added — a production data platform must include `ANALYZE TABLE` as the final step of every ETL load, or accept that the CBO is effectively disabled. [Ref: 455](spark_book.pdf#page=455)
+Spark's Cost-Based Optimizer (CBO), enabled via `spark.sql.cbo.enabled=true`, uses column-level statistics stored in `TAB_COL_STATS` and `PART_COL_STATS` to make join reordering, cardinality estimation, and broadcast join decisions. These statistics are populated by `ANALYZE TABLE t COMPUTE STATISTICS FOR ALL COLUMNS` — a full-scan operation that computes `min`, `max`, `avg_col_len`, `max_col_len`, `num_nulls`, `num_distincts`, and a histogram (if `spark.sql.statistics.histogram.enabled=true`). Without fresh statistics, Catalyst defaults to heuristic row-count estimates of 200 rows per relation, which causes the CBO to systematically choose sort-merge joins over broadcast joins on small tables, adding full shuffle stages that can double query latency. Statistics go stale every time new partitions are added — a production data platform must include `ANALYZE TABLE` as the final step of every ETL load, or accept that the CBO is effectively disabled. 
 
---- [Ref: 459](spark_book.pdf#page=459)
+---
 
 ## 📊 Performance Characteristics
 
@@ -88,7 +89,7 @@ Spark's Cost-Based Optimizer (CBO), enabled via `spark.sql.cbo.enabled=true`, us
 | `ALTER TABLE ADD PARTITION` | O(1) | No | Single RDBMS INSERT; preferred for production pipelines |
 | `ANALYZE TABLE ... FOR ALL COLUMNS` | O(data size) | Yes (internally) | Full table scan; run after each ETL load for CBO accuracy |
 | Partition pruning (at planning) | O(p log p) | No | p = number of registered partitions; done at Driver before task launch |
-| `spark.catalog.refreshTable()` | O(1) | No | Invalidates local `SessionCatalog` cache; does NOT touch HMS | [Ref: 464](spark_book.pdf#page=464)
+| `spark.catalog.refreshTable()` | O(1) | No | Invalidates local `SessionCatalog` cache; does NOT touch HMS | 
 
 ---
 

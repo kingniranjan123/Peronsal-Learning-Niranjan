@@ -1,16 +1,17 @@
 # 🔥 Master Class: A* Search Algorithm in Apache Spark
 
 ## Overview
+<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 A* (A-Star) is an informed heuristic search algorithm that finds the shortest path between two nodes in a weighted graph by combining the actual cost of reaching a node (`g(n)`) with an admissible heuristic estimate of the remaining cost to the goal (`h(n)`). The combined score `f(n) = g(n) + h(n)` guides a priority queue — the open set — so that the most promising nodes are always expanded first. Unlike Dijkstra's algorithm, which explores outward uniformly, A* focuses its frontier toward the goal, dramatically pruning the search space when a tight, admissible heuristic is available.
 
 In the Spark ecosystem, A* presents a fundamental architectural tension: the algorithm is inherently sequential and stateful — each expansion depends on the current minimum of the priority queue — yet Spark is built for massively parallel, stateless transformations. Resolving this tension requires choosing between three distinct deployment patterns: (1) running classical A* on the **driver JVM** using graph data pulled from distributed RDDs, (2) adapting A* into the **Pregel superstep model** via GraphX for graph-parallel traversal, and (3) launching **multiple independent A* searches in parallel** across the cluster using `mapPartitions` or `RDD.map`. Each pattern carries radically different memory, serialization, and fault-tolerance implications.
 
-The reason A* matters at scale is that modern production graphs — road networks, knowledge graphs, logistics networks — contain billions of edges. Fetching a subgraph to the driver is impractical. GraphX Pregel allows the graph to remain distributed while still converging on shortest paths through iterative message passing, at the cost of per-superstep shuffle overhead and a relaxed execution model that approximates, rather than exactly replicates, classical A* ordering. [Ref: 451](spark_book.pdf#page=451)
+The reason A* matters at scale is that modern production graphs — road networks, knowledge graphs, logistics networks — contain billions of edges. Fetching a subgraph to the driver is impractical. GraphX Pregel allows the graph to remain distributed while still converging on shortest paths through iterative message passing, at the cost of per-superstep shuffle overhead and a relaxed execution model that approximates, rather than exactly replicates, classical A* ordering. 
 
---- [Ref: 456](spark_book.pdf#page=456)
+---
 
-## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
+## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
 
@@ -22,7 +23,7 @@ The **GraphX Pregel API** adapts A* into a bulk-synchronous parallel (BSP) model
 
 The Pregel model does **not** guarantee A*'s node-expansion order. Classical A* expands nodes in strict `f(n)` order, ensuring optimality with an admissible heuristic. In Pregel, all active vertices in a superstep expand simultaneously regardless of their `f(n)` value. This means Pregel-based A* behaves more like a parallel Bellman-Ford with a heuristic bias — it still converges to the optimal path (given consistent heuristics and sufficient supersteps), but it may process more relaxations than necessary, increasing total work by a factor proportional to the graph diameter.
 
-```
+```scala
 Driver JVM (spark.driver.memory) Executor JVM (spark.executor.memory)
 ┌──────────────────────────────────┐ ┌──────────────────────────────────────────┐
 │ Classical A* (single-source) │ │ GraphX Pregel A* (distributed) │
@@ -47,7 +48,7 @@ Driver JVM (spark.driver.memory) Executor JVM (spark.executor.memory)
  │ .mapPartitions { │ a full in-memory A*
  │ localAstar(...) │ on a subgraph shard
  │ } │
- └──────────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
+ └──────────────────────────┘ 
 ```
 
 ### Key Internal Components
@@ -58,25 +59,25 @@ Driver JVM (spark.driver.memory) Executor JVM (spark.executor.memory)
 
 - **Pregel `vprog` / `sendMsg` / `mergeMsg`:** These three lambda functions are serialized by Kryo and shipped to executors. Closures that capture large driver-side objects (e.g., a broadcast heuristic lookup table) will serialize the entire captured object on every superstep unless explicitly wrapped in a `Broadcast[T]` variable via `sc.broadcast()`.
 
-- **ShuffleManager (SortShuffleManager):** Each Pregel superstep's `aggregateMessages` triggers a sort-based shuffle. With 100 million edges and 50 active vertices per partition, shuffle write volume per superstep can reach 4–8 GB uncompressed. Enabling `spark.shuffle.compress=true` with `LZ4` codec reduces this by 40–60%, at ~2% CPU overhead per task. [Ref: 452](spark_book.pdf#page=452)
+- **ShuffleManager (SortShuffleManager):** Each Pregel superstep's `aggregateMessages` triggers a sort-based shuffle. With 100 million edges and 50 active vertices per partition, shuffle write volume per superstep can reach 4–8 GB uncompressed. Enabling `spark.shuffle.compress=true` with `LZ4` codec reduces this by 40–60%, at ~2% CPU overhead per task. 
 
---- [Ref: 457](spark_book.pdf#page=457)
+---
 
-## ⚠️ Critical Concepts & Common Pitfalls [Ref: 461](spark_book.pdf#page=461)
+## ⚠️ Critical Concepts & Common Pitfalls 
 
 ### The Admissibility vs. Consistency Trap in Pregel
 
 Classical A* requires an *admissible* heuristic (never overestimates) for optimality and a *consistent* (monotone) heuristic for guaranteed single-expansion per node. In the Pregel model, the single-expansion guarantee is impossible because multiple supersteps can relax the same vertex. If your heuristic is admissible but not consistent, Pregel A* may still converge to the correct answer but requires re-opening already-settled vertices across supersteps, dramatically increasing iteration count.
 
-The practical failure mode is infinite or near-infinite superstep loops when the heuristic is inadmissible — even slightly. A heuristic that overestimates by just 0.1% can cause Pregel to continue issuing messages to already-optimal vertices because the local `f(n)` comparison never settles. Always validate your heuristic against ground-truth distances on a 10,000-node subgraph before running at scale, and cap Pregel iterations with a `maxIterations` bound to prevent runaway jobs that consume cluster resources indefinitely. [Ref: 464](spark_book.pdf#page=464)
+The practical failure mode is infinite or near-infinite superstep loops when the heuristic is inadmissible — even slightly. A heuristic that overestimates by just 0.1% can cause Pregel to continue issuing messages to already-optimal vertices because the local `f(n)` comparison never settles. Always validate your heuristic against ground-truth distances on a 10,000-node subgraph before running at scale, and cap Pregel iterations with a `maxIterations` bound to prevent runaway jobs that consume cluster resources indefinitely. 
 
 ### Driver Memory Overflow with Large Open Sets
 
 When running A* on the driver, the open set size is bounded in the worst case by the number of reachable nodes — which for a road network graph with 50 million nodes means a `PriorityQueue` holding up to 50 million entries. At 80 bytes per entry (object header, four primitive fields, heap array pointer), this is 4 GB — exceeding the typical `spark.driver.memory=4g` setting and triggering `java.lang.OutOfMemoryError: Java heap space`. This error surfaces in the Spark UI as a failed stage with "Driver lost" or "Executor lost (driver)" and the SparkContext becomes invalid, requiring a full application restart.
 
-The mitigation is a beam-search approximation: cap the open set at `K` entries (e.g., K=100,000) by evicting high-`f(n)` nodes when the heap exceeds the cap. This converts A* into a bounded-memory approximation that trades optimality for survivability at scale. Alternatively, partition the graph spatially (by geographic bounding box or community detection) and run A* on a compressed "highway" graph with precomputed boundary costs, a technique used in production map routing systems. [Ref: 455](spark_book.pdf#page=455)
+The mitigation is a beam-search approximation: cap the open set at `K` entries (e.g., K=100,000) by evicting high-`f(n)` nodes when the heap exceeds the cap. This converts A* into a bounded-memory approximation that trades optimality for survivability at scale. Alternatively, partition the graph spatially (by geographic bounding box or community detection) and run A* on a compressed "highway" graph with precomputed boundary costs, a technique used in production map routing systems. 
 
---- [Ref: 458](spark_book.pdf#page=458)
+---
 
 ## 📊 Performance Characteristics
 
@@ -86,9 +87,9 @@ The mitigation is a beam-search approximation: cap the open set at `K` entries (
 | Pregel superstep (aggregateMessages) | O(E / P) per step | Yes | One full shuffle per superstep; P = parallelism |
 | Kryo serialize VertexAttr | O(fields) ≈ O(1) | N/A | ~50 bytes/vertex with registration vs ~350 bytes Java |
 | Parallel multi-source A* (mapPartitions) | O((V/P + E/P) log(V/P)) | No | Embarrassingly parallel; requires graph pre-partitioned by query |
-| Path reconstruction (collect + trace) | O(path length) | No | Runs on driver after convergence; negligible for short paths | [Ref: 462](spark_book.pdf#page=462)
+| Path reconstruction (collect + trace) | O(path length) | No | Runs on driver after convergence; negligible for short paths | 
 
---- [Ref: 469](spark_book.pdf#page=469)
+---
 
 ## 💻 Code Examples
 
