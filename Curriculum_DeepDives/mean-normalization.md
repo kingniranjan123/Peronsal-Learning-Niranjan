@@ -18,7 +18,7 @@ At the Physical Planning level, Catalyst selects a `HashAggregateExec` strategy 
 
 Once the global means are computed at the Driver JVM, they are broadcasted to all Worker Executor JVMs via a TorrentBroadcast mechanism. For the transformation phase, Tungsten generates code that maps over the vectorized readers, subtracting the broadcasted mean from each element. If the data is stored in Parquet format, Spark utilizes dictionary encoding and run-length encoding (RLE) to accelerate the scanning process. The network serialization for broadcasting the statistical models relies heavily on Kryo serialization rather than standard Java serialization, drastically reducing the byte footprint over the wire and deserialization latency on the worker nodes.
 
-```scala
+```text
 Driver JVM Worker Executor JVMs
 ┌─────────────────────────────────┐ ┌─────────────────────────────────────────┐
 │ Spark MLlib / Catalyst │ │ Tungsten Execution Engine │

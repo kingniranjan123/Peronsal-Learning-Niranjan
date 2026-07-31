@@ -23,7 +23,7 @@ Tungsten's off-heap memory management does **not** apply natively to GraphX — 
 
 The **Pregel API** models computation as a series of supersteps. In each superstep: (1) active vertices receive messages from the previous round, (2) the vertex program (`vprog`) updates the vertex attribute based on the incoming merged message, (3) `sendMsg` runs on every `EdgeTriplet` and decides whether to generate a message, (4) `mergeMsg` reduces all messages destined for the same vertex using an associative, commutative merge function. A vertex becomes inactive (halts) when it receives no messages. The BSP barrier between supersteps is implemented as an RDD action (`count`) that forces materialization of the updated vertex RDD before the next iteration begins, ensuring exactly-once message delivery per superstep.
 
-```scala
+```text
 Graph Construction & Triplet View
 ─────────────────────────────────────────────────────────────────────────
  VertexRDD[VD] EdgeRDD[ED]
@@ -96,7 +96,7 @@ Pregel terminates when no messages are generated in a superstep. A common mistak
 
 > **What this demonstrates:** How to build a `Graph[VD, ED]` from raw RDDs using the correct partition strategy for skewed social-network-like graphs, and how to inspect the triplet view to validate co-location of vertex and edge attributes.
 
-```scala
+```text
 import org.apache.spark.graphx._
 import org.apache.spark.graphx.PartitionStrategy._
 import org.apache.spark.rdd.RDD

@@ -23,7 +23,7 @@ The Tungsten execution engine's Whole-Stage Code Generation (WSCG) fuses multipl
 
 The `ExpressionEncoder` uses `ScalaReflection` (backed by Scala 2.x runtime reflection via `scala.reflect.api.Universe`) to build a tree of `CreateNamedStruct`, `GetStructField`, and `Invoke` expressions that map between `InternalRow` binary format and your JVM class. This reflection happens once at `Dataset` construction time and is cached, but it means that complex or nested types with custom `apply` factories, generic types with type erasure, or classes with private fields can fail with cryptic `AnalysisException: No encoder found` errors at runtime.
 
-```scala
+```text
  Spark Driver JVM
  ┌───────────────────────────────────────────────────────────────┐
  │ Dataset[T] │
@@ -164,7 +164,7 @@ highEarners_good.explain(true)
 
 > **What this demonstrates:** Why typed `groupByKey().mapGroups()` forces full object materialization in memory for each group while the aggregation DSL stays in Tungsten binary format — and when each approach is the correct choice.
 
-```scala
+```text
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{KeyValueGroupedDataset, Dataset}
 
@@ -222,7 +222,7 @@ val anomaliesDS: Dataset[(String, Double)] = salesDS
 
 > **What this demonstrates:** How to handle types that `ExpressionEncoder` cannot introspect — Java beans, classes with private constructors, and the performance-safety tradeoff of using the Kryo encoder.
 
-```scala
+```text
 import org.apache.spark.sql.{Encoder, Encoders, Dataset}
 import java.time.LocalDate
 
@@ -292,7 +292,7 @@ stateDS.printSchema()
 
 > **What this demonstrates:** The performance and usability differences between `Dataset.joinWith` (which produces `Dataset[(T, U)]`) and the DataFrame join followed by `as[CaseClass]` — a classic expert-level tradeoff with significant shuffle and GC implications.
 
-```scala
+```text
 import org.apache.spark.sql.functions._
 
 case class Order(orderId: Long, customerId: Long, total: Double)

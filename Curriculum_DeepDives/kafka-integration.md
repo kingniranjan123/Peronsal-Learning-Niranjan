@@ -16,7 +16,7 @@ Once the physical plan is generated, Tungsten's Whole-Stage Code Generation synt
 
 Because Spark tracks offsets in its own HDFS/S3-backed checkpoint directory rather than relying on Kafka's internal `__consumer_offsets` topic, it can tightly couple offset advancement with the successful completion of a micro-batch and its associated state updates. If an Executor crashes mid-batch, the Driver simply relaunches the task, and the new Executor requests the exact same offset range. This deterministic replayability, combined with idempotent sinks, forms the basis of Spark's exactly-once guarantees, ensuring zero data loss and zero duplication even in chaotic failure scenarios.
 
-```scala
+```text
 Driver JVM Kafka Cluster
 ┌─────────────────────────────────┐ ┌─────────────────────────┐
 │ Structured Streaming Engine │ Offset │ ┌─────────────────────┐ │

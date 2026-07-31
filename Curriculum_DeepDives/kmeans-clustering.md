@@ -21,7 +21,7 @@ Once initialization completes, the main iteration loop begins. Each iteration is
 
 After all tasks complete, the partial aggregates — k pairs of (sum-vector, count) — are combined using `RDD.treeAggregate` with a merge depth of 2. `treeAggregate` differs critically from `aggregate` in that it performs a binary tree reduction on the executors before sending results to the Driver, reducing Driver ingestion from P messages to log₂(P) messages. The Driver divides each sum vector by its count to produce new centroids, computes the centroid shift (maximum L2 distance between old and new centroids), and repeats the loop if convergence has not been reached. The Catalyst optimizer is not involved in this loop — MLlib's K-Means operates below the DataFrame abstraction at the RDD level after the initial `fit` triggers a `dataset.rdd` conversion through the `RowToVector` internal transformer.
 
-```scala
+```text
 Driver JVM
 ┌──────────────────────────────────────────────────────┐
 │ KMeans.fit() │
@@ -304,7 +304,7 @@ bkm_model.write().overwrite().save("s3a://models/bisecting_kmeans_v1/")
 
 > **What this demonstrates:** Production-grade multi-seed K-Means training — running multiple independent fits with different random seeds, selecting the best by WCSS, and diagnosing pathological cluster size distributions that signal convergence failures or poor k selection.
 
-```python
+```text
 from pyspark.ml.clustering import KMeans
 from pyspark.sql import functions as F
 import math

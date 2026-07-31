@@ -21,7 +21,7 @@ Tungsten's off-heap memory manager operates outside the JVM heap within the exec
 
 Shuffle data is the central bottleneck in EC2 deployments. Spark's `SortShuffleManager` writes shuffle files to the local disk of each executor's EC2 instance. On instance types with NVMe storage (e.g., `m5d`, `c5d`, `r6id`), shuffle write throughput can reach 3+ GB/s, while EBS `gp3` volumes are capped at 1,000 MB/s (16,000 IOPS). The `ExternalShuffleService`, enabled by default in EMR, decouples shuffle file serving from executor JVMs, allowing YARN to reclaim executor containers while shuffle data remains readable — critical for dynamic allocation on Spot clusters. S3A's `fs.s3a.fast.upload` multipart upload pipeline (controlled by `fs.s3a.multipart.size` and `fs.s3a.fast.upload.buffer`) determines the throughput ceiling for writing Parquet/ORC output to S3, and misconfiguration is the single largest source of slow write performance in production.
 
-```scala
+```text
 EMR Master Node (m5.xlarge) EMR Core / Task Nodes
 ┌───────────────────────────────┐ ┌────────────────────────────────────┐
 │ YARN ResourceManager │◀────────────│ YARN NodeManager │
@@ -213,7 +213,7 @@ print(f"Cluster ID: {response['JobFlowId']}")
 
 > **What this demonstrates:** The exact `SparkSession` configuration parameters that govern S3A read/write throughput, the Magic Committer pipeline, and how misconfigurations manifest as silent performance cliffs.
 
-```python
+```text
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, year, month
 
@@ -306,7 +306,7 @@ df = (
 
 > **What this demonstrates:** The JVM and Spark configuration adjustments required to fully exploit Graviton3 (ARM64) instances on EMR, including GC tuning differences, SIMD-aware shuffle settings, and Kryo serializer registration for reduced network overhead.
 
-```python
+```text
 from pyspark.sql import SparkSession
 
 # Graviton3 (r6g/m6g/c6g) characteristics vs x86 (m5/r5/c5):
@@ -401,7 +401,7 @@ print(f"Groups aggregated: {result}")
 
 > **What this demonstrates:** A production-grade pattern for running long-running Spark ETL on 100% Spot instances with S3-backed checkpointing, lineage truncation, and automated EMR Step retry — enabling 70–85% cost reduction with fault tolerance at the application layer.
 
-```python
+```text
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import col, to_date, current_timestamp
 import boto3

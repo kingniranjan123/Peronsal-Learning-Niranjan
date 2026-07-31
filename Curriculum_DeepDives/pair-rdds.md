@@ -23,7 +23,7 @@ Tungsten's binary format is active throughout this pipeline. Values are stored i
 
 Catalyst's role in Pair RDD operations is limited compared to DataFrames — Pair RDDs bypass the Catalyst optimizer entirely. There is no predicate pushdown, no join reordering, and no Whole-Stage Codegen for arbitrary RDD lambda functions. This is why Spark's structured APIs (DataFrame/Dataset) exist and are preferred for production pipelines. However, Pair RDDs remain essential when dealing with complex, non-tabular value types — nested collections, custom ML model objects, or binary blobs — that cannot be expressed in Catalyst's type system.
 
-```scala
+```text
 Driver JVM
 ┌──────────────────────────────────────────────────────┐
 │ SparkContext │

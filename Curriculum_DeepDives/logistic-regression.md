@@ -23,7 +23,7 @@ The optimizer itself is **L-BFGS** (Limited-memory Broyden–Fletcher–Goldfarb
 
 For **multinomial** (softmax) mode, the weight matrix grows from a single vector of size `numFeatures` to a matrix of shape `numClasses × numFeatures`. The memory footprint is proportional, and gradient aggregation cost scales linearly with `numClasses`. Spark automatically selects binary mode when `numClasses == 2` and multinomial otherwise, though you can force multinomial binary classification via `setFamily("multinomial")`.
 
-```scala
+```text
 Training Data Partitions (Executors) Driver JVM
 ┌────────────────────────────────────┐ ┌─────────────────────────────────┐
 │ Executor 1 │ │ L-BFGS / OWLQN Optimizer │

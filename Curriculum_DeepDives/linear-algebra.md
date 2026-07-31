@@ -21,7 +21,7 @@ BLAS (Basic Linear Algebra Subprograms) and LAPACK (Linear Algebra PACKage) are 
 
 Apache Arrow enters this picture as the serialization format for the JVM-to-Python boundary. When PySpark calls `toArrow()` on a DataFrame containing feature vectors, Spark serializes the column-oriented data into Arrow's in-memory columnar format without copying individual values — the Arrow buffer is handed to the Python process via a memory-mapped file or socket, and NumPy/pandas can read it with zero deserialization overhead. For linear algebra workloads that bridge Spark preprocessing and scikit-learn or NumPy model fitting, this reduces Python worker startup overhead from seconds (with pickle serialization) to milliseconds.
 
-```scala
+```text
 Driver JVM Executor JVMs (RDD Partitions)
 ┌──────────────────────────────────┐ ┌─────────────────────────────────────┐
 │ SparkContext / DAGScheduler │ │ Partition 0: RDD[Vector] rows 0..k │

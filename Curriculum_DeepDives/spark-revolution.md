@@ -23,7 +23,7 @@ The **Catalyst optimizer** — Spark SQL's query planning engine — operates in
 
 Network serialization has also been redesigned. MapReduce used Java's default serialization for shuffle data — verbose, slow, and GC-heavy. Spark defaults to **Java serialization** for RDD operations but strongly recommends **Kryo serialization** (`spark.serializer=org.apache.spark.serializer.KryoSerializer`), which is 10× smaller and 3× faster for complex domain objects. For DataFrames and Datasets, Tungsten's `Encoder`-based binary format sidesteps both entirely, storing data as raw bytes that match CPU cache lines and can be operated on without deserialization.
 
-```scala
+```text
 MapReduce Execution (3 stages, disk-bound) Spark Execution (3 stages, in-memory DAG)
 ─────────────────────────────────────────── ──────────────────────────────────────────────
 

@@ -18,7 +18,7 @@ As transformations are applied, the Catalyst optimizer tracks the partitioning s
 
 During a shuffle, the Tungsten execution engine heavily utilizes off-heap memory for shuffle buffers. Tasks running on Executor Thread Pools write map outputs to local disk, partitioned by the target reducer. When reducers fetch this data, they pull it into memory for sorting or hashing. If the incoming partition size exceeds the executor's JVM heap or off-heap allocation, Spark will spill to disk, causing massive performance degradation. Therefore, tuning the number of partitions (e.g., via `spark.sql.shuffle.partitions`) directly impacts the size of each task's working set in memory, dictating whether Tungsten can process the data entirely in RAM or if it must thrash the disk.
 
-```scala
+```text
 Driver JVM Worker Executor JVM (Node 1)
 ┌─────────────────────────┐ ┌─────────────────────────────────────────┐
 │ SparkContext │ │ Executor Thread Pool │

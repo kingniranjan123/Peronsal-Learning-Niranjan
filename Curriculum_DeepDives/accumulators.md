@@ -21,7 +21,7 @@ Inside each executor, each task thread maintains a `TaskContext` which holds a `
 
 This architecture means the driver's accumulator value is the merge of all successfully committed task deltas, and the merge happens entirely on the driver JVM heap — no shuffle, no disk, no distributed coordination. The cost is proportional to the number of tasks and the size of each delta, not the size of the entire dataset. However, this also means two critical constraints apply: accumulators are **not** fault-tolerant counters (failed tasks may apply their delta multiple times due to retries), and accumulators updated inside transformations (lazy operations) are only executed when an action forces computation — the "lazy semantics trap" that silently produces zero values if the developer reads the accumulator before calling `.count()` or `.collect()`.
 
-```scala
+```text
 Driver JVM Executor JVM (Worker Node)
 ┌─────────────────────────────────┐ ┌──────────────────────────────────────┐
 │ SparkContext │ │ Task Thread (Partition N) │

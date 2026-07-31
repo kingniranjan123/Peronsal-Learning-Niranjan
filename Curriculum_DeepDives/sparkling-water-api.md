@@ -23,7 +23,7 @@ The Catalyst optimizer has no visibility into H2O operations. When you call `h2o
 
 AutoML uses H2O's `AutoML` Java API under the hood, which runs entirely on the H2O cluster—not on the Spark DAGScheduler. The Spark driver thread blocks on `trainModels()` via H2O's Future mechanism while H2O's internal scheduler trains and cross-validates up to `maxModels` models. The resulting leaderboard `ModelMetrics` objects live in the DKV. When you call `getBestModel()`, the winning model is serialized into a MOJO (Model ObJect, Optimized)—a self-contained zip file containing the model tree structure and scoring logic in H2O's portable binary format. The MOJO has no JVM dependency: it is scored by the `h2o-genmodel.jar` runtime, which uses hand-optimized bytecode that bypasses reflection and achieves throughput within 2–5x of native compiled C++ inference code.
 
-```scala
+```text
 Driver JVM
 ┌────────────────────────────────────────────────────────────────┐
 │ SparkSession │
@@ -154,7 +154,7 @@ println(s"Backend: ${hc.getConf.backendClusterMode}")
 
 > **What this demonstrates:** The correct ordering of Spark-side filter operations relative to `asH2OFrame()` conversion, and why invoking filters after conversion is an invisible but catastrophic performance anti-pattern that Catalyst cannot detect.
 
-```python
+```text
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, to_timestamp, year
 from pysparkling import H2OContext

@@ -23,7 +23,7 @@ The RocksDB state store fundamentally changes the memory model for stateful stre
 
 Trigger intervals and the async progress tracking API are the final layer. Setting `Trigger.ProcessingTime("30 seconds")` tells `MicroBatchExecution` to sleep until the interval boundary if the batch completes early, which is essential for cost control in cloud environments where you pay per executor-second. Async progress tracking (`spark.sql.streaming.asyncProgressTrackingEnabled = true`), introduced in Spark 3.5, decouples the WAL commit from the processing loop: the driver commits offsets to the checkpoint store asynchronously in a separate thread while the next batch begins constructing. This alone reduces trigger-to-trigger latency overhead by 15–40% on high-throughput pipelines.
 
-```scala
+```text
 Driver JVM (StreamExecution Thread)
 ┌────────────────────────────────────────────────────────┐
 │ MicroBatchExecution.constructNextBatch() │

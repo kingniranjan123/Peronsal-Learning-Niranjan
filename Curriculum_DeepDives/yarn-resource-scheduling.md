@@ -23,7 +23,7 @@ Node labels partition cluster nodes into disjoint (exclusive) or shared (non-exc
 
 Preemption is the mechanism by which the Capacity Scheduler reclaims Containers from over-capacity queues to give them to under-served queues. When `yarn.scheduler.capacity.preemption.enabled=true`, the `PreemptionManager` runs a background thread (period set by `yarn.resourcemanager.monitor.capacity.preemption.monitoring_interval`, default 3 seconds). It calculates each queue's ideal share, identifies queues exceeding it, and marks excess Containers for reclamation. Marked Containers are first given a grace period (`yarn.resourcemanager.monitor.capacity.preemption.max_wait_before_kill`, default 15 seconds) during which the ApplicationMaster can voluntarily release them. Spark's AM does not implement voluntary preemption, so YARN always kills the Container hard after the grace period, causing the executor to be lost and all in-flight tasks and cached shuffle data on it to be invalidated.
 
-```scala
+```text
 ResourceManager JVM
 ┌──────────────────────────────────────────────────────────────────┐
 │ RPC Server (Client/AM/RM protocols) │

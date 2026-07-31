@@ -23,7 +23,7 @@ The **Tungsten execution engine** underpins physical execution. For RDD-based co
 
 Network serialization at the shuffle boundary converts RDD partition data into byte streams. Kryo serialization (`spark.serializer=org.apache.spark.serializer.KryoSerializer`) is typically 3–10x faster and 3–5x more compact than Java serialization for user-defined types, and is strongly recommended for any RDD pipeline involving custom case classes or domain objects. Failure to register classes with the `KryoRegistrator` causes Kryo to fall back to Java-compatible mode, silently negating its performance benefit.
 
-```scala
+```text
 Driver JVM Executor JVM (Worker Node)
 ┌──────────────────────────────────┐ ┌────────────────────────────────────────┐
 │ SparkContext │ │ Unified Memory Manager │
@@ -155,7 +155,7 @@ sc.stop()
 
 > **What this demonstrates:** The precise mechanical difference between a shuffle with a map-side combiner (`aggregateByKey`) and one without (`groupByKey`), and how to calculate per-key statistics that `reduceByKey` alone cannot express.
 
-```python
+```text
 from pyspark import SparkContext, SparkConf
 
 conf = SparkConf() \
@@ -223,7 +223,7 @@ sc.stop()
 
 > **What this demonstrates:** How the `BlockManager` stores RDD cache blocks at different storage levels, and how to select the right level based on executor memory pressure and recomputation cost.
 
-```scala
+```text
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -284,7 +284,7 @@ sc.stop()
 
 > **What this demonstrates:** How a `HashPartitioner` applied once eliminates all subsequent shuffle operations for repeated joins on the same key space — the foundational optimization for graph processing and iterative ML algorithms built on RDDs.
 
-```scala
+```text
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 
 val sc = new SparkContext(new SparkConf().setAppName("Custom-Partitioner").setMaster("local[*]")

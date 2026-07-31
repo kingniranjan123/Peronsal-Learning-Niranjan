@@ -23,7 +23,7 @@ Spark's Tungsten engine allocates memory in two zones: the JVM heap (managed by 
 
 Image layering strategy directly impacts cluster startup latency. Docker images are built in layers. If the JRE base layer, the Spark distribution layer, and the application JAR layer are all in one `RUN` command, any change to the application JAR invalidates and re-downloads the entire multi-gigabyte image on every worker node. The correct approach is to separate layers by change frequency: `FROM openjdk:17-slim` → `ADD spark-3.x.tgz` → `COPY app.jar`. The first two layers are cached permanently on workers; only the 50MB application JAR layer is re-pulled on each deployment, reducing cold-start time from 10+ minutes to under 30 seconds.
 
-```scala
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ Docker Host (Linux Kernel) │
 │ │
@@ -328,7 +328,7 @@ spec:
 
 > **What this demonstrates:** A diagnostic PySpark script and shell command set that detects cgroup memory misconfiguration, validates that shuffle directories are on host volumes (not OverlayFS), and measures the actual container memory headroom available to Tungsten's off-heap allocator.
 
-```python
+```text
 # diagnostics/spark_docker_health_check.py
 # Run as: spark-submit --master spark://spark-master:7077 \
 # spark_docker_health_check.py

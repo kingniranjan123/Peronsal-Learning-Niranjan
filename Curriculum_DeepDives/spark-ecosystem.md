@@ -18,7 +18,7 @@ Once Catalyst finishes planning, the Tungsten Execution Engine takes over, radic
 
 The final pillar of the ecosystem’s internal mechanics is network serialization. During massive SQL joins or complex ML model training, data must be shuffled across the network between executors. Relying on standard Java serialization is a death knell for performance due to heavy reflection and class metadata. Instead, the ecosystem utilizes Kryo serialization—which is heavily optimized and schema-less—combined with Tungsten’s binary format. Data moves across the network in the exact same binary layout it holds in memory. This means executor JVMs can stream, shuffle, and process millions of records without ever incurring the CPU-crushing cost of deserialization.
 
-```scala
+```text
 Driver JVM Worker Executor JVM
 ┌─────────────────┐ ┌─────────────────────────────────┐
 │ SparkSession │──────▶│ Tungsten Execution Engine │

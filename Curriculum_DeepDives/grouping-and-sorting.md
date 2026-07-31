@@ -21,7 +21,7 @@ The shuffle itself is managed by the **ShuffleManager** (default: `SortShuffleMa
 
 The **Whole-Stage Code Generation** (Tungsten's WSCG) fuses the sort, hash map probing, and aggregation steps into a single tight Java bytecode loop per stage, eliminating virtual method dispatch and per-row object allocation. This is why `explain(mode="codegen")` reveals that a `groupBy` with a simple `sum` compiles down to a single generated class rather than a chain of iterator calls. `spark.sql.codegen.wholeStage=true` (default) is the configuration that enables this.
 
-```scala
+```text
 Driver JVM Shuffle Service / Executors
 ┌──────────────────────────────┐ ┌────────────────────────────────────────────┐
 │ Catalyst Optimizer │ │ Executor A (Map Side) │
@@ -129,7 +129,7 @@ result.write.parquet("/output/user_spend_summary/")
 
 > **What this demonstrates:** The concrete performance and behavioral difference between `orderBy` (global, shuffles) and `sortWithinPartitions` (local, no shuffle), and when each is the correct choice.
 
-```python
+```text
 from pyspark.sql import functions as F
 
 logs = spark.read.parquet("/data/server_logs/")
@@ -171,7 +171,7 @@ locally_sorted.explain(mode="simple")
 
 > **What this demonstrates:** How to detect a skewed key using Spark UI stage metrics and implement the two-pass salting pattern to distribute hot-key aggregation across multiple tasks.
 
-```python
+```text
 from pyspark.sql import functions as F
 import math
 
@@ -241,7 +241,7 @@ final_result.write.parquet("/output/seller_summary/")
 
 > **What this demonstrates:** How to implement the secondary sort pattern using `repartition` + `sortWithinPartitions` to achieve ordered-within-group processing without materializing entire groups in memory via `collect_list`, which is the primary cause of executor OOM in grouped time-series processing.
 
-```python
+```text
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 

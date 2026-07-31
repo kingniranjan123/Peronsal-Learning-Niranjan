@@ -23,7 +23,7 @@ The **GraphX Pregel API** adapts A* into a bulk-synchronous parallel (BSP) model
 
 The Pregel model does **not** guarantee A*'s node-expansion order. Classical A* expands nodes in strict `f(n)` order, ensuring optimality with an admissible heuristic. In Pregel, all active vertices in a superstep expand simultaneously regardless of their `f(n)` value. This means Pregel-based A* behaves more like a parallel Bellman-Ford with a heuristic bias — it still converges to the optimal path (given consistent heuristics and sufficient supersteps), but it may process more relaxations than necessary, increasing total work by a factor proportional to the graph diameter.
 
-```scala
+```text
 Driver JVM (spark.driver.memory) Executor JVM (spark.executor.memory)
 ┌──────────────────────────────────┐ ┌──────────────────────────────────────────┐
 │ Classical A* (single-source) │ │ GraphX Pregel A* (distributed) │

@@ -18,7 +18,7 @@ Once the data is physically collocated on the target executors, a `SortExec` ope
 
 As the `WindowExec` physical operator iterates over the sorted data stream, it maintains an internal state buffer representing the active rows currently inside the sliding frame. For physical frames defined by `rowsBetween`, Tungsten simply tracks physical pointer offsets in memory, which is exceptionally fast. For logical frames defined by `rangeBetween`, the engine must continuously evaluate the actual values of the ordering column, dynamically expanding or contracting the off-heap memory buffer to accommodate rows with identical peer values. Furthermore, the Whole-Stage Code Generation phase collapses these physical operators into a single, highly optimized Java function, completely bypassing virtual method dispatch overhead and maximizing CPU L1/L2 cache locality during the iterative frame evaluation.
 
-```scala
+```text
 Driver JVM Worker Executor JVM
 ┌─────────────────┐ ┌─────────────────────────────────┐
 │ Catalyst │──────▶│ Tungsten Execution Engine │
