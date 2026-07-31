@@ -10,6 +10,31 @@ The API surface splits into two layers. The higher-level **Pregel API** models i
 
 ---
 
+```mermaid
+graph LR
+    VERTS["VertexRDD
+(id: Long, attr: VD)
+users, cities, proteins"] --> GRAPH["Graph[VD, ED]
+immutable, partitioned
+EdgeCut / VertexCut"]
+    EDGES["EdgeRDD
+(src, dst, attr: ED)
+friendships, routes"] --> GRAPH
+    GRAPH -->|Pregel API
+message passing| PREGEL["Iterative computation
+PageRank, SSSP, CC"]
+    GRAPH -->|graph operators| OPS["mapVertices
+subgraph
+joinVertices
+aggregateMessages"]
+    PREGEL --> RESULT3["Converged vertex values
+(rank scores, distances)"]
+    style GRAPH fill:#1a1a3b,stroke:#6366f1
+    style PREGEL fill:#2d1f0f,stroke:#f59e0b
+    style RESULT3 fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

@@ -10,6 +10,29 @@ The revolution was not just about speed. Spark unified four previously separate 
 
 ---
 
+```mermaid
+graph TD
+    subgraph MR["MapReduce - Disk Bound"]
+        M1[Map Task] -->|write to HDFS| H1[(HDFS)]
+        H1 -->|read| R1[Reduce Task]
+        R1 -->|write to HDFS| H2[(HDFS)]
+        H2 -->|read| M2[Next Map Task]
+    end
+    subgraph SP["Apache Spark - In-Memory DAG"]
+        S1[Stage 1
+map+filter+project] -->|shuffle only| S2[Stage 2
+hash-agg+sort]
+        S2 --> S3[Stage 3
+Action: collect/write]
+        CACHE["BlockManager Cache
+(RAM)"] -.->|reuse| S2
+    end
+    MR -- "10-100x slower" --- SP
+    style MR fill:#3b1a1a,stroke:#ef4444
+    style SP fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

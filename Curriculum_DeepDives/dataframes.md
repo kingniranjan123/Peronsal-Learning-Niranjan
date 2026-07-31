@@ -162,6 +162,32 @@ Processing complex nested data structures like JSON or Parquet arrays historical
 
 ---
 
+```mermaid
+graph LR
+    SQL["SQL Query
+SELECT * FROM orders
+WHERE amount > 1000"] --> PARSE[Unresolved
+Logical Plan]
+    SCALA["DataFrame API
+df.filter(col > 1000)"] --> PARSE
+    PARSE -->|Analysis
+resolve columns| LP[Resolved
+Logical Plan]
+    LP -->|Logical Optimization
+predicate pushdown
+constant folding| OLP[Optimized
+Logical Plan]
+    OLP -->|Physical Planning
+cost-based join selection| PP[Physical Plan
+BroadcastHashJoin]
+    PP -->|Whole-Stage CodeGen
+Janino bytecode| EXEC[JVM Bytecode
+Execution]
+    style OLP fill:#0f2d1f,stroke:#22c55e
+    style EXEC fill:#1a1a3b,stroke:#6366f1
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=130" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="DataFrame API">p.130</a> <a href="spark_book.pdf#page=133" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Schema Inference">p.133</a> <a href="spark_book.pdf#page=136" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Catalyst Optimizer">p.136</a> <a href="spark_book.pdf#page=139" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="DataFrame vs RDD">p.139</a>

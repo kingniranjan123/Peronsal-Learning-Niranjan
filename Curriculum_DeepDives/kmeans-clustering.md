@@ -10,6 +10,26 @@ The algorithm converges iteratively: in each round, every executor assigns its l
 
 ---
 
+```mermaid
+graph LR
+    INIT["Initialize K centroids
+randomly or KMeans++"] --> ASSIGN["Assign each point
+to nearest centroid
+(Euclidean distance)"]
+    ASSIGN --> UPDATE["Recompute centroids
+mean of assigned points"]
+    UPDATE -->|converged?| CHECK{Delta < threshold?}
+    CHECK -->|No| ASSIGN
+    CHECK -->|Yes| RESULT2["Final K clusters
+WSSSE metric for quality"]
+    DIST[Distributed
+Each Spark partition
+computes local assignments] -.->|parallel| ASSIGN
+    style RESULT2 fill:#0f2d1f,stroke:#22c55e
+    style DIST fill:#1a1a3b,stroke:#6366f1
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

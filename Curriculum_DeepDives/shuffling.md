@@ -7,6 +7,22 @@ The necessity of the shuffle arises from the inherent partitioning of distribute
 
 ---
 
+```mermaid
+graph TD
+    subgraph MAP["Map Side"]
+        M0[Task P=0] -->|sort+index| WF0["Shuffle File 0"]
+        M1[Task P=1] -->|sort+index| WF1["Shuffle File 1"]
+        M2[Task P=2] -->|sort+index| WF2["Shuffle File 2"]
+    end
+    subgraph RED["Reduce Side"]
+        WF0 & WF1 & WF2 -->|"BlockManager RPC"| R0[Reduce P=0]
+        WF0 & WF1 & WF2 --> R1[Reduce P=1]
+    end
+    style MAP fill:#0f2d1f,stroke:#22c55e
+    style RED fill:#1a1a3b,stroke:#6366f1
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

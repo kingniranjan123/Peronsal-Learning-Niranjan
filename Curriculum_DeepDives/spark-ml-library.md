@@ -10,6 +10,31 @@ The library solves three critical production problems: reproducible preprocessin
 
 ---
 
+```mermaid
+graph LR
+    RAW2[(Raw Data)] -->|DataFrame| FE["Feature Engineering
+VectorAssembler
+StringIndexer
+StandardScaler"]
+    FE --> PIPE["ML Pipeline
+Stage 1: Tokenizer
+Stage 2: HashingTF
+Stage 3: IDF
+Stage 4: LogisticRegression"]
+    PIPE -->|fit on training data| MODEL["Trained PipelineModel"]
+    MODEL -->|transform on test data| PRED["Predictions DataFrame
+features, label, prediction, probability"]
+    PRED --> EVAL["Evaluator
+BinaryClassificationEvaluator
+AUC, F1, Accuracy"]
+    EVAL --> CV["CrossValidator
+k-fold + ParamGrid"]
+    CV -->|best model| MODEL
+    style PIPE fill:#1a1a3b,stroke:#6366f1
+    style MODEL fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

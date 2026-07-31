@@ -7,6 +7,26 @@ This strict separation solves the fundamental problem of distributed computing i
 
 ---
 
+```mermaid
+sequenceDiagram
+    participant U as User Code
+    participant D as Driver DAGScheduler
+    participant E as Executor
+    participant S as Storage/Output
+
+    U->>D: df.count() [ACTION called]
+    D->>D: Build physical plan from DAG
+    D->>D: Split into Stages at shuffles
+    D->>E: Dispatch Stage 1 Tasks (map, filter)
+    E->>E: Execute tasks on partitions
+    E-->>D: Task results / shuffle files
+    D->>E: Dispatch Stage 2 Tasks (reduce)
+    E->>E: Fetch shuffle data + aggregate
+    E-->>D: Final partition results
+    D-->>U: Return count value to Driver
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

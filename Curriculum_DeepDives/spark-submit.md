@@ -9,6 +9,31 @@ Beyond simply shipping code, `spark-submit` enforces strict isolation and stagin
 
 ---
 
+```mermaid
+graph TD
+    CMD["spark-submit
+--class MyApp
+--master yarn
+--deploy-mode cluster
+--executor-memory 4g
+app.jar"] --> PARSE2["Config Resolution
+cli > spark-defaults.conf
+> SparkConf > defaults"]
+    PARSE2 --> CLIENT["CLIENT MODE
+Driver runs on submitting machine
+Good for interactive/debug"]
+    PARSE2 --> CLUSTER["CLUSTER MODE
+Driver runs inside cluster
+Good for production batch"]
+    CLIENT -->|request executors| CM2[Cluster Manager]
+    CLUSTER -->|upload jar + launch| CM2
+    CM2 --> EXEC2[Executors launched
+across worker nodes]
+    style CLIENT fill:#2d2d0f,stroke:#f59e0b
+    style CLUSTER fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

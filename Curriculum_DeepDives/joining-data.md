@@ -120,6 +120,25 @@ Range joins, or Theta joins (involving non-equi conditions like `<`, `>`), funda
 
 ---
 
+```mermaid
+graph TD
+    BIG["Large Table
+100 GB"] & SMALL["Small Table
+< 10 MB"]
+    BIG -->|sort by key| SMJ_L["Sort-Merge Join
+(default, large+large)"]
+    SMALL -->|broadcast to all executors| BHJ["BroadcastHashJoin
+(fast, no shuffle)"]
+    BIG --> SMJ_L
+    SMJ_L --> RESULT_A[Result - 2 full shuffles]
+    BHJ --> RESULT_B[Result - 0 shuffles]
+    style BHJ fill:#0f2d1f,stroke:#22c55e
+    style RESULT_B fill:#0f2d1f,stroke:#22c55e
+    style SMJ_L fill:#2d2d0f,stroke:#f59e0b
+    style RESULT_A fill:#2d2d0f,stroke:#f59e0b
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=78" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Join Strategies">p.78</a> <a href="spark_book.pdf#page=81" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="BroadcastHashJoin">p.81</a> <a href="spark_book.pdf#page=84" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="SortMergeJoin">p.84</a> <a href="spark_book.pdf#page=87" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Shuffle Join Cost">p.87</a>

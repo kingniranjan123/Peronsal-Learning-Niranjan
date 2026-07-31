@@ -125,6 +125,24 @@ Standard Python UDFs represent a major performance trap. Spark must serialize ea
 
 ---
 
+```mermaid
+graph LR
+    DF[DataFrame] -->|createOrReplaceTempView| VIEW["Temp View
+'orders'"]
+    VIEW -->|spark.sql| SQL["SQL: SELECT customer_id,
+SUM(amount) as total
+FROM orders
+GROUP BY customer_id
+ORDER BY total DESC"]
+    SQL --> CATALYST[Catalyst Optimizer]
+    CATALYST -->|predicate pushdown| PARQ[(Parquet Files
+only read needed cols+rows)]
+    PARQ --> RESULT[Aggregated Result DataFrame]
+    style VIEW fill:#1a1a3b,stroke:#6366f1
+    style CATALYST fill:#0f2d1f,stroke:#22c55e
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=155" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Spark SQL">p.155</a> <a href="spark_book.pdf#page=158" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Temp Views">p.158</a> <a href="spark_book.pdf#page=161" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="SQL vs DataFrame API">p.161</a> <a href="spark_book.pdf#page=164" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Query Planning">p.164</a>

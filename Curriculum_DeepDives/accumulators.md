@@ -10,6 +10,25 @@ Accumulators are natively supported in Spark UI under the "Stages" tab, where pe
 
 ---
 
+```mermaid
+sequenceDiagram
+    participant D as Driver
+    participant E0 as Executor 0
+    participant E1 as Executor 1
+
+    D->>D: val acc = sc.longAccumulator("errors")
+    D->>E0: Task (with acc reference)
+    D->>E1: Task (with acc reference)
+    E0->>E0: acc.add(1) - local delta only
+    E1->>E1: acc.add(3) - local delta only
+    E0-->>D: Task complete, delta = 1
+    E1-->>D: Task complete, delta = 3
+    D->>D: acc.value = 4 (merged)
+    Note over E0,E1: Executors CANNOT read acc.value
+    Note over D: Only Driver can read final value
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

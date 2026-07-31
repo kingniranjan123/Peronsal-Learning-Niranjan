@@ -7,6 +7,26 @@ The necessity of data partitioning stems from the physical limits of single-node
 
 ---
 
+```mermaid
+graph TD
+    DATA[Large Dataset
+100 GB] -->|default| HP["HashPartitioner
+partition = hash(key) % N"]
+    DATA -->|sorted data| RP["RangePartitioner
+samples data to build ranges"]
+    DATA -->|custom logic| CP["CustomPartitioner
+override getPartition()"]
+    HP --> EX1["Even key distribution
+Good for groupByKey"]
+    RP --> EX2["Range-sorted output
+Good for sortByKey"]
+    CP --> EX3["Business-aware colocation
+Eliminate shuffle for joins"]
+    style CP fill:#1a1a3b,stroke:#6366f1
+    style EX3 fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

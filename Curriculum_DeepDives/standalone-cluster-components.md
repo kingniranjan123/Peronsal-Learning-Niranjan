@@ -10,6 +10,30 @@ Understanding the Standalone mode is critical for mastering Spark’s internal e
 
 ---
 
+```mermaid
+graph TD
+    CLI[spark-submit] -->|register app| MASTER["Standalone Master
+Resource Manager
+port 7077"]
+    MASTER -->|launch executor| W1["Worker Node 1
+ports 7078+"]
+    MASTER -->|launch executor| W2["Worker Node 2"]
+    MASTER -->|launch executor| W3["Worker Node 3"]
+    W1 --> E1["Executor JVM
+4 cores, 8GB RAM
+Task Thread Pool"]
+    W2 --> E2["Executor JVM
+4 cores, 8GB RAM"]
+    W3 --> E3["Executor JVM
+4 cores, 8GB RAM"]
+    E1 & E2 & E3 -->|heartbeat| MASTER
+    DRV[Driver JVM
+DAGScheduler] -->|task dispatch| E1 & E2 & E3
+    style MASTER fill:#1a1a3b,stroke:#6366f1
+    style DRV fill:#2d1f0f,stroke:#f59e0b
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

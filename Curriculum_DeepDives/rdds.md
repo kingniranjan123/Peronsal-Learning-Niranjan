@@ -10,6 +10,35 @@ The RDD API exposes two categories of operations: **transformations**, which are
 
 ---
 
+```mermaid
+graph LR
+    subgraph DRIVER["Driver JVM"]
+        SC[SparkContext] --> DAG["RDD Lineage DAG
+rdd1 → rdd2 → rdd3"]
+        DAG --> DAGS["DAGScheduler
+Stage 0: map+filter
+Stage 1: reduceByKey"]
+        DAGS --> TS[TaskScheduler] --> SB[SchedulerBackend]
+    end
+    subgraph EXEC["Executor JVM - Worker Node"]
+        subgraph MEM["Unified Memory Manager"]
+            EM["Execution Mem
+(shuffle, sort)"]
+            SM["Storage Mem
+(BlockManager)"]
+        end
+        subgraph POOL["Task Thread Pool"]
+            T0[Task P=0] & T1[Task P=1] & TN[...]
+        end
+        TUF["Tungsten UnsafeExternalSorter"]
+    end
+    subgraph SVC["Shuffle Service"]
+        SF["Map output → local disk"] --> RF["Reduce fetch via BlockManager RPC"]
+    end
+    SB -- "Kryo/Java ser" --> POOL --> TUF --> SVC --> MEM
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

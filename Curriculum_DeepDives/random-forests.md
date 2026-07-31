@@ -147,6 +147,26 @@ Finally, extracting peak performance from a Random Forest necessitates rigorous 
 
 ---
 
+```mermaid
+graph TD
+    DATA2[Training Data
+1M rows] -->|Bootstrap sample 1| T1["Decision Tree 1
+(random subset of features)"]
+    DATA2 -->|Bootstrap sample 2| T2["Decision Tree 2
+(different feature subset)"]
+    DATA2 -->|Bootstrap sample N| TN["Decision Tree N
+(different feature subset)"]
+    T1 & T2 & TN -->|majority vote
+or average| ENS["Ensemble Prediction
+Low variance, high accuracy
+Reduces overfitting"]
+    style ENS fill:#0f2d1f,stroke:#22c55e
+    style T1 fill:#1a1a3b,stroke:#6366f1
+    style T2 fill:#1a1a3b,stroke:#6366f1
+    style TN fill:#1a1a3b,stroke:#6366f1
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>

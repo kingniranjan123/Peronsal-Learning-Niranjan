@@ -7,6 +7,34 @@ This hierarchical abstraction exists to solve the critical problem of distribute
 
 ---
 
+```mermaid
+graph TD
+    APP[Spark Application] --> JOB[Job
+triggered by action]
+    JOB --> S0["Stage 0
+Narrow ops: map, filter, flatMap
+(pipelined, no shuffle)"]
+    JOB --> S1["Stage 1
+Wide op: reduceByKey
+(requires shuffle)"]
+    S0 -->|"shuffle write
+(SortShuffleManager)"| DISK[(Shuffle Files
+on local disk)]
+    DISK -->|"shuffle read
+(BlockManager RPC)"| S1
+    S0 --> T0A[Task 0
+Partition 0] & T0B[Task 1
+Partition 1] & T0C[Task 2
+Partition 2]
+    S1 --> T1A[Task 0
+Partition 0] & T1B[Task 1
+Partition 1]
+    style S0 fill:#0f2d1f,stroke:#22c55e
+    style S1 fill:#1a1a3b,stroke:#6366f1
+    style DISK fill:#2d2d2d,stroke:#94a3b8
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

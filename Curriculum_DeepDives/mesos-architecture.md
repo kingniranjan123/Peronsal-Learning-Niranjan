@@ -10,6 +10,26 @@ The central design insight is **separation of concerns**: Mesos handles *where* 
 
 ---
 
+```mermaid
+graph TD
+    MASTER2["Mesos Master
+Resource offers"] -->|offers resources| FRAME1["Framework 1
+Spark Driver
+(accepts/rejects offers)"]
+    MASTER2 -->|offers resources| FRAME2["Framework 2
+Hadoop MR"]
+    MASTER2 -->|offers resources| FRAME3["Framework 3
+Kafka / Marathon"]
+    FRAME1 -->|launch tasks| AGENT1["Mesos Agent Node 1
+containerized tasks"]
+    FRAME1 -->|launch tasks| AGENT2["Mesos Agent Node 2"]
+    FRAME2 --> AGENT2
+    FRAME3 --> AGENT1
+    style MASTER2 fill:#1a1a3b,stroke:#6366f1
+    style FRAME1 fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

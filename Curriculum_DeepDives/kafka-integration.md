@@ -7,6 +7,41 @@ This integration is not merely a connector; it is a profound architectural align
 
 ---
 
+```mermaid
+graph LR
+    subgraph KAFKA["Apache Kafka"]
+        T0P["Topic: events
+Partition 0
+offset 0..N"]
+        T1P["Topic: events
+Partition 1
+offset 0..N"]
+        T2P["Topic: events
+Partition 2
+offset 0..N"]
+    end
+    subgraph SPARK["Spark Structured Streaming"]
+        SRC["Kafka Source
+(one Spark partition
+per Kafka partition)"]
+        WM["Watermark
+event_time - 10 minutes"]
+        AGG["Window Aggregation
+GROUP BY window, key"]
+        SINK["Sink
+(Parquet / Kafka / DB)"]
+        SRC --> WM --> AGG --> SINK
+    end
+    T0P & T1P & T2P -->|"readStream
+startingOffsets=latest"| SRC
+    AGG -->|"checkpoint offsets
+to HDFS/S3"| CP[(Checkpoint
+Dir)]
+    style KAFKA fill:#1a1a3b,stroke:#6366f1
+    style SPARK fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

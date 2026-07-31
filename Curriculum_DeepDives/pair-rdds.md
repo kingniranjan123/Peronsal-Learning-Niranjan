@@ -10,6 +10,28 @@ The single most important engineering decision when working with Pair RDDs is ch
 
 ---
 
+```mermaid
+graph LR
+    INPUT["Input RDD
+[(a,1),(b,2),(a,3)]"] -->|mapToPair| PAIR["PairRDD
+Key-Value pairs"]
+    PAIR -->|groupByKey
+SHUFFLE| GBK["Grouped
+[(a,[1,3]),(b,[2])]"]
+    PAIR -->|reduceByKey
+SHUFFLE+COMBINER| RBK["Reduced
+[(a,4),(b,2)]"]
+    PAIR -->|partitionBy HashPartitioner| PART["Pre-partitioned RDD
+Co-located by key"]
+    PART -->|join
+NO extra shuffle| JOIN["Joined RDD
+(same partitioner)"]
+    style GBK fill:#3b1a1a,stroke:#ef4444
+    style RBK fill:#0f2d1f,stroke:#22c55e
+    style JOIN fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

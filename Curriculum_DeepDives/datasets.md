@@ -10,6 +10,37 @@ The practical consequence is enormous: a Dataset pipeline that fails due to a ty
 
 ---
 
+```mermaid
+graph TD
+    subgraph DS["Dataset - Type Safe + Optimized"]
+        CASE["case class Order
+(id: Long, amount: Double)"]
+        ENC["Encoder
+binary schema-aware serialization"]
+        PLAN["Catalyst Optimizer
++ Tungsten execution"]
+        CASE --> ENC --> PLAN
+    end
+    subgraph DF["DataFrame - Schema, No Type Safety"]
+        ROW["Row object
+untyped columns"]
+        SAME["Same Catalyst + Tungsten
+optimization path"]
+        ROW --> SAME
+    end
+    subgraph RDD["RDD - Full Control, No Optimization"]
+        JVM["JVM objects
+opaque to optimizer"]
+        GC["Full GC pressure
+no off-heap"]
+        JVM --> GC
+    end
+    style DS fill:#0f2d1f,stroke:#22c55e
+    style DF fill:#1a1a3b,stroke:#6366f1
+    style RDD fill:#2d2d0f,stroke:#f59e0b
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

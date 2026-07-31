@@ -10,6 +10,26 @@ Choosing the right metastore backend is one of the first production decisions a 
 
 ---
 
+```mermaid
+graph LR
+    APP[Spark Application] -->|SparkSession with
+enableHiveSupport| HMS["Hive Metastore
+(Derby / MySQL / Postgres)"]
+    HMS -->|table definitions
+schema, location, format| CAT[Spark Catalog]
+    CAT -->|physical data location| HDFS[(HDFS / S3
+Parquet / ORC files)]
+    CAT --> SQL["spark.sql
+SELECT * FROM db.table"] --> EXEC[Execution]
+    subgraph SHARING["Shared Access"]
+        HIVE[Hive Queries] -.->|same metastore| HMS
+        PRESTO[Presto/Trino] -.->|same metastore| HMS
+    end
+    style HMS fill:#1a1a3b,stroke:#6366f1
+    style SHARING fill:#0f1a0f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

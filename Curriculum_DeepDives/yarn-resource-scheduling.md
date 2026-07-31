@@ -10,6 +10,30 @@ The five mechanisms covered here — DominantResourceCalculator, node labels, qu
 
 ---
 
+```mermaid
+graph TD
+    CLI2[spark-submit] -->|submit app| RM["YARN ResourceManager
+Global resource arbiter"]
+    RM -->|launch container| AM["ApplicationMaster
+(Spark Driver inside YARN)"]
+    AM -->|request executor containers| RM
+    RM -->|allocate containers| NM1["NodeManager 1
+container: 4 cores 8GB"]
+    RM -->|allocate containers| NM2["NodeManager 2
+container: 4 cores 8GB"]
+    NM1 --> EY1["Executor JVM
+Task Pool + BlockManager"]
+    NM2 --> EY2["Executor JVM
+Task Pool + BlockManager"]
+    AM -->|dispatch tasks| EY1 & EY2
+    EY1 & EY2 -->|heartbeat + results| AM
+    style RM fill:#1a1a3b,stroke:#6366f1
+    style AM fill:#2d1f0f,stroke:#f59e0b
+    style EY1 fill:#0f2d1f,stroke:#22c55e
+    style EY2 fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

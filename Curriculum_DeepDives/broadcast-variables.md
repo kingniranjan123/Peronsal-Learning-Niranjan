@@ -9,6 +9,25 @@ By leveraging a highly optimized BitTorrent-like peer-to-peer distribution proto
 
 ---
 
+```mermaid
+graph TD
+    DRV[Driver
+broadcast val bc = sc.broadcast
+countryMap large Map] -->|serialized once
+via BitTorrent protocol| E0["Executor 0
+local cache of countryMap"]
+    DRV --> E1["Executor 1
+local cache of countryMap"]
+    DRV --> E2["Executor 2
+local cache of countryMap"]
+    E0 & E1 & E2 -->|bc.value lookup per row
+no network per record| OUT[Result
+no shuffle needed]
+    style DRV fill:#1a1a3b,stroke:#6366f1
+    style OUT fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

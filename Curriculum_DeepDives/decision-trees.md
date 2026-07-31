@@ -9,6 +9,27 @@ These statistics are aggregated via a highly optimized tree-reduce operation and
 
 ---
 
+```mermaid
+graph TD
+    ROOT["Root Node
+Feature: salary > 50k?
+Gini Impurity = 0.48"] -->|Yes| N1["Node
+age > 30?
+Gini = 0.24"]
+    ROOT -->|No| LEAF1["Leaf: Class = Low Risk
+purity = 0.91"]
+    N1 -->|Yes| LEAF2["Leaf: Class = High Risk
+purity = 0.88"]
+    N1 -->|No| N2["Node
+credit_score > 700?"]
+    N2 -->|Yes| LEAF3["Leaf: Class = Medium Risk"]
+    N2 -->|No| LEAF4["Leaf: Class = High Risk"]
+    style ROOT fill:#1a1a3b,stroke:#6366f1
+    style LEAF1 fill:#0f2d1f,stroke:#22c55e
+    style LEAF2 fill:#3b1a1a,stroke:#ef4444
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

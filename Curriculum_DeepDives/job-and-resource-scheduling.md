@@ -129,6 +129,26 @@ Data Locality—shipping computation to the data rather than data to the computa
 
 ---
 
+```mermaid
+graph TD
+    MULTI["Multiple Concurrent
+Spark Applications"] -->|FIFO default| SCHED["Spark Scheduler"]
+    MULTI -->|FAIR mode| SCHED
+    SCHED --> FIFO_P["FIFO Pool
+first submitted = first resources
+simple, no isolation"]
+    SCHED --> FAIR_P["FAIR Pool
+round-robin across jobs
+each job gets a share
+good for multi-user clusters"]
+    FAIR_P -->|configure| POOLS["schedulerMode=FAIR
+fairscheduler.xml
+weight, minShare per pool"]
+    style FIFO_P fill:#2d2d0f,stroke:#f59e0b
+    style FAIR_P fill:#0f2d1f,stroke:#22c55e
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>

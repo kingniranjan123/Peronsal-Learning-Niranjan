@@ -167,6 +167,31 @@ This Scala snippet emphasizes the configuration and validation of vectorized Par
 
 ---
 
+```mermaid
+graph TD
+    subgraph HEAP["On-Heap JVM - Default RDD"]
+        OBJ["Java Objects
+Boxed types, headers, pointers"]
+        GC["GC Pauses
+100ms - 10s stop-the-world"]
+        OBJ --> GC
+    end
+    subgraph OFFHEAP["Off-Heap Tungsten - DataFrame"]
+        BIN["Binary UnsafeRow format
+no object overhead"]
+        SORT["UnsafeExternalSorter
+sun.misc.Unsafe operations"]
+        CODEGEN["Whole-Stage CodeGen
+single JVM method per stage"]
+        BIN --> SORT --> CODEGEN
+    end
+    HEAP -->|"60-80% less GC
+with Tungsten"| OFFHEAP
+    style HEAP fill:#3b1a1a,stroke:#ef4444
+    style OFFHEAP fill:#0f2d1f,stroke:#22c55e
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=195" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Tungsten Engine">p.195</a> <a href="spark_book.pdf#page=198" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Unsafe Memory">p.198</a> <a href="spark_book.pdf#page=201" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Off-Heap Storage">p.201</a> <a href="spark_book.pdf#page=204" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Whole-Stage Codegen">p.204</a>

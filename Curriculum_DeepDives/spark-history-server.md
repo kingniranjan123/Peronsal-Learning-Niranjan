@@ -10,6 +10,25 @@ The SHS is not just a log viewer. It maintains its own in-process key-value stor
 
 ---
 
+```mermaid
+graph LR
+    APP2[Spark App running] -->|writes JSON event log| LOG[(Event Log
+HDFS/S3
+spark.eventLog.dir)]
+    APP2 -->|port 4040 LIVE| UI2[Live Spark Web UI]
+    APP2 -->|app finishes - UI gone| GONE[UI unavailable]
+    LOG -->|reads logs| HS2["History Server
+port 18080
+persistent"]
+    HS2 -->|reconstructs| HIST["Historical UI
+Stages, Tasks, SQL
+GC metrics, shuffle stats"]
+    style LOG fill:#1a1a3b,stroke:#6366f1
+    style HS2 fill:#0f2d1f,stroke:#22c55e
+    style GONE fill:#3b1a1a,stroke:#ef4444
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

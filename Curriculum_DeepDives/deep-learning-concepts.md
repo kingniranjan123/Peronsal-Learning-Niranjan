@@ -7,6 +7,31 @@ By leveraging barrier execution mode, Project Hydrogen, and frameworks like Horo
 
 ---
 
+```mermaid
+graph LR
+    INPUT2["Input Layer
+784 neurons
+(28x28 image pixels)"] --> H1L["Hidden Layer 1
+256 neurons
+ReLU activation"]
+    H1L --> H2L["Hidden Layer 2
+128 neurons
+ReLU activation"]
+    H2L --> OUT2["Output Layer
+10 neurons
+Softmax
+(class probabilities)"]
+    OUT2 -->|"Cross-entropy loss
+backpropagation"| GRAD["Gradients flow backward
+Update weights via Adam optimizer"]
+    GRAD --> H1L
+    DIST2["Spark distributes
+data across executors"] -.->|mini-batches| H1L
+    style DIST2 fill:#1a1a3b,stroke:#6366f1
+    style OUT2 fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

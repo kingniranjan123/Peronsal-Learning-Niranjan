@@ -10,6 +10,33 @@ Understanding transformations also means understanding their **cost boundary**: 
 
 ---
 
+```mermaid
+graph TD
+    subgraph NARROW["Narrow Dependencies - Pipelined in ONE Stage"]
+        A[RDD A
+4 partitions] -->|map| B[RDD B
+4 partitions]
+        B -->|filter| C[RDD C
+4 partitions]
+        C -->|mapValues| D[RDD D
+4 partitions]
+    end
+    subgraph WIDE["Wide Dependencies - SHUFFLE required - New Stage"]
+        D -->|groupByKey| SH{{"Shuffle
+all-to-all"}}
+        SH --> E[RDD E
+Partition 0]
+        SH --> F[RDD E
+Partition 1]
+        SH --> G[RDD E
+Partition 2]
+    end
+    style NARROW fill:#0f2d1f,stroke:#22c55e
+    style WIDE fill:#2d1f0f,stroke:#f59e0b
+    style SH fill:#7c3aed,color:#fff
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

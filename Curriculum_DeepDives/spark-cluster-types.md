@@ -161,6 +161,33 @@ In this Mesos configuration, we leverage the Mesos Universal Containerizer or Do
 
 ---
 
+```mermaid
+graph TD
+    SC3[Spark Application] --> LOCAL["Local Mode
+spark.master=local[*]
+Driver = Executor
+Dev & Testing only"]
+    SC3 --> STAND["Standalone
+spark.master=spark://host:7077
+Built-in cluster manager
+Simple but limited"]
+    SC3 --> YARN["YARN
+spark.master=yarn
+Hadoop ecosystem
+Multi-tenant queues"]
+    SC3 --> MESOS["Mesos
+Fine-grained scheduling
+Shared cluster"]
+    SC3 --> K8S["Kubernetes
+spark.master=k8s://...
+Container-native
+Auto-scaling"]
+    style LOCAL fill:#2d2d0f,stroke:#f59e0b
+    style YARN fill:#0f2d1f,stroke:#22c55e
+    style K8S fill:#1a1a3b,stroke:#6366f1
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>

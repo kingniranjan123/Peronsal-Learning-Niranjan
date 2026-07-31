@@ -132,6 +132,39 @@ For advanced platform engineering teams, treating Catalyst as a black box is oft
 
 ---
 
+```mermaid
+graph LR
+    RAW["Raw SQL / DataFrame API"] --> PHASE1
+    subgraph PHASE1["Phase 1 - Analysis"]
+        A1["Resolve column names
+Check types vs catalog"]
+    end
+    PHASE1 --> PHASE2
+    subgraph PHASE2["Phase 2 - Logical Optimization
+50+ rule-based rewrites"]
+        A2A["Predicate Pushdown
+filter before join"]
+        A2B["Constant Folding
+1+1 → 2 at plan time"]
+        A2C["Null Propagation"]
+    end
+    PHASE2 --> PHASE3
+    subgraph PHASE3["Phase 3 - Physical Planning
+Cost-Based"]
+        A3["BroadcastHashJoin vs SortMergeJoin
+based on table statistics"]
+    end
+    PHASE3 --> PHASE4
+    subgraph PHASE4["Phase 4 - Code Generation
+Janino"]
+        A4["Whole-Stage CodeGen
+entire stage → single JVM method"]
+    end
+    style PHASE2 fill:#0f2d1f,stroke:#22c55e
+    style PHASE4 fill:#1a1a3b,stroke:#6366f1
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=178" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Catalyst Architecture">p.178</a> <a href="spark_book.pdf#page=181" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Logical Plan">p.181</a> <a href="spark_book.pdf#page=184" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Physical Plan">p.184</a> <a href="spark_book.pdf#page=187" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Predicate Pushdown">p.187</a> <a href="spark_book.pdf#page=190" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Code Generation">p.190</a>

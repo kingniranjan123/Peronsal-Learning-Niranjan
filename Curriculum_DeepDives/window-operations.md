@@ -7,6 +7,26 @@ Under the hood, window operations are evaluated exceptionally late in the logica
 
 ---
 
+```mermaid
+graph LR
+    DF2["DataFrame
+(employee, dept, salary)"] -->|PARTITION BY dept
+ORDER BY salary DESC| WSPEC["Window Spec
+WindowSpec.partitionBy
+.orderBy.rowsBetween"]
+    WSPEC -->|RANK| RANK["rank() over window
+1,2,3 per dept"]
+    WSPEC -->|LAG| LAG["lag(salary,1) over window
+previous row value"]
+    WSPEC -->|SUM| RSUM["sum(salary) over window
+running total per dept"]
+    WSPEC -->|NTILE| NTILE["ntile(4) over window
+quartile bucket per dept"]
+    style WSPEC fill:#1a1a3b,stroke:#6366f1
+    style RANK fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

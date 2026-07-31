@@ -175,6 +175,28 @@ For complex estimators like the `MultilayerPerceptronClassifier`, the optimizati
 
 ---
 
+```mermaid
+graph LR
+    DATA5["Full Dataset
+100k rows"] -->|split| FOLDS["5-Fold Cross Validation
+Fold1 test, 2-5 train
+Fold2 test, 1,3-5 train
+...etc"]
+    FOLDS --> PG["ParamGrid
+regParam: [0.01, 0.1, 1.0]
+fitIntercept: [true, false]
+= 6 combinations"]
+    PG -->|train+evaluate
+5x6=30 model fits| SCORES["Fold Scores
+AUC per param combo"]
+    SCORES -->|select best params| BEST["Best Hyperparameters
+retrain on full dataset"]
+    BEST --> FINAL["Final Fitted Model"]
+    style PG fill:#1a1a3b,stroke:#6366f1
+    style FINAL fill:#0f2d1f,stroke:#22c55e
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>

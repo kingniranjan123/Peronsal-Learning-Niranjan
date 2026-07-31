@@ -10,6 +10,29 @@ Spark Streaming's architecture made a deliberate bet: reuse the mature, battle-t
 
 ---
 
+```mermaid
+graph LR
+    SRC3["Input Sources
+Kafka, Kinesis
+Files, Sockets"] -->|DStream or
+Structured Streaming| ENGINE["Streaming Engine
+Micro-batch every N secs"]
+    ENGINE -->|stateless ops| STAT_OP["map, filter, flatMap
+per batch - no state"]
+    ENGINE -->|stateful ops| STAT_FULL["updateStateByKey
+mapWithState
+window operations"]
+    STAT_FULL -->|persists state| ST2["State Store
+RocksDB / HDFS"]
+    STAT_OP & STAT_FULL --> SNK2["Output Sinks
+Kafka, DB, Files
+Console for debug"]
+    style ENGINE fill:#1a1a3b,stroke:#6366f1
+    style STAT_FULL fill:#2d1f0f,stroke:#f59e0b
+    style ST2 fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

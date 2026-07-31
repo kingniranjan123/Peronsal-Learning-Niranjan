@@ -10,6 +10,39 @@ Understanding Spark's runtime deeply means understanding its JVM memory layout, 
 
 ---
 
+```mermaid
+graph TD
+    subgraph DRV["Driver Program"]
+        SC2[SparkContext] --> DAG2[DAGScheduler]
+        DAG2 --> TS2[TaskScheduler]
+        TS2 --> SB2[SchedulerBackend]
+    end
+    subgraph CM["Cluster Manager
+(Standalone / YARN / Mesos / K8s)"]
+        AM[ResourceManager
+or Master]
+    end
+    subgraph WN1["Worker Node 1"]
+        EX1["Executor
+Task Threads
+BlockManager"]
+    end
+    subgraph WN2["Worker Node 2"]
+        EX2["Executor
+Task Threads
+BlockManager"]
+    end
+    SB2 -->|request resources| AM
+    AM -->|launch executors| EX1 & EX2
+    EX1 & EX2 -->|register| SB2
+    SB2 -->|dispatch tasks| EX1 & EX2
+    style DRV fill:#1a1a3b,stroke:#6366f1
+    style CM fill:#2d2d0f,stroke:#f59e0b
+    style WN1 fill:#0f2d1f,stroke:#22c55e
+    style WN2 fill:#0f2d1f,stroke:#22c55e
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

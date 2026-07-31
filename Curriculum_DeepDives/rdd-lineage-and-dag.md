@@ -10,6 +10,35 @@ Understanding RDD lineage and DAG anatomy is the single most important skill for
 
 ---
 
+```mermaid
+graph LR
+    SRC[("HDFS
+server.log")] -->|sc.textFile| RDD1["RDD 1
+HadoopRDD
+raw lines"]
+    RDD1 -->|filter ERROR| RDD2["RDD 2
+MapPartitionsRDD
+error lines only"]
+    RDD2 -->|map to pairs| RDD3["RDD 3
+MapPartitionsRDD
+(service, 1) pairs"]
+    RDD3 -->|reduceByKey
+ SHUFFLE| RDD4["RDD 4
+ShuffledRDD
+error counts"]
+    RDD4 -->|count ACTION| DRV[Driver
+result]
+
+    NODE_FAIL{{Node Crash
+RDD2 lost}} -.->|recompute from lineage| RDD1
+    NODE_FAIL -.->|no full replication needed| RDD2
+
+    style RDD3 fill:#1a1a3b,stroke:#6366f1
+    style RDD4 fill:#1a1a3b,stroke:#6366f1
+    style NODE_FAIL fill:#3b1a1a,stroke:#ef4444
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

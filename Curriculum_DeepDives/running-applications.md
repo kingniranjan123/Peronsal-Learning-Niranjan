@@ -168,6 +168,28 @@ In this example, the custom `TaskMetricsListener` evaluates the exact Garbage Co
 
 ---
 
+```mermaid
+graph TD
+    SUBMIT["spark-submit --deploy-mode client
+or cluster"] --> CLIENT2["CLIENT MODE
+Driver on edge node
+Executors on cluster
+Good for: debug, interactive"]
+    SUBMIT --> CLUSTER2["CLUSTER MODE
+Driver INSIDE cluster
+submitter exits immediately
+Good for: production batch"]
+    CLIENT2 -->|driver network dependency| RISK["Risk: driver dies if
+client machine loses connection"]
+    CLUSTER2 -->|fully managed| SAFE["Safe: cluster restarts
+driver if it fails"]
+    style CLIENT2 fill:#2d2d0f,stroke:#f59e0b
+    style CLUSTER2 fill:#0f2d1f,stroke:#22c55e
+    style RISK fill:#3b1a1a,stroke:#ef4444
+    style SAFE fill:#0f2d1f,stroke:#22c55e
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=1" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Introduction">p.1</a> <a href="spark_book.pdf#page=5" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Core Concepts">p.5</a> <a href="spark_book.pdf#page=10" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Implementation">p.10</a>

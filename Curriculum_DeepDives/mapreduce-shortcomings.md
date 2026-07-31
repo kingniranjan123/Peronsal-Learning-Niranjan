@@ -125,6 +125,22 @@ MapReduce has no REPL (Read-Eval-Print Loop) capability because of its batch-ori
 
 ---
 
+```mermaid
+graph LR
+    subgraph MR["MapReduce Execution - 3 Iterations"]
+        I1[Input HDFS] --> M1[Map] -->|disk write| D1[(HDFS)]
+        D1 -->|disk read| R1[Reduce] -->|disk write| D2[(HDFS)]
+        D2 -->|disk read| M2[Map Iter 2] -->|disk write| D3[(HDFS)]
+        D3 -->|disk read| R2[Reduce Iter 2] -->|disk write| D4[(HDFS)]
+    end
+    subgraph SP["Spark Execution - 3 Iterations"]
+        SI[Input] --> S1[Iter 1 in RAM] --> S2[Iter 2 in RAM] --> S3[Iter 3 in RAM] --> OUT[Output]
+    end
+    style MR fill:#3b1a1a,stroke:#ef4444
+    style SP fill:#0f2d1f,stroke:#22c55e
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=2" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="MapReduce Architecture">p.2</a> <a href="spark_book.pdf#page=4" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Disk I/O Bottleneck">p.4</a> <a href="spark_book.pdf#page=6" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Iterative Algorithm Problem">p.6</a> <a href="spark_book.pdf#page=7" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Fault Tolerance Cost">p.7</a>

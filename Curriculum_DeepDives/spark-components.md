@@ -121,6 +121,33 @@ While DataFrames hide much of Spark's internal complexity, mastering raw RDD par
 
 ---
 
+```mermaid
+graph TD
+    SPARK["Apache Spark
+Unified Analytics Engine"] --> CORE["Spark Core
+RDD, DAGScheduler
+Task Scheduling, I/O"]
+    CORE --> SQL2["Spark SQL
+DataFrame / Dataset
+Catalyst + Tungsten"]
+    CORE --> STREAM["Structured Streaming
+Micro-batch / Continuous
+Event-time windows"]
+    CORE --> MLLIB["MLlib
+Pipelines, Models
+Feature Engineering"]
+    CORE --> GX["GraphX
+Graph computation
+PregelAPI"]
+    CORE --> CLUSTER3["Cluster Managers
+Standalone / YARN
+Mesos / Kubernetes"]
+    style SPARK fill:#1a1a3b,stroke:#6366f1
+    style SQL2 fill:#0f2d1f,stroke:#22c55e
+    style STREAM fill:#0f2d1f,stroke:#22c55e
+```
+
+
 <div style="font-size: 0.82rem; color: #64748b; border-top: 1px solid #1e3a5f; padding-top: 12px; margin-top: 24px; line-height: 1.8;">
 <strong style="color: #94a3b8;">📚 Book References (Spark in Action, 2nd Ed.):</strong>&nbsp;
 <a href="spark_book.pdf#page=15" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Spark Core">p.15</a> <a href="spark_book.pdf#page=17" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="SparkContext">p.17</a> <a href="spark_book.pdf#page=19" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Cluster Manager">p.19</a> <a href="spark_book.pdf#page=21" style="color: #60a5fa; text-decoration: none; margin-right: 10px;" title="Executors & Drivers">p.21</a>

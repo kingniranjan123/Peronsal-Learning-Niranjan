@@ -10,6 +10,34 @@ The UI also exposes a programmatic REST API under `/api/v1/` and a Java/Scala `S
 
 ---
 
+```mermaid
+graph LR
+    APP[Running Spark App] -->|port 4040| UI["Spark Web UI"]
+    UI --> JOBS["Jobs Tab
+DAG visualization
+job duration"]
+    UI --> STAGES["Stages Tab
+task timelines
+shuffled bytes
+spill metrics"]
+    UI --> STORAGE["Storage Tab
+cached RDD/DF
+memory fraction used"]
+    UI --> ENV["Environment Tab
+spark.* config
+JVM flags"]
+    UI --> EXEC["Executors Tab
+GC time
+heap usage
+task counts"]
+    DONE[Completed App] -->|reads event log| HS["History Server
+port 18080"]
+    HS --> UI
+    style STAGES fill:#1a1a3b,stroke:#6366f1
+    style HS fill:#2d1f0f,stroke:#f59e0b
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

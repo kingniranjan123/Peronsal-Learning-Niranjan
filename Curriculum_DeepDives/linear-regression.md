@@ -8,6 +8,27 @@ Spark's ML implementation (`org.apache.spark.ml.regression.LinearRegression`) su
 
 ---
 
+```mermaid
+graph LR
+    DATA3["Training Data
+(features, label)"] -->|VectorAssembler| VEC["Feature Vector
+[x1, x2, x3, ...]"]
+    VEC -->|fit| LR2["LinearRegression
+y = w0 + w1*x1 + w2*x2"]
+    LR2 -->|gradient descent
+L-BFGS / SGD| LOSS["Loss: MSE
+minimize sum of squared errors"]
+    LOSS -->|converge| MODEL2["Trained Model
+coefficients + intercept"]
+    MODEL2 -->|transform on test| PRED2["Predictions
+(prediction, label columns)"]
+    PRED2 --> EVAL2["RegressionEvaluator
+RMSE, R2, MAE"]
+    style MODEL2 fill:#0f2d1f,stroke:#22c55e
+    style LOSS fill:#2d1f0f,stroke:#f59e0b
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood

@@ -10,6 +10,28 @@ The implementation lives in `org.apache.spark.ml.classification.LogisticRegressi
 
 ---
 
+```mermaid
+graph LR
+    DATA4["Training Data
+binary labels 0/1"] -->|StandardScaler + VectorAssembler| FEAT["Scaled Feature Vector"]
+    FEAT -->|fit| LR3["LogisticRegression
+P(y=1) = sigmoid(w·x)"]
+    LR3 -->|maximize log-likelihood
+or minimize cross-entropy| OPT["Optimizer
+L-BFGS / OWLQN"]
+    OPT --> MODEL3["Trained Model
+coefficients, intercept
+threshold=0.5"]
+    MODEL3 -->|predict| PRED3["Predictions
+probability, rawPrediction
+prediction columns"]
+    PRED3 --> EVAL3["BinaryClassificationEvaluator
+AUC-ROC, Precision, Recall"]
+    style MODEL3 fill:#0f2d1f,stroke:#22c55e
+    style OPT fill:#1a1a3b,stroke:#6366f1
+```
+
+
 ## 🏗️ Architectural Deep Dive 
 
 ### How It Works Under the Hood
