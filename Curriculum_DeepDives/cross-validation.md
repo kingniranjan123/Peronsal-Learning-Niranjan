@@ -25,19 +25,19 @@ pipeline = Pipeline(stages=[tokenizer, remover, hashingTF, rf])
 
 # Tuning both feature extraction (numFeatures) and model hyperparameters
 paramGrid = (ParamGridBuilder()
-             .addGrid(hashingTF.numFeatures, [1000, 5000, 10000])
-             .addGrid(rf.numTrees, [50, 100])
-             .addGrid(rf.maxDepth, [5, 10])
-             .build())
+ .addGrid(hashingTF.numFeatures, [1000, 5000, 10000])
+ .addGrid(rf.numTrees, [50, 100])
+ .addGrid(rf.maxDepth, [5, 10])
+ .build())
 
 evaluator = MulticlassClassificationEvaluator(metricName="f1")
 
 # Instantiate CrossValidator with 5 folds
 cv = CrossValidator(estimator=pipeline,
-                    estimatorParamMaps=paramGrid,
-                    evaluator=evaluator,
-                    numFolds=5,
-                    parallelism=4) # Execute up to 4 models concurrently
+ estimatorParamMaps=paramGrid,
+ evaluator=evaluator,
+ numFolds=5,
+ parallelism=4) # Execute up to 4 models concurrently
 
 cvModel = cv.fit(df)
 print(f"Best HashingTF Features: {cvModel.bestModel.stages[2].getNumFeatures()}")
@@ -67,27 +67,27 @@ import org.apache.spark.sql.DataFrame
 trainingData.cache()
 
 val gbt = new GBTRegressor()
-  .setLabelCol("target")
-  .setFeaturesCol("features")
+ .setLabelCol("target")
+ .setFeaturesCol("features")
 
 val paramGrid = new ParamGridBuilder()
-  .addGrid(gbt.maxIter, Array(50, 100, 200))
-  .addGrid(gbt.maxDepth, Array(3, 5, 7))
-  .addGrid(gbt.stepSize, Array(0.01, 0.1))
-  .build()
+ .addGrid(gbt.maxIter, Array(50, 100, 200))
+ .addGrid(gbt.maxDepth, Array(3, 5, 7))
+ .addGrid(gbt.stepSize, Array(0.01, 0.1))
+ .build()
 
 val evaluator = new RegressionEvaluator()
-  .setMetricName("rmse")
-  .setLabelCol("target")
-  .setPredictionCol("prediction")
+ .setMetricName("rmse")
+ .setLabelCol("target")
+ .setPredictionCol("prediction")
 
 // Configure CrossValidator with parallelism to maximize cluster utilization
 val cv = new CrossValidator()
-  .setEstimator(gbt)
-  .setEvaluator(evaluator)
-  .setEstimatorParamMaps(paramGrid)
-  .setNumFolds(4)
-  .setParallelism(8) // Evaluates 8 models simultaneously
+ .setEstimator(gbt)
+ .setEvaluator(evaluator)
+ .setEstimatorParamMaps(paramGrid)
+ .setNumFolds(4)
+ .setParallelism(8) // Evaluates 8 models simultaneously
 
 val cvModel = cv.fit(trainingData)
 val bestModel = cvModel.bestModel.asInstanceOf[GBTRegressor]
@@ -112,23 +112,23 @@ balancing_ratio = (total_count - pos_count) / total_count
 
 # Assign weight based on class
 df_weighted = df.withColumn("class_weight", F.when(F.col("label") == 1, balancing_ratio)
-                                             .otherwise(1.0 - balancing_ratio))
+ .otherwise(1.0 - balancing_ratio))
 
 lr = LogisticRegression(labelCol="label", featuresCol="features", weightCol="class_weight")
 
 paramGrid = (ParamGridBuilder()
-             .addGrid(lr.regParam, [0.01, 0.1, 1.0])
-             .addGrid(lr.elasticNetParam, [0.0, 0.5, 1.0])
-             .build())
+ .addGrid(lr.regParam, [0.01, 0.1, 1.0])
+ .addGrid(lr.elasticNetParam, [0.0, 0.5, 1.0])
+ .build())
 
 # Using areaUnderPR instead of areaUnderROC for imbalanced data
 evaluator = BinaryClassificationEvaluator(metricName="areaUnderPR")
 
 cv = CrossValidator(estimator=lr,
-                    estimatorParamMaps=paramGrid,
-                    evaluator=evaluator,
-                    numFolds=3,
-                    parallelism=3)
+ estimatorParamMaps=paramGrid,
+ evaluator=evaluator,
+ numFolds=3,
+ parallelism=3)
 
 cvModel = cv.fit(df_weighted)
 ```
@@ -147,26 +147,26 @@ import org.apache.spark.ml.tuning.{ParamGridBuilder, TrainValidationSplit}
 val layers = Array[Int](100, 50, 20, 10)
 
 val mlpc = new MultilayerPerceptronClassifier()
-  .setLayers(layers)
-  .setBlockSize(128)
-  .setSeed(1234L)
-  .setMaxIter(100)
+ .setLayers(layers)
+ .setBlockSize(128)
+ .setSeed(1234L)
+ .setMaxIter(100)
 
 val paramGrid = new ParamGridBuilder()
-  .addGrid(mlpc.blockSize, Array(64, 128, 256))
-  .addGrid(mlpc.stepSize, Array(0.01, 0.05, 0.1))
-  .build()
+ .addGrid(mlpc.blockSize, Array(64, 128, 256))
+ .addGrid(mlpc.stepSize, Array(0.01, 0.05, 0.1))
+ .build()
 
 val evaluator = new MulticlassClassificationEvaluator()
-  .setMetricName("accuracy")
+ .setMetricName("accuracy")
 
 // TrainValidationSplit evaluates only once based on trainRatio
 val tvs = new TrainValidationSplit()
-  .setEstimator(mlpc)
-  .setEvaluator(evaluator)
-  .setEstimatorParamMaps(paramGrid)
-  .setTrainRatio(0.8) // 80% of data for training, 20% for validation
-  .setParallelism(4)
+ .setEstimator(mlpc)
+ .setEvaluator(evaluator)
+ .setEstimatorParamMaps(paramGrid)
+ .setTrainRatio(0.8) // 80% of data for training, 20% for validation
+ .setParallelism(4)
 
 val tvsModel = tvs.fit(massiveDataFrame)
 ```

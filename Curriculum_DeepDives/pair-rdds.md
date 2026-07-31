@@ -6,11 +6,11 @@ A **Pair RDD** is any RDD whose elements are two-element tuples of the form `(ke
 
 Pair RDDs exist because the distributed aggregation problem — "for every key, compute some summary over all values that share that key across a cluster" — is one of the most fundamental patterns in large-scale data processing. Batch analytics, sessionization, word counts, revenue rollups, inverted indexes, join operations: all of them reduce to keyed aggregation. The Pair RDD abstraction makes the key structurally explicit to the runtime, enabling the scheduler and the shuffle system to make informed decisions about data locality, partition co-location, and network traffic minimization.
 
-The single most important engineering decision when working with Pair RDDs is choosing the *right aggregation operator* for the job. The difference between `groupByKey` and `reduceByKey` is not stylistic — it is the difference between sending every raw record across the network and sending only pre-aggregated partial results. In large-scale production jobs, this single choice determines whether a job finishes in minutes or fails with an OOM exception.
+The single most important engineering decision when working with Pair RDDs is choosing the *right aggregation operator* for the job. The difference between `groupByKey` and `reduceByKey` is not stylistic — it is the difference between sending every raw record across the network and sending only pre-aggregated partial results. In large-scale production jobs, this single choice determines whether a job finishes in minutes or fails with an OOM exception. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 455](spark_book.pdf#page=455)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
 
 ### How It Works Under the Hood
 
@@ -22,34 +22,34 @@ Tungsten's binary format is active throughout this pipeline. Values are stored i
 
 Catalyst's role in Pair RDD operations is limited compared to DataFrames — Pair RDDs bypass the Catalyst optimizer entirely. There is no predicate pushdown, no join reordering, and no Whole-Stage Codegen for arbitrary RDD lambda functions. This is why Spark's structured APIs (DataFrame/Dataset) exist and are preferred for production pipelines. However, Pair RDDs remain essential when dealing with complex, non-tabular value types — nested collections, custom ML model objects, or binary blobs — that cannot be expressed in Catalyst's type system.
 
-```
+```text
 Driver JVM
 ┌──────────────────────────────────────────────────────┐
-│  SparkContext                                        │
-│  DAGScheduler                                        │
-│   └─ Stage 1 (map-side)      Stage 2 (reduce-side)  │
-│       ShuffleMapTasks    ──▶  ResultTasks            │
+│ SparkContext │
+│ DAGScheduler │
+│ └─ Stage 1 (map-side) Stage 2 (reduce-side) │
+│ ShuffleMapTasks ──▶ ResultTasks │
 └────────────┬─────────────────────────┬───────────────┘
-             │                         │
-             ▼                         ▼
-Executor A (Worker JVM)         Executor B (Worker JVM)
-┌──────────────────────┐       ┌──────────────────────┐
-│  Partition 0, 1      │       │  Partition 2, 3       │
-│  ┌────────────────┐  │       │  ┌────────────────┐  │
-│  │ map-side combiner│ │       │  │ map-side combiner│ │
-│  │ (partial agg)  │  │       │  │ (partial agg)  │  │
-│  └──────┬─────────┘  │       │  └──────┬─────────┘  │
-│  ShuffleWriter        │       │  ShuffleWriter        │
-│  Disk: shuffle_0.idx  │       │  Disk: shuffle_0.idx  │
-└──────────┬────────────┘       └──────────┬────────────┘
-           │  BlockManager ◀──────────────▶ BlockManager │
-           │     NettyBlockTransferService               │
-           ▼                               ▼
-┌──────────────────────┐       ┌──────────────────────┐
-│ ShuffleReader (Exec A)│       │ ShuffleReader (Exec B)│
-│  Key-range [A–M]     │       │  Key-range [N–Z]      │
-│  Final aggregation   │       │  Final aggregation    │
-└──────────────────────┘       └──────────────────────┘
+ │ │
+ ▼ ▼
+Executor A (Worker JVM) Executor B (Worker JVM)
+┌──────────────────────┐ ┌──────────────────────┐
+│ Partition 0, 1 │ │ Partition 2, 3 │
+│ ┌────────────────┐ │ │ ┌────────────────┐ │
+│ │ map-side combiner│ │ │ │ map-side combiner│ │
+│ │ (partial agg) │ │ │ │ (partial agg) │ │
+│ └──────┬─────────┘ │ │ └──────┬─────────┘ │
+│ ShuffleWriter │ │ ShuffleWriter │
+│ Disk: shuffle_0.idx │ │ Disk: shuffle_0.idx │
+└──────────┬────────────┘ └──────────┬────────────┘
+ │ BlockManager ◀──────────────▶ BlockManager │
+ │ NettyBlockTransferService │
+ ▼ ▼
+┌──────────────────────┐ ┌──────────────────────┐
+│ ShuffleReader (Exec A)│ │ ShuffleReader (Exec B)│
+│ Key-range [A–M] │ │ Key-range [N–Z] │
+│ Final aggregation │ │ Final aggregation │
+└──────────────────────┘ └──────────────────────┘ [Ref: 462](spark_book.pdf#page=462)
 ```
 
 ### Key Internal Components
@@ -60,25 +60,25 @@ Executor A (Worker JVM)         Executor B (Worker JVM)
 
 - **`SortShuffleManager` & `ExternalSorter`:** The current shuffle backend. When a shuffle write exceeds `spark.shuffle.spill.numElementsForceSpillThreshold` (default 1B elements) or the JVM heap threshold (`spark.shuffle.memoryFraction`), the `ExternalSorter` spills sorted batches to disk and merge-sorts them on read. Spill files visible in the Spark UI's "Shuffle Spill (Disk)" column indicate memory pressure and the need for more executor memory or a re-partitioning strategy.
 
-- **`Aggregator[K, V, C]` (the map-side combiner):** The internal class that powers `reduceByKey`, `aggregateByKey`, and `combineByKey`. It holds an `ExternalAppendOnlyMap` on the executor — a hash map that applies a combine function *locally* before writing to the shuffle. This is map-side aggregation, and it is the core reason these operators are superior to `groupByKey` for aggregation workloads.
+- **`Aggregator[K, V, C]` (the map-side combiner):** The internal class that powers `reduceByKey`, `aggregateByKey`, and `combineByKey`. It holds an `ExternalAppendOnlyMap` on the executor — a hash map that applies a combine function *locally* before writing to the shuffle. This is map-side aggregation, and it is the core reason these operators are superior to `groupByKey` for aggregation workloads. [Ref: 469](spark_book.pdf#page=469)
 
----
+--- [Ref: 452](spark_book.pdf#page=452)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
 
 ### `groupByKey` — The Most Dangerous Operator in the Spark API
 
 `groupByKey` is almost always the wrong choice for aggregation. It performs *zero* map-side combination: every raw `(key, value)` record is serialized, written to shuffle files, and transferred across the network in full. The reduce-side task then receives an `Iterable[V]` containing all values for each key. For a key with 50 million associated values, the reduce task must buffer all 50 million objects in heap memory simultaneously. This routinely causes `java.lang.OutOfMemoryError: GC overhead limit exceeded` on skewed datasets, and it produces shuffle payloads that are 10–100× larger than equivalent `reduceByKey` jobs.
 
-The only legitimate use cases for `groupByKey` are when you genuinely need the full, ordered list of values for each key and cannot express the aggregation as an associative/commutative function — for example, computing the exact sorted list of events per user session. Even then, consider `aggregateByKey` with a `ListBuffer` accumulator, which at least allows you to control the initial container size per partition and avoid materializing all values at once on the reduce side.
+The only legitimate use cases for `groupByKey` are when you genuinely need the full, ordered list of values for each key and cannot express the aggregation as an associative/commutative function — for example, computing the exact sorted list of events per user session. Even then, consider `aggregateByKey` with a `ListBuffer` accumulator, which at least allows you to control the initial container size per partition and avoid materializing all values at once on the reduce side. [Ref: 459](spark_book.pdf#page=459)
 
 ### Key Skew and the Silent Performance Killer
 
 Key skew occurs when a small number of keys account for a disproportionate share of values — for example, a `country` key where 70% of records are `"US"`. The `HashPartitioner` faithfully sends all `"US"` records to the same reduce-side partition, which becomes a **straggler task**: all other tasks complete in seconds while one task runs for minutes, holding the entire stage hostage. The Spark UI's Stage Detail view will show one task with dramatically higher "Duration", "Shuffle Read Size", and "GC Time" than its peers.
 
-Mitigation strategies depend on the aggregation type. For commutative/associative operations (`sum`, `count`, `max`), a two-phase aggregation works: salt each key with a random prefix (`"US_0"` through `"US_9"`), perform the first `reduceByKey`, then strip the salt and `reduceByKey` again. This distributes the hot key across 10 partitions in the first pass, reducing per-partition load by ~10×. For `combineByKey` workloads, setting `spark.sql.shuffle.partitions` (or the RDD `numPartitions` parameter) higher than the default 200 often reduces skew impact at the cost of more, smaller tasks.
+Mitigation strategies depend on the aggregation type. For commutative/associative operations (`sum`, `count`, `max`), a two-phase aggregation works: salt each key with a random prefix (`"US_0"` through `"US_9"`), perform the first `reduceByKey`, then strip the salt and `reduceByKey` again. This distributes the hot key across 10 partitions in the first pass, reducing per-partition load by ~10×. For `combineByKey` workloads, setting `spark.sql.shuffle.partitions` (or the RDD `numPartitions` parameter) higher than the default 200 often reduces skew impact at the cost of more, smaller tasks. [Ref: 463](spark_book.pdf#page=463)
 
----
+--- [Ref: 470](spark_book.pdf#page=470)
 
 ## 📊 Performance Characteristics
 
@@ -91,11 +91,11 @@ Mitigation strategies depend on the aggregation type. For commutative/associativ
 | `partitionBy(p)` | N/A | Yes (once) | 🟢 Low | Pay shuffle cost once; subsequent joins are narrow |
 | `mapValues(f)` | N/A | ❌ No | 🟢 None | Preserves partitioning; no shuffle ever triggered |
 | `join(other)` | N/A | Yes (unless co-partitioned) | 🟡 Medium | Co-partition both RDDs first to eliminate shuffle |
-| `countByKey` | N/A | No (action) | 🟡 Medium — result pulled to driver | Use only when key cardinality is small |
+| `countByKey` | N/A | No (action) | 🟡 Medium — result pulled to driver | Use only when key cardinality is small | [Ref: 453](spark_book.pdf#page=453)
 
----
+--- [Ref: 457](spark_book.pdf#page=457)
 
-## 💻 Code Examples
+## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
 
 ### Example 1: `reduceByKey` vs `groupByKey` — Quantifying the Shuffle Cost Difference
 
@@ -105,21 +105,21 @@ Mitigation strategies depend on the aggregation type. For commutative/associativ
 import org.apache.spark.{SparkConf, SparkContext}
 
 val conf = new SparkConf()
-  .setAppName("PairRDD-ReduceVsGroup")
-  .setMaster("local[4]")
-  // Kryo serialization produces 3-5x smaller shuffle payloads than Java serialization
-  .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+ .setAppName("PairRDD-ReduceVsGroup")
+ .setMaster("local[4]")
+ // Kryo serialization produces 3-5x smaller shuffle payloads than Java serialization
+ .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 
 val sc = new SparkContext(conf)
 
 // Simulate a log dataset: (userId, sessionDurationSeconds)
 val rawLogs = sc.parallelize(
-  Seq(
-    ("user_A", 120), ("user_B", 300), ("user_A", 45),
-    ("user_C", 600), ("user_B", 90),  ("user_A", 200),
-    ("user_C", 150), ("user_B", 420)
-  ),
-  numSlices = 4  // 4 input partitions → 4 ShuffleMapTasks in Stage 0
+ Seq(
+ ("user_A", 120), ("user_B", 300), ("user_A", 45),
+ ("user_C", 600), ("user_B", 90), ("user_A", 200),
+ ("user_C", 150), ("user_B", 420)
+ ),
+ numSlices = 4 // 4 input partitions → 4 ShuffleMapTasks in Stage 0
 )
 
 // ❌ ANTI-PATTERN: groupByKey
@@ -127,17 +127,17 @@ val rawLogs = sc.parallelize(
 // The Iterable[Int] on the reduce side must fit in executor heap for each key.
 // At scale (1B records), this triggers heap OOM or massive GC pauses.
 val groupedTotal = rawLogs
-  .groupByKey()                              // Full shuffle: sends raw tuples
-  .mapValues(iter => iter.sum)               // Aggregation deferred to reduce side
+ .groupByKey() // Full shuffle: sends raw tuples
+ .mapValues(iter => iter.sum) // Aggregation deferred to reduce side
 
 // ✅ BEST PRACTICE: reduceByKey
 // The Aggregator[String, Int, Int] applies the combine function LOCALLY on each
 // executor before writing to shuffle files. Only one Int per key per partition
 // crosses the network — not one Int per raw record.
 val reducedTotal = rawLogs
-  .reduceByKey(_ + _)   // map-side: (user_A, 120+45+200=365) per partition
-                         // shuffle:  only the partial sums are transferred
-                         // reduce-side: partial sums are summed again
+ .reduceByKey(_ + _) // map-side: (user_A, 120+45+200=365) per partition
+ // shuffle: only the partial sums are transferred
+ // reduce-side: partial sums are summed again
 
 // Print the lineage DAG — notice "ShuffledRDD" in both, but the groupByKey
 // lineage has no "Aggregator" annotation because it skips map-side combining.
@@ -147,9 +147,9 @@ println(groupedTotal.toDebugString)
 println("=== reduceByKey lineage ===")
 println(reducedTotal.toDebugString)
 
-reducedTotal.foreach(println)  // Triggers the job; inspect Stage 0 shuffle write bytes vs Stage 1 shuffle read bytes in Spark UI
+reducedTotal.foreach(println) // Triggers the job; inspect Stage 0 shuffle write bytes vs Stage 1 shuffle read bytes in Spark UI
 
-sc.stop()
+sc.stop() [Ref: 464](spark_book.pdf#page=464)
 ```
 
 > **Mastery Note:** Open the Spark UI at `http://localhost:4040` and compare the "Shuffle Write" column for the `groupByKey` job vs the `reduceByKey` job on the same data. With `reduceByKey`, the shuffle write size equals `(numPartitions × numUniqueKeys × sizeof(Int))` — a constant independent of the total number of records. With `groupByKey`, shuffle write size grows linearly with record count. At 100 million records with 1,000 unique keys, `reduceByKey` writes ~800 KB to shuffle; `groupByKey` writes ~800 MB. The `toDebugString` output will show `ShuffledRDD[N] at reduceByKey` with an `Aggregator` comment for `reduceByKey`, confirming that the combiner is active on the map side.
@@ -172,37 +172,37 @@ val sc: SparkContext = ??? // assumed initialized
 
 // (category, salePrice): V = Double
 val sales = sc.parallelize(Seq(
-  ("electronics", 299.99), ("clothing", 45.00), ("electronics", 899.99),
-  ("clothing", 120.00),    ("food", 5.99),      ("food", 12.49),
-  ("electronics", 199.99), ("food", 3.50),      ("clothing", 85.00)
+ ("electronics", 299.99), ("clothing", 45.00), ("electronics", 899.99),
+ ("clothing", 120.00), ("food", 5.99), ("food", 12.49),
+ ("electronics", 199.99), ("food", 3.50), ("clothing", 85.00)
 ), numSlices = 3)
 
 // Zero value: C = (Double, Int) = (runningSum, count)
 // seqOp: called per record WITHIN a partition on the map side.
-//   Merges one V (Double) into the accumulator C = (sum, count).
-//   This runs entirely inside the executor's JVM heap, no network I/O.
+// Merges one V (Double) into the accumulator C = (sum, count).
+// This runs entirely inside the executor's JVM heap, no network I/O.
 val zeroValue: (Double, Int) = (0.0, 0)
 
 val seqOp: ((Double, Int), Double) => (Double, Int) =
-  (accumulator, price) => (accumulator._1 + price, accumulator._2 + 1)
+ (accumulator, price) => (accumulator._1 + price, accumulator._2 + 1)
 
 // combOp: called on the REDUCE SIDE to merge two partial accumulators.
-//   Both inputs are of type C = (sum, count), already partially aggregated.
-//   Must be associative and commutative, but NOT identical to seqOp.
+// Both inputs are of type C = (sum, count), already partially aggregated.
+// Must be associative and commutative, but NOT identical to seqOp.
 val combOp: ((Double, Int), (Double, Int)) => (Double, Int) =
-  (partialA, partialB) => (partialA._1 + partialB._1, partialA._2 + partialB._2)
+ (partialA, partialB) => (partialA._1 + partialB._1, partialA._2 + partialB._2)
 
 // aggregateByKey: C differs from V. This is impossible with reduceByKey.
 val sumAndCount: org.apache.spark.rdd.RDD[(String, (Double, Int))] =
-  sales.aggregateByKey(zeroValue, numPartitions = 4)(seqOp, combOp)
+ sales.aggregateByKey(zeroValue, numPartitions = 4)(seqOp, combOp)
 
 // Final map: divide sum by count — no shuffle, mapValues preserves partitioning
 val averagePrice: org.apache.spark.rdd.RDD[(String, Double)] =
-  sumAndCount.mapValues { case (sum, count) => sum / count }
+ sumAndCount.mapValues { case (sum, count) => sum / count }
 
 averagePrice.collect().foreach {
-  case (category, avg) =>
-    println(f"$category%-15s → avg price: $$${avg}%.2f")
+ case (category, avg) =>
+ println(f"$category%-15s → avg price: $$${avg}%.2f")
 }
 ```
 
@@ -225,9 +225,9 @@ sc = SparkContext(conf=conf)
 # This cannot be expressed with reduceByKey (non-scalar output) or
 # aggregateByKey easily because we want to retain the raw score list.
 grades = sc.parallelize([
-    ("alice", 88), ("bob", 72), ("alice", 95),
-    ("carol", 61), ("bob", 85), ("alice", 78),
-    ("carol", 90), ("bob", 67), ("carol", 82)
+ ("alice", 88), ("bob", 72), ("alice", 95),
+ ("carol", 61), ("bob", 85), ("alice", 78),
+ ("carol", 90), ("bob", 67), ("carol", 82)
 ], numSlices = 3)
 
 # --- Hook 1: createCombiner(value) ---
@@ -235,45 +235,45 @@ grades = sc.parallelize([
 # within a partition. Creates a fresh combiner C from one V.
 # Runs entirely on the map side — no network I/O at this point.
 def create_combiner(score):
-    # The combiner accumulates (list_of_scores, running_max, count)
-    return ([score], score, 1)
+ # The combiner accumulates (list_of_scores, running_max, count)
+ return ([score], score, 1)
 
 # --- Hook 2: mergeValue(combiner, value) ---
 # Called for each subsequent value for the same key within the same partition.
 # Also runs on the map side; folds V into the existing combiner C.
 def merge_value(combiner, score):
-    scores, best, count = combiner
-    scores.append(score)            # mutate in place — safe on map side
-    return (scores, max(best, score), count + 1)
+ scores, best, count = combiner
+ scores.append(score) # mutate in place — safe on map side
+ return (scores, max(best, score), count + 1)
 
 # --- Hook 3: mergeCombiners(c1, c2) ---
 # Called on the REDUCE SIDE to merge two combiners from different partitions
 # (or different map tasks). Both inputs are type C. Must produce type C.
 # This is the only hook that executes post-shuffle.
 def merge_combiners(c1, c2):
-    scores1, best1, count1 = c1
-    scores2, best2, count2 = c2
-    return (scores1 + scores2, max(best1, best2), count1 + count2)
+ scores1, best1, count1 = c1
+ scores2, best2, count2 = c2
+ return (scores1 + scores2, max(best1, best2), count1 + count2)
 
 # combineByKey wires the three hooks into Spark's Aggregator[K, V, C].
 # numPartitions=4 controls the post-shuffle partition count.
 combined = grades.combineByKey(
-    createCombiner=create_combiner,
-    mergeValue=merge_value,
-    mergeCombiners=merge_combiners,
-    numPartitions=4
+ createCombiner=create_combiner,
+ mergeValue=merge_value,
+ mergeCombiners=merge_combiners,
+ numPartitions=4
 )
 
 # Convert combiner tuple to a readable dict — mapValues: zero shuffle cost
 result = combined.mapValues(lambda c: {
-    "scores": sorted(c[0]),
-    "best": c[1],
-    "count": c[2],
-    "average": round(sum(c[0]) / c[2], 2)
+ "scores": sorted(c[0]),
+ "best": c[1],
+ "count": c[2],
+ "average": round(sum(c[0]) / c[2], 2)
 })
 
 for student, stats in sorted(result.collect()):
-    print(f"{student}: {stats}")
+ print(f"{student}: {stats}")
 
 sc.stop()
 ```
@@ -292,56 +292,56 @@ import org.apache.spark.{SparkContext, HashPartitioner}
 val sc: SparkContext = ??? // assumed initialized
 
 // --- Scenario: a recommendation engine that repeatedly joins user features
-//     with user behavior logs throughout a multi-step pipeline.
-//     Without partitionBy, every join triggers a fresh shuffle. ---
+// with user behavior logs throughout a multi-step pipeline.
+// Without partitionBy, every join triggers a fresh shuffle. ---
 
 val PARTITIONS = 200 // Match spark.sql.shuffle.partitions for consistency
 
 // Raw user features: (userId, featureVector)
 val userFeatures = sc.textFile("hdfs:///data/user_features.csv")
-  .map(line => {
-    val cols = line.split(",")
-    (cols(0), cols.drop(1).map(_.toDouble))  // (userId, Array[Double])
-  })
-  // Pay the shuffle cost ONCE here. After this, userFeatures is pinned to
-  // a HashPartitioner(200). Spark records this in rdd.partitioner.
-  .partitionBy(new HashPartitioner(PARTITIONS))
-  .persist()   // Persist after partitioning — avoids re-shuffling on reuse
+ .map(line => {
+ val cols = line.split(",")
+ (cols(0), cols.drop(1).map(_.toDouble)) // (userId, Array[Double])
+ })
+ // Pay the shuffle cost ONCE here. After this, userFeatures is pinned to
+ // a HashPartitioner(200). Spark records this in rdd.partitioner.
+ .partitionBy(new HashPartitioner(PARTITIONS))
+ .persist() // Persist after partitioning — avoids re-shuffling on reuse
 
 // Raw click events: (userId, clickedItemId)
 val clickEvents = sc.textFile("hdfs:///data/click_events.csv")
-  .map(line => {
-    val cols = line.split(",")
-    (cols(0), cols(1))                        // (userId, itemId)
-  })
-  // Co-partition with the same HashPartitioner so join produces a NarrowDependency
-  .partitionBy(new HashPartitioner(PARTITIONS))
-  .persist()
+ .map(line => {
+ val cols = line.split(",")
+ (cols(0), cols(1)) // (userId, itemId)
+ })
+ // Co-partition with the same HashPartitioner so join produces a NarrowDependency
+ .partitionBy(new HashPartitioner(PARTITIONS))
+ .persist()
 
 // Raw purchase events: (userId, purchasedItemId)
 val purchaseEvents = sc.textFile("hdfs:///data/purchase_events.csv")
-  .map(line => {
-    val cols = line.split(",")
-    (cols(0), cols(1))
-  })
-  .partitionBy(new HashPartitioner(PARTITIONS))
-  .persist()
+ .map(line => {
+ val cols = line.split(",")
+ (cols(0), cols(1))
+ })
+ .partitionBy(new HashPartitioner(PARTITIONS))
+ .persist()
 
 // --- Join 1: features + clicks ---
 // Because BOTH sides share HashPartitioner(200), Spark detects via
 // rdd.partitioner equality check that no shuffle is needed.
 // The DAG shows a OneToOneDependency (narrow), NOT a ShuffleDependency.
 val featuresWithClicks = userFeatures.join(clickEvents)
-  // (userId, (featureVector, clickedItemId))
+ // (userId, (featureVector, clickedItemId))
 
 // --- Join 2: result + purchases ---
 // The result of join() PRESERVES the partitioner when both sides share one.
 // So this second join is ALSO narrow — zero additional shuffle.
 // Without upfront partitioning, this pipeline would trigger 4 shuffle stages.
 val fullProfile = featuresWithClicks
-  .map { case (uid, (features, click)) => (uid, (features, click)) } // identity
-  .join(purchaseEvents)
-  // (userId, ((featureVector, clickedItemId), purchasedItemId))
+ .map { case (uid, (features, click)) => (uid, (features, click)) } // identity
+ .join(purchaseEvents)
+ // (userId, ((featureVector, clickedItemId), purchasedItemId))
 
 // Verify: print the partitioner at each stage to confirm no shuffle reintroduced
 println(s"userFeatures partitioner: ${userFeatures.partitioner}")
@@ -374,9 +374,9 @@ To achieve true mastery of Pair RDDs:
 
 ## 📚 Summary
 
-Pair RDDs are the foundational abstraction for distributed keyed aggregation in Apache Spark. Their power lies not in the data structure itself — a 2-tuple is trivially simple — but in the execution semantics that Spark attaches to them: the `Aggregator[K, V, C]` that enables map-side combination, the `HashPartitioner` that guarantees key co-location, and the `ShuffleManager`/`BlockManager` pipeline that moves partial results across the cluster with minimal I/O. Every keyed operator (`reduceByKey`, `aggregateByKey`, `combineByKey`) is a configuration of these same internal components, and understanding those components is what separates an engineer who writes correct code from one who writes performant code at scale. [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)
+Pair RDDs are the foundational abstraction for distributed keyed aggregation in Apache Spark. Their power lies not in the data structure itself — a 2-tuple is trivially simple — but in the execution semantics that Spark attaches to them: the `Aggregator[K, V, C]` that enables map-side combination, the `HashPartitioner` that guarantees key co-location, and the `ShuffleManager`/`BlockManager` pipeline that moves partial results across the cluster with minimal I/O. Every keyed operator (`reduceByKey`, `aggregateByKey`, `combineByKey`) is a configuration of these same internal components, and understanding those components is what separates an engineer who writes correct code from one who writes performant code at scale. 
 
-The single most impactful decision in any Pair RDD pipeline is operator selection. `groupByKey` ships every raw record across the network and materializes entire value iterables in heap memory — it is appropriate only when the full ordered value list is a genuine requirement. `reduceByKey` and `aggregateByKey` apply partial aggregation on the map side, dramatically reducing shuffle volume. `combineByKey` exposes all three aggregation hooks directly and is the primitive from which the others derive. For pipelines involving multiple joins against the same RDD, `partitionBy` amortizes the shuffle cost to a single upfront operation, converting all subsequent joins from shuffle-heavy to narrow-dependency. [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)
+The single most impactful decision in any Pair RDD pipeline is operator selection. `groupByKey` ships every raw record across the network and materializes entire value iterables in heap memory — it is appropriate only when the full ordered value list is a genuine requirement. `reduceByKey` and `aggregateByKey` apply partial aggregation on the map side, dramatically reducing shuffle volume. `combineByKey` exposes all three aggregation hooks directly and is the primitive from which the others derive. For pipelines involving multiple joins against the same RDD, `partitionBy` amortizes the shuffle cost to a single upfront operation, converting all subsequent joins from shuffle-heavy to narrow-dependency. 
 
-Production Spark engineering with Pair RDDs ultimately requires fluency with three diagnostic tools: the Spark UI's **Stage Detail** view (for identifying shuffle write/read imbalance and straggler tasks caused by key skew), the **RDD `toDebugString`** lineage (for confirming that map-side combiners are active and that `partitionBy` has not been inadvertently discarded by a `map` call), and the **Executor Memory** tab (for detecting shuffle spill to disk, signaled by non-zero "Shuffle Spill (Disk)" values, which indicate that executor memory is insufficient for the current aggregation's working set and that either heap size or `spark.memory.fraction` must be increased). [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)
+Production Spark engineering with Pair RDDs ultimately requires fluency with three diagnostic tools: the Spark UI's **Stage Detail** view (for identifying shuffle write/read imbalance and straggler tasks caused by key skew), the **RDD `toDebugString`** lineage (for confirming that map-side combiners are active and that `partitionBy` has not been inadvertently discarded by a `map` call), and the **Executor Memory** tab (for detecting shuffle spill to disk, signaled by non-zero "Shuffle Spill (Disk)" values, which indicate that executor memory is insufficient for the current aggregation's working set and that either heap size or `spark.memory.fraction` must be increased). 
 

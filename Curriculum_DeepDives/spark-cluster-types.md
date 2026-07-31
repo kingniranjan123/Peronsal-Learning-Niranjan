@@ -10,24 +10,24 @@ Deploying on Hadoop YARN (Yet Another Resource Negotiator) requires careful tuni
 
 ```bash
 spark-submit \
-  --master yarn \
-  --deploy-mode cluster \
-  --name "HeavyShuffle_YARN_Job" \
-  --conf spark.yarn.maxAppAttempts=4 \
-  --conf spark.yarn.am.memory=2G \
-  --conf spark.executor.instances=20 \
-  --conf spark.executor.cores=5 \
-  --conf spark.executor.memory=16G \
-  --conf spark.yarn.executor.memoryOverhead=4096 \
-  --conf spark.memory.fraction=0.8 \
-  --conf spark.sql.shuffle.partitions=400 \
-  --conf spark.shuffle.service.enabled=true \
-  --conf spark.dynamicAllocation.enabled=true \
-  --conf spark.dynamicAllocation.minExecutors=5 \
-  --conf spark.dynamicAllocation.maxExecutors=50 \
-  --conf spark.network.timeout=800s \
-  --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
-  hdfs://namenode:8020/apps/scripts/heavy_etl.py
+ --master yarn \
+ --deploy-mode cluster \
+ --name "HeavyShuffle_YARN_Job" \
+ --conf spark.yarn.maxAppAttempts=4 \
+ --conf spark.yarn.am.memory=2G \
+ --conf spark.executor.instances=20 \
+ --conf spark.executor.cores=5 \
+ --conf spark.executor.memory=16G \
+ --conf spark.yarn.executor.memoryOverhead=4096 \
+ --conf spark.memory.fraction=0.8 \
+ --conf spark.sql.shuffle.partitions=400 \
+ --conf spark.shuffle.service.enabled=true \
+ --conf spark.dynamicAllocation.enabled=true \
+ --conf spark.dynamicAllocation.minExecutors=5 \
+ --conf spark.dynamicAllocation.maxExecutors=50 \
+ --conf spark.network.timeout=800s \
+ --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
+ hdfs://namenode:8020/apps/scripts/heavy_etl.py
 ```
 
 This configuration highlights critical YARN-specific parameters. The `spark.yarn.executor.memoryOverhead` is explicitly set to 4GB to accommodate off-heap memory allocations and Tungsten’s native memory management, preventing YARN from aggressively killing the container with an Out-Of-Memory (OOM) error. The `spark.executor.cores=5` is chosen optimally to maximize HDFS throughput without overwhelming the JVM garbage collector, a common pitfall when assigning too many cores per executor. Additionally, dynamic allocation is enabled in tandem with the External Shuffle Service, allowing Spark to gracefully scale down idle executors while preserving intermediate shuffle files. The Kryo serializer ensures that data moving across the wire during shuffles is highly compressed, reducing network I/O.
@@ -45,36 +45,36 @@ Kubernetes (K8s) has become the de facto standard for modern infrastructure, and
 apiVersion: v1
 kind: Pod
 spec:
-  nodeSelector:
-    disktype: ssd
-    instance-type: compute-optimized
-  tolerations:
-    - key: "dedicated"
-      operator: "Equal"
-      value: "spark"
-      effect: "NoSchedule"
-  containers:
-    - name: spark-kubernetes-executor
-      volumeMounts:
-        - name: spark-local-dir-1
-          mountPath: /var/data/spark-local
-  volumes:
-    - name: spark-local-dir-1
-      hostPath:
-        path: /mnt/nvme/spark-scratch
+ nodeSelector:
+ disktype: ssd
+ instance-type: compute-optimized
+ tolerations:
+ - key: "dedicated"
+ operator: "Equal"
+ value: "spark"
+ effect: "NoSchedule"
+ containers:
+ - name: spark-kubernetes-executor
+ volumeMounts:
+ - name: spark-local-dir-1
+ mountPath: /var/data/spark-local
+ volumes:
+ - name: spark-local-dir-1
+ hostPath:
+ path: /mnt/nvme/spark-scratch
 ```
 
 ```bash
 spark-submit \
-  --master k8s://https://k8s-apiserver:443 \
-  --deploy-mode cluster \
-  --name "K8s_Native_Spark" \
-  --conf spark.executor.instances=10 \
-  --conf spark.kubernetes.container.image=myrepo/spark:3.4.0 \
-  --conf spark.kubernetes.authenticate.driver.serviceAccountName=spark \
-  --conf spark.kubernetes.executor.podTemplateFile=/opt/spark/executor-pod-template.yaml \
-  --conf spark.local.dir=/var/data/spark-local \
-  local:///opt/spark/work/main.py
+ --master k8s://https://k8s-apiserver:443 \
+ --deploy-mode cluster \
+ --name "K8s_Native_Spark" \
+ --conf spark.executor.instances=10 \
+ --conf spark.kubernetes.container.image=myrepo/spark:3.4.0 \
+ --conf spark.kubernetes.authenticate.driver.serviceAccountName=spark \
+ --conf spark.kubernetes.executor.podTemplateFile=/opt/spark/executor-pod-template.yaml \
+ --conf spark.local.dir=/var/data/spark-local \
+ local:///opt/spark/work/main.py
 ```
 
 By leveraging the `spark.kubernetes.executor.podTemplateFile`, we instruct the Kubernetes API server to spawn executor pods with a specific YAML blueprint. This allows us to pin executors to SSD-backed nodes using `nodeSelector` and mount an NVMe drive for the `spark.local.dir`. Optimizing the local directory is paramount in K8s, as Spark spills shuffle data to disk when RAM is exhausted; relying on the default ephemeral container storage often leads to disastrous I/O bottlenecks and disk pressure evictions.
@@ -98,22 +98,22 @@ os.environ["SPARK_WORKER_CORES"] = "16"
 os.environ["SPARK_WORKER_MEMORY"] = "64g"
 
 spark = SparkSession.builder \
-    .appName("Standalone_HA_Tuning") \
-    .master("spark://master1:7077,master2:7077") \
-    .config("spark.deploy.recoveryMode", "ZOOKEEPER") \
-    .config("spark.deploy.zookeeper.url", "zookeeper1:2181,zookeeper2:2181") \
-    .config("spark.deploy.zookeeper.dir", "/spark_standalone") \
-    .config("spark.cores.max", "64") \
-    .config("spark.executor.memory", "16g") \
-    .config("spark.network.crypto.enabled", "true") \
-    .config("spark.authenticate", "true") \
-    .config("spark.authenticate.secret", "super_secret_key") \
-    .getOrCreate()
+ .appName("Standalone_HA_Tuning") \
+ .master("spark://master1:7077,master2:7077") \
+ .config("spark.deploy.recoveryMode", "ZOOKEEPER") \
+ .config("spark.deploy.zookeeper.url", "zookeeper1:2181,zookeeper2:2181") \
+ .config("spark.deploy.zookeeper.dir", "/spark_standalone") \
+ .config("spark.cores.max", "64") \
+ .config("spark.executor.memory", "16g") \
+ .config("spark.network.crypto.enabled", "true") \
+ .config("spark.authenticate", "true") \
+ .config("spark.authenticate.secret", "super_secret_key") \
+ .getOrCreate()
 
 # Example DataFrame operation exploiting Tungsten memory format
 df = spark.range(0, 1000000000).repartition(64)
 df.selectExpr("id", "id * 2 as doubled_id") \
-  .write.mode("overwrite").parquet("hdfs://namenode:8020/data/output")
+ .write.mode("overwrite").parquet("hdfs://namenode:8020/data/output")
 
 spark.stop()
 ```
@@ -133,17 +133,17 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import broadcast
 
 spark = SparkSession.builder \
-    .appName("Mesos_Docker_Execution") \
-    .master("mesos://zk://zookeeper1:2181,zookeeper2:2181/mesos") \
-    .config("spark.mesos.coarse", "true") \
-    .config("spark.mesos.executor.docker.image", "myrepo/spark-mesos:3.4.0") \
-    .config("spark.mesos.executor.docker.forcePullImage", "false") \
-    .config("spark.mesos.executor.docker.volumes", "/mnt/data:/mnt/data:rw") \
-    .config("spark.mesos.task.labels", "env:production,tier:backend") \
-    .config("spark.executor.memory", "32g") \
-    .config("spark.mesos.uris", "hdfs://namenode:8020/conf/spark-env.sh") \
-    .config("spark.executor.cores", "8") \
-    .getOrCreate()
+ .appName("Mesos_Docker_Execution") \
+ .master("mesos://zk://zookeeper1:2181,zookeeper2:2181/mesos") \
+ .config("spark.mesos.coarse", "true") \
+ .config("spark.mesos.executor.docker.image", "myrepo/spark-mesos:3.4.0") \
+ .config("spark.mesos.executor.docker.forcePullImage", "false") \
+ .config("spark.mesos.executor.docker.volumes", "/mnt/data:/mnt/data:rw") \
+ .config("spark.mesos.task.labels", "env:production,tier:backend") \
+ .config("spark.executor.memory", "32g") \
+ .config("spark.mesos.uris", "hdfs://namenode:8020/conf/spark-env.sh") \
+ .config("spark.executor.cores", "8") \
+ .getOrCreate()
 
 # Perform an expansive join utilizing Broadcast Hash Join to avoid shuffle over Mesos network
 large_df = spark.read.parquet("/mnt/data/large_fact_table")

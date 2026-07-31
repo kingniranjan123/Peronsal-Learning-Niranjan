@@ -13,15 +13,15 @@ from pyspark.sql import SparkSession
 
 # Building a SparkSession tuned for YARN Cluster mode with aggressive resource requests
 spark = SparkSession.builder \
-    .appName("YARN_Mastery_App") \
-    .master("yarn") \
-    .config("spark.submit.deployMode", "cluster") \
-    .config("spark.yarn.queue", "high_priority_etl") \
-    .config("spark.yarn.maxAppAttempts", "2") \
-    .config("spark.yarn.am.memory", "2g") \
-    .config("spark.yarn.am.cores", "2") \
-    .config("spark.yarn.submit.waitAppCompletion", "false") \
-    .getOrCreate()
+ .appName("YARN_Mastery_App") \
+ .master("yarn") \
+ .config("spark.submit.deployMode", "cluster") \
+ .config("spark.yarn.queue", "high_priority_etl") \
+ .config("spark.yarn.maxAppAttempts", "2") \
+ .config("spark.yarn.am.memory", "2g") \
+ .config("spark.yarn.am.cores", "2") \
+ .config("spark.yarn.submit.waitAppCompletion", "false") \
+ .getOrCreate()
 
 # Example dataframe operation
 df = spark.range(1, 1000000).repartition(200)
@@ -46,17 +46,17 @@ from pyspark.sql import SparkSession
 
 # Configuring Spark for Dynamic Allocation on YARN
 spark = SparkSession.builder \
-    .appName("Dynamic_Allocation_YARN") \
-    .master("yarn") \
-    .config("spark.dynamicAllocation.enabled", "true") \
-    .config("spark.shuffle.service.enabled", "true") \
-    .config("spark.dynamicAllocation.initialExecutors", "10") \
-    .config("spark.dynamicAllocation.minExecutors", "5") \
-    .config("spark.dynamicAllocation.maxExecutors", "100") \
-    .config("spark.dynamicAllocation.executorIdleTimeout", "60s") \
-    .config("spark.dynamicAllocation.cachedExecutorIdleTimeout", "600s") \
-    .config("spark.yarn.shuffle.stopOnFailure", "false") \
-    .getOrCreate()
+ .appName("Dynamic_Allocation_YARN") \
+ .master("yarn") \
+ .config("spark.dynamicAllocation.enabled", "true") \
+ .config("spark.shuffle.service.enabled", "true") \
+ .config("spark.dynamicAllocation.initialExecutors", "10") \
+ .config("spark.dynamicAllocation.minExecutors", "5") \
+ .config("spark.dynamicAllocation.maxExecutors", "100") \
+ .config("spark.dynamicAllocation.executorIdleTimeout", "60s") \
+ .config("spark.dynamicAllocation.cachedExecutorIdleTimeout", "600s") \
+ .config("spark.yarn.shuffle.stopOnFailure", "false") \
+ .getOrCreate()
 
 # A skewed workload that benefits from dynamic scaling
 df1 = spark.range(1, 10000000).withColumn("key", (spark._sc._jvm.org.apache.spark.sql.functions.rand() * 10).cast("int"))
@@ -80,15 +80,15 @@ from pyspark.sql import SparkSession
 
 # Submitting a job targeting specific hardware using YARN Node Labels
 spark = SparkSession.builder \
-    .appName("Hardware_Aware_YARN_Job") \
-    .master("yarn") \
-    .config("spark.yarn.executor.nodeLabelExpression", "high_memory") \
-    .config("spark.yarn.am.nodeLabelExpression", "core_nodes") \
-    .config("spark.locality.wait", "3s") \
-    .config("spark.locality.wait.node", "5s") \
-    .config("spark.locality.wait.rack", "1s") \
-    .config("spark.yarn.containerLauncherMaxThreads", "25") \
-    .getOrCreate()
+ .appName("Hardware_Aware_YARN_Job") \
+ .master("yarn") \
+ .config("spark.yarn.executor.nodeLabelExpression", "high_memory") \
+ .config("spark.yarn.am.nodeLabelExpression", "core_nodes") \
+ .config("spark.locality.wait", "3s") \
+ .config("spark.locality.wait.node", "5s") \
+ .config("spark.locality.wait.rack", "1s") \
+ .config("spark.yarn.containerLauncherMaxThreads", "25") \
+ .getOrCreate()
 
 # Intensive aggregation requiring high-memory nodes
 large_df = spark.read.parquet("hdfs:///data/massive_clickstream_dataset")
@@ -109,17 +109,17 @@ from pyspark.sql import SparkSession
 
 # Configuring robust memory overhead and G1GC for YARN containers
 spark = SparkSession.builder \
-    .appName("YARN_Memory_Mastery") \
-    .master("yarn") \
-    .config("spark.executor.memory", "16g") \
-    .config("spark.yarn.executor.memoryOverhead", "4g") \
-    .config("spark.executor.cores", "4") \
-    .config("spark.executor.extraJavaOptions", 
-            "-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:MaxGCPauseMillis=200 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps") \
-    .config("spark.memory.fraction", "0.6") \
-    .config("spark.memory.storageFraction", "0.5") \
-    .config("spark.python.worker.memory", "1g") \
-    .getOrCreate()
+ .appName("YARN_Memory_Mastery") \
+ .master("yarn") \
+ .config("spark.executor.memory", "16g") \
+ .config("spark.yarn.executor.memoryOverhead", "4g") \
+ .config("spark.executor.cores", "4") \
+ .config("spark.executor.extraJavaOptions", 
+ "-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:MaxGCPauseMillis=200 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps") \
+ .config("spark.memory.fraction", "0.6") \
+ .config("spark.memory.storageFraction", "0.5") \
+ .config("spark.python.worker.memory", "1g") \
+ .getOrCreate()
 
 # Triggering complex python UDFs which utilize off-heap memory
 import pyspark.sql.functions as F
@@ -127,7 +127,7 @@ from pyspark.sql.types import StringType
 
 @F.udf(returnType=StringType())
 def intensive_string_manipulation(data):
-    return data.upper() * 100
+ return data.upper() * 100
 
 df = spark.range(1, 10000000).withColumn("raw_text", F.lit("sample_text"))
 df.withColumn("processed", intensive_string_manipulation("raw_text")).count()

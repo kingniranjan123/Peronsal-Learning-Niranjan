@@ -9,27 +9,27 @@ At its core, MapReduce forces a rigid, two-stage execution model: Map and Reduce
 ```java
 // Traditional Hadoop MapReduce Word Count
 public class WordCount {
-  public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable>{
-    private final static IntWritable one = new IntWritable(1);
-    private Text word = new Text();
-    public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-      StringTokenizer itr = new StringTokenizer(value.toString());
-      while (itr.hasMoreTokens()) {
-        word.set(itr.nextToken());
-        context.write(word, one);
-      }
-    }
-  }
-  public static class IntSumReducer extends Reducer<Text,IntWritable,Text,IntWritable> {
-    private IntWritable result = new IntWritable();
-    public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-      int sum = 0;
-      for (IntWritable val : values) { sum += val.get(); }
-      result.set(sum);
-      context.write(key, result);
-    }
-  }
-  // Driver code omitted for brevity, but requires another 20+ lines...
+ public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable>{
+ private final static IntWritable one = new IntWritable(1);
+ private Text word = new Text();
+ public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+ StringTokenizer itr = new StringTokenizer(value.toString());
+ while (itr.hasMoreTokens()) {
+ word.set(itr.nextToken());
+ context.write(word, one);
+ }
+ }
+ }
+ public static class IntSumReducer extends Reducer<Text,IntWritable,Text,IntWritable> {
+ private IntWritable result = new IntWritable();
+ public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+ int sum = 0;
+ for (IntWritable val : values) { sum += val.get(); }
+ result.set(sum);
+ context.write(key, result);
+ }
+ }
+ // Driver code omitted for brevity, but requires another 20+ lines...
 }
 ```
 
@@ -48,24 +48,24 @@ This means that for an algorithm requiring 50 iterations, MapReduce incurs the m
 ```python
 # Pseudo-code demonstrating the friction of iterative jobs in MapReduce
 def run_kmeans_mapreduce(max_iterations, data_path, initial_centroids_path):
-    current_centroids = initial_centroids_path
-    
-    for i in range(max_iterations):
-        # Must submit a brand new YARN application for EACH iteration
-        job = HadoopJob(
-            mapper=KMeansMapper(current_centroids),
-            reducer=KMeansReducer(),
-            input_path=data_path,
-            output_path=f"/tmp/kmeans_iter_{i}"
-        )
-        job.waitForCompletion()
-        
-        # Read the HDFS output of the reducer to get new centroids
-        # and pass them to the distributed cache for the next iteration
-        current_centroids = extract_new_centroids(f"/tmp/kmeans_iter_{i}")
-        
-        if has_converged(current_centroids):
-            break
+ current_centroids = initial_centroids_path
+ 
+ for i in range(max_iterations):
+ # Must submit a brand new YARN application for EACH iteration
+ job = HadoopJob(
+ mapper=KMeansMapper(current_centroids),
+ reducer=KMeansReducer(),
+ input_path=data_path,
+ output_path=f"/tmp/kmeans_iter_{i}"
+ )
+ job.waitForCompletion()
+ 
+ # Read the HDFS output of the reducer to get new centroids
+ # and pass them to the distributed cache for the next iteration
+ current_centroids = extract_new_centroids(f"/tmp/kmeans_iter_{i}")
+ 
+ if has_converged(current_centroids):
+ break
 ```
 
 This Python pseudo-code illustrates the orchestration nightmare of iterative algorithms in MapReduce. The driver program runs on a client machine, submitting individual jobs to the cluster. Between each job, the heavy lifting of HDFS persistence occurs. The data points being clustered are read from disk repeatedly, despite never changing. Furthermore, to share the updated centroids with the mappers in the next phase, developers had to rely on the Hadoop Distributed Cache, distributing files across the network for every iteration. The lack of an in-memory execution engine meant that cluster CPUs spent the vast majority of their time waiting for disk and network I/O to complete.
@@ -81,25 +81,25 @@ If you need to join two massive datasets, you must manually implement the join l
 ```java
 // Snippet demonstrating manual reduce-side join complexity
 public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-    String customerData = null;
-    List<String> orderData = new ArrayList<>();
-    
-    // Developer must manually inspect tags to differentiate datasets
-    for (Text val : values) {
-        String record = val.toString();
-        if (record.startsWith("CUST_TAG:")) {
-            customerData = record.substring(9);
-        } else if (record.startsWith("ORD_TAG:")) {
-            orderData.add(record.substring(8));
-        }
-    }
-    
-    // Perform the inner join manually in memory
-    if (customerData != null && !orderData.isEmpty()) {
-        for (String order : orderData) {
-            context.write(key, new Text(customerData + "\t" + order));
-        }
-    }
+ String customerData = null;
+ List<String> orderData = new ArrayList<>();
+ 
+ // Developer must manually inspect tags to differentiate datasets
+ for (Text val : values) {
+ String record = val.toString();
+ if (record.startsWith("CUST_TAG:")) {
+ customerData = record.substring(9);
+ } else if (record.startsWith("ORD_TAG:")) {
+ orderData.add(record.substring(8));
+ }
+ }
+ 
+ // Perform the inner join manually in memory
+ if (customerData != null && !orderData.isEmpty()) {
+ for (String order : orderData) {
+ context.write(key, new Text(customerData + "\t" + order));
+ }
+ }
 }
 ```
 

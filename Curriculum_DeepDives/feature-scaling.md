@@ -14,16 +14,16 @@ from pyspark.ml.linalg import Vectors
 
 # Example 1: Scaling dense vectors robustly against outliers
 dense_scaler = RobustScaler(inputCol="features", outputCol="scaled_features",
-                            withCentering=True, withScaling=True,
-                            lower=0.25, upper=0.75, relativeError=0.001)
+ withCentering=True, withScaling=True,
+ lower=0.25, upper=0.75, relativeError=0.001)
 dense_model = dense_scaler.fit(df)
 df_dense_scaled = dense_model.transform(df)
 
 # Example 2: Edge case with Sparse Vectors
 # withCentering MUST be False for Sparse Vectors to prevent densification
 sparse_scaler = RobustScaler(inputCol="sparse_features", outputCol="scaled_sparse",
-                             withCentering=False, withScaling=True,
-                             lower=0.25, upper=0.75, relativeError=0.001)
+ withCentering=False, withScaling=True,
+ lower=0.25, upper=0.75, relativeError=0.001)
 sparse_model = sparse_scaler.fit(df)
 df_sparse_scaled = sparse_model.transform(df)
 ```
@@ -48,9 +48,9 @@ import org.apache.spark.rdd.RDD
 // Using treeAggregate to compute column-wise sums and squared sums for variance
 
 val vectorRDD: RDD[Vector] = spark.sparkContext.parallelize(Seq(
-  Vectors.dense(1.0, 10.0, 100.0),
-  Vectors.dense(2.0, 20.0, 200.0),
-  Vectors.dense(3.0, 30.0, 300.0)
+ Vectors.dense(1.0, 10.0, 100.0),
+ Vectors.dense(2.0, 20.0, 200.0),
+ Vectors.dense(3.0, 30.0, 300.0)
 ), numSlices = 4)
 
 val numFeatures = 3
@@ -59,29 +59,29 @@ val numFeatures = 3
 val initialZeroValue = (0L, Array.fill(numFeatures)(0.0), Array.fill(numFeatures)(0.0))
 
 val stats = vectorRDD.treeAggregate(initialZeroValue)(
-  seqOp = (acc, v) => {
-    val (count, sums, sqSums) = acc
-    val arr = v.toArray
-    var i = 0
-    while (i < arr.length) {
-      sums(i) += arr(i)
-      sqSums(i) += arr(i) * arr(i)
-      i += 1
-    }
-    (count + 1L, sums, sqSums)
-  },
-  combOp = (acc1, acc2) => {
-    val (c1, s1, sq1) = acc1
-    val (c2, s2, sq2) = acc2
-    var i = 0
-    while (i < numFeatures) {
-      s1(i) += s2(i)
-      sq1(i) += sq2(i)
-      i += 1
-    }
-    (c1 + c2, s1, sq1)
-  },
-  depth = 2 // multi-level aggregation tree
+ seqOp = (acc, v) => {
+ val (count, sums, sqSums) = acc
+ val arr = v.toArray
+ var i = 0
+ while (i < arr.length) {
+ sums(i) += arr(i)
+ sqSums(i) += arr(i) * arr(i)
+ i += 1
+ }
+ (count + 1L, sums, sqSums)
+ },
+ combOp = (acc1, acc2) => {
+ val (c1, s1, sq1) = acc1
+ val (c2, s2, sq2) = acc2
+ var i = 0
+ while (i < numFeatures) {
+ s1(i) += s2(i)
+ sq1(i) += sq2(i)
+ i += 1
+ }
+ (c1 + c2, s1, sq1)
+ },
+ depth = 2 // multi-level aggregation tree
 )
 ```
 
@@ -98,7 +98,7 @@ from pyspark.ml.feature import StandardScaler, VectorSlicer, VectorAssembler
 slicer = VectorSlicer(inputCol="raw_features", outputCol="continuous_features", indices=list(range(10)))
 
 scaler = StandardScaler(inputCol="continuous_features", outputCol="scaled_continuous",
-                        withStd=True, withMean=True)
+ withStd=True, withMean=True)
 
 # Re-assemble the scaled features with the remaining untouched categorical features
 slicer_cat = VectorSlicer(inputCol="raw_features", outputCol="categorical_features", indices=list(range(10, 50)))
@@ -121,8 +121,8 @@ from pyspark.ml.linalg import Vectors, VectorUDT
 
 # A dataset where the 2nd feature has exactly zero variance (a constant value)
 data = [(Vectors.dense([1.0, 5.0, 10.0]),),
-        (Vectors.dense([2.0, 5.0, 20.0]),),
-        (Vectors.dense([3.0, 5.0, 30.0]),)]
+ (Vectors.dense([2.0, 5.0, 20.0]),),
+ (Vectors.dense([3.0, 5.0, 30.0]),)]
 
 df_edge = spark.createDataFrame(data, ["features"])
 
@@ -135,7 +135,7 @@ scaled_df.show(truncate=False)
 
 # Custom verification to prevent NaN propagation
 def check_nan_udf(v):
-    return float('nan') not in v.toArray()
+ return float('nan') not in v.toArray()
 
 check_udf = udf(check_nan_udf, "boolean")
 safe_df = scaled_df.filter(check_udf(col("scaled_features")))

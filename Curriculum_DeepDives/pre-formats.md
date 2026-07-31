@@ -7,19 +7,19 @@ Formats like **Parquet** and **ORC** store data in columns rather than rows. If 
 
 ```mermaid
 graph LR
-    subgraph Row-Based (CSV/JSON/Avro)
-    R1[Row 1: ID, Name, Age, City]
-    R2[Row 2: ID, Name, Age, City]
-    end
+ subgraph Row-Based (CSV/JSON/Avro)
+ R1[Row 1: ID, Name, Age, City]
+ R2[Row 2: ID, Name, Age, City]
+ end
 
-    subgraph Columnar (Parquet/ORC)
-    C1[Column: ID 1, 2, 3...]
-    C2[Column: Name A, B, C...]
-    C3[Column: Age 22, 24, 26...]
-    end
-    
-    style C1 fill:#dfd
-    style C3 fill:#dfd
+ subgraph Columnar (Parquet/ORC)
+ C1[Column: ID 1, 2, 3...]
+ C2[Column: Name A, B, C...]
+ C3[Column: Age 22, 24, 26...]
+ end
+ 
+ style C1 fill:#dfd
+ style C3 fill:#dfd
 ```
 
 ### Practical Examples

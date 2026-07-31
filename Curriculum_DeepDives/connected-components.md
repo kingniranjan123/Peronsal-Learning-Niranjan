@@ -11,22 +11,22 @@ from graphframes import GraphFrame
 
 # Initialize Spark Session with Checkpointing configured
 spark = SparkSession.builder \
-    .appName("ConnectedComponentsMasterClass") \
-    .config("spark.jars.packages", "graphframes:graphframes:0.8.2-spark3.2-s_2.12") \
-    .getOrCreate()
+ .appName("ConnectedComponentsMasterClass") \
+ .config("spark.jars.packages", "graphframes:graphframes:0.8.2-spark3.2-s_2.12") \
+ .getOrCreate()
 
 spark.sparkContext.setCheckpointDir("/tmp/graphframes_checkpoints")
 
 # Create a graph of users (vertices) and relationships (edges)
 vertices = spark.createDataFrame([
-    ("1", "Alice", 34), ("2", "Bob", 36),
-    ("3", "Charlie", 30), ("4", "David", 29),
-    ("5", "Eve", 32), ("6", "Frank", 40)
+ ("1", "Alice", 34), ("2", "Bob", 36),
+ ("3", "Charlie", 30), ("4", "David", 29),
+ ("5", "Eve", 32), ("6", "Frank", 40)
 ], ["id", "name", "age"])
 
 edges = spark.createDataFrame([
-    ("1", "2", "friend"), ("2", "3", "follow"),
-    ("4", "5", "colleague")
+ ("1", "2", "friend"), ("2", "3", "follow"),
+ ("4", "5", "colleague")
 ], ["src", "dst", "relationship"])
 
 g = GraphFrame(vertices, edges)
@@ -52,15 +52,15 @@ Furthermore, JVM memory management becomes a bottleneck. The intermediate states
 ```python
 # Create a directed graph with cycles
 scc_vertices = spark.createDataFrame([
-    ("a", "Alice"), ("b", "Bob"), ("c", "Charlie"), 
-    ("d", "David"), ("e", "Eve"), ("f", "Frank"), ("g", "Grace")
+ ("a", "Alice"), ("b", "Bob"), ("c", "Charlie"), 
+ ("d", "David"), ("e", "Eve"), ("f", "Frank"), ("g", "Grace")
 ], ["id", "name"])
 
 scc_edges = spark.createDataFrame([
-    ("a", "b"), ("b", "c"), ("c", "a"),  # Cycle 1: a, b, c
-    ("b", "d"),                          # Bridge
-    ("d", "e"), ("e", "f"), ("f", "d"),  # Cycle 2: d, e, f
-    ("f", "g")                           # Outlier
+ ("a", "b"), ("b", "c"), ("c", "a"), # Cycle 1: a, b, c
+ ("b", "d"), # Bridge
+ ("d", "e"), ("e", "f"), ("f", "d"), # Cycle 2: d, e, f
+ ("f", "g") # Outlier
 ], ["src", "dst"])
 
 g_directed = GraphFrame(scc_vertices, scc_edges)
@@ -111,13 +111,13 @@ val vertexLines: RDD[String] = spark.sparkContext.textFile("hdfs://data/vertices
 val edgeLines: RDD[String] = spark.sparkContext.textFile("hdfs://data/edges.csv")
 
 val vertices: RDD[(VertexId, String)] = vertexLines.map { line =>
-  val parts = line.split(",")
-  (parts(0).toLong, parts(1))
+ val parts = line.split(",")
+ (parts(0).toLong, parts(1))
 }
 
 val edges: RDD[Edge[Int]] = edgeLines.map { line =>
-  val parts = line.split(",")
-  Edge(parts(0).toLong, parts(1).toLong, 1)
+ val parts = line.split(",")
+ Edge(parts(0).toLong, parts(1).toLong, 1)
 }
 
 // Build Graph and partition edges to optimize routing tables
@@ -128,7 +128,7 @@ val ccGraph = graph.connectedComponents()
 
 // Join back with original vertices to get vertex attributes alongside component IDs
 val usersWithComponents = ccGraph.vertices.innerJoin(vertices) {
-  (id, componentId, name) => (name, componentId)
+ (id, componentId, name) => (name, componentId)
 }
 
 usersWithComponents.take(10).foreach(println)

@@ -18,31 +18,31 @@ val sparkVersion = "3.5.0"
 
 // Optimize compilation for Catalyst and JVM performance
 scalacOptions ++= Seq(
-  "-target:jvm-1.8",
-  "-deprecation",
-  "-feature",
-  "-Xfatal-warnings",
-  "-Ywarn-dead-code",
-  "-opt:l:inline", // Aggressive method inlining for performance
-  "-opt-inline-from:**"
+ "-target:jvm-1.8",
+ "-deprecation",
+ "-feature",
+ "-Xfatal-warnings",
+ "-Ywarn-dead-code",
+ "-opt:l:inline", // Aggressive method inlining for performance
+ "-opt-inline-from:**"
 )
 
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-  "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
-  "org.scalatest" %% "scalatest" % "3.2.16" % Test
+ "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
+ "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
+ "org.scalatest" %% "scalatest" % "3.2.16" % Test
 )
 
 // Shading to resolve Jackson dependency conflicts often found in complex clusters
 assembly / assemblyShadeRules := Seq(
-  ShadeRule.rename("com.fasterxml.jackson.**" -> "shaded.jackson.@1").inAll
+ ShadeRule.rename("com.fasterxml.jackson.**" -> "shaded.jackson.@1").inAll
 )
 
 // Merge strategy to handle META-INF conflicts during fat-jar creation
 assembly / assemblyMergeStrategy := {
-  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-  case "reference.conf" => MergeStrategy.concat
-  case x => MergeStrategy.first
+ case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+ case "reference.conf" => MergeStrategy.concat
+ case x => MergeStrategy.first
 }
 ```
 This SBT configuration enforces strict compilation rules (using `-Xfatal-warnings` and inline optimizations), ensuring code quality is pristine before Catalyst even begins analyzing it. The `% "provided"` scope for Spark libraries prevents the resulting fat JAR from swelling to unmanageable sizes, as the cluster environment will already provide these binaries. The `assemblyShadeRules` and `assemblyMergeStrategy` are advanced techniques required to circumvent "classpath hell", cleanly isolating your project's local dependencies from the execution environment's internal JVM libraries.
@@ -60,26 +60,26 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.SparkConf
 
 object LocalSparkSessionProvider {
-  def getSession(appName: String): SparkSession = {
-    val conf = new SparkConf()
-      // Run locally with as many worker threads as logical cores
-      .setMaster("local[*]")
-      .setAppName(appName)
-      // Force Kryo serialization checks even in local mode
-      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-      .set("spark.kryo.registrationRequired", "true") 
-      // Reduce shuffle partitions to optimize local processing overhead
-      .set("spark.sql.shuffle.partitions", "4")
-      // Allocate off-heap memory for Tungsten optimization locally
-      .set("spark.memory.offHeap.enabled", "true")
-      .set("spark.memory.offHeap.size", "1g")
-      // Prevent UI port binding conflicts during repeated IDE runs
-      .set("spark.ui.port", "4040")
+ def getSession(appName: String): SparkSession = {
+ val conf = new SparkConf()
+ // Run locally with as many worker threads as logical cores
+ .setMaster("local[*]")
+ .setAppName(appName)
+ // Force Kryo serialization checks even in local mode
+ .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+ .set("spark.kryo.registrationRequired", "true") 
+ // Reduce shuffle partitions to optimize local processing overhead
+ .set("spark.sql.shuffle.partitions", "4")
+ // Allocate off-heap memory for Tungsten optimization locally
+ .set("spark.memory.offHeap.enabled", "true")
+ .set("spark.memory.offHeap.size", "1g")
+ // Prevent UI port binding conflicts during repeated IDE runs
+ .set("spark.ui.port", "4040")
 
-    SparkSession.builder()
-      .config(conf)
-      .getOrCreate()
-  }
+ SparkSession.builder()
+ .config(conf)
+ .getOrCreate()
+ }
 }
 ```
 This configuration is specifically tuned for the IDE runtime. By setting `spark.kryo.registrationRequired` to `true`, we force the application to crash locally if any class sent over the network (or captured by an executor closure) isn't explicitly registered for fast serialization. This preemptively catches `NotSerializableException` errors that would otherwise only occur in a distributed environment, saving hours of debugging. Configuring Tungsten's off-heap memory ensures the local execution plan closely matches the cluster's physical execution paradigm.
@@ -95,34 +95,34 @@ import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
 trait SparkTestSession extends BeforeAndAfterAll { self: Suite =>
-  
-  @transient private var _spark: SparkSession = _
+ 
+ @transient private var _spark: SparkSession = _
 
-  def spark: SparkSession = _spark
+ def spark: SparkSession = _spark
 
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    // Suppress verbose logging during IDE test execution to keep console clean
-    org.apache.log4j.Logger.getLogger("org").setLevel(org.apache.log4j.Level.WARN)
-    
-    _spark = SparkSession.builder()
-      .master("local[2]") // Minimum 2 threads for concurrent testing deadlocks
-      .appName(this.getClass.getSimpleName)
-      .config("spark.sql.shuffle.partitions", "2")
-      .config("spark.ui.enabled", "false") // Disable UI to save JVM resources
-      .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-      .getOrCreate()
-  }
+ override def beforeAll(): Unit = {
+ super.beforeAll()
+ // Suppress verbose logging during IDE test execution to keep console clean
+ org.apache.log4j.Logger.getLogger("org").setLevel(org.apache.log4j.Level.WARN)
+ 
+ _spark = SparkSession.builder()
+ .master("local[2]") // Minimum 2 threads for concurrent testing deadlocks
+ .appName(this.getClass.getSimpleName)
+ .config("spark.sql.shuffle.partitions", "2")
+ .config("spark.ui.enabled", "false") // Disable UI to save JVM resources
+ .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+ .getOrCreate()
+ }
 
-  override def afterAll(): Unit = {
-    if (_spark != null) {
-      _spark.stop()
-      // Clear active session to prevent Catalyst caching issues between test suites
-      SparkSession.clearActiveSession()
-      SparkSession.clearDefaultSession()
-    }
-    super.afterAll()
-  }
+ override def afterAll(): Unit = {
+ if (_spark != null) {
+ _spark.stop()
+ // Clear active session to prevent Catalyst caching issues between test suites
+ SparkSession.clearActiveSession()
+ SparkSession.clearDefaultSession()
+ }
+ super.afterAll()
+ }
 }
 ```
 This trait expertly handles the instantiation and destruction of the SparkSession per test suite. Setting `.master("local[2]")` is a vital edge-case fix because some Spark operations, like Structured Streaming or certain complex cross-joins, require at least two threads to prevent deadlocks (one thread for the receiver/driver, one for the active processing). Disabling the Spark UI heavily speeds up test execution in the IDE by avoiding unnecessary web server initialization.
@@ -139,42 +139,42 @@ import sys
 
 @pytest.fixture(scope="session")
 def spark_session():
-    """Provides a localized, highly optimized PySpark session for IDE testing."""
-    spark = SparkSession.builder \
-        .master("local[2]") \
-        .appName("PySpark-IDE-Testing") \
-        .config("spark.sql.shuffle.partitions", "2") \
-        .config("spark.sql.execution.arrow.pyspark.enabled", "true") \
-        .config("spark.python.worker.reuse", "true") \
-        .getOrCreate()
-    yield spark
-    spark.stop()
+ """Provides a localized, highly optimized PySpark session for IDE testing."""
+ spark = SparkSession.builder \
+ .master("local[2]") \
+ .appName("PySpark-IDE-Testing") \
+ .config("spark.sql.shuffle.partitions", "2") \
+ .config("spark.sql.execution.arrow.pyspark.enabled", "true") \
+ .config("spark.python.worker.reuse", "true") \
+ .getOrCreate()
+ yield spark
+ spark.stop()
 
 def test_pyspark_closure_serialization(spark_session):
-    """
-    Tests critical edge cases where un-serializable Python objects might be 
-    inadvertently captured in a UDF closure, causing distributed failures.
-    """
-    df = spark_session.createDataFrame([("data1",), ("data2",)], ["value"])
+ """
+ Tests critical edge cases where un-serializable Python objects might be 
+ inadvertently captured in a UDF closure, causing distributed failures.
+ """
+ df = spark_session.createDataFrame([("data1",), ("data2",)], ["value"])
 
-    # Simulate an un-serializable object (e.g., an open file handle, socket, or lock)
-    # Using sys.stdout as an example of state we cannot serialize to executors
-    unserializable_obj = sys.stdout 
+ # Simulate an un-serializable object (e.g., an open file handle, socket, or lock)
+ # Using sys.stdout as an example of state we cannot serialize to executors
+ unserializable_obj = sys.stdout 
 
-    # Correct approach: encapsulate logic avoiding external un-serializable state
-    def safe_transform(val):
-        # Do NOT reference unserializable_obj here to avoid Pickle closure errors
-        return f"processed_{val}"
-    
-    safe_udf = udf(safe_transform, StringType())
-    
-    # This action will succeed locally and remotely
-    result_df = df.withColumn("new_value", safe_udf(col("value")))
-    assert result_df.count() == 2
-    
-    # Demonstrating PyArrow vectorization optimization
-    # Arrow enables zero-copy memory transfer between JVM and Python workers
-    assert spark_session.conf.get("spark.sql.execution.arrow.pyspark.enabled") == "true"
+ # Correct approach: encapsulate logic avoiding external un-serializable state
+ def safe_transform(val):
+ # Do NOT reference unserializable_obj here to avoid Pickle closure errors
+ return f"processed_{val}"
+ 
+ safe_udf = udf(safe_transform, StringType())
+ 
+ # This action will succeed locally and remotely
+ result_df = df.withColumn("new_value", safe_udf(col("value")))
+ assert result_df.count() == 2
+ 
+ # Demonstrating PyArrow vectorization optimization
+ # Arrow enables zero-copy memory transfer between JVM and Python workers
+ assert spark_session.conf.get("spark.sql.execution.arrow.pyspark.enabled") == "true"
 ```
 This PySpark example highlights the paramount importance of testing closure boundaries inside the IDE. The fixture intelligently configures PyArrow (`spark.sql.execution.arrow.pyspark.enabled`), a crucial setting for performance. PyArrow facilitates zero-copy memory transfer between the JVM (where Catalyst actually runs) and the Python worker processes, drastically reducing the IPC (Inter-Process Communication) serialization overhead compared to standard Python Pickle. Validating these configurations in your local IDE tests ensures your data pipelines are fundamentally robust and highly performant before cluster deployment.
 </Master Class: Spark IDE Project Setup>

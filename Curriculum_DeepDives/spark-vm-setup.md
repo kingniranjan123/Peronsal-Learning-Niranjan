@@ -9,14 +9,14 @@ Understanding the JVM heap architecture—differentiating between the Young Gene
 from pyspark.sql import SparkSession
 
 spark = SparkSession.builder \
-    .appName("AdvancedLocalSetup") \
-    .master("local[4]") \
-    .config("spark.driver.memory", "4g") \
-    .config("spark.executor.memory", "4g") \
-    .config("spark.sql.shuffle.partitions", "4") \
-    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
-    .config("spark.kryoserializer.buffer.max", "128m") \
-    .getOrCreate()
+ .appName("AdvancedLocalSetup") \
+ .master("local[4]") \
+ .config("spark.driver.memory", "4g") \
+ .config("spark.executor.memory", "4g") \
+ .config("spark.sql.shuffle.partitions", "4") \
+ .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
+ .config("spark.kryoserializer.buffer.max", "128m") \
+ .getOrCreate()
 ```
 
 When initializing a `SparkSession` in a local VM, defaults are rarely sufficient for rigorous testing. The code snippet demonstrates a robust initialization strategy tailored for a constrained local environment. By explicitly setting `spark.driver.memory` and `spark.executor.memory`, we confine Spark's footprint, preventing Out-Of-Memory (OOM) errors that can crash the VM. We configure `spark.sql.shuffle.partitions` to match the number of allocated logical cores (e.g., 4), drastically improving local shuffle performance compared to the default of 200. Furthermore, enabling the `KryoSerializer` is a critical optimization. Unlike the default Java serialization, Kryo is significantly faster and more compact, reducing the memory footprint of shuffled and cached data. This setup provides a high-performance sandbox that accurately simulates memory constraints you will face in distributed production clusters.
@@ -33,12 +33,12 @@ When configuring your VM, passing specific JVM arguments via `spark.driver.extra
 import org.apache.spark.sql.SparkSession
 
 val spark = SparkSession.builder()
-  .appName("OffHeapAndG1GC")
-  .master("local[*]")
-  .config("spark.memory.offHeap.enabled", "true")
-  .config("spark.memory.offHeap.size", "2g")
-  .config("spark.driver.extraJavaOptions", "-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:MaxGCPauseMillis=200")
-  .getOrCreate()
+ .appName("OffHeapAndG1GC")
+ .master("local[*]")
+ .config("spark.memory.offHeap.enabled", "true")
+ .config("spark.memory.offHeap.size", "2g")
+ .config("spark.driver.extraJavaOptions", "-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:MaxGCPauseMillis=200")
+ .getOrCreate()
 ```
 
 This Scala example illustrates how to explicitly configure Spark to leverage off-heap memory and the G1 Garbage Collector within a local VM. Off-heap memory is allocated outside the JVM heap, meaning it is not subject to garbage collection pauses, which is particularly beneficial for large-scale aggregations and caching. By setting `spark.memory.offHeap.enabled` to `true` and defining the size, we grant Spark direct access to physical memory. Concurrently, the `spark.driver.extraJavaOptions` parameter injects G1GC configurations directly into the JVM. The `InitiatingHeapOccupancyPercent=35` parameter tells G1GC to start concurrent marking earlier than the default 45%, which is crucial for Spark workloads that rapidly generate short-lived objects. This dual approach ensures that the local Spark instance remains highly responsive and stable.
@@ -55,14 +55,14 @@ The Catalyst optimizer parses SQL queries, generating an optimized physical plan
 from pyspark.sql import SparkSession
 
 spark = SparkSession.builder \
-    .appName("ShuffleOptimization") \
-    .master("local[*]") \
-    .config("spark.local.dir", "/mnt/fast-ssd/spark-temp") \
-    .config("spark.io.compression.codec", "zstd") \
-    .config("spark.shuffle.file.buffer", "1m") \
-    .config("spark.reducer.maxSizeInFlight", "96m") \
-    .config("spark.shuffle.spill.compress", "true") \
-    .getOrCreate()
+ .appName("ShuffleOptimization") \
+ .master("local[*]") \
+ .config("spark.local.dir", "/mnt/fast-ssd/spark-temp") \
+ .config("spark.io.compression.codec", "zstd") \
+ .config("spark.shuffle.file.buffer", "1m") \
+ .config("spark.reducer.maxSizeInFlight", "96m") \
+ .config("spark.shuffle.spill.compress", "true") \
+ .getOrCreate()
 ```
 
 This Python example demonstrates how to configure Spark for optimal disk I/O and shuffle performance within a VM environment. When processing large datasets locally, Spark will inevitably spill data to disk. By explicitly setting `spark.local.dir` to a high-speed SSD mount point, we mitigate the severe performance degradation associated with disk spilling. We change the default shuffle compression codec from `lz4` to `zstd`. Zstandard provides a superior compression ratio while maintaining high decompression speeds, reducing the total volume of data written to disk. The `spark.shuffle.file.buffer` setting is increased from the default 32k to 1m, optimizing disk writes by reducing the number of I/O system calls. Finally, configuring `spark.reducer.maxSizeInFlight` limits the memory consumed by reduce tasks when fetching shuffle data.
@@ -74,10 +74,10 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
 val spark = SparkSession.builder()
-  .appName("CatalystTesting")
-  .master("local[*]")
-  .config("spark.sql.autoBroadcastJoinThreshold", "10485760") // 10MB
-  .getOrCreate()
+ .appName("CatalystTesting")
+ .master("local[*]")
+ .config("spark.sql.autoBroadcastJoinThreshold", "10485760") // 10MB
+ .getOrCreate()
 
 import spark.implicits._
 

@@ -13,8 +13,8 @@ from pyspark.sql.functions import col, lit
 
 # Initialize Spark session
 spark = SparkSession.builder \
-    .appName("Catalyst-Inspection") \
-    .getOrCreate()
+ .appName("Catalyst-Inspection") \
+ .getOrCreate()
 
 # Create dummy data
 df1 = spark.range(1, 1000000).toDF("id").withColumn("value1", col("id") * 2)
@@ -23,9 +23,9 @@ df2 = spark.range(1, 500000).toDF("id").withColumn("value2", col("id") * 3)
 # Construct a query with intentional inefficiencies
 # Catalyst will automatically optimize the unnecessary filter and delayed projection
 query_df = df1.join(df2, "id") \
-    .filter(col("value1") > 100) \
-    .filter(col("value1") > lit(50)) \
-    .select("id", "value1")
+ .filter(col("value1") > 100) \
+ .filter(col("value1") > lit(50)) \
+ .select("id", "value1")
 
 # Use explain with 'extended' mode to view the Parsed, Analyzed, Optimized, and Physical plans
 query_df.explain(mode="extended")
@@ -54,9 +54,9 @@ spark.sql("ANALYZE TABLE stores COMPUTE STATISTICS")
 
 # A multi-way join query
 complex_join_df = spark.table("sales") \
-    .join(spark.table("customers"), "customer_id") \
-    .join(spark.table("stores"), "store_id") \
-    .filter(col("region") == "EMEA")
+ .join(spark.table("customers"), "customer_id") \
+ .join(spark.table("stores"), "store_id") \
+ .filter(col("region") == "EMEA")
 
 # Explain the plan with cost information
 complex_join_df.explain(mode="cost")
@@ -74,7 +74,7 @@ spark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")
 
 # Create a skewed dataset intentionally
 skewed_df = spark.range(1, 10000000) \
-    .withColumn("join_key", (col("id") % 3).cast("integer")) # Highly skewed keys: 0, 1, 2
+ .withColumn("join_key", (col("id") % 3).cast("integer")) # Highly skewed keys: 0, 1, 2
 
 dimension_df = spark.range(1, 100).toDF("join_key").withColumn("desc", lit("info"))
 
@@ -100,28 +100,28 @@ import org.apache.spark.sql.catalyst.expressions.{EqualTo, Literal}
 
 // Define a custom Catalyst optimization rule
 case class ProhibitFullTableScan(spark: SparkSession) extends Rule[LogicalPlan] {
-  def apply(plan: LogicalPlan): LogicalPlan = plan transform {
-    // If we find a Filter with a specific condition, we could optimize or flag it
-    // Here we'll intercept a dummy filter and rewrite it
-    case f @ Filter(condition, child) =>
-      condition match {
-        // If query has "WHERE 1 = 0", we can technically return an empty local relation
-        // But for this example, let's just log and leave it unmodified, or transform it
-        case EqualTo(Literal(1, _), Literal(0, _)) =>
-          println("WARNING: Detected an always-false condition. Intercepting!")
-          f
-        case _ => f
-      }
-  }
+ def apply(plan: LogicalPlan): LogicalPlan = plan transform {
+ // If we find a Filter with a specific condition, we could optimize or flag it
+ // Here we'll intercept a dummy filter and rewrite it
+ case f @ Filter(condition, child) =>
+ condition match {
+ // If query has "WHERE 1 = 0", we can technically return an empty local relation
+ // But for this example, let's just log and leave it unmodified, or transform it
+ case EqualTo(Literal(1, _), Literal(0, _)) =>
+ println("WARNING: Detected an always-false condition. Intercepting!")
+ f
+ case _ => f
+ }
+ }
 }
 
 // Inject the rule into the SparkSession Extensions
 val spark = SparkSession.builder()
-  .appName("Custom-Catalyst-Extension")
-  .withExtensions { extensions =>
-    extensions.injectOptimizerRule(session => ProhibitFullTableScan(session))
-  }
-  .getOrCreate()
+ .appName("Custom-Catalyst-Extension")
+ .withExtensions { extensions =>
+ extensions.injectOptimizerRule(session => ProhibitFullTableScan(session))
+ }
+ .getOrCreate()
 
 // Trigger the custom rule
 spark.sql("SELECT * FROM range(10) WHERE 1 = 0").explain(true)

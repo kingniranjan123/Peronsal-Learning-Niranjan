@@ -13,11 +13,11 @@ from pyspark.sql.types import IntegerType
 # spark = SparkSession.builder.config("spark.jars.packages", "graphframes:graphframes:0.8.2-spark3.0-s_2.12").getOrCreate()
 
 vertices = spark.createDataFrame([
-    ("A", "Alice"), ("B", "Bob"), ("C", "Charlie"), ("D", "David"), ("E", "Eve")
+ ("A", "Alice"), ("B", "Bob"), ("C", "Charlie"), ("D", "David"), ("E", "Eve")
 ], ["id", "name"])
 
 edges = spark.createDataFrame([
-    ("A", "B", 1), ("B", "C", 2), ("C", "D", 1), ("A", "D", 5), ("D", "E", 1)
+ ("A", "B", 1), ("B", "C", 2), ("C", "D", 1), ("A", "D", 5), ("D", "E", 1)
 ], ["src", "dst", "weight"])
 
 g = GraphFrame(vertices, edges)
@@ -45,35 +45,35 @@ import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 
 val vertices: RDD[(VertexId, String)] = sc.parallelize(Array(
-  (1L, "A"), (2L, "B"), (3L, "C"), (4L, "D"), (5L, "E")
+ (1L, "A"), (2L, "B"), (3L, "C"), (4L, "D"), (5L, "E")
 ))
 val edges: RDD[Edge[Double]] = sc.parallelize(Array(
-  Edge(1L, 2L, 1.0), Edge(2L, 3L, 2.0), Edge(3L, 4L, 1.0),
-  Edge(1L, 4L, 5.0), Edge(4L, 5L, 1.0)
+ Edge(1L, 2L, 1.0), Edge(2L, 3L, 2.0), Edge(3L, 4L, 1.0),
+ Edge(1L, 4L, 5.0), Edge(4L, 5L, 1.0)
 ))
 val graph = Graph(vertices, edges)
 val sourceId: VertexId = 1L // Node A
 
 // Initialize graph: source is 0.0, others are infinity
 val initialGraph = graph.mapVertices((id, _) =>
-  if (id == sourceId) 0.0 else Double.PositiveInfinity
+ if (id == sourceId) 0.0 else Double.PositiveInfinity
 )
 
 val sssp = initialGraph.pregel(Double.PositiveInfinity, maxIterations = 20)(
-  // Vertex Program: Update vertex with the minimum distance
-  (id, dist, newDist) => math.min(dist, newDist),
-  
-  // Send Message: If reaching the neighbor is shorter, send the new distance
-  triplet => {
-    if (triplet.srcAttr + triplet.attr < triplet.dstAttr) {
-      Iterator((triplet.dstId, triplet.srcAttr + triplet.attr))
-    } else {
-      Iterator.empty
-    }
-  },
-  
-  // Merge Message: Combine multiple incoming distances by taking the minimum
-  (a, b) => math.min(a, b)
+ // Vertex Program: Update vertex with the minimum distance
+ (id, dist, newDist) => math.min(dist, newDist),
+ 
+ // Send Message: If reaching the neighbor is shorter, send the new distance
+ triplet => {
+ if (triplet.srcAttr + triplet.attr < triplet.dstAttr) {
+ Iterator((triplet.dstId, triplet.srcAttr + triplet.attr))
+ } else {
+ Iterator.empty
+ }
+ },
+ 
+ // Merge Message: Combine multiple incoming distances by taking the minimum
+ (a, b) => math.min(a, b)
 )
 
 sssp.vertices.collect().foreach(println)
@@ -88,32 +88,32 @@ from graphframes.lib import AggregateMessages as AM
 # Custom implementation of SSSP for weighted graphs in GraphFrames
 # Requires iterative execution of AggregateMessages
 def weighted_sssp(g, source_id, max_iter=10):
-    # Initialize distances: 0 for source, Infinity for others
-    v = g.vertices.withColumn("distance", 
-                              when(col("id") == source_id, lit(0.0))
-                              .otherwise(lit(float('inf'))))
-    cached_g = GraphFrame(v, g.edges)
-    cached_g.cache()
+ # Initialize distances: 0 for source, Infinity for others
+ v = g.vertices.withColumn("distance", 
+ when(col("id") == source_id, lit(0.0))
+ .otherwise(lit(float('inf'))))
+ cached_g = GraphFrame(v, g.edges)
+ cached_g.cache()
 
-    for i in range(max_iter):
-        msgToDst = AM.src["distance"] + AM.edge["weight"]
-        # Aggregate messages sent to destinations
-        agg = cached_g.aggregateMessages(
-            least(AM.msg).alias("min_msg"),
-            sendToDst=msgToDst
-        )
-        # Update vertex distances
-        new_v = cached_g.vertices.join(agg, on="id", how="left_outer") \
-            .withColumn("distance", least(col("distance"), col("min_msg"))) \
-            .drop("min_msg")
-        
-        # Checkpoint to truncate lineage
-        if i % 5 == 0:
-            new_v = new_v.localCheckpoint()
-            
-        cached_g = GraphFrame(new_v, cached_g.edges)
-        
-    return cached_g
+ for i in range(max_iter):
+ msgToDst = AM.src["distance"] + AM.edge["weight"]
+ # Aggregate messages sent to destinations
+ agg = cached_g.aggregateMessages(
+ least(AM.msg).alias("min_msg"),
+ sendToDst=msgToDst
+ )
+ # Update vertex distances
+ new_v = cached_g.vertices.join(agg, on="id", how="left_outer") \
+ .withColumn("distance", least(col("distance"), col("min_msg"))) \
+ .drop("min_msg")
+ 
+ # Checkpoint to truncate lineage
+ if i % 5 == 0:
+ new_v = new_v.localCheckpoint()
+ 
+ cached_g = GraphFrame(new_v, cached_g.edges)
+ 
+ return cached_g
 
 result_gf = weighted_sssp(g, "A")
 result_gf.vertices.show()
@@ -127,19 +127,19 @@ This example ports the weighted SSSP logic to GraphFrames using `AggregateMessag
 # We can use motifs to find paths of specific lengths.
 
 motif = g.find("(a)-[e1]->(b); (b)-[e2]->(c)") \
-         .filter("a.id != c.id")
+ .filter("a.id != c.id")
 
 # Calculate the path weight
 path_weights = motif.select(
-    col("a.id").alias("start"),
-    col("c.id").alias("end"),
-    (col("e1.weight") + col("e2.weight")).alias("path_weight")
+ col("a.id").alias("start"),
+ col("c.id").alias("end"),
+ (col("e1.weight") + col("e2.weight")).alias("path_weight")
 )
 
 # Aggregate to find the shortest 2-hop paths
 shortest_2_hop = path_weights.groupBy("start", "end") \
-                             .min("path_weight") \
-                             .withColumnRenamed("min(path_weight)", "shortest_distance")
+ .min("path_weight") \
+ .withColumnRenamed("min(path_weight)", "shortest_distance")
 
 # Optimize execution with broadcast joins if one side is small
 from pyspark.sql.functions import broadcast

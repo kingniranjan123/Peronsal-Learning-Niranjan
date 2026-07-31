@@ -6,11 +6,11 @@ Every transformation applied to an RDD in Apache Spark does not execute immediat
 
 The DAG is also the foundation for **RDD lineage** — Spark's mechanism for fault tolerance without replication. Because every RDD knows exactly which parent RDD it was derived from and which transformation produced it, any lost partition can be recomputed from its lineage chain rather than recovered from a replica. This makes Spark's fault model fundamentally different from Hadoop MapReduce, which checkpoints intermediate data to HDFS after every map and reduce phase.
 
-Understanding RDD lineage and DAG anatomy is the single most important skill for diagnosing performance bottlenecks and building production-reliable Spark pipelines. Engineers who can read a DAG — whether from `toDebugString` or the Spark UI — can instantly identify shuffle boundaries, unnecessary re-computations, and missing `persist()` calls that silently destroy job throughput.
+Understanding RDD lineage and DAG anatomy is the single most important skill for diagnosing performance bottlenecks and building production-reliable Spark pipelines. Engineers who can read a DAG — whether from `toDebugString` or the Spark UI — can instantly identify shuffle boundaries, unnecessary re-computations, and missing `persist()` calls that silently destroy job throughput. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 455](spark_book.pdf#page=455)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
 
 ### How It Works Under the Hood
 
@@ -20,38 +20,38 @@ When an action is called, the **DAGScheduler** (running on the Driver JVM) trave
 
 Shuffle data is serialized using either Java serialization or **Kryo** (configured via `spark.serializer`), written to the local disk of the map-side executor via the **SortShuffleManager**, and then fetched over the network by reduce-side tasks. The shuffle write files are tracked by the **BlockManager** and the **MapOutputTracker** on the Driver. If a reduce-side task fails to fetch a block because the map-side executor died, Spark re-submits the **entire upstream stage** — not just the failed partition — because the shuffle files are gone. This is precisely why long lineage chains and un-persisted shuffled RDDs are dangerous at scale.
 
-```
+```text
 Driver JVM
 ┌──────────────────────────────────────────────────────────┐
-│  SparkContext                                            │
-│  ┌─────────────────┐     ┌──────────────────────────┐   │
-│  │  RDD DAG Graph  │────▶│     DAGScheduler         │   │
-│  │  (Lineage Tree) │     │  ┌──────────────────┐    │   │
-│  │  RDD_A          │     │  │ Stage 0 (narrow) │    │   │
-│  │   └─▶ RDD_B     │     │  │  map ─▶ filter   │    │   │
-│  │   └─▶ RDD_C     │     │  └────────┬─────────┘    │   │
-│  │        └─▶ RDD_D│     │           │ ShuffleDep   │   │
-│  └─────────────────┘     │  ┌────────▼─────────┐    │   │
-│                          │  │ Stage 1 (reduce) │    │   │
-│  MapOutputTracker ◀──────│  │  reduceByKey     │    │   │
-│  BlockManagerMaster      │  └──────────────────┘    │   │
-└───────────────┬──────────└──────────────────────────┘   │
-                │  TaskScheduler dispatches Tasks          │
-                ▼                                          │
-  Executor JVM (Worker Node)                               │
-  ┌────────────────────────────────────────────────────┐   │
-  │  Task Thread Pool                                  │   │
-  │  ┌──────────────┐  ┌──────────────┐               │   │
-  │  │ Task(Part.0) │  │ Task(Part.1) │  ...          │   │
-  │  │ Tungsten WSCG│  │ Tungsten WSCG│               │   │
-  │  │ (fused loop) │  │ (fused loop) │               │   │
-  │  └──────┬───────┘  └──────┬───────┘               │   │
-  │         │  Shuffle Write  │                        │   │
-  │  ┌──────▼─────────────────▼───────┐               │   │
-  │  │  SortShuffleManager (disk)     │               │   │
-  │  │  BlockManager (tracks blocks)  │               │   │
-  │  └────────────────────────────────┘               │   │
-  └────────────────────────────────────────────────────┘   │
+│ SparkContext │
+│ ┌─────────────────┐ ┌──────────────────────────┐ │
+│ │ RDD DAG Graph │────▶│ DAGScheduler │ │
+│ │ (Lineage Tree) │ │ ┌──────────────────┐ │ │
+│ │ RDD_A │ │ │ Stage 0 (narrow) │ │ │
+│ │ └─▶ RDD_B │ │ │ map ─▶ filter │ │ │
+│ │ └─▶ RDD_C │ │ └────────┬─────────┘ │ │
+│ │ └─▶ RDD_D│ │ │ ShuffleDep │ │
+│ └─────────────────┘ │ ┌────────▼─────────┐ │ │
+│ │ │ Stage 1 (reduce) │ │ │
+│ MapOutputTracker ◀──────│ │ reduceByKey │ │ │
+│ BlockManagerMaster │ └──────────────────┘ │ │
+└───────────────┬──────────└──────────────────────────┘ │
+ │ TaskScheduler dispatches Tasks │
+ ▼ │
+ Executor JVM (Worker Node) │
+ ┌────────────────────────────────────────────────────┐ │
+ │ Task Thread Pool │ │
+ │ ┌──────────────┐ ┌──────────────┐ │ │
+ │ │ Task(Part.0) │ │ Task(Part.1) │ ... │ │
+ │ │ Tungsten WSCG│ │ Tungsten WSCG│ │ │
+ │ │ (fused loop) │ │ (fused loop) │ │ │
+ │ └──────┬───────┘ └──────┬───────┘ │ │
+ │ │ Shuffle Write │ │ │
+ │ ┌──────▼─────────────────▼───────┐ │ │
+ │ │ SortShuffleManager (disk) │ │ │
+ │ │ BlockManager (tracks blocks) │ │ │
+ │ └────────────────────────────────┘ │ │
+ └────────────────────────────────────────────────────┘ │ [Ref: 463](spark_book.pdf#page=463)
 ```
 
 ### Key Internal Components
@@ -59,25 +59,25 @@ Driver JVM
 - **DAGScheduler:** Translates the RDD lineage DAG into a physical execution plan of `ResultStage` and `ShuffleMapStage` objects. It performs stage-level fault recovery by re-submitting failed stages when shuffle data is lost.
 - **MapOutputTracker:** A Driver-side registry that maps each shuffle's output block locations to specific executors. Reduce-side tasks query this registry to know where to fetch their input partitions.
 - **SortShuffleManager:** The default shuffle implementation since Spark 1.6. It sorts records by partition ID on the map side, producing a single sorted data file per mapper with an associated index file, replacing the old hash-based approach that created `M × R` files.
-- **BlockManager:** A distributed storage system running on both the Driver and every Executor. It manages the lifecycle of shuffle blocks, cached RDD partitions (in on-heap or off-heap Tungsten binary format), and broadcast variable chunks across the cluster.
+- **BlockManager:** A distributed storage system running on both the Driver and every Executor. It manages the lifecycle of shuffle blocks, cached RDD partitions (in on-heap or off-heap Tungsten binary format), and broadcast variable chunks across the cluster. [Ref: 452](spark_book.pdf#page=452)
 
----
+--- [Ref: 456](spark_book.pdf#page=456)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 459](spark_book.pdf#page=459)
 
 ### The Re-Computation Trap: Iterative Algorithms Without `persist()`
 
 Every time an action is called on an RDD, Spark walks the entire lineage chain from scratch and recomputes all transformations from the source data. If you call `count()` and then `collect()` on the same derived RDD without calling `persist()`, the full computation — including any expensive shuffles — executes **twice**. In iterative ML algorithms like gradient descent that loop hundreds of times over the same dataset, this turns an O(1) read into O(N) reads per iteration, often increasing runtime by 10-100x.
 
-The failure mode is subtle: the job completes correctly, but the Spark UI shows the same stages executing repeatedly with no cache hits. The fix is `rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)` before the loop. The `SER` suffix stores partitions as Kryo-serialized byte arrays rather than deserialized JVM objects, reducing heap pressure by 5-10x and preventing GC-induced executor OOM kills when the dataset is large.
+The failure mode is subtle: the job completes correctly, but the Spark UI shows the same stages executing repeatedly with no cache hits. The fix is `rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)` before the loop. The `SER` suffix stores partitions as Kryo-serialized byte arrays rather than deserialized JVM objects, reducing heap pressure by 5-10x and preventing GC-induced executor OOM kills when the dataset is large. [Ref: 464](spark_book.pdf#page=464)
 
 ### Long Lineage Chains and the Stack Overflow Failure Mode
 
 Spark represents the RDD lineage as a recursive object graph. Each RDD holds a reference to its parent RDD, which holds a reference to its parent, and so on. When you build an RDD through thousands of iterative transformations — common in streaming microbatch accumulation or recursive graph processing — the lineage chain grows unbounded. When Spark tries to serialize this chain (e.g., to send a task to an executor) or to traverse it for stage planning, it triggers a **`StackOverflowError`** in the Driver JVM because the recursive traversal exceeds the JVM stack depth (default ~512 frames for most JVM configurations).
 
-The precise error is `java.lang.StackOverflowError` in `DAGScheduler.getShuffleDependencies` or `RDD.iterator`. The solution is **checkpointing**: `rdd.checkpoint()` materializes the RDD to HDFS/S3 and severs the lineage by replacing the parent pointer with a reference to the checkpoint file. This caps lineage depth to O(1) after each checkpoint and is mandatory in any iterative algorithm exceeding ~50 transformation steps.
+The precise error is `java.lang.StackOverflowError` in `DAGScheduler.getShuffleDependencies` or `RDD.iterator`. The solution is **checkpointing**: `rdd.checkpoint()` materializes the RDD to HDFS/S3 and severs the lineage by replacing the parent pointer with a reference to the checkpoint file. This caps lineage depth to O(1) after each checkpoint and is mandatory in any iterative algorithm exceeding ~50 transformation steps. [Ref: 453](spark_book.pdf#page=453)
 
----
+--- [Ref: 457](spark_book.pdf#page=457)
 
 ## 📊 Performance Characteristics
 
@@ -88,9 +88,9 @@ The precise error is `java.lang.StackOverflowError` in `DAGScheduler.getShuffleD
 | `groupByKey` | O(n log n) | Yes | No map-side combine; sends all values over network — avoid in favor of `reduceByKey` |
 | `checkpoint()` | O(n) | No (write) | Materializes to distributed storage; severs lineage; requires one full pass over data |
 | `join` (co-partitioned) | O(n) | No | Zip-join is a NarrowDep; requires identical partitioner and partition count on both sides |
-| `join` (non-partitioned) | O(n log n) | Yes | SortMergeJoin after shuffle; both sides fully re-distributed across the cluster |
+| `join` (non-partitioned) | O(n log n) | Yes | SortMergeJoin after shuffle; both sides fully re-distributed across the cluster | [Ref: 461](spark_book.pdf#page=461)
 
----
+--- [Ref: 469](spark_book.pdf#page=469)
 
 ## 💻 Code Examples
 
@@ -106,31 +106,31 @@ sc = SparkContext(conf=conf)
 
 # Stage 0: Two narrow transformations — these will be PIPELINED into one stage.
 # No data movement occurs here; Spark only records the lineage.
-raw = sc.textFile("hdfs:///data/events/*.log")          # RDD[String]
-parsed = raw.map(lambda line: line.split(","))           # NarrowDep: map
-filtered = parsed.filter(lambda f: len(f) > 3)          # NarrowDep: filter
+raw = sc.textFile("hdfs:///data/events/*.log") # RDD[String]
+parsed = raw.map(lambda line: line.split(",")) # NarrowDep: map
+filtered = parsed.filter(lambda f: len(f) > 3) # NarrowDep: filter
 
 # Stage boundary: groupByKey introduces a ShuffleDependency.
 # Every executor must exchange data with every other executor.
 # This is the most expensive operation — use reduceByKey if you can aggregate.
-keyed = filtered.map(lambda f: (f[0], int(f[2])))       # NarrowDep: map
-grouped = keyed.groupByKey()                             # *** SHUFFLE BOUNDARY ***
+keyed = filtered.map(lambda f: (f[0], int(f[2]))) # NarrowDep: map
+grouped = keyed.groupByKey() # *** SHUFFLE BOUNDARY ***
 
 # Stage 1: Another narrow transformation AFTER the shuffle.
 # This runs in a new stage on the shuffle's output partitions.
-totals = grouped.mapValues(lambda vals: sum(vals))       # NarrowDep: mapValues
+totals = grouped.mapValues(lambda vals: sum(vals)) # NarrowDep: mapValues
 
 # Print the lineage graph. Indentation level = stage depth.
 # Each (N) number is the number of partitions at that RDD.
 # Lines preceded by a ShuffleDep marker show where stages split.
 print(totals.toDebugString().decode("utf-8"))
 # Expected output (abbreviated):
-# (4) PythonRDD[5] at RDD at PythonRDD.scala:53 []           <-- Stage 1
-#  |  MapPartitionsRDD[4] ...
-#  |  ShuffledRDD[3] ...                                      <-- Shuffle boundary
-#  +-(4) PairwiseRDD[2] ...                                   <-- Stage 0 begins here
-#      |  PythonRDD[1] ...
-#      |  hdfs:///data/events/*.log MapPartitionsRDD[0]
+# (4) PythonRDD[5] at RDD at PythonRDD.scala:53 [] <-- Stage 1
+# | MapPartitionsRDD[4] ...
+# | ShuffledRDD[3] ... <-- Shuffle boundary
+# +-(4) PairwiseRDD[2] ... <-- Stage 0 begins here
+# | PythonRDD[1] ...
+# | hdfs:///data/events/*.log MapPartitionsRDD[0]
 ```
 
 > **Mastery Note:** The indentation depth in `toDebugString` directly encodes stage membership — a new level of indentation after a `ShuffledRDD` line marks a new stage. Each `(N)` prefix is the partition count at that RDD; if you see the partition count change unexpectedly (e.g., from 200 to 1), look for a misconfigured `coalesce()` or a `groupByKey()` with a custom `numPartitions` argument. The `groupByKey()` used here is an anti-pattern: it collects all values per key in a Python list in memory on the reduce side, with zero map-side aggregation. For a sum, `reduceByKey(lambda a, b: a + b)` produces identical results but can reduce shuffle data volume by 10-50x through partial aggregation on the map side.
@@ -150,7 +150,7 @@ transactions = sc.textFile("hdfs:///data/transactions/")
 
 # Parse and key by user_id. This is cheap (NarrowDep) and fast to re-compute.
 keyed = transactions.map(lambda line: line.split(",")) \
-                    .map(lambda f: (f[1], float(f[3])))  # (user_id, amount)
+ .map(lambda f: (f[1], float(f[3]))) # (user_id, amount)
 
 # reduceByKey triggers a full shuffle. The result — per-user totals — is
 # expensive to produce. We will consume it in TWO downstream computations,
@@ -158,7 +158,7 @@ keyed = transactions.map(lambda line: line.split(",")) \
 # MEMORY_AND_DISK_SER: Kryo-serializes partitions to byte arrays on heap,
 # spills to disk if heap is insufficient. Safer than MEMORY_ONLY for large datasets.
 per_user_totals = keyed.reduceByKey(lambda a, b: a + b) \
-                       .persist(StorageLevel.MEMORY_AND_DISK_SER)
+ .persist(StorageLevel.MEMORY_AND_DISK_SER)
 
 # Action 1: Force materialization into BlockManager cache across all executors.
 # After this, per_user_totals partitions are stored as serialized byte arrays.
@@ -191,8 +191,8 @@ per_user_totals.unpersist()
 from pyspark import SparkContext, SparkConf, StorageLevel
 
 conf = SparkConf() \
-    .setAppName("IterativeCheckpoint") \
-    .set("spark.cleaner.referenceTracking.cleanCheckpoints", "true")  # Auto-clean old checkpoints
+ .setAppName("IterativeCheckpoint") \
+ .set("spark.cleaner.referenceTracking.cleanCheckpoints", "true") # Auto-clean old checkpoints
 
 sc = SparkContext(conf=conf)
 
@@ -204,34 +204,34 @@ sc.setCheckpointDir("hdfs:///spark-checkpoints/pagerank/")
 # In a real PageRank, `ranks` is re-derived each iteration from `links`.
 ranks = sc.parallelize([(f"node_{i}", 1.0) for i in range(1_000_000)], numSlices=200)
 
-CHECKPOINT_INTERVAL = 10  # Checkpoint every 10 iterations to bound lineage depth
+CHECKPOINT_INTERVAL = 10 # Checkpoint every 10 iterations to bound lineage depth
 
 for iteration in range(100):
-    # Each iteration adds a new transformation layer to the lineage DAG.
-    # After 100 iterations without checkpointing, the lineage chain is 100 levels deep.
-    # RDD.iterator() and DAGScheduler.getShuffleDependencies() recurse over this chain,
-    # causing StackOverflowError in the Driver JVM at ~50-200 iterations.
-    ranks = ranks.map(lambda kv: (kv[0], kv[1] * 0.85 + 0.15))  # Damping factor
+ # Each iteration adds a new transformation layer to the lineage DAG.
+ # After 100 iterations without checkpointing, the lineage chain is 100 levels deep.
+ # RDD.iterator() and DAGScheduler.getShuffleDependencies() recurse over this chain,
+ # causing StackOverflowError in the Driver JVM at ~50-200 iterations.
+ ranks = ranks.map(lambda kv: (kv[0], kv[1] * 0.85 + 0.15)) # Damping factor
 
-    if iteration % CHECKPOINT_INTERVAL == 0 and iteration > 0:
-        # persist() BEFORE checkpoint() is critical!
-        # Without it, checkpoint() triggers TWO full recomputations:
-        # once to write to HDFS and once more when the next transformation reads it.
-        # With persist(), the data is read from cache for both operations.
-        ranks.persist(StorageLevel.MEMORY_AND_DISK_SER)
+ if iteration % CHECKPOINT_INTERVAL == 0 and iteration > 0:
+ # persist() BEFORE checkpoint() is critical!
+ # Without it, checkpoint() triggers TWO full recomputations:
+ # once to write to HDFS and once more when the next transformation reads it.
+ # With persist(), the data is read from cache for both operations.
+ ranks.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
-        # Marks this RDD for materialization to the checkpoint directory.
-        # Does NOT execute immediately — checkpoint write happens on next action.
-        ranks.checkpoint()
+ # Marks this RDD for materialization to the checkpoint directory.
+ # Does NOT execute immediately — checkpoint write happens on next action.
+ ranks.checkpoint()
 
-        # Trigger the checkpoint write by forcing an action.
-        # After this line, ranks.dependencies() returns a CheckpointRDD
-        # with a single file-based dependency — lineage depth resets to 1.
-        count = ranks.count()
-        print(f"Iteration {iteration}: {count} nodes, lineage severed.")
+ # Trigger the checkpoint write by forcing an action.
+ # After this line, ranks.dependencies() returns a CheckpointRDD
+ # with a single file-based dependency — lineage depth resets to 1.
+ count = ranks.count()
+ print(f"Iteration {iteration}: {count} nodes, lineage severed.")
 
-        # Release the in-memory cache now that the checkpoint is written to HDFS.
-        ranks.unpersist()
+ # Release the in-memory cache now that the checkpoint is written to HDFS.
+ ranks.unpersist()
 
 sc.stop()
 ```
@@ -249,11 +249,11 @@ from pyspark import SparkContext, StorageLevel
 from pyspark.sql import SparkSession
 
 spark = SparkSession.builder \
-    .appName("ShuffleSkewDiagnosis") \
-    .config("spark.sql.shuffle.partitions", "400") \
-    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
-    .config("spark.shuffle.sort.bypassMergeThreshold", "400") \
-    .getOrCreate()
+ .appName("ShuffleSkewDiagnosis") \
+ .config("spark.sql.shuffle.partitions", "400") \
+ .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
+ .config("spark.shuffle.sort.bypassMergeThreshold", "400") \
+ .getOrCreate()
 
 sc = spark.sparkContext
 
@@ -261,8 +261,8 @@ sc = spark.sparkContext
 # Key "hot_seller" appears 90% of the time — a pathological case for groupByKey/reduceByKey.
 import random
 data = [("hot_seller", random.random()) if random.random() < 0.9
-        else (f"seller_{i % 50}", random.random())
-        for i in range(5_000_000)]
+ else (f"seller_{i % 50}", random.random())
+ for i in range(5_000_000)]
 
 rdd = sc.parallelize(data, numSlices=200)
 
@@ -271,34 +271,34 @@ rdd = sc.parallelize(data, numSlices=200)
 # The DAG will show Stage 1 with 199 tasks finishing in 2s and 1 task taking 180s.
 # This single slow task ("straggler") holds up the entire stage.
 skewed_result = rdd.reduceByKey(lambda a, b: a + b)
-# skewed_result.count()  # Uncomment to observe straggler in Spark UI
+# skewed_result.count() # Uncomment to observe straggler in Spark UI
 
 # SOLUTION: Key salting to redistribute the hot key across multiple partitions.
-SALT_BUCKETS = 20  # Split "hot_seller" into 20 virtual keys
+SALT_BUCKETS = 20 # Split "hot_seller" into 20 virtual keys
 
 def salt_key(kv):
-    """Append a random bucket suffix to hot keys to distribute load."""
-    key, value = kv
-    if key == "hot_seller":
-        # Random salt distributes this key's records across 20 partitions
-        return (f"{key}_salt_{random.randint(0, SALT_BUCKETS - 1)}", value)
-    return (key, value)
+ """Append a random bucket suffix to hot keys to distribute load."""
+ key, value = kv
+ if key == "hot_seller":
+ # Random salt distributes this key's records across 20 partitions
+ return (f"{key}_salt_{random.randint(0, SALT_BUCKETS - 1)}", value)
+ return (key, value)
 
 def desalt_key(kv):
-    """Strip the salt suffix to recover the original key."""
-    key, value = kv
-    original_key = key.split("_salt_")[0] if "_salt_" in key else key
-    return (original_key, value)
+ """Strip the salt suffix to recover the original key."""
+ key, value = kv
+ original_key = key.split("_salt_")[0] if "_salt_" in key else key
+ return (original_key, value)
 
 # Phase 1: Partial aggregation with salted keys.
 # The shuffle now distributes "hot_seller" across 20 partitions (max ~225K records each).
 salted = rdd.map(salt_key)
-partial_sums = salted.reduceByKey(lambda a, b: a + b)  # Stage 1: balanced shuffle
+partial_sums = salted.reduceByKey(lambda a, b: a + b) # Stage 1: balanced shuffle
 
 # Phase 2: Desalt and perform final aggregation.
 # This second reduceByKey is cheap: only 20 + 50 unique keys after partial aggregation.
 final_result = partial_sums.map(desalt_key) \
-                           .reduceByKey(lambda a, b: a + b)  # Stage 2: tiny shuffle
+ .reduceByKey(lambda a, b: a + b) # Stage 2: tiny shuffle
 
 # Inspect the lineage to confirm the two-phase structure.
 # toDebugString will show two ShuffleDependency boundaries (two shuffle stages).
@@ -330,9 +330,9 @@ To achieve true mastery of RDD Lineage and DAG:
 
 ## 📚 Summary
 
-RDD Lineage and the DAG are not implementation details — they are the cognitive model that every Spark engineer must internalize to reason about correctness, fault tolerance, and performance simultaneously. The DAGScheduler's conversion of the logical RDD dependency graph into physical `ShuffleMapStage` and `ResultStage` objects determines everything: which tasks execute in parallel, where data moves across the network, how failures are recovered, and what the Spark UI's timeline will look like at runtime. [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463)
+RDD Lineage and the DAG are not implementation details — they are the cognitive model that every Spark engineer must internalize to reason about correctness, fault tolerance, and performance simultaneously. The DAGScheduler's conversion of the logical RDD dependency graph into physical `ShuffleMapStage` and `ResultStage` objects determines everything: which tasks execute in parallel, where data moves across the network, how failures are recovered, and what the Spark UI's timeline will look like at runtime. 
 
-The two most impactful interventions available to a Spark engineer are strategic `persist()` placement and disciplined checkpointing. Persist at the output of expensive shuffle stages that feed multiple downstream computations; checkpoint in iterative algorithms every 10-20 iterations to prevent `StackOverflowError` from recursive lineage traversal in the Driver JVM. Both operations interact directly with the BlockManager and the Tungsten memory subsystem, so understanding storage levels — particularly the heap vs. off-heap tradeoffs between `MEMORY_ONLY`, `MEMORY_AND_DISK_SER`, and `OFF_HEAP` — is prerequisite knowledge for sizing executors correctly. [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)
+The two most impactful interventions available to a Spark engineer are strategic `persist()` placement and disciplined checkpointing. Persist at the output of expensive shuffle stages that feed multiple downstream computations; checkpoint in iterative algorithms every 10-20 iterations to prevent `StackOverflowError` from recursive lineage traversal in the Driver JVM. Both operations interact directly with the BlockManager and the Tungsten memory subsystem, so understanding storage levels — particularly the heap vs. off-heap tradeoffs between `MEMORY_ONLY`, `MEMORY_AND_DISK_SER`, and `OFF_HEAP` — is prerequisite knowledge for sizing executors correctly. 
 
-Finally, the `toDebugString` output and the Spark UI's DAG visualization are the two most underused diagnostic tools in the Spark ecosystem. An engineer who can look at a DAG and immediately identify skipped stages (cache hits), unexpected shuffles (missing co-partitioning), and abnormal partition counts (accidental `coalesce(1)`) will outperform peers who tune by intuition alone. The DAG is Spark's full declarative description of its intent — learning to read it fluently is the highest-leverage skill in production Spark engineering. [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)
+Finally, the `toDebugString` output and the Spark UI's DAG visualization are the two most underused diagnostic tools in the Spark ecosystem. An engineer who can look at a DAG and immediately identify skipped stages (cache hits), unexpected shuffles (missing co-partitioning), and abnormal partition counts (accidental `coalesce(1)`) will outperform peers who tune by intuition alone. The DAG is Spark's full declarative description of its intent — learning to read it fluently is the highest-leverage skill in production Spark engineering. 
 

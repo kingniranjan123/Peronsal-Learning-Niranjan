@@ -12,17 +12,17 @@ from pyspark.sql import SparkSession
 
 # Initialize Spark Session
 spark = SparkSession.builder \
-    .appName("GraphFrames-PageRank") \
-    .config("spark.jars.packages", "graphframes:graphframes:0.8.2-spark3.0-s_2.12") \
-    .getOrCreate()
+ .appName("GraphFrames-PageRank") \
+ .config("spark.jars.packages", "graphframes:graphframes:0.8.2-spark3.0-s_2.12") \
+ .getOrCreate()
 
 # Create Vertices and Edges DataFrames
 vertices = spark.createDataFrame([
-    ("A", "User A"), ("B", "User B"), ("C", "User C"), ("D", "User D")
+ ("A", "User A"), ("B", "User B"), ("C", "User C"), ("D", "User D")
 ], ["id", "name"])
 
 edges = spark.createDataFrame([
-    ("A", "B"), ("A", "C"), ("B", "C"), ("C", "A"), ("D", "C")
+ ("A", "B"), ("A", "C"), ("B", "C"), ("C", "A"), ("D", "C")
 ], ["src", "dst"])
 
 # Construct GraphFrame
@@ -55,10 +55,10 @@ val sc = spark.sparkContext
 
 // Define vertices and edges
 val vertices: RDD[(VertexId, String)] = sc.parallelize(Array(
-  (1L, "Alice"), (2L, "Bob"), (3L, "Charlie"), (4L, "David")
+ (1L, "Alice"), (2L, "Bob"), (3L, "Charlie"), (4L, "David")
 ))
 val edges: RDD[Edge[Int]] = sc.parallelize(Array(
-  Edge(1L, 2L, 1), Edge(2L, 3L, 1), Edge(3L, 1L, 1), Edge(4L, 1L, 1)
+ Edge(1L, 2L, 1), Edge(2L, 3L, 1), Edge(3L, 1L, 1), Edge(4L, 1L, 1)
 ))
 
 val graph = Graph(vertices, edges)
@@ -69,7 +69,7 @@ val personalizedPageRankGraph = graph.personalizedPageRank(sourceVertexId, 0.001
 
 // Join ranks with original usernames
 val rankedUsers = personalizedPageRankGraph.vertices.join(vertices).map {
-  case (id, (rank, name)) => (name, rank)
+ case (id, (rank, name)) => (name, rank)
 }
 
 rankedUsers.sortBy(_._2, ascending = false).collect().foreach(println)
@@ -90,7 +90,7 @@ val sc = spark.sparkContext
 sc.setCheckpointDir("hdfs://namenode:8020/spark/checkpoints")
 
 val graph = GraphLoader.edgeListFile(sc, "hdfs://namenode:8020/data/web-Google.txt")
-  .cache() // Cache the initial topology to avoid re-reading from disk
+ .cache() // Cache the initial topology to avoid re-reading from disk
 
 // Initialize GraphX with optimal edge partitioning to minimize shuffle
 val partitionedGraph = graph.partitionBy(PartitionStrategy.EdgePartition2D)
@@ -117,32 +117,32 @@ val numVertices = initialGraph.numVertices
 
 // Calculate out-degrees and join with initial graph
 val graphWithOutDegrees = initialGraph.outerJoinVertices(initialGraph.outDegrees) {
-  (id, rank, outDegOpt) => (rank, outDegOpt.getOrElse(0))
+ (id, rank, outDegOpt) => (rank, outDegOpt.getOrElse(0))
 }
 
 // Execute Pregel
 val customPageRank = graphWithOutDegrees.pregel(
-  initialMsg = 0.0,
-  maxIterations = 15,
-  activeDirection = EdgeDirection.Out
+ initialMsg = 0.0,
+ maxIterations = 15,
+ activeDirection = EdgeDirection.Out
 )(
-  // Vertex Program: Update rank based on incoming message sum
-  vprog = (id, attr, msgSum) => {
-    val (oldRank, outDeg) = attr
-    val newRank = (1.0 - dampingFactor) + dampingFactor * msgSum
-    (newRank, outDeg)
-  },
-  // Send Message: Distribute rank equally among outgoing edges
-  sendMsg = triplet => {
-    val (srcRank, srcOutDeg) = triplet.srcAttr
-    if (srcOutDeg > 0) {
-      Iterator((triplet.dstId, srcRank / srcOutDeg))
-    } else {
-      Iterator.empty
-    }
-  },
-  // Merge Message: Sum incoming ranks
-  mergeMsg = (a, b) => a + b
+ // Vertex Program: Update rank based on incoming message sum
+ vprog = (id, attr, msgSum) => {
+ val (oldRank, outDeg) = attr
+ val newRank = (1.0 - dampingFactor) + dampingFactor * msgSum
+ (newRank, outDeg)
+ },
+ // Send Message: Distribute rank equally among outgoing edges
+ sendMsg = triplet => {
+ val (srcRank, srcOutDeg) = triplet.srcAttr
+ if (srcOutDeg > 0) {
+ Iterator((triplet.dstId, srcRank / srcOutDeg))
+ } else {
+ Iterator.empty
+ }
+ },
+ // Merge Message: Sum incoming ranks
+ mergeMsg = (a, b) => a + b
 )
 
 customPageRank.vertices.take(5).foreach(println)

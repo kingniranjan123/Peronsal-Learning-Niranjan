@@ -12,31 +12,31 @@ import org.java_websocket.handshake.ServerHandshake
 import java.net.URI
 
 class WebSocketReceiver(uri: String) extends Receiver[String](StorageLevel.MEMORY_AND_DISK_2) {
-  @transient private var client: WebSocketClient = _
+ @transient private var client: WebSocketClient = _
 
-  override def onStart(): Unit = {
-    client = new WebSocketClient(new URI(uri)) {
-      override def onOpen(handshakedata: ServerHandshake): Unit = {}
-      
-      override def onMessage(message: String): Unit = {
-        // Store incoming message directly into Spark's memory block
-        store(message) 
-      }
-      
-      override def onClose(code: Int, reason: String, remote: Boolean): Unit = {
-        restart("WebSocket connection closed")
-      }
-      
-      override def onError(ex: Exception): Unit = {
-        restart("Error receiving data", ex)
-      }
-    }
-    client.connect()
-  }
+ override def onStart(): Unit = {
+ client = new WebSocketClient(new URI(uri)) {
+ override def onOpen(handshakedata: ServerHandshake): Unit = {}
+ 
+ override def onMessage(message: String): Unit = {
+ // Store incoming message directly into Spark's memory block
+ store(message) 
+ }
+ 
+ override def onClose(code: Int, reason: String, remote: Boolean): Unit = {
+ restart("WebSocket connection closed")
+ }
+ 
+ override def onError(ex: Exception): Unit = {
+ restart("Error receiving data", ex)
+ }
+ }
+ client.connect()
+ }
 
-  override def onStop(): Unit = {
-    if (client != null) client.close()
-  }
+ override def onStop(): Unit = {
+ if (client != null) client.close()
+ }
 }
 ```
 In this example, we define a custom DStream `Receiver` in Scala to ingest WebSocket messages. The critical component here is the `StorageLevel.MEMORY_AND_DISK_2` parameter. Because WebSocket streams can exhibit sudden bursts (e.g., a market volatility spike), we replicate the blocks across two nodes. When `onMessage` is invoked, `store(message)` buffers the payload into Spark's BlockManager. To optimize this, the JVM heap must be carefully tuned. We bypass complex object creation inside `onMessage` to minimize GC pressure. While this example uses DStreams for simplicity, the underlying principle of managing the asynchronous network thread separate from Spark's task thread pool remains critical. The receiver thread must remain non-blocking, delegating the persistence to Spark's internal storage mechanisms.
@@ -57,27 +57,27 @@ from pyspark.sql.types import StructType, StructField, StringType, DoubleType, T
 # It is generally an anti-pattern to connect Spark directly to WebSockets in production.
 # The enterprise pattern uses a lightweight service (e.g., Node.js/Go) to bridge WebSocket to Kafka.
 spark = SparkSession.builder \
-    .appName("WebSocket_Kafka_Ingestion") \
-    .config("spark.sql.streaming.statefulOperator.checkCorrectness.enabled", "false") \
-    .getOrCreate()
+ .appName("WebSocket_Kafka_Ingestion") \
+ .config("spark.sql.streaming.statefulOperator.checkCorrectness.enabled", "false") \
+ .getOrCreate()
 
 schema = StructType([
-    StructField("symbol", StringType(), True),
-    StructField("price", DoubleType(), True),
-    StructField("timestamp", TimestampType(), True)
+ StructField("symbol", StringType(), True),
+ StructField("price", DoubleType(), True),
+ StructField("timestamp", TimestampType(), True)
 ])
 
 # Read the buffered WebSocket stream from Kafka
 df = spark.readStream \
-    .format("kafka") \
-    .option("kafka.bootstrap.servers", "broker:29092") \
-    .option("subscribe", "websocket_raw_events") \
-    .option("startingOffsets", "latest") \
-    .load()
+ .format("kafka") \
+ .option("kafka.bootstrap.servers", "broker:29092") \
+ .option("subscribe", "websocket_raw_events") \
+ .option("startingOffsets", "latest") \
+ .load()
 
 # Catalyst Optimizer uses the schema to generate highly optimized deserialization bytecode
 parsed_df = df.select(
-    from_json(col("value").cast("string"), schema).alias("data")
+ from_json(col("value").cast("string"), schema).alias("data")
 ).select("data.*")
 
 # Filter pushed down directly after Tungsten memory allocation
@@ -91,20 +91,20 @@ from pyspark.sql.functions import window, avg
 
 # Handling late data from flaky mobile WebSocket connections
 watermarked_df = high_value_df \
-    .withWatermark("timestamp", "5 seconds") \
-    .groupBy(
-        window(col("timestamp"), "10 seconds", "5 seconds"),
-        col("symbol")
-    ) \
-    .agg(avg("price").alias("moving_avg_price"))
+ .withWatermark("timestamp", "5 seconds") \
+ .groupBy(
+ window(col("timestamp"), "10 seconds", "5 seconds"),
+ col("symbol")
+ ) \
+ .agg(avg("price").alias("moving_avg_price"))
 
 # Start the continuous query
 query = watermarked_df.writeStream \
-    .outputMode("append") \
-    .format("console") \
-    .option("truncate", "false") \
-    .trigger(processingTime="5 seconds") \
-    .start()
+ .outputMode("append") \
+ .format("console") \
+ .option("truncate", "false") \
+ .trigger(processingTime="5 seconds") \
+ .start()
 ```
 WebSocket clients, especially on mobile networks, frequently experience latency spikes and temporary disconnects, resulting in out-of-order events. This example demonstrates how to implement stateful processing with event-time watermarking to handle this unreliability. The `withWatermark` function instructs Spark's state store (typically backed by HDFS-compatible storage via RocksDB) to maintain intermediate aggregations for up to 5 seconds of event-time delay. If a WebSocket packet containing an older timestamp arrives within this threshold, Spark updates the running aggregation. Once the watermark passes, the state is purged to prevent memory leaks in the Executor. This guarantees that your Tungsten memory footprint remains bounded, even if thousands of WebSocket connections are actively streaming chaotic, out-of-order data.
 
@@ -114,30 +114,30 @@ import websocket
 import json
 
 def write_to_websocket(df, epoch_id):
-    # Collect data to driver or use mapPartitions to send directly from executors
-    # For high throughput, always send from executors using foreachPartition
-    
-    def send_partition(partition):
-        # Establish one WebSocket connection per partition to avoid connection overhead
-        ws = websocket.create_connection("ws://dashboard-service:8080/ingest")
-        for row in partition:
-            payload = json.dumps({
-                "window_start": row.window.start.isoformat(),
-                "symbol": row.symbol,
-                "moving_avg": row.moving_avg_price
-            })
-            ws.send(payload)
-        ws.close()
+ # Collect data to driver or use mapPartitions to send directly from executors
+ # For high throughput, always send from executors using foreachPartition
+ 
+ def send_partition(partition):
+ # Establish one WebSocket connection per partition to avoid connection overhead
+ ws = websocket.create_connection("ws://dashboard-service:8080/ingest")
+ for row in partition:
+ payload = json.dumps({
+ "window_start": row.window.start.isoformat(),
+ "symbol": row.symbol,
+ "moving_avg": row.moving_avg_price
+ })
+ ws.send(payload)
+ ws.close()
 
-    # Distribute the WebSocket network I/O across the cluster
-    df.rdd.foreachPartition(send_partition)
+ # Distribute the WebSocket network I/O across the cluster
+ df.rdd.foreachPartition(send_partition)
 
 # Write the aggregated results back to a WebSocket dashboard
 sink_query = watermarked_df.writeStream \
-    .outputMode("update") \
-    .foreachBatch(write_to_websocket) \
-    .trigger(processingTime="5 seconds") \
-    .start()
+ .outputMode("update") \
+ .foreachBatch(write_to_websocket) \
+ .trigger(processingTime="5 seconds") \
+ .start()
 ```
 Outputting data from Spark to a WebSocket requires extreme care to avoid paralyzing the Driver node. This final example illustrates a scalable WebSocket Sink utilizing `foreachBatch` and `foreachPartition`. Rather than collecting the massive result set to the Driver and bottlenecking a single network interface, we distribute the network egress. Inside `send_partition`, each Spark Executor task establishes its own WebSocket connection to the downstream dashboard or API gateway. This parallelizes the TCP connection overhead and the network I/O. Furthermore, since `foreachPartition` operates on Tungsten's `UnsafeRow` objects, we perform a lightweight JSON serialization immediately before transmission. This architecture scales linearly: adding more Executors automatically increases the number of concurrent WebSocket connections, allowing Spark to push millions of updates per second to real-time client dashboards.
 </Master Class: WebSockets>

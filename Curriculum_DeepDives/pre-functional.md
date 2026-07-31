@@ -7,17 +7,17 @@ In Spark, DataFrames and RDDs are **immutable**—they cannot be changed once cr
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Spark
-    participant Cluster
-    User->>Spark: df = read.parquet("data")
-    Note right of Spark: Lazy Evaluation: No execution yet
-    User->>Spark: df2 = df.filter(age > 18)
-    Note right of Spark: Graph updated, still no execution
-    User->>Spark: df2.count()
-    Note right of Spark: Action triggered!
-    Spark->>Cluster: Optimize & Execute DAG
-    Cluster-->>User: Return 1,450,000
+ participant User
+ participant Spark
+ participant Cluster
+ User->>Spark: df = read.parquet("data")
+ Note right of Spark: Lazy Evaluation: No execution yet
+ User->>Spark: df2 = df.filter(age > 18)
+ Note right of Spark: Graph updated, still no execution
+ User->>Spark: df2.count()
+ Note right of Spark: Action triggered!
+ Spark->>Cluster: Optimize & Execute DAG
+ Cluster-->>User: Return 1,450,000
 ```
 
 ### Practical Examples

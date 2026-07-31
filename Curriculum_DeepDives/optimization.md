@@ -9,11 +9,11 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 
 spark = SparkSession.builder \
-    .appName("CBO_Optimization") \
-    .config("spark.sql.cbo.enabled", "true") \
-    .config("spark.sql.cbo.joinReorder.enabled", "true") \
-    .config("spark.sql.statistics.histogram.enabled", "true") \
-    .getOrCreate()
+ .appName("CBO_Optimization") \
+ .config("spark.sql.cbo.enabled", "true") \
+ .config("spark.sql.cbo.joinReorder.enabled", "true") \
+ .config("spark.sql.statistics.histogram.enabled", "true") \
+ .getOrCreate()
 
 # Generate precise column statistics for CBO
 spark.sql("ANALYZE TABLE transactions COMPUTE STATISTICS FOR COLUMNS amount")
@@ -24,8 +24,8 @@ users_df = spark.table("users")
 
 # CBO optimizes join order based on the selectivity of the filter
 optimized_plan = transactions_df.filter(col("amount") > 10000) \
-    .join(users_df, "user_id") \
-    .groupBy("user_id").sum("amount")
+ .join(users_df, "user_id") \
+ .groupBy("user_id").sum("amount")
 
 optimized_plan.explain(True)
 ```
@@ -50,9 +50,9 @@ countries_df = spark.read.parquet("s3a://data/countries_dim")
 
 # AQE dynamically detects skew and splits the massive partition
 skew_optimized_join = sales_df.join(
-    countries_df,
-    sales_df.country_id == countries_df.country_id,
-    "inner"
+ countries_df,
+ sales_df.country_id == countries_df.country_id,
+ "inner"
 )
 skew_optimized_join.write.mode("overwrite").parquet("s3a://data/output")
 ```
@@ -75,9 +75,9 @@ val dimTableDf = spark.read.parquet("/data/dimension")
 
 // Manually override Catalyst size estimations
 val broadcastJoinDf = largeTxDf.join(
-  broadcast(dimTableDf),
-  Seq("category_id"),
-  "inner"
+ broadcast(dimTableDf),
+ Seq("category_id"),
+ "inner"
 )
 
 broadcastJoinDf.explain()
@@ -91,16 +91,16 @@ spark.conf.set("spark.sql.sources.bucketing.enabled", "true")
 # Pre-shuffle data by bucketing and sorting during write
 orders_df = spark.read.parquet("/data/orders")
 orders_df.write.bucketBy(200, "customer_id").sortBy("customer_id") \
-    .saveAsTable("bucket_orders")
+ .saveAsTable("bucket_orders")
 
 returns_df = spark.read.parquet("/data/returns")
 returns_df.write.bucketBy(200, "customer_id").sortBy("customer_id") \
-    .saveAsTable("bucket_returns")
+ .saveAsTable("bucket_returns")
 
 # Sort-Merge Join with ZERO shuffle and ZERO sort phases
 optimized_smj = spark.table("bucket_orders").join(
-    spark.table("bucket_returns"), 
-    "customer_id"
+ spark.table("bucket_returns"), 
+ "customer_id"
 )
 optimized_smj.explain()
 ```

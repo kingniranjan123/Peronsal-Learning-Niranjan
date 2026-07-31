@@ -4,11 +4,11 @@ The Apache Spark Ecosystem is fundamentally misunderstood by many practitioners 
 
 The Spark Ecosystem exists to eradicate these boundaries. It achieves this by routing all high-level workloads through a single, shared intermediate representation and executing them upon a unified, hyper-optimized substrate. Whether you are building a real-time fraud detection streaming application or running complex graph traversals on petabytes of historical data, the ecosystem compiles your logic down to the exact same physical execution plans, utilizing identical memory layouts and optimizer rules.
 
-By abstracting away the underlying cluster managers (YARN, Kubernetes, Mesos) and storage layers (HDFS, S3, Delta Lake), the ecosystem provides a seamless interface. However, mastering it requires looking past the APIs and understanding the brutal physics of distributed computation. True expertise means grasping exactly how your Python or Scala code is translated, optimized, compiled into bytecode, and executed across thousands of JVMs without buckling under network or memory constraints.
+By abstracting away the underlying cluster managers (YARN, Kubernetes, Mesos) and storage layers (HDFS, S3, Delta Lake), the ecosystem provides a seamless interface. However, mastering it requires looking past the APIs and understanding the brutal physics of distributed computation. True expertise means grasping exactly how your Python or Scala code is translated, optimized, compiled into bytecode, and executed across thousands of JVMs without buckling under network or memory constraints. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 458](spark_book.pdf#page=458)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 462](spark_book.pdf#page=462)
 
 ### How It Works Under the Hood
 The ecosystem is completely anchored by two monolithic components: the Catalyst Optimizer and the Tungsten Execution Engine. When a developer submits a query—whether via Spark SQL, a DataFrame transformation, or an MLlib pipeline—the API constructs an Unresolved Logical Plan. This AST (Abstract Syntax Tree) is immediately consumed by Catalyst. Catalyst pushes the plan through four critical phases: Analysis (validating against the Catalog), Logical Optimization (executing rule-based transformations like predicate pushdown and constant folding), Physical Planning (generating multiple physical execution strategies and picking the most optimal using a cost-based model), and finally, Code Generation.
@@ -17,38 +17,38 @@ Once Catalyst finishes planning, the Tungsten Execution Engine takes over, radic
 
 The final pillar of the ecosystem’s internal mechanics is network serialization. During massive SQL joins or complex ML model training, data must be shuffled across the network between executors. Relying on standard Java serialization is a death knell for performance due to heavy reflection and class metadata. Instead, the ecosystem utilizes Kryo serialization—which is heavily optimized and schema-less—combined with Tungsten’s binary format. Data moves across the network in the exact same binary layout it holds in memory. This means executor JVMs can stream, shuffle, and process millions of records without ever incurring the CPU-crushing cost of deserialization.
 
-```
-Driver JVM                Worker Executor JVM
-┌─────────────────┐       ┌─────────────────────────────────┐
-│  SparkSession   │──────▶│ Tungsten Execution Engine       │
-│  Catalyst Opt.  │       │  ┌───────────────────────────┐  │
-│  DAGScheduler   │       │  │ Task 1 (Core 0, Part. 0)  │  │
-│  TaskScheduler  │       │  │ Off-Heap Memory Manager   │  │
-└─────────────────┘       │  └───────────────────────────┘  │
-       │                  │  ┌───────────────────────────┐  │
-       ▼                  │  │ Task 2 (Core 1, Part. 1)  │  │
- Cluster Manager          │  │ Vectorized Parquet Reader │  │
-(YARN/K8s/Mesos)          │  └───────────────────────────┘  │
-                          └─────────────────────────────────┘
+```text
+Driver JVM Worker Executor JVM
+┌─────────────────┐ ┌─────────────────────────────────┐
+│ SparkSession │──────▶│ Tungsten Execution Engine │
+│ Catalyst Opt. │ │ ┌───────────────────────────┐ │
+│ DAGScheduler │ │ │ Task 1 (Core 0, Part. 0) │ │
+│ TaskScheduler │ │ │ Off-Heap Memory Manager │ │
+└─────────────────┘ │ └───────────────────────────┘ │
+ │ │ ┌───────────────────────────┐ │
+ ▼ │ │ Task 2 (Core 1, Part. 1) │ │
+ Cluster Manager │ │ Vectorized Parquet Reader │ │
+(YARN/K8s/Mesos) │ └───────────────────────────┘ │
+ └─────────────────────────────────┘ [Ref: 469](spark_book.pdf#page=469)
 ```
 
 ### Key Internal Components
 - **Catalyst Optimizer:** The rule-based and cost-based engine that transforms DataFrame/SQL API calls into highly optimized Physical Plans via iterative AST transformations.
 - **Tungsten Engine:** The execution backend that replaces Java objects with custom off-heap binary formats and generates highly optimized bytecode via Whole-Stage Codegen.
 - **DAGScheduler:** The internal coordinator that translates Catalyst's Physical Plan into a Directed Acyclic Graph of stages, determining optimal shuffle boundaries based on data partitioning.
-- **BlockManager:** The distributed storage system that manages cached RDDs, DataFrame partitions, and intermediate shuffle files across the executor's JVM heap, off-heap memory, and local disks.
+- **BlockManager:** The distributed storage system that manages cached RDDs, DataFrame partitions, and intermediate shuffle files across the executor's JVM heap, off-heap memory, and local disks. [Ref: 452](spark_book.pdf#page=452)
 
----
+--- [Ref: 459](spark_book.pdf#page=459)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
 
 ### Ecosystem Impedance Mismatch (UDFs & MLlib)
-When integrating standard Python or Java libraries into the Spark Ecosystem via User-Defined Functions (UDFs), developers routinely and unknowingly break the Tungsten execution model. A standard Python UDF forces Spark to take Tungsten's highly optimized, off-heap binary data, serialize it, pipe it across a local socket to a separate Python worker process (using Py4J), deserialize it into Python objects, run the function, and pipe it back. This entirely destroys the benefits of Whole-Stage Codegen and vectorized execution, resulting in throughput dropping by orders of magnitude. The ecosystem-native solution is utilizing Vectorized Pandas UDFs, which leverage Apache Arrow to transfer columnar memory directly between the JVM and Python without serialization overhead.
+When integrating standard Python or Java libraries into the Spark Ecosystem via User-Defined Functions (UDFs), developers routinely and unknowingly break the Tungsten execution model. A standard Python UDF forces Spark to take Tungsten's highly optimized, off-heap binary data, serialize it, pipe it across a local socket to a separate Python worker process (using Py4J), deserialize it into Python objects, run the function, and pipe it back. This entirely destroys the benefits of Whole-Stage Codegen and vectorized execution, resulting in throughput dropping by orders of magnitude. The ecosystem-native solution is utilizing Vectorized Pandas UDFs, which leverage Apache Arrow to transfer columnar memory directly between the JVM and Python without serialization overhead. [Ref: 470](spark_book.pdf#page=470)
 
 ### Shuffle Partitioning and Data Skew
-A fatal anti-pattern in the Spark Ecosystem occurs when joining massive datasets (e.g., streaming telemetry with static ML models) without addressing underlying data skew. Catalyst's physical planning phase evaluates broadcast vs. sort-merge join strategies by comparing the table sizes against `spark.sql.autoBroadcastJoinThreshold` (default 10MB) and selects the algorithm accordingly. However, if a Sort-Merge Join is chosen and the join key is heavily skewed (e.g., millions of records contain a `null` or default 'Unknown' category), a single executor task will receive an overwhelming volume of records while others receive zero. This causes catastrophic `OutOfMemoryError` exceptions on the JVM heap during the shuffle phase, as the `ShuffleManager` attempts to buffer the massive partition for the external sort, completely crashing the pipeline.
+A fatal anti-pattern in the Spark Ecosystem occurs when joining massive datasets (e.g., streaming telemetry with static ML models) without addressing underlying data skew. Catalyst's physical planning phase evaluates broadcast vs. sort-merge join strategies by comparing the table sizes against `spark.sql.autoBroadcastJoinThreshold` (default 10MB) and selects the algorithm accordingly. However, if a Sort-Merge Join is chosen and the join key is heavily skewed (e.g., millions of records contain a `null` or default 'Unknown' category), a single executor task will receive an overwhelming volume of records while others receive zero. This causes catastrophic `OutOfMemoryError` exceptions on the JVM heap during the shuffle phase, as the `ShuffleManager` attempts to buffer the massive partition for the external sort, completely crashing the pipeline. [Ref: 455](spark_book.pdf#page=455)
 
----
+--- [Ref: 461](spark_book.pdf#page=461)
 
 ## 📊 Performance Characteristics
 
@@ -57,7 +57,7 @@ A fatal anti-pattern in the Spark Ecosystem occurs when joining massive datasets
 | Spark SQL Joins (Broadcast) | O(N) | No | Eliminates network shuffle entirely; limited only by driver and executor memory constraints. |
 | Spark SQL Joins (Sort-Merge) | O(N log N) | Yes | Causes heavy disk I/O and network traffic; highly susceptible to data skew and straggler tasks. |
 | MLlib VectorAssembler | O(N) | No | Operates entirely map-side; leverages Tungsten for fast row-to-vector conversion in memory. |
-| Structured Streaming Aggregation | O(N) | Yes | Requires state store (RocksDB) on executors to track watermarks and late-arriving data. |
+| Structured Streaming Aggregation | O(N) | Yes | Requires state store (RocksDB) on executors to track watermarks and late-arriving data. | [Ref: 464](spark_book.pdf#page=464)
 
 ---
 
@@ -77,9 +77,9 @@ from pyspark.sql.types import DoubleType
 # this function receives a Pandas Series (columnar data) directly.
 @pandas_udf(DoubleType())
 def vectorized_predict_udf(features: pd.Series) -> pd.Series:
-    # Inside the UDF, we are executing highly optimized C-level NumPy code via Pandas.
-    # The data never leaves columnar format, preserving CPU cache locality.
-    return features.apply(lambda x: x * 2.54) # Simplified ML prediction logic
+ # Inside the UDF, we are executing highly optimized C-level NumPy code via Pandas.
+ # The data never leaves columnar format, preserving CPU cache locality.
+ return features.apply(lambda x: x * 2.54) # Simplified ML prediction logic
 
 # The Catalyst optimizer pushes down the Parquet read, then immediately feeds the 
 # Apache Arrow batches into the Python worker process.
@@ -115,9 +115,9 @@ val deviceDim = spark.read.parquet("s3a://data/device_metadata")
 // across the network, serializing massive amounts of data via Kryo or Java serialization.
 // We explicitly override the planner using the broadcast() hint.
 val enrichedData = telemetryFact.join(
-  broadcast(deviceDim), // Forces the DAGScheduler to broadcast this DataFrame to all executors
-  telemetryFact("device_id") === deviceDim("device_id"),
-  "left"
+ broadcast(deviceDim), // Forces the DAGScheduler to broadcast this DataFrame to all executors
+ telemetryFact("device_id") === deviceDim("device_id"),
+ "left"
 )
 
 // The resulting physical plan will show a BroadcastHashJoin instead of a SortMergeJoin.
@@ -139,34 +139,34 @@ import org.apache.spark.sql.functions._
 // We integrate with Kafka (a core ecosystem component) using the exact same DataFrame API 
 // used for batch processing. Catalyst treats this as a continuous, unbounded table.
 val rawStream = spark.readStream
-  .format("kafka")
-  .option("kafka.bootstrap.servers", "broker1:9092,broker2:9092")
-  .option("subscribe", "user_events")
-  .load()
+ .format("kafka")
+ .option("kafka.bootstrap.servers", "broker1:9092,broker2:9092")
+ .option("subscribe", "user_events")
+ .load()
 
 // We parse the JSON payload. Tungsten efficiently extracts the required fields
 // directly into off-heap memory without instantiating massive JSON Object trees.
 val parsedStream = rawStream.selectExpr("CAST(value AS STRING)")
-  .select(from_json($"value", schema).as("data"))
-  .select("data.user_id", "data.event_time", "data.action")
+ .select(from_json($"value", schema).as("data"))
+ .select("data.user_id", "data.event_time", "data.action")
 
 // Watermarking is critical. It tells the state store on the executor JVMs when to safely 
 // evict old window aggregates from memory to prevent OOM errors.
 val aggregatedStream = parsedStream
-  .withWatermark("event_time", "10 minutes") // Allow data up to 10 minutes late
-  .groupBy(
-    window($"event_time", "1 minute"), // 1-minute tumbling window
-    $"action"
-  )
-  .count()
+ .withWatermark("event_time", "10 minutes") // Allow data up to 10 minutes late
+ .groupBy(
+ window($"event_time", "1 minute"), // 1-minute tumbling window
+ $"action"
+ )
+ .count()
 
 // Output to Delta Lake, another ecosystem component providing ACID transactions.
 aggregatedStream.writeStream
-  .format("delta")
-  .outputMode("append")
-  .option("checkpointLocation", "hdfs:///checkpoints/events_agg")
-  .trigger(Trigger.ProcessingTime("10 seconds"))
-  .start()
+ .format("delta")
+ .outputMode("append")
+ .option("checkpointLocation", "hdfs:///checkpoints/events_agg")
+ .trigger(Trigger.ProcessingTime("10 seconds"))
+ .start()
 ```
 
 > **Mastery Note:** The true power of the Spark Ecosystem is that Structured Streaming shares the exact same Catalyst optimizer and Tungsten execution engine as the batch APIs. When a windowed aggregation is applied, the DAGScheduler allocates tasks that utilize a local State Store (often backed by RocksDB) on the executor JVM. The watermark (`10 minutes`) is the mechanism that bounds this state. Without a watermark, the executor would accumulate aggregation state for every window indefinitely, eventually crashing the JVM heap with an `OutOfMemoryError`. The ecosystem ensures that as the watermark advances, old state is safely flushed, maintaining predictable memory profiles even when running continuously for months.
@@ -185,8 +185,8 @@ transactions = spark.read.format("delta").load("s3a://lakehouse/transactions")
 # We apply highly selective filters.
 # Catalyst's Logical Optimization phase will push these predicates as close to the disk as possible.
 filtered_tx = transactions.filter(
-    (transactions.date == '2026-07-30') & 
-    (transactions.customer_id == 'CUST-8675309')
+ (transactions.date == '2026-07-30') & 
+ (transactions.customer_id == 'CUST-8675309')
 )
 
 # A complex aggregation utilizing Tungsten's HashAggregate operator.
@@ -213,9 +213,9 @@ To achieve true mastery of the Spark Ecosystem:
 
 ## 📚 Summary
 
-The Apache Spark Ecosystem is not merely a collection of loosely coupled libraries; it is a tightly integrated execution environment built upon a shared foundation. At its core, the Catalyst optimizer parses, analyzes, and translates disparate workloads into highly optimized physical execution plans. Regardless of whether a developer submits a streaming query or trains a machine learning model, Catalyst ensures that the most efficient pathways—such as predicate pushdown and intelligent join selection—are inherently utilized, transforming high-level API calls into DAGs of distributed computation. [Ref: 451](spark_book.pdf#page=451) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)
+The Apache Spark Ecosystem is not merely a collection of loosely coupled libraries; it is a tightly integrated execution environment built upon a shared foundation. At its core, the Catalyst optimizer parses, analyzes, and translates disparate workloads into highly optimized physical execution plans. Regardless of whether a developer submits a streaming query or trains a machine learning model, Catalyst ensures that the most efficient pathways—such as predicate pushdown and intelligent join selection—are inherently utilized, transforming high-level API calls into DAGs of distributed computation. 
 
-Beneath Catalyst lies the Tungsten execution engine, the true workhorse of the ecosystem. Tungsten aggressively subverts the traditional Java JVM object model, utilizing `sun.misc.Unsafe` to manage data in raw, off-heap binary formats. This architectural shift virtually eliminates the devastating performance penalties of garbage collection and metaspace overhead. By utilizing Whole-Stage Code Generation, Tungsten compiles complex query plans into dense, optimized Java bytecode that closely mirrors hand-written C, allowing modern CPUs to process data with maximum cache locality and vectorized efficiency. [Ref: 452](spark_book.pdf#page=452) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)
+Beneath Catalyst lies the Tungsten execution engine, the true workhorse of the ecosystem. Tungsten aggressively subverts the traditional Java JVM object model, utilizing `sun.misc.Unsafe` to manage data in raw, off-heap binary formats. This architectural shift virtually eliminates the devastating performance penalties of garbage collection and metaspace overhead. By utilizing Whole-Stage Code Generation, Tungsten compiles complex query plans into dense, optimized Java bytecode that closely mirrors hand-written C, allowing modern CPUs to process data with maximum cache locality and vectorized efficiency. 
 
 Ultimately, mastering the Spark Ecosystem requires a deep understanding of this underlying machinery. When engineers comprehend how Catalyst evaluates join costs, how Tungsten manages off-heap memory, and how Kryo serialization directly impacts network transfer, they transcend basic API usage. They gain the ability to preemptively eliminate data skew, minimize expensive cluster-wide shuffles, and craft robust, massively parallel architectures that squeeze every ounce of performance out of their distributed infrastructure.
-</🔥 Master Class: Spark Ecosystem> [Ref: 455](spark_book.pdf#page=455) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)
+</🔥 Master Class: Spark Ecosystem> 

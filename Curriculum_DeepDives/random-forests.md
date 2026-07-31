@@ -20,14 +20,14 @@ assembler = VectorAssembler(inputCols=["feature1", "feature2", "feature3"], outp
 data = assembler.transform(df)
 
 rf = RandomForestClassifier(
-    labelCol="label", 
-    featuresCol="features",
-    numTrees=200,            # High number of trees for stability
-    maxDepth=10,             # Deep enough to capture complex interactions
-    maxBins=64,              # Increased bins for fine-grained continuous splits
-    featureSubsetStrategy="sqrt", # Random subspace method
-    impurity="gini",
-    seed=42
+ labelCol="label", 
+ featuresCol="features",
+ numTrees=200, # High number of trees for stability
+ maxDepth=10, # Deep enough to capture complex interactions
+ maxBins=64, # Increased bins for fine-grained continuous splits
+ featureSubsetStrategy="sqrt", # Random subspace method
+ impurity="gini",
+ seed=42
 )
 
 model = rf.fit(data)
@@ -55,8 +55,8 @@ feature_names = ["feature1", "feature2", "feature3"]
 
 # Creating a DataFrame for visualization
 importance_df = pd.DataFrame({
-    "Feature": feature_names,
-    "Importance": importances
+ "Feature": feature_names,
+ "Importance": importances
 }).sort_values(by="Importance", ascending=False)
 
 print("Top Features:")
@@ -92,16 +92,16 @@ negative_weight = 1.0 - balancing_ratio
 
 # Append a weight column to the DataFrame
 weighted_data = data.withColumn(
-    "weight", 
-    when(col("label") == 1, positive_weight).otherwise(negative_weight)
+ "weight", 
+ when(col("label") == 1, positive_weight).otherwise(negative_weight)
 )
 
 # Train the Random Forest utilizing the weight column
 rf_weighted = RandomForestClassifier(
-    labelCol="label", 
-    featuresCol="features",
-    weightCol="weight", # Crucial parameter for imbalanced data
-    numTrees=100
+ labelCol="label", 
+ featuresCol="features",
+ weightCol="weight", # Crucial parameter for imbalanced data
+ numTrees=100
 )
 
 weighted_model = rf_weighted.fit(weighted_data)
@@ -118,23 +118,23 @@ from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 # Define the base model and evaluator
 rf_base = RandomForestClassifier(labelCol="label", featuresCol="features")
 evaluator = MulticlassClassificationEvaluator(
-    labelCol="label", predictionCol="prediction", metricName="f1"
+ labelCol="label", predictionCol="prediction", metricName="f1"
 )
 
 # Construct a grid of hyperparameters to search over
 paramGrid = (ParamGridBuilder()
-             .addGrid(rf_base.numTrees, [50, 100, 200])
-             .addGrid(rf_base.maxDepth, [5, 10, 15])
-             .addGrid(rf_base.maxBins, [32, 64])
-             .build())
+ .addGrid(rf_base.numTrees, [50, 100, 200])
+ .addGrid(rf_base.maxDepth, [5, 10, 15])
+ .addGrid(rf_base.maxBins, [32, 64])
+ .build())
 
 # Configure the CrossValidator
 cv = CrossValidator(
-    estimator=rf_base,
-    estimatorParamMaps=paramGrid,
-    evaluator=evaluator,
-    numFolds=3,
-    parallelism=4 # Train multiple models concurrently
+ estimator=rf_base,
+ estimatorParamMaps=paramGrid,
+ evaluator=evaluator,
+ numFolds=3,
+ parallelism=4 # Train multiple models concurrently
 )
 
 # Execute the grid search

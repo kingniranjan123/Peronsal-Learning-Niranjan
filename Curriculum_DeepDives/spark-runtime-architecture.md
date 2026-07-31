@@ -6,11 +6,11 @@ Apache Spark's runtime architecture is a carefully layered distributed system bu
 
 This architecture is not arbitrary. By centralizing scheduling and metadata in the Driver and pushing all data-plane computation to Executors, Spark achieves a clean fault-boundary: if an Executor dies, the Driver can re-schedule its Tasks on surviving Executors using lineage information from the RDD DAG. The Driver itself is a single point of failure, which is why high-availability Driver modes (e.g., Yarn cluster mode with AM failover, Kubernetes with restart policies) are mandatory for production deployments.
 
-Understanding Spark's runtime deeply means understanding its JVM memory layout, how memory is partitioned between execution and storage within each Executor, how shuffle data flows through the `BlockManager`, and how `MapOutputTracker` coordinates the location of that shuffle data. Without this knowledge, you cannot correctly configure a production cluster, diagnose `OutOfMemoryError`s, or tune for throughput and latency simultaneously.
+Understanding Spark's runtime deeply means understanding its JVM memory layout, how memory is partitioned between execution and storage within each Executor, how shuffle data flows through the `BlockManager`, and how `MapOutputTracker` coordinates the location of that shuffle data. Without this knowledge, you cannot correctly configure a production cluster, diagnose `OutOfMemoryError`s, or tune for throughput and latency simultaneously. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 457](spark_book.pdf#page=457)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 461](spark_book.pdf#page=461)
 
 ### How It Works Under the Hood
 
@@ -22,31 +22,31 @@ Inside the Executor JVM, memory is managed by the **Unified Memory Manager** (in
 
 The **Tungsten execution engine** operates primarily off-heap in the **DirectMemory** region (managed via `sun.misc.Unsafe`), storing binary-encoded rows in a compact format that avoids Java object overhead — a `String` field that costs 48+ bytes as a Java object costs exactly its character count in Tungsten binary format. Whole-Stage CodeGen collapses the entire operator pipeline into a single compiled JVM method, eliminating virtual dispatch and iterator overhead between operators, reducing the CPU cost of a query pipeline by 2-5x compared to interpreted execution.
 
-```
-Driver JVM                                  Worker Node 1 (Executor JVM)
-┌────────────────────────────────┐          ┌──────────────────────────────────────────────┐
-│  SparkContext                  │          │  CoarseGrainedExecutorBackend                │
-│  ┌─────────────────────────┐   │  Netty   │  ┌──────────────────────────────────────┐   │
-│  │  DAGScheduler           │◀──┼──RPC────▶│  │ Unified Memory Manager               │   │
-│  │  (Stage/Task creation)  │   │          │  │  ┌─────────────┬──────────────────┐  │   │
-│  └─────────────────────────┘   │          │  │  │ Reserved    │  Spark Pool (60%)│  │   │
-│  ┌─────────────────────────┐   │          │  │  │ 300MB       │  ┌────────┬─────┐│  │   │
-│  │  TaskScheduler          │   │          │  │  │             │  │Exec Mem│Store││  │   │
-│  │  SchedulerBackend       │───┼──Tasks──▶│  │  │             │  │(fluid) │Cache││  │   │
-│  └─────────────────────────┘   │          │  │  └─────────────┴──┴────────┴─────┘│  │   │
-│  ┌─────────────────────────┐   │          │  │  User Memory (40%) │ Off-Heap(Tungsten)│  │
-│  │  MapOutputTracker       │◀──┼──shuffle─│  └──────────────────────────────────────┘   │
-│  │  (Master)               │   │  metadata│  ┌──────────────────────────────────────┐   │
-│  └─────────────────────────┘   │          │  │ BlockManager (Slave)                 │   │
-│  ┌─────────────────────────┐   │          │  │  ┌──────────┐  ┌──────────────────┐ │   │
-│  │  BlockManagerMaster     │◀──┼──block───│  │  │MemStore  │  │ DiskStore        │ │   │
-│  │  (Driver-side registry) │   │  reports │  │  │(Heap/UMM)│  │(shuffle/persist) │ │   │
-│  └─────────────────────────┘   │          │  └──────────────────────────────────────┘   │
-└────────────────────────────────┘          │  ┌──────────────────────────────────────┐   │
-                                            │  │ Thread Pool (spark.executor.cores)   │   │
-                                            │  │  Task 0 │ Task 1 │ Task 2 │ Task 3   │   │
-                                            │  └──────────────────────────────────────┘   │
-                                            └──────────────────────────────────────────────┘
+```text
+Driver JVM Worker Node 1 (Executor JVM)
+┌────────────────────────────────┐ ┌──────────────────────────────────────────────┐
+│ SparkContext │ │ CoarseGrainedExecutorBackend │
+│ ┌─────────────────────────┐ │ Netty │ ┌──────────────────────────────────────┐ │
+│ │ DAGScheduler │◀──┼──RPC────▶│ │ Unified Memory Manager │ │
+│ │ (Stage/Task creation) │ │ │ │ ┌─────────────┬──────────────────┐ │ │
+│ └─────────────────────────┘ │ │ │ │ Reserved │ Spark Pool (60%)│ │ │
+│ ┌─────────────────────────┐ │ │ │ │ 300MB │ ┌────────┬─────┐│ │ │
+│ │ TaskScheduler │ │ │ │ │ │ │Exec Mem│Store││ │ │
+│ │ SchedulerBackend │───┼──Tasks──▶│ │ │ │ │(fluid) │Cache││ │ │
+│ └─────────────────────────┘ │ │ │ └─────────────┴──┴────────┴─────┘│ │ │
+│ ┌─────────────────────────┐ │ │ │ User Memory (40%) │ Off-Heap(Tungsten)│ │
+│ │ MapOutputTracker │◀──┼──shuffle─│ └──────────────────────────────────────┘ │
+│ │ (Master) │ │ metadata│ ┌──────────────────────────────────────┐ │
+│ └─────────────────────────┘ │ │ │ BlockManager (Slave) │ │
+│ ┌─────────────────────────┐ │ │ │ ┌──────────┐ ┌──────────────────┐ │ │
+│ │ BlockManagerMaster │◀──┼──block───│ │ │MemStore │ │ DiskStore │ │ │
+│ │ (Driver-side registry) │ │ reports │ │ │(Heap/UMM)│ │(shuffle/persist) │ │ │
+│ └─────────────────────────┘ │ │ └──────────────────────────────────────┘ │
+└────────────────────────────────┘ │ ┌──────────────────────────────────────┐ │
+ │ │ Thread Pool (spark.executor.cores) │ │
+ │ │ Task 0 │ Task 1 │ Task 2 │ Task 3 │ │
+ │ └──────────────────────────────────────┘ │
+ └──────────────────────────────────────────────┘ [Ref: 464](spark_book.pdf#page=464)
 ```
 
 ### Key Internal Components
@@ -57,25 +57,25 @@ Driver JVM                                  Worker Node 1 (Executor JVM)
 
 - **MapOutputTracker:** A fault-tolerant metadata service that tracks the location of every shuffle map output. The `MapOutputTrackerMaster` runs in the Driver; each Executor has a `MapOutputTrackerWorker` that fetches shuffle metadata via RPC. When a reduce Task starts, it queries the tracker to learn which Executor holds each mapper's output and opens direct Netty connections to fetch shuffle blocks — this is the **shuffle read** phase.
 
-- **CoarseGrainedSchedulerBackend:** Maintains a long-lived RPC connection to each Executor. "Coarse-grained" means Executors are not released between Tasks — they hold their JVM process and memory allocation for the entire application lifetime, unlike fine-grained resource managers that deallocate between Tasks. This is the dominant model for all production cluster managers (YARN, K8s, Standalone).
+- **CoarseGrainedSchedulerBackend:** Maintains a long-lived RPC connection to each Executor. "Coarse-grained" means Executors are not released between Tasks — they hold their JVM process and memory allocation for the entire application lifetime, unlike fine-grained resource managers that deallocate between Tasks. This is the dominant model for all production cluster managers (YARN, K8s, Standalone). [Ref: 452](spark_book.pdf#page=452)
 
----
+--- [Ref: 458](spark_book.pdf#page=458)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 462](spark_book.pdf#page=462)
 
 ### Executor Memory Misconfiguration and Silent OOM Eviction
 
 The most destructive misconfiguration in Spark is setting `spark.memory.fraction` too high relative to the JVM heap, starving the garbage collector. The JVM heap is managed by the G1GC (default since JDK 9), which requires headroom to operate — typically 20-30% free heap. If `spark.executor.memory=8g` and `spark.memory.fraction=0.6`, then Spark claims 4.7GB (after subtracting 300MB reserved). If Execution Memory builds large sort buffers simultaneously across all cores, live JVM objects fill the remaining heap, triggering a `java.lang.OutOfMemoryError: GC overhead limit exceeded` — not the more diagnosable Spark OOM exception.
 
-A subtler failure: when Execution Memory pressure evicts Storage Memory blocks, Spark does **not** log a warning at the default log level. You will see re-computation of cached DataFrames in the Spark UI (stages executing that should have been skipped), with no obvious error. The metric to watch is `Storage Memory Used` in the Executors tab — if it drops mid-job, eviction is occurring. Set `spark.memory.storageFraction=0.5` to reserve half the Spark pool for Storage and reduce eviction risk, accepting higher spill probability for aggregation.
+A subtler failure: when Execution Memory pressure evicts Storage Memory blocks, Spark does **not** log a warning at the default log level. You will see re-computation of cached DataFrames in the Spark UI (stages executing that should have been skipped), with no obvious error. The metric to watch is `Storage Memory Used` in the Executors tab — if it drops mid-job, eviction is occurring. Set `spark.memory.storageFraction=0.5` to reserve half the Spark pool for Storage and reduce eviction risk, accepting higher spill probability for aggregation. [Ref: 469](spark_book.pdf#page=469)
 
 ### Shuffle Fetch Failures and MapOutputTracker Inconsistency
 
 When an Executor dies mid-shuffle, its map output files are lost. The `MapOutputTrackerMaster` detects the dead Executor (via the heartbeat timeout `spark.network.timeout`, default 120s) and invalidates its map output entries. The Stage that produced those outputs is re-submitted as a **FetchFailed** recovery — but only the specific map Tasks whose outputs were lost are re-run, not the entire Stage. This is controlled by `spark.stage.maxConsecutiveAttempts` (default 4).
 
-The dangerous edge case is an Executor that is alive but under extreme GC pressure — it responds to heartbeats but fails to serve shuffle blocks within `spark.shuffle.io.connectionTimeout` (default 120s). The reducer receives a `FetchFailed` exception (`org.apache.spark.shuffle.FetchFailedException`), which the DAGScheduler interprets as a potential Executor loss. If the Executor is not actually dead, the Stage is retried unnecessarily, causing cascading delays. Monitoring GC time per Executor in the Spark UI (Executors tab → GC Time column) above 10% of task time is the diagnostic signal.
+The dangerous edge case is an Executor that is alive but under extreme GC pressure — it responds to heartbeats but fails to serve shuffle blocks within `spark.shuffle.io.connectionTimeout` (default 120s). The reducer receives a `FetchFailed` exception (`org.apache.spark.shuffle.FetchFailedException`), which the DAGScheduler interprets as a potential Executor loss. If the Executor is not actually dead, the Stage is retried unnecessarily, causing cascading delays. Monitoring GC time per Executor in the Spark UI (Executors tab → GC Time column) above 10% of task time is the diagnostic signal. [Ref: 455](spark_book.pdf#page=455)
 
----
+--- [Ref: 459](spark_book.pdf#page=459)
 
 ## 📊 Performance Characteristics
 
@@ -84,9 +84,9 @@ The dangerous edge case is an Executor that is alive but under extreme GC pressu
 | `map` / `filter` / `select` | O(N/P) per partition | No | Pipelined by Tungsten; no data movement. Whole-Stage CodeGen fuses all operators into one JVM method. |
 | `groupByKey` / `reduceByKey` | O(N log N) sort + O(N) aggregate | Yes | Sort-based shuffle (SortShuffleManager). Each mapper writes one sorted file + index. Reducer fetches and merges. |
 | Broadcast Join | O(N) probe side, O(M) build side | No (for probe) | Driver collects small table, serializes via `TorrentBroadcast` (BitTorrent-like P2P), cached in Executor BlockManager. Threshold: `spark.sql.autoBroadcastJoinThreshold` default 10MB. |
-| Sort-Merge Join | O(N log N + M log M) | Yes (both sides) | Both sides sorted by join key in shuffle. Requires two full shuffles. Avoidable with bucket tables that pre-sort data at write time. |
+| Sort-Merge Join | O(N log N + M log M) | Yes (both sides) | Both sides sorted by join key in shuffle. Requires two full shuffles. Avoidable with bucket tables that pre-sort data at write time. | [Ref: 463](spark_book.pdf#page=463)
 
----
+--- [Ref: 470](spark_book.pdf#page=470)
 
 ## 💻 Code Examples
 
@@ -99,22 +99,22 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.memory.UnifiedMemoryManager
 
 val spark = SparkSession.builder()
-  // Allocate 4GB JVM heap per executor. The Unified Memory Manager
-  // will reserve 300MB internally, then apply spark.memory.fraction=0.7
-  // to the remaining ~3.7GB ≈ 2.59GB for Spark pool.
-  .config("spark.executor.memory", "4g")
-  // 70% of (heap - 300MB reserved) goes to Spark's unified pool.
-  // The remaining 30% is user memory for UDFs, Python worker overhead,
-  // and any data structures allocated outside Spark's memory tracking.
-  .config("spark.memory.fraction", "0.7")
-  // Within the Spark pool, guarantee at least 50% (≈1.3GB) for Storage.
-  // Execution Memory can still use Storage's space when Storage is idle,
-  // but Storage can reclaim this fraction before eviction occurs.
-  .config("spark.memory.storageFraction", "0.5")
-  .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-  // Kryo is 10x faster and 5x smaller than Java serialization for
-  // task/closure serialization. Always enable in production.
-  .getOrCreate()
+ // Allocate 4GB JVM heap per executor. The Unified Memory Manager
+ // will reserve 300MB internally, then apply spark.memory.fraction=0.7
+ // to the remaining ~3.7GB ≈ 2.59GB for Spark pool.
+ .config("spark.executor.memory", "4g")
+ // 70% of (heap - 300MB reserved) goes to Spark's unified pool.
+ // The remaining 30% is user memory for UDFs, Python worker overhead,
+ // and any data structures allocated outside Spark's memory tracking.
+ .config("spark.memory.fraction", "0.7")
+ // Within the Spark pool, guarantee at least 50% (≈1.3GB) for Storage.
+ // Execution Memory can still use Storage's space when Storage is idle,
+ // but Storage can reclaim this fraction before eviction occurs.
+ .config("spark.memory.storageFraction", "0.5")
+ .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+ // Kryo is 10x faster and 5x smaller than Java serialization for
+ // task/closure serialization. Always enable in production.
+ .getOrCreate()
 
 val sc = spark.sparkContext
 
@@ -123,11 +123,11 @@ val sc = spark.sparkContext
 // maxMem = the BlockManager's total Storage capacity (not full heap).
 val memStatus = sc.getExecutorMemoryStatus
 memStatus.foreach { case (executor, (maxMem, remainingMem)) =>
-  val usedMem = maxMem - remainingMem
-  val usedPct = (usedMem.toDouble / maxMem * 100).formatted("%.1f")
-  // This reflects Storage Memory usage (cached RDD/DF blocks) only.
-  // Execution Memory pressure is visible in the Spark UI Stages tab.
-  println(s"Executor $executor: ${usedMem / 1024 / 1024}MB / ${maxMem / 1024 / 1024}MB used ($usedPct%)")
+ val usedMem = maxMem - remainingMem
+ val usedPct = (usedMem.toDouble / maxMem * 100).formatted("%.1f")
+ // This reflects Storage Memory usage (cached RDD/DF blocks) only.
+ // Execution Memory pressure is visible in the Spark UI Stages tab.
+ println(s"Executor $executor: ${usedMem / 1024 / 1024}MB / ${maxMem / 1024 / 1024}MB used ($usedPct%)")
 }
 
 spark.stop()
@@ -146,23 +146,23 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.storage.StorageLevel
 
 val spark = SparkSession.builder()
-  .config("spark.executor.memory", "8g")
-  // Enable off-heap memory for Tungsten's binary format and
-  // MEMORY_AND_DISK_OFF_HEAP storage. Off-heap blocks are managed
-  // via sun.misc.Unsafe and do not trigger JVM GC.
-  .config("spark.memory.offHeap.enabled", "true")
-  // 2GB of off-heap memory per executor, outside the JVM heap.
-  // This memory is invisible to GC but counts toward container memory.
-  // Always add 10-15% overhead: spark.executor.memoryOverhead = 2200m
-  .config("spark.memory.offHeap.size", "2147483648")
-  .getOrCreate()
+ .config("spark.executor.memory", "8g")
+ // Enable off-heap memory for Tungsten's binary format and
+ // MEMORY_AND_DISK_OFF_HEAP storage. Off-heap blocks are managed
+ // via sun.misc.Unsafe and do not trigger JVM GC.
+ .config("spark.memory.offHeap.enabled", "true")
+ // 2GB of off-heap memory per executor, outside the JVM heap.
+ // This memory is invisible to GC but counts toward container memory.
+ // Always add 10-15% overhead: spark.executor.memoryOverhead = 2200m
+ .config("spark.memory.offHeap.size", "2147483648")
+ .getOrCreate()
 
 val sc = spark.sparkContext
 
 // Simulate a large reference dataset read repeatedly across many jobs.
 val rawData = sc.textFile("hdfs:///data/reference/large_lookup.csv", minPartitions = 200)
-  .map(line => line.split(","))
-  .filter(fields => fields.length == 5)
+ .map(line => line.split(","))
+ .filter(fields => fields.length == 5)
 
 // MEMORY_ONLY: Deserializes and stores JVM objects in the MemoryStore.
 // Fast for access (no deserialization), but high GC pressure due to
@@ -187,7 +187,7 @@ rawData.count() // triggers caching
 // After the action, inspect which blocks are in which store.
 // BlockManagerMaster on the Driver tracks all blocks across all Executors.
 val blockIds = sc.getPersistentRDDs.flatMap { case (_, rdd) =>
-  rdd.partitions.map(p => s"rdd_${rdd.id}_${p.index}")
+ rdd.partitions.map(p => s"rdd_${rdd.id}_${p.index}")
 }
 
 println(s"Cached ${blockIds.size} partitions across the cluster.")
@@ -208,34 +208,34 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 spark = SparkSession.builder \
-    .config("spark.sql.shuffle.partitions", "400") \
-    # 400 shuffle partitions means the MapOutputTrackerMaster stores
-    # 400 × num_mappers entries (one per (mapper, reducer) pair).
-    # For 200 executors × 4 cores = 800 map tasks, the tracker holds
-    # 800 × 400 = 320,000 location records. At ~100 bytes each = 32MB
-    # of Driver heap just for shuffle metadata. With 2000 map tasks,
-    # this becomes 800MB — a common Driver OOM source at scale.
-    .config("spark.shuffle.manager", "sort") \
-    # SortShuffleManager (default) writes one sorted data file + one
-    # index file per mapper per shuffle stage. Total shuffle files =
-    # 2 × num_mappers. With BypassMergeSortShuffleHandle (triggered
-    # when num_reducers < spark.shuffle.sort.bypassMergeThreshold=200),
-    # it writes one file per reducer per mapper: num_mappers × num_reducers.
-    # AVOID small bypassMergeThreshold with large partition counts.
-    .config("spark.shuffle.sort.bypassMergeThreshold", "50") \
-    .config("spark.reducer.maxSizeInFlight", "96m") \
-    # Each reducer simultaneously fetches shuffle blocks from mappers.
-    # maxSizeInFlight caps total in-flight bytes per reducer at 96MB.
-    # Increasing this speeds up shuffle reads but raises Execution Memory
-    # pressure. The fetched blocks are buffered in ExternalAppendOnlyMap
-    # before being merged/aggregated.
-    .config("spark.shuffle.io.retryWait", "10s") \
-    # If a shuffle block fetch fails (FetchFailedException), Spark waits
-    # 10s before retrying. Combined with spark.shuffle.io.maxRetries=3,
-    # a degraded Executor has 30s to recover before a FetchFailed is
-    # escalated to the DAGScheduler as an Executor loss event.
-    .config("spark.shuffle.io.maxRetries", "3") \
-    .getOrCreate()
+ .config("spark.sql.shuffle.partitions", "400") \
+ # 400 shuffle partitions means the MapOutputTrackerMaster stores
+ # 400 × num_mappers entries (one per (mapper, reducer) pair).
+ # For 200 executors × 4 cores = 800 map tasks, the tracker holds
+ # 800 × 400 = 320,000 location records. At ~100 bytes each = 32MB
+ # of Driver heap just for shuffle metadata. With 2000 map tasks,
+ # this becomes 800MB — a common Driver OOM source at scale.
+ .config("spark.shuffle.manager", "sort") \
+ # SortShuffleManager (default) writes one sorted data file + one
+ # index file per mapper per shuffle stage. Total shuffle files =
+ # 2 × num_mappers. With BypassMergeSortShuffleHandle (triggered
+ # when num_reducers < spark.shuffle.sort.bypassMergeThreshold=200),
+ # it writes one file per reducer per mapper: num_mappers × num_reducers.
+ # AVOID small bypassMergeThreshold with large partition counts.
+ .config("spark.shuffle.sort.bypassMergeThreshold", "50") \
+ .config("spark.reducer.maxSizeInFlight", "96m") \
+ # Each reducer simultaneously fetches shuffle blocks from mappers.
+ # maxSizeInFlight caps total in-flight bytes per reducer at 96MB.
+ # Increasing this speeds up shuffle reads but raises Execution Memory
+ # pressure. The fetched blocks are buffered in ExternalAppendOnlyMap
+ # before being merged/aggregated.
+ .config("spark.shuffle.io.retryWait", "10s") \
+ # If a shuffle block fetch fails (FetchFailedException), Spark waits
+ # 10s before retrying. Combined with spark.shuffle.io.maxRetries=3,
+ # a degraded Executor has 30s to recover before a FetchFailed is
+ # escalated to the DAGScheduler as an Executor loss event.
+ .config("spark.shuffle.io.maxRetries", "3") \
+ .getOrCreate()
 
 # Simulate a wide transformation (groupBy + agg) that triggers a full shuffle.
 df = spark.read.parquet("hdfs:///data/transactions/")
@@ -244,15 +244,15 @@ df = spark.read.parquet("hdfs:///data/transactions/")
 # written to the shuffle file. The reducer fetches the relevant key-range
 # from every mapper, then performs a local sort-merge aggregation.
 result = df.groupBy("customer_id", "product_category") \
-    .agg(
-        F.sum("amount").alias("total_spend"),
-        F.count("*").alias("transaction_count"),
-        # approx_count_distinct uses HyperLogLog++ internally — a 16KB
-        # sketch per group, serialized into the shuffle file as binary.
-        # Far cheaper than exact count distinct which requires full shuffles
-        # of deduplicated keys (O(N log N) sort vs O(N) sketch merge).
-        F.approx_count_distinct("product_id", rsd=0.02).alias("unique_products")
-    )
+ .agg(
+ F.sum("amount").alias("total_spend"),
+ F.count("*").alias("transaction_count"),
+ # approx_count_distinct uses HyperLogLog++ internally — a 16KB
+ # sketch per group, serialized into the shuffle file as binary.
+ # Far cheaper than exact count distinct which requires full shuffles
+ # of deduplicated keys (O(N log N) sort vs O(N) sketch merge).
+ F.approx_count_distinct("product_id", rsd=0.02).alias("unique_products")
+ )
 
 # Repartition to a smaller number AFTER aggregation to reduce output file count.
 # Writing 400 output files from 400 reducers creates small files in HDFS/S3
@@ -275,25 +275,25 @@ spark.stop()
 import org.apache.spark.sql.SparkSession
 
 val spark = SparkSession.builder()
-  // locality.wait: Time the TaskScheduler waits for a node-local slot
-  // before relaxing to rack-local. Default is 3 seconds. In a lightly
-  // loaded cluster, increase to 10s to get better locality. In a heavily
-  // loaded cluster, reduce to 0s to avoid Executor starvation.
-  .config("spark.locality.wait", "10s")
-  // Node-local: data and task on same Executor process. I/O speed: RAM or NVMe.
-  .config("spark.locality.wait.node", "10s")
-  // Rack-local: task on same network rack as data. I/O speed: ~1-10Gbps intra-rack.
-  .config("spark.locality.wait.rack", "30s")
-  // ANY: Cross-rack fetch. I/O speed: 1-10Gbps cross-rack but shared with all traffic.
-  // A cross-rack read for a 1GB partition block adds ~8-80 seconds of pure network time.
-  .config("spark.locality.wait.any", "0s") // don't wait once we've relaxed to ANY
-  .config("spark.hadoop.dfs.replication", "3")
-  // With 3 HDFS replicas, each block exists on 3 nodes. Spark's HDFS
-  // InputFormat integration queries NameNode for block locations and
-  // passes them to TaskScheduler via PreferredLocations on each Task.
-  // The scheduler maps these hostnames to Executor IDs using the
-  // ExecutorsByHost index maintained in CoarseGrainedSchedulerBackend.
-  .getOrCreate()
+ // locality.wait: Time the TaskScheduler waits for a node-local slot
+ // before relaxing to rack-local. Default is 3 seconds. In a lightly
+ // loaded cluster, increase to 10s to get better locality. In a heavily
+ // loaded cluster, reduce to 0s to avoid Executor starvation.
+ .config("spark.locality.wait", "10s")
+ // Node-local: data and task on same Executor process. I/O speed: RAM or NVMe.
+ .config("spark.locality.wait.node", "10s")
+ // Rack-local: task on same network rack as data. I/O speed: ~1-10Gbps intra-rack.
+ .config("spark.locality.wait.rack", "30s")
+ // ANY: Cross-rack fetch. I/O speed: 1-10Gbps cross-rack but shared with all traffic.
+ // A cross-rack read for a 1GB partition block adds ~8-80 seconds of pure network time.
+ .config("spark.locality.wait.any", "0s") // don't wait once we've relaxed to ANY
+ .config("spark.hadoop.dfs.replication", "3")
+ // With 3 HDFS replicas, each block exists on 3 nodes. Spark's HDFS
+ // InputFormat integration queries NameNode for block locations and
+ // passes them to TaskScheduler via PreferredLocations on each Task.
+ // The scheduler maps these hostnames to Executor IDs using the
+ // ExecutorsByHost index maintained in CoarseGrainedSchedulerBackend.
+ .getOrCreate()
 
 val sc = spark.sparkContext
 val sqlCtx = spark
@@ -304,8 +304,8 @@ val sqlCtx = spark
 // partition, returning those replica hosts. TaskSetManager then schedules
 // each Task to run on an Executor co-located with one of the replicas.
 val events = sqlCtx.read
-  .option("mergeSchema", "false") // disable schema merge to avoid extra NameNode round-trips
-  .parquet("hdfs:///data/events/year=2024/")
+ .option("mergeSchema", "false") // disable schema merge to avoid extra NameNode round-trips
+ .parquet("hdfs:///data/events/year=2024/")
 
 // Force Task count to match HDFS block count for maximum node-locality.
 // If numPartitions < numBlocks, some partitions span multiple blocks and
@@ -320,10 +320,10 @@ val blockAlignedEvents = events.repartition(events.rdd.partitions.length)
 // scanning only row groups where event_type min/max statistics overlap "purchase".
 // On a 10TB dataset with 10% "purchase" events, this reduces I/O by ~90%.
 val purchases = blockAlignedEvents
-  .filter("event_type = 'purchase' AND amount > 100.0")
-  .select("user_id", "amount", "event_ts")
-  .groupBy("user_id")
-  .agg(org.apache.spark.sql.functions.sum("amount").alias("total"))
+ .filter("event_type = 'purchase' AND amount > 100.0")
+ .select("user_id", "amount", "event_ts")
+ .groupBy("user_id")
+ .agg(org.apache.spark.sql.functions.sum("amount").alias("total"))
 
 purchases.write.mode("overwrite").parquet("hdfs:///data/output/high_value_users/")
 
@@ -358,9 +358,9 @@ To achieve true mastery of Spark Runtime Architecture:
 
 ## 📚 Summary
 
-Spark's runtime architecture is a precisely engineered contract between the Driver JVM and Executor JVMs: the Driver holds all metadata (DAG, stage graph, shuffle locations via `MapOutputTracker`, block registry via `BlockManagerMaster`) while Executors hold all data (partition bytes in `MemoryStore`/`DiskStore`, shuffle files on local disk). This separation of concerns enables the fundamental fault-tolerance guarantee: any Executor can be lost and its Tasks re-scheduled on surviving Executors using the immutable RDD lineage graph maintained in the Driver. [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)
+Spark's runtime architecture is a precisely engineered contract between the Driver JVM and Executor JVMs: the Driver holds all metadata (DAG, stage graph, shuffle locations via `MapOutputTracker`, block registry via `BlockManagerMaster`) while Executors hold all data (partition bytes in `MemoryStore`/`DiskStore`, shuffle files on local disk). This separation of concerns enables the fundamental fault-tolerance guarantee: any Executor can be lost and its Tasks re-scheduled on surviving Executors using the immutable RDD lineage graph maintained in the Driver. 
 
-The `UnifiedMemoryManager` is the most operationally significant internal component — its dynamic boundary between Execution and Storage Memory means that a heavy aggregation job and a cached reference dataset compete for the same pool of bytes, and the aggregation always wins (Execution can evict Storage; Storage cannot evict Execution). Understanding this asymmetry explains a class of production failures where cached DataFrames silently disappear under load, causing re-computation that looks like query regression. The Tungsten engine's off-heap binary format severs the link between dataset size and GC pause duration, which is why off-heap caching is the correct solution when both high-throughput aggregation and stable caching are required simultaneously. [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)
+The `UnifiedMemoryManager` is the most operationally significant internal component — its dynamic boundary between Execution and Storage Memory means that a heavy aggregation job and a cached reference dataset compete for the same pool of bytes, and the aggregation always wins (Execution can evict Storage; Storage cannot evict Execution). Understanding this asymmetry explains a class of production failures where cached DataFrames silently disappear under load, causing re-computation that looks like query regression. The Tungsten engine's off-heap binary format severs the link between dataset size and GC pause duration, which is why off-heap caching is the correct solution when both high-throughput aggregation and stable caching are required simultaneously. 
 
-Network topology awareness and shuffle architecture are the final pillars. Every shuffle write produces exactly one sorted file + one index file per mapper (SortShuffleManager), and the `MapOutputTracker` must hold location records for every `(mapper, reducer)` pair in Driver heap. At 2,000 map tasks × 1,000 shuffle partitions, this is 2 million records — 200MB of Driver heap minimum. Designing Spark jobs means designing for memory at every layer: Driver metadata memory, Executor Execution Memory, Executor Storage Memory, off-heap Tungsten buffers, and the network shuffle — each with its own failure mode and its own configuration lever. [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)
+Network topology awareness and shuffle architecture are the final pillars. Every shuffle write produces exactly one sorted file + one index file per mapper (SortShuffleManager), and the `MapOutputTracker` must hold location records for every `(mapper, reducer)` pair in Driver heap. At 2,000 map tasks × 1,000 shuffle partitions, this is 2 million records — 200MB of Driver heap minimum. Designing Spark jobs means designing for memory at every layer: Driver metadata memory, Executor Execution Memory, Executor Storage Memory, off-heap Tungsten buffers, and the network shuffle — each with its own failure mode and its own configuration lever. 
 

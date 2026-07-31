@@ -4,11 +4,11 @@ At its core, an Apache Spark Broadcast Variable is a distributed read-only, shar
 
 Broadcast variables solve this by decoupling the variable shipping from the task closure. Instead of sending the variable with every task, the Driver node serializes the data exactly once per executor (rather than per task). The executor JVM then caches this data globally within its BlockManager, allowing all concurrent task threads on that executor to read the exact same memory instance. This fundamentally shifts the distribution mechanism from task-level redundancy to executor-level singleton caching.
 
-By leveraging a highly optimized BitTorrent-like peer-to-peer distribution protocol (TorrentBroadcast), Spark guarantees that massive lookup tables, machine learning models, or dimension tables can be distributed across clusters with hundreds of nodes without overwhelming the Driver's network interface. It is the fundamental mechanism enabling the Broadcast Hash Join, physically bypassing the Shuffle phase for small-to-large table joins.
+By leveraging a highly optimized BitTorrent-like peer-to-peer distribution protocol (TorrentBroadcast), Spark guarantees that massive lookup tables, machine learning models, or dimension tables can be distributed across clusters with hundreds of nodes without overwhelming the Driver's network interface. It is the fundamental mechanism enabling the Broadcast Hash Join, physically bypassing the Shuffle phase for small-to-large table joins. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 455](spark_book.pdf#page=455)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 459](spark_book.pdf#page=459)
 
 ### How It Works Under the Hood
 The architecture of broadcast variables integrates tightly with Spark's BlockManager, the Catalyst optimizer, and Tungsten's memory management. When a user explicitly broadcasts a variable (or when Catalyst's physical planning phase evaluates a join and triggers an automatic broadcast via `spark.sql.autoBroadcastJoinThreshold`, which defaults to 10MB), the Driver serializes the object using either Java or the heavily optimized Kryo serializer. This serialized payload is then chunked into discrete blocks, typically sized at 4MB, to optimize network transfer and avoid memory fragmentation.
@@ -18,50 +18,50 @@ Rather than the Driver directly pushing this data to all executors, Spark employ
 On the execution side, Tungsten's Whole-Stage Code Generation seamlessly integrates broadcasted variables. During a Broadcast Hash Join, Tungsten generates optimized Java bytecode that reads directly from the broadcasted hash relation residing in the executor's memory. This memory is typically managed off-heap to circumvent JVM garbage collection overhead. By avoiding the shuffle phase entirely—bypassing local disk spills, network fetches, and sort-merge operations—broadcast variables enable a direct map-side join, operating at the speed of raw memory access.
 
 ```text
-Driver JVM                                      Worker Executor JVM (Node 1)
-┌────────────────────────────────┐              ┌─────────────────────────────────────┐
-│  SparkContext                  │     Chunk    │  BlockManager                       │
-│  ┌──────────────────────────┐  │   Fetch (P2P)│  ┌───────────────────────────────┐  │
-│  │ TorrentBroadcastFactory  │◀─┼──────────────┼─▶│ Broadcast Block (Cached)      │  │
-│  └──────────────────────────┘  │              │  └───────────────────────────────┘  │
-│  BlockManagerMaster            │              │  Executor Thread Pool               │
-│  ┌──────────────────────────┐  │              │  ┌──────────────┐ ┌──────────────┐  │
-│  │ Serialized Chunks (4MB)  │  │              │  │ Task 1       │ │ Task 2       │  │
-│  └──────────────────────────┘  │              │  │ (Read-Only)  │ │ (Read-Only)  │  │
-└────────────────────────────────┘              │  └──────────────┘ └──────────────┘  │
-                ▲                               └─────────────────────────────────────┘
-                │ Chunk Fetch (P2P)               ▲
-                ▼                                 │ Chunk Fetch (P2P)
-Worker Executor JVM (Node 2)                      ▼
-┌────────────────────────────────┐              Worker Executor JVM (Node 3)
-│  BlockManager                  │              ┌─────────────────────────────────────┐
-│  ┌──────────────────────────┐  │              │  BlockManager                       │
-│  │ Broadcast Block (Cached) │  │              │  ┌───────────────────────────────┐  │
-│  └──────────────────────────┘  │              │  │ Broadcast Block (Cached)      │  │
-└────────────────────────────────┘              └─────────────────────────────────────┘
+Driver JVM Worker Executor JVM (Node 1)
+┌────────────────────────────────┐ ┌─────────────────────────────────────┐
+│ SparkContext │ Chunk │ BlockManager │
+│ ┌──────────────────────────┐ │ Fetch (P2P)│ ┌───────────────────────────────┐ │
+│ │ TorrentBroadcastFactory │◀─┼──────────────┼─▶│ Broadcast Block (Cached) │ │
+│ └──────────────────────────┘ │ │ └───────────────────────────────┘ │
+│ BlockManagerMaster │ │ Executor Thread Pool │
+│ ┌──────────────────────────┐ │ │ ┌──────────────┐ ┌──────────────┐ │
+│ │ Serialized Chunks (4MB) │ │ │ │ Task 1 │ │ Task 2 │ │
+│ └──────────────────────────┘ │ │ │ (Read-Only) │ │ (Read-Only) │ │
+└────────────────────────────────┘ │ └──────────────┘ └──────────────┘ │
+ ▲ └─────────────────────────────────────┘
+ │ Chunk Fetch (P2P) ▲
+ ▼ │ Chunk Fetch (P2P)
+Worker Executor JVM (Node 2) ▼
+┌────────────────────────────────┐ Worker Executor JVM (Node 3)
+│ BlockManager │ ┌─────────────────────────────────────┐
+│ ┌──────────────────────────┐ │ │ BlockManager │
+│ │ Broadcast Block (Cached) │ │ │ ┌───────────────────────────────┐ │
+│ └──────────────────────────┘ │ │ │ Broadcast Block (Cached) │ │
+└────────────────────────────────┘ └─────────────────────────────────────┘ [Ref: 464](spark_book.pdf#page=464)
 ```
 
 ### Key Internal Components
 - **TorrentBroadcastFactory:** The internal factory responsible for instantiating the peer-to-peer broadcast mechanism, completely replacing the legacy HttpBroadcast which suffered from Driver bottlenecks at scale.
 - **BlockManager:** Spark's distributed key-value store that physically caches the broadcast blocks in memory or on disk on both the Driver and all Executor JVMs, managing the eviction lifecycle.
 - **BroadcastExchangeExec:** The physical plan operator generated by Catalyst that coordinates the asynchronous collection and broadcasting of a DataFrame partition directly to all worker nodes during a Broadcast Hash Join.
-- **KryoSerializer:** The preferred serialization framework for broadcast variables, offering significantly reduced footprint and faster serialization/deserialization cycles compared to standard Java serialization, drastically reducing network I/O.
+- **KryoSerializer:** The preferred serialization framework for broadcast variables, offering significantly reduced footprint and faster serialization/deserialization cycles compared to standard Java serialization, drastically reducing network I/O. [Ref: 452](spark_book.pdf#page=452)
 
----
+--- [Ref: 457](spark_book.pdf#page=457)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 461](spark_book.pdf#page=461)
 
 ### The Driver OOM Death Spiral
 A severe anti-pattern in Spark engineering is assuming broadcast variables completely bypass the Driver. During an automatic Broadcast Hash Join, or when a user calls `df.collect()` to explicitly broadcast, Catalyst triggers an action that gathers all partitions of the DataFrame back to the Driver JVM over the network. The Driver must hold the *entire* uncompressed dataset in its heap to serialize and chunk it for the `TorrentBroadcast`. 
 
-If the dataset size approaches the Driver's configured memory (`spark.driver.memory`), this results in a catastrophic Driver OutOfMemoryError (OOM), instantly killing the entire application. Engineers frequently raise `spark.sql.autoBroadcastJoinThreshold` beyond the default 10MB to force Broadcast Hash Joins on larger tables without correspondingly increasing the Driver memory or tuning `spark.driver.maxResultSize`, leading to inevitable cluster failures. Always monitor the Driver heap when bumping the broadcast threshold.
+If the dataset size approaches the Driver's configured memory (`spark.driver.memory`), this results in a catastrophic Driver OutOfMemoryError (OOM), instantly killing the entire application. Engineers frequently raise `spark.sql.autoBroadcastJoinThreshold` beyond the default 10MB to force Broadcast Hash Joins on larger tables without correspondingly increasing the Driver memory or tuning `spark.driver.maxResultSize`, leading to inevitable cluster failures. Always monitor the Driver heap when bumping the broadcast threshold. [Ref: 469](spark_book.pdf#page=469)
 
 ### Late-Stage Deserialization Overhead
 While the Torrent protocol efficiently distributes the serialized bytes to Executor BlockManagers, those bytes must be deserialized into Java objects before the executor tasks can evaluate them. This deserialization happens lazily when the first task on the executor explicitly calls `.value` on the broadcast variable. 
 
-If the broadcasted object is incredibly complex—such as a heavily nested machine learning model or a massive `Map[String, Object]`—the initial deserialization process can take tens of seconds and trigger a massive CPU spike on the executor. Furthermore, the resulting deserialized object lives permanently in the executor's JVM heap, competing with the execution memory for Tungsten aggregations. This often causes severe Garbage Collection (GC) pauses during the exact moments Tungsten requires memory. To mitigate this, engineers should broadcast primitive arrays or heavily optimized structures (like RoaringBitmaps) instead of dense object graphs.
+If the broadcasted object is incredibly complex—such as a heavily nested machine learning model or a massive `Map[String, Object]`—the initial deserialization process can take tens of seconds and trigger a massive CPU spike on the executor. Furthermore, the resulting deserialized object lives permanently in the executor's JVM heap, competing with the execution memory for Tungsten aggregations. This often causes severe Garbage Collection (GC) pauses during the exact moments Tungsten requires memory. To mitigate this, engineers should broadcast primitive arrays or heavily optimized structures (like RoaringBitmaps) instead of dense object graphs. [Ref: 453](spark_book.pdf#page=453)
 
----
+--- [Ref: 458](spark_book.pdf#page=458)
 
 ## 📊 Performance Characteristics
 
@@ -70,9 +70,9 @@ If the broadcasted object is incredibly complex—such as a heavily nested machi
 | Task Closure Shipping | O(N * T) | No | Without broadcast, sends variable N times per node (T=tasks), maxing out network. |
 | TorrentBroadcast Setup | O(N / K) | No | Logarithmic P2P distribution of chunks (K=peers) significantly reduces Driver I/O. |
 | Broadcast Hash Join | O(N) | No | Skips Sort-Merge Shuffle entirely; complexity is O(N) where N is the large table size. |
-| Executor Deserialization | O(V) | No | One-time penalty per executor to unpack the serialized blocks (V=variable size). |
+| Executor Deserialization | O(V) | No | One-time penalty per executor to unpack the serialized blocks (V=variable size). | [Ref: 463](spark_book.pdf#page=463)
 
----
+--- [Ref: 470](spark_book.pdf#page=470)
 
 ## 💻 Code Examples
 
@@ -90,9 +90,9 @@ val spark = SparkSession.builder().appName("BroadcastDeepDive").getOrCreate()
 // 1. Driver-side construction of a reference mapping (e.g., loaded from a DB or API)
 // This object exists purely in the Driver's JVM heap.
 val ipToCountryMap: Map[String, String] = Map(
-  "192.168.1.1" -> "US",
-  "10.0.0.1" -> "UK"
-  // Imagine 5 million entries here
+ "192.168.1.1" -> "US",
+ "10.0.0.1" -> "UK"
+ // Imagine 5 million entries here
 )
 
 // 2. Explicitly register with SparkContext to utilize TorrentBroadcast
@@ -102,9 +102,9 @@ val broadcastedIpMap = spark.sparkContext.broadcast(ipToCountryMap)
 // 3. Define a UDF that references the BROADCAST VARIABLE, not the local Map.
 // The task closure only captures the lightweight Broadcast object reference.
 val resolveCountryUdf = udf((ip: String) => {
-  // 4. Lazy evaluation: The executor's first task calls .value, triggering 
-  // the P2P fetch from other BlockManagers and local deserialization.
-  broadcastedIpMap.value.getOrElse(ip, "UNKNOWN")
+ // 4. Lazy evaluation: The executor's first task calls .value, triggering 
+ // the P2P fetch from other BlockManagers and local deserialization.
+ broadcastedIpMap.value.getOrElse(ip, "UNKNOWN")
 })
 
 val trafficDf = spark.read.parquet("hdfs://traffic_logs/")
@@ -130,7 +130,7 @@ broadcastedIpMap.unpersist()
 import org.apache.spark.sql.functions.broadcast
 
 val largeTransactionDf = spark.read.parquet("hdfs://transactions/") // 10 Terabytes
-val smallMerchantDf = spark.read.parquet("hdfs://merchants/")       // 50 Megabytes
+val smallMerchantDf = spark.read.parquet("hdfs://merchants/") // 50 Megabytes
 
 // 1. Catalyst usually evaluates table sizes against `spark.sql.autoBroadcastJoinThreshold`.
 // However, if table statistics are missing (e.g., no ANALYZE TABLE run), Catalyst defaults 
@@ -139,9 +139,9 @@ val smallMerchantDf = spark.read.parquet("hdfs://merchants/")       // 50 Megaby
 // 2. We use the broadcast() hint to override the physical planner.
 // This injects a BroadcastHint into the Logical Plan.
 val joinedDf = largeTransactionDf.join(
-  broadcast(smallMerchantDf), 
-  largeTransactionDf("merchant_id") === smallMerchantDf("merchant_id"),
-  "inner"
+ broadcast(smallMerchantDf), 
+ largeTransactionDf("merchant_id") === smallMerchantDf("merchant_id"),
+ "inner"
 )
 
 // 3. The execution plan will now show a BroadcastExchangeExec operator
@@ -151,12 +151,12 @@ joinedDf.explain(extended = false)
 == Physical Plan ==
 *(2) BroadcastHashJoin [merchant_id#10L], [merchant_id#25L], Inner, BuildRight
 :- *(2) Filter isnotnull(merchant_id#10L)
-:  +- *(2) ColumnarToRow
-:     +- FileScan parquet [merchant_id#10L, amount#11] ...
+: +- *(2) ColumnarToRow
+: +- FileScan parquet [merchant_id#10L, amount#11] ...
 +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, false])), [id=#42]
-   +- *(1) Filter isnotnull(merchant_id#25L)
-      +- *(1) ColumnarToRow
-         +- FileScan parquet [merchant_id#25L, name#26] ...
+ +- *(1) Filter isnotnull(merchant_id#25L)
+ +- *(1) ColumnarToRow
+ +- FileScan parquet [merchant_id#25L, name#26] ...
 */
 ```
 
@@ -214,28 +214,28 @@ local_booster.load_model("s3a://models/fraud_detection.bin")
 # Note: Complex C++ bound objects (like xgb) might fail Kryo serialization.
 # A common pro-tip is to broadcast the raw bytes instead of the instantiated object.
 with open("local_model.bin", "rb") as f:
-    model_bytes = f.read()
+ model_bytes = f.read()
 
 broadcast_model = spark.sparkContext.broadcast(model_bytes)
 
 # 3. Vectorized Pandas UDF for massive throughput
 @pandas_udf('double')
 def predict_fraud(features_series: pd.Series) -> pd.Series:
-    # 4. Lazy instantiation on the Executor JVM. 
-    # Reconstruct the model from the broadcasted bytes once per Python worker process.
-    global model_instance
-    if 'model_instance' not in globals():
-        import tempfile
-        with tempfile.NamedTemporaryFile() as tmp:
-            tmp.write(broadcast_model.value)
-            tmp.flush()
-            model_instance = xgb.Booster()
-            model_instance.load_model(tmp.name)
-    
-    # 5. Execute vectorized inference using Arrow memory mapping
-    dmatrix = xgb.DMatrix(pd.DataFrame(features_series.tolist()))
-    predictions = model_instance.predict(dmatrix)
-    return pd.Series(predictions)
+ # 4. Lazy instantiation on the Executor JVM. 
+ # Reconstruct the model from the broadcasted bytes once per Python worker process.
+ global model_instance
+ if 'model_instance' not in globals():
+ import tempfile
+ with tempfile.NamedTemporaryFile() as tmp:
+ tmp.write(broadcast_model.value)
+ tmp.flush()
+ model_instance = xgb.Booster()
+ model_instance.load_model(tmp.name)
+ 
+ # 5. Execute vectorized inference using Arrow memory mapping
+ dmatrix = xgb.DMatrix(pd.DataFrame(features_series.tolist()))
+ predictions = model_instance.predict(dmatrix)
+ return pd.Series(predictions)
 
 ```
 
@@ -256,9 +256,9 @@ To achieve true mastery of Broadcast Variables:
 
 ## 📚 Summary
 
-Broadcast variables represent a critical architectural pillar in Apache Spark's distributed memory model, fundamentally shifting the paradigm of dependency distribution. Rather than indiscriminately shipping identical state within thousands of task closures, Spark leverages the highly efficient `TorrentBroadcast` peer-to-peer protocol. This delegates the caching responsibility directly to the BlockManager of each Executor JVM, ensuring that large, immutable datasets or complex machine learning models are materialized exactly once per node, drastically reducing network I/O and garbage collection thrashing. [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)
+Broadcast variables represent a critical architectural pillar in Apache Spark's distributed memory model, fundamentally shifting the paradigm of dependency distribution. Rather than indiscriminately shipping identical state within thousands of task closures, Spark leverages the highly efficient `TorrentBroadcast` peer-to-peer protocol. This delegates the caching responsibility directly to the BlockManager of each Executor JVM, ensuring that large, immutable datasets or complex machine learning models are materialized exactly once per node, drastically reducing network I/O and garbage collection thrashing. 
 
-Deeply integrated into the Catalyst Optimizer and the Tungsten execution engine, broadcast mechanisms are the engine behind the Broadcast Hash Join. By materializing a heavily optimized, off-heap `HashedRelation` and distributing it via Torrent protocol, Tungsten can generate highly performant Java bytecode that performs map-side joins at bare-metal memory speeds. This completely bypasses the catastrophic performance penalties of the traditional shuffle-sort phase, enabling interactive analytics on petabyte-scale data lakes. [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)
+Deeply integrated into the Catalyst Optimizer and the Tungsten execution engine, broadcast mechanisms are the engine behind the Broadcast Hash Join. By materializing a heavily optimized, off-heap `HashedRelation` and distributing it via Torrent protocol, Tungsten can generate highly performant Java bytecode that performs map-side joins at bare-metal memory speeds. This completely bypasses the catastrophic performance penalties of the traditional shuffle-sort phase, enabling interactive analytics on petabyte-scale data lakes. 
 
 However, true mastery requires acute awareness of the inherent dangers, specifically the Driver OOM death spiral. Because Catalyst demands the entirety of the broadcasted data be collected, deserialized, and chunked on the Driver JVM prior to distribution, miscalculating compression ratios or blindly raising the broadcast threshold guarantees cluster failure. By carefully managing lifecycle state via `unpersist()` and understanding the mechanical transition from serialized chunk to JVM object graph, engineers can wield broadcast variables to achieve orders-of-magnitude performance gains in production environments.
-</🔥 Master Class: Broadcast Variables> [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)
+</🔥 Master Class: Broadcast Variables> 

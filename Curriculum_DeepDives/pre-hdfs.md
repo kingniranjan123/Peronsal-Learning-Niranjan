@@ -7,16 +7,16 @@ HDFS uses a **NameNode** and **DataNode** architecture. The NameNode acts as the
 
 ```mermaid
 graph TD
-    Client((Client)) -->|1. File Create/Read| NN[NameNode<br/>Metadata & Namespace]
-    NN -.->|2. Block Locations| Client
-    Client ==>|3. Read/Write Data| DN1[DataNode 1<br/>Block A, B]
-    Client ==>|4. Read/Write Data| DN2[DataNode 2<br/>Block A, C]
-    Client ==>|5. Read/Write Data| DN3[DataNode 3<br/>Block B, C]
-    
-    style NN fill:#f9f,stroke:#333,stroke-width:2px
-    style DN1 fill:#bbf,stroke:#333,stroke-width:2px
-    style DN2 fill:#bbf,stroke:#333,stroke-width:2px
-    style DN3 fill:#bbf,stroke:#333,stroke-width:2px
+ Client((Client)) -->|1. File Create/Read| NN[NameNode<br/>Metadata & Namespace]
+ NN -.->|2. Block Locations| Client
+ Client ==>|3. Read/Write Data| DN1[DataNode 1<br/>Block A, B]
+ Client ==>|4. Read/Write Data| DN2[DataNode 2<br/>Block A, C]
+ Client ==>|5. Read/Write Data| DN3[DataNode 3<br/>Block B, C]
+ 
+ style NN fill:#f9f,stroke:#333,stroke-width:2px
+ style DN1 fill:#bbf,stroke:#333,stroke-width:2px
+ style DN2 fill:#bbf,stroke:#333,stroke-width:2px
+ style DN3 fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
 ### Practical Examples

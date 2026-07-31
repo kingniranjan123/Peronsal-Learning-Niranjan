@@ -15,34 +15,34 @@ import org.apache.spark.sql.{SparkSession, Encoders, Dataset}
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 
 object TungstenEncoderExample {
-  case class ComplexEvent(id: Long, timestamp: Long, payload: Array[Byte], flags: Map[String, Boolean])
+ case class ComplexEvent(id: Long, timestamp: Long, payload: Array[Byte], flags: Map[String, Boolean])
 
-  def main(args: Array[String]): Unit = {
-    val spark = SparkSession.builder().appName("TungstenEncoders").master("local[*]").getOrCreate()
-    import spark.implicits._
+ def main(args: Array[String]): Unit = {
+ val spark = SparkSession.builder().appName("TungstenEncoders").master("local[*]").getOrCreate()
+ import spark.implicits._
 
-    // Standard case class encoding leverages Tungsten's UnsafeRow representation
-    val eventEncoder = Encoders.product[ComplexEvent]
-    
-    // Create dummy data
-    val events = Seq(
-      ComplexEvent(1L, System.currentTimeMillis(), "data1".getBytes, Map("active" -> true)),
-      ComplexEvent(2L, System.currentTimeMillis(), "data2".getBytes, Map("active" -> false))
-    )
+ // Standard case class encoding leverages Tungsten's UnsafeRow representation
+ val eventEncoder = Encoders.product[ComplexEvent]
+ 
+ // Create dummy data
+ val events = Seq(
+ ComplexEvent(1L, System.currentTimeMillis(), "data1".getBytes, Map("active" -> true)),
+ ComplexEvent(2L, System.currentTimeMillis(), "data2".getBytes, Map("active" -> false))
+ )
 
-    // When we create a Dataset, data is immediately serialized into Tungsten's binary format
-    val ds: Dataset[ComplexEvent] = spark.createDataset(events)(eventEncoder)
+ // When we create a Dataset, data is immediately serialized into Tungsten's binary format
+ val ds: Dataset[ComplexEvent] = spark.createDataset(events)(eventEncoder)
 
-    // Tungsten operates directly on the binary data for filtering without deserializing the entire object.
-    // The query optimizer extracts just the 'id' field from the UnsafeRow.
-    val filtered = ds.filter(e => e.id > 1L)
-    
-    // To view the generated code for this physical plan, we use explain
-    filtered.explain(extended = true) // Look for *(1) Filter in the output, denoting WSCG
-    
-    filtered.show()
-    spark.stop()
-  }
+ // Tungsten operates directly on the binary data for filtering without deserializing the entire object.
+ // The query optimizer extracts just the 'id' field from the UnsafeRow.
+ val filtered = ds.filter(e => e.id > 1L)
+ 
+ // To view the generated code for this physical plan, we use explain
+ filtered.explain(extended = true) // Look for *(1) Filter in the output, denoting WSCG
+ 
+ filtered.show()
+ spark.stop()
+ }
 }
 ```
 In this example, the `ComplexEvent` dataset is backed by Tungsten's memory manager. When the `.filter(e => e.id > 1L)` transformation is applied, Tungsten doesn't deserialize the entire `ComplexEvent` back into a JVM object. Instead, the Catalyst optimizer combined with Tungsten generates code that directly offsets into the `UnsafeRow` byte array to read the `id` field as a primitive `long`. This specific field extraction avoids object allocation and GC overhead. The `Array[Byte]` and `Map` are completely ignored during the evaluation of this predicate, saving significant CPU cycles and memory bandwidth.
@@ -60,29 +60,29 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.debug._
 
 object WSCGInspection {
-  def main(args: Array[String]): Unit = {
-    val spark = SparkSession.builder()
-      .appName("WSCG-Debug")
-      .config("spark.sql.codegen.wholeStage", "true") // Enabled by default
-      .master("local[*]")
-      .getOrCreate()
+ def main(args: Array[String]): Unit = {
+ val spark = SparkSession.builder()
+ .appName("WSCG-Debug")
+ .config("spark.sql.codegen.wholeStage", "true") // Enabled by default
+ .master("local[*]")
+ .getOrCreate()
 
-    // Generate a large DataFrame
-    val df = spark.range(1, 10000000)
-      .withColumn("squared", $"id" * $"id")
-      .withColumn("is_even", $"id" % 2 === 0)
-      .filter($"is_even" === true)
+ // Generate a large DataFrame
+ val df = spark.range(1, 10000000)
+ .withColumn("squared", $"id" * $"id")
+ .withColumn("is_even", $"id" % 2 === 0)
+ .filter($"is_even" === true)
 
-    // The debugCodegen method prints the actual Java code generated for the fused operators.
-    // It shows how Range, Project (withColumn), and Filter are collapsed into a single loop.
-    df.debugCodegen()
+ // The debugCodegen method prints the actual Java code generated for the fused operators.
+ // It shows how Range, Project (withColumn), and Filter are collapsed into a single loop.
+ df.debugCodegen()
 
-    // Execute to trigger code generation and processing
-    val count = df.count()
-    println(s"Processed $count rows.")
-    
-    spark.stop()
-  }
+ // Execute to trigger code generation and processing
+ val count = df.count()
+ println(s"Processed $count rows.")
+ 
+ spark.stop()
+ }
 }
 ```
 When `df.debugCodegen()` is executed, Spark outputs the raw Java source code compiled by Janino. Instead of instantiating an iterator for the `range`, then an iterator for `withColumn`, and another for `filter`, Tungsten generates a monolithic `processNext()` method. Inside this method, a `while` loop generates the sequence of numbers, calculates the square, evaluates the modulo, and conditionally increments the count—all using primitive Java types (`long`, `boolean`). There are no `Row` objects instantiated within the loop. This tight execution path fits perfectly within the CPU's instruction cache, yielding massive performance gains.
@@ -101,12 +101,12 @@ from pyspark.sql.functions import col, count, rand
 
 # Initialize Spark with Tungsten Off-Heap Memory enabled
 spark = SparkSession.builder \
-    .appName("Tungsten-OffHeap-Agg") \
-    .config("spark.memory.offHeap.enabled", "true") \
-    .config("spark.memory.offHeap.size", "4g") \
-    .config("spark.sql.shuffle.partitions", "200") \
-    .master("local[*]") \
-    .getOrCreate()
+ .appName("Tungsten-OffHeap-Agg") \
+ .config("spark.memory.offHeap.enabled", "true") \
+ .config("spark.memory.offHeap.size", "4g") \
+ .config("spark.sql.shuffle.partitions", "200") \
+ .master("local[*]") \
+ .getOrCreate()
 
 # Generate 50 million rows with a high cardinality key (approx 1 million distinct keys)
 df = spark.range(0, 50000000).withColumn("key", (rand() * 1000000).cast("int"))
@@ -135,32 +135,32 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
 
 object VectorizedReadTuning {
-  def main(args: Array[String]): Unit = {
-    val spark = SparkSession.builder()
-      .appName("Vectorized-Parquet")
-      .config("spark.sql.parquet.enableVectorizedReader", "true") // Default is true
-      .config("spark.sql.inMemoryColumnarStorage.batchSize", "10000") // Tuning batch size
-      .master("local[*]")
-      .getOrCreate()
+ def main(args: Array[String]): Unit = {
+ val spark = SparkSession.builder()
+ .appName("Vectorized-Parquet")
+ .config("spark.sql.parquet.enableVectorizedReader", "true") // Default is true
+ .config("spark.sql.inMemoryColumnarStorage.batchSize", "10000") // Tuning batch size
+ .master("local[*]")
+ .getOrCreate()
 
-    val path = "/tmp/sample_parquet_data"
-    
-    // Create sample data if it doesn't exist (omitted for brevity, assume 100M rows)
-    // spark.range(100000000).write.mode("overwrite").parquet(path)
+ val path = "/tmp/sample_parquet_data"
+ 
+ // Create sample data if it doesn't exist (omitted for brevity, assume 100M rows)
+ // spark.range(100000000).write.mode("overwrite").parquet(path)
 
-    // Read the data
-    val df = spark.read.parquet(path)
+ // Read the data
+ val df = spark.read.parquet(path)
 
-    // A simple aggregation to force a full scan
-    val result = df.filter($"id" > 50000000L).agg(org.apache.spark.sql.functions.sum("id"))
+ // A simple aggregation to force a full scan
+ val result = df.filter($"id" > 50000000L).agg(org.apache.spark.sql.functions.sum("id"))
 
-    // Ensure vectorized reading is happening in the physical plan
-    // Look for 'Batched: true' in the FileScan node of the explain output
-    result.explain(extended = true)
-    
-    result.show()
-    spark.stop()
-  }
+ // Ensure vectorized reading is happening in the physical plan
+ // Look for 'Batched: true' in the FileScan node of the explain output
+ result.explain(extended = true)
+ 
+ result.show()
+ spark.stop()
+ }
 }
 ```
 This Scala snippet emphasizes the configuration and validation of vectorized Parquet reading. When `spark.sql.parquet.enableVectorizedReader` is true, the `FileScan` node in the execution plan will display `Batched: true`. Instead of decoding Parquet files row-by-row into `InternalRow` objects, Spark decodes entire columns into `ColumnarBatch` structures within Tungsten's memory. This alignment allows the CPU to process entire arrays of primitives using SIMD instructions, drastically reducing CPU cycles per row during decompression and decoding. Tuning the batch size can further optimize L1/L2 cache locality depending on the CPU architecture, making it a critical, yet often overlooked, aspect of Tungsten tuning.

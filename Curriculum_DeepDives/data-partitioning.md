@@ -3,11 +3,11 @@
 
 At its core, Apache Spark is a distributed computing engine, and data partitioning is the fundamental architectural mechanism that enables this distribution. Partitioning dictates how a large, monolithic dataset is broken down into smaller, manageable, and logically independent chunks (partitions) that can be processed concurrently across the distributed nodes of a cluster. It is the primary determinant of parallelism in Spark; a dataset with only one partition will only utilize a single CPU core, regardless of the cluster's size, whereas a dataset partitioned effectively will keep every core saturated with work.
 
-The necessity of data partitioning stems from the physical limits of single-node architectures. Modern datasets (petabytes of logs, telemetry, and transactional data) cannot fit into the memory (RAM) or even the disk space of a standard commodity server. Partitioning solves this by distributing the data layout. However, it is not merely about storage. Partitioning is the crucial lever for optimizing network I/O during shuffle operations—the most expensive phase in distributed computing. By intelligently co-locating related data or controlling the boundaries of data splits, partitioning minimizes cross-node network traffic, prevents `OutOfMemoryError` (OOM) exceptions, and ensures that the cluster's compute capacity is leveraged efficiently. In essence, mastering Spark means mastering data partitioning.
+The necessity of data partitioning stems from the physical limits of single-node architectures. Modern datasets (petabytes of logs, telemetry, and transactional data) cannot fit into the memory (RAM) or even the disk space of a standard commodity server. Partitioning solves this by distributing the data layout. However, it is not merely about storage. Partitioning is the crucial lever for optimizing network I/O during shuffle operations—the most expensive phase in distributed computing. By intelligently co-locating related data or controlling the boundaries of data splits, partitioning minimizes cross-node network traffic, prevents `OutOfMemoryError` (OOM) exceptions, and ensures that the cluster's compute capacity is leveraged efficiently. In essence, mastering Spark means mastering data partitioning. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 455](spark_book.pdf#page=455)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
 
 ### How It Works Under the Hood
 
@@ -17,52 +17,52 @@ As transformations are applied, the Catalyst optimizer tracks the partitioning s
 
 During a shuffle, the Tungsten execution engine heavily utilizes off-heap memory for shuffle buffers. Tasks running on Executor Thread Pools write map outputs to local disk, partitioned by the target reducer. When reducers fetch this data, they pull it into memory for sorting or hashing. If the incoming partition size exceeds the executor's JVM heap or off-heap allocation, Spark will spill to disk, causing massive performance degradation. Therefore, tuning the number of partitions (e.g., via `spark.sql.shuffle.partitions`) directly impacts the size of each task's working set in memory, dictating whether Tungsten can process the data entirely in RAM or if it must thrash the disk.
 
-```
-Driver JVM                                      Worker Executor JVM (Node 1)
-┌─────────────────────────┐                     ┌─────────────────────────────────────────┐
-│ SparkContext            │                     │ Executor Thread Pool                    │
-│ ┌─────────────────────┐ │  Task Execution     │ ┌────────────────┐ ┌────────────────┐   │
-│ │ DAGScheduler        │─┼────────────────────▶│ │ Task 1 (Part 0)│ │ Task 2 (Part 1)│   │
-│ │ (Stages & Tasks)    │ │                     │ │ ┌────────────┐ │ │ ┌────────────┐ │   │
-│ └─────────────────────┘ │                     │ │ │ Tungsten   │ │ │ │ Tungsten   │ │   │
-│ ┌─────────────────────┐ │                     │ │ │ Binary Row │ │ │ │ Binary Row │ │   │
-│ │ TaskScheduler       │ │                     │ │ └────────────┘ │ │ └────────────┘ │   │
-│ │ (Task Dispatch)     │ │                     │ └───────┬────────┘ └────────┬───────┘   │
-│ └─────────────────────┘ │                     │         │ Shuffle Write     │           │
-└─────────────────────────┘                     │ ┌───────▼───────────────────▼───────┐   │
-                                                │ │       BlockManager (Disk/RAM)     │   │
-                                                │ └───────────────────────────────────┘   │
-                                                └─────────────────────────────────────────┘
-                                                                    │ Network Fetch
-                                                Worker Executor JVM (Node 2)
-                                                ┌─────────────────────────────────────────┐
-                                                │ ┌───────────────────────────────────┐   │
-                                                │ │       Shuffle Fetcher (RAM)       │   │
-                                                │ └─────────┬─────────────────┬───────┘   │
-                                                │ ┌─────────▼──────┐ ┌────────▼───────┐   │
-                                                │ │ Task 3 (Part 2)│ │ Task 4 (Part 3)│   │
-                                                │ │ (Hash Join)    │ │ (Hash Join)    │   │
-                                                │ └────────────────┘ └────────────────┘   │
-                                                └─────────────────────────────────────────┘
+```text
+Driver JVM Worker Executor JVM (Node 1)
+┌─────────────────────────┐ ┌─────────────────────────────────────────┐
+│ SparkContext │ │ Executor Thread Pool │
+│ ┌─────────────────────┐ │ Task Execution │ ┌────────────────┐ ┌────────────────┐ │
+│ │ DAGScheduler │─┼────────────────────▶│ │ Task 1 (Part 0)│ │ Task 2 (Part 1)│ │
+│ │ (Stages & Tasks) │ │ │ │ ┌────────────┐ │ │ ┌────────────┐ │ │
+│ └─────────────────────┘ │ │ │ │ Tungsten │ │ │ │ Tungsten │ │ │
+│ ┌─────────────────────┐ │ │ │ │ Binary Row │ │ │ │ Binary Row │ │ │
+│ │ TaskScheduler │ │ │ │ └────────────┘ │ │ └────────────┘ │ │
+│ │ (Task Dispatch) │ │ │ └───────┬────────┘ └────────┬───────┘ │
+│ └─────────────────────┘ │ │ │ Shuffle Write │ │
+└─────────────────────────┘ │ ┌───────▼───────────────────▼───────┐ │
+ │ │ BlockManager (Disk/RAM) │ │
+ │ └───────────────────────────────────┘ │
+ └─────────────────────────────────────────┘
+ │ Network Fetch
+ Worker Executor JVM (Node 2)
+ ┌─────────────────────────────────────────┐
+ │ ┌───────────────────────────────────┐ │
+ │ │ Shuffle Fetcher (RAM) │ │
+ │ └─────────┬─────────────────┬───────┘ │
+ │ ┌─────────▼──────┐ ┌────────▼───────┐ │
+ │ │ Task 3 (Part 2)│ │ Task 4 (Part 3)│ │
+ │ │ (Hash Join) │ │ (Hash Join) │ │
+ │ └────────────────┘ └────────────────┘ │
+ └─────────────────────────────────────────┘ [Ref: 462](spark_book.pdf#page=462)
 ```
 
 ### Key Internal Components
 - **`Partitioner` Trait:** The abstract class defining how key-value pairs are mapped to partition IDs (integers). The primary implementations are `HashPartitioner` (uses `Object.hashCode % numPartitions`) and `RangePartitioner` (samples keys to create relatively equal-sized ranges).
 - **`DAGScheduler`:** This component analyzes the RDD/DataFrame lineage. Whenever it encounters a change in the `Partitioner` (e.g., a `groupByKey` or a join requiring repartitioning), it inserts a Shuffle boundary, dividing the execution plan into distinct Stages.
 - **`BlockManager`:** Exists on every executor and manages the storage of partition data. During shuffles, it writes map outputs to local disk and serves them to reducer tasks over the network via the `ShuffleClient`.
-- **`Exchange` (ShuffleExchangeExec):** The physical execution node generated by the Catalyst optimizer that performs the actual network shuffle to satisfy a required data distribution (like `HashPartitioning` for a `SortMergeJoin`).
+- **`Exchange` (ShuffleExchangeExec):** The physical execution node generated by the Catalyst optimizer that performs the actual network shuffle to satisfy a required data distribution (like `HashPartitioning` for a `SortMergeJoin`). [Ref: 469](spark_book.pdf#page=469)
 
----
+--- [Ref: 452](spark_book.pdf#page=452)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
 
 ### Data Skew and the "Straggler" Problem
-Data skew is the most common and devastating failure mode in distributed data processing. It occurs when a `HashPartitioner` maps an overwhelmingly large proportion of records to a single partition (or a few partitions). For instance, if you partition sales data by `country`, the partition for "USA" might be 100x larger than "Iceland". When executing a Stage, the `TaskScheduler` must wait for all tasks in that Stage to complete before moving on. The task processing the "USA" partition becomes a "straggler," running for hours while other CPU cores sit idle. Furthermore, this massive partition will likely exceed the executor's JVM heap space, leading to relentless Garbage Collection (GC) pauses, disk spilling, and eventually an `OutOfMemoryError` (OOM), crashing the executor and failing the job.
+Data skew is the most common and devastating failure mode in distributed data processing. It occurs when a `HashPartitioner` maps an overwhelmingly large proportion of records to a single partition (or a few partitions). For instance, if you partition sales data by `country`, the partition for "USA" might be 100x larger than "Iceland". When executing a Stage, the `TaskScheduler` must wait for all tasks in that Stage to complete before moving on. The task processing the "USA" partition becomes a "straggler," running for hours while other CPU cores sit idle. Furthermore, this massive partition will likely exceed the executor's JVM heap space, leading to relentless Garbage Collection (GC) pauses, disk spilling, and eventually an `OutOfMemoryError` (OOM), crashing the executor and failing the job. [Ref: 459](spark_book.pdf#page=459)
 
 ### The Repartition vs. Coalesce Trade-off
-Engineers frequently misunderstand the mechanical difference between `repartition()` and `coalesce()`. `repartition(n)` always forces a full cluster-wide network shuffle, creating exactly `n` partitions of roughly equal size using a Round Robin partitioning scheme (if no column is specified). It is highly expensive but guarantees uniform partition sizes. Conversely, `coalesce(n)` avoids a full shuffle. If you are reducing the number of partitions (e.g., from 1000 to 100), `coalesce` simply logically merges existing partitions on the same node. However, this causes upstream tasks to run with fewer partitions. If you read a 1TB file and immediately `coalesce(1)`, you force the entire 1TB read to happen on a single executor core, destroying parallelism and inevitably causing an OOM. `coalesce` should only be used *after* a heavy filter to reduce partition count before writing to disk, without inducing a shuffle.
+Engineers frequently misunderstand the mechanical difference between `repartition()` and `coalesce()`. `repartition(n)` always forces a full cluster-wide network shuffle, creating exactly `n` partitions of roughly equal size using a Round Robin partitioning scheme (if no column is specified). It is highly expensive but guarantees uniform partition sizes. Conversely, `coalesce(n)` avoids a full shuffle. If you are reducing the number of partitions (e.g., from 1000 to 100), `coalesce` simply logically merges existing partitions on the same node. However, this causes upstream tasks to run with fewer partitions. If you read a 1TB file and immediately `coalesce(1)`, you force the entire 1TB read to happen on a single executor core, destroying parallelism and inevitably causing an OOM. `coalesce` should only be used *after* a heavy filter to reduce partition count before writing to disk, without inducing a shuffle. [Ref: 463](spark_book.pdf#page=463)
 
----
+--- [Ref: 453](spark_book.pdf#page=453)
 
 ## 📊 Performance Characteristics
 
@@ -72,11 +72,11 @@ Engineers frequently misunderstand the mechanical difference between `repartitio
 | `repartition(col)` | O(N) | Yes | Hash partitions by column. Excellent for preparing data for joins/aggregations, but highly susceptible to data skew. |
 | `coalesce(n)` | O(1) metadata | No* | Fuses partitions locally. (*Only shuffles if `n` > current partitions, in which case it behaves like `repartition`). |
 | `partitionBy(col)` | O(N) | Yes | Used during write operations. Writes data into directory structures (e.g., `col=value/`). Can create the "Small Files Problem" if overused. |
-| `bucketBy(col)` | O(N) | Yes | Saves data pre-partitioned and pre-sorted, storing metadata in the Hive Metastore to eliminate shuffles in future queries. |
+| `bucketBy(col)` | O(N) | Yes | Saves data pre-partitioned and pre-sorted, storing metadata in the Hive Metastore to eliminate shuffles in future queries. | [Ref: 457](spark_book.pdf#page=457)
 
----
+--- [Ref: 461](spark_book.pdf#page=461)
 
-## 💻 Code Examples
+## 💻 Code Examples [Ref: 464](spark_book.pdf#page=464)
 
 ### Example 1: Mitigating Data Skew with Salted Keys
 
@@ -95,23 +95,23 @@ val SALT_BINS = 100
 // We add a random integer between 0 and 99 to the join key.
 // This splits the massive single partition into 100 smaller, manageable partitions.
 val saltedTransactions = transactions
-  .withColumn("salt", expr(s"cast(rand() * $SALT_BINS as int)"))
-  .withColumn("salted_customer_id", concat($"customer_id", lit("_"), $"salt"))
+ .withColumn("salt", expr(s"cast(rand() * $SALT_BINS as int)"))
+ .withColumn("salted_customer_id", concat($"customer_id", lit("_"), $"salt"))
 
 // 2. Explode the Dimension Table (Customers)
 // To ensure the join still works, the dimension table must be duplicated for every possible salt value.
 // This increases the dimension table size by 100x, but prevents the OOM on the skewed transaction side.
 val saltValues = spark.range(0, SALT_BINS).withColumnRenamed("id", "salt")
 val explodedCustomers = customers
-  .crossJoin(saltValues) // Cartesian product to duplicate rows
-  .withColumn("salted_customer_id", concat($"customer_id", lit("_"), $"salt"))
+ .crossJoin(saltValues) // Cartesian product to duplicate rows
+ .withColumn("salted_customer_id", concat($"customer_id", lit("_"), $"salt"))
 
 // 3. Perform the Join on the Salted Keys
 // The Catalyst optimizer's Exchange node will now use HashPartitioning on 'salted_customer_id'.
 // The skewed customer is now processed concurrently across 100 tasks instead of stalling 1 task.
 val joinedData = saltedTransactions
-  .join(explodedCustomers, Seq("salted_customer_id"), "inner")
-  .drop("salt", "salted_customer_id")
+ .join(explodedCustomers, Seq("salted_customer_id"), "inner")
+ .drop("salt", "salted_customer_id")
 ```
 
 > **Mastery Note:** A senior engineer recognizes that salting is a desperate measure used only when Catalyst's Adaptive Query Execution (AQE) Skew Join Optimization is insufficient or unavailable. The code deliberately trades computational overhead (a cross join on the dimension table) for stability and parallelism. By hashing on `salted_customer_id`, Tungsten's `ShuffleExchangeExec` distributes the skewed records across the cluster, preventing a single executor's JVM heap from overflowing and minimizing GC pressure by a factor of `SALT_BINS`.
@@ -182,18 +182,18 @@ val eventsDF = spark.read.parquet("/data/events")
 // We also sort the data within those buckets using sortBy.
 // Note: saveAsTable registers the bucketing metadata in the Hive Metastore.
 usersDF.write
-  .format("parquet")
-  .bucketBy(256, "user_id")
-  .sortBy("user_id")
-  .mode(SaveMode.Overwrite)
-  .saveAsTable("bucketed_users")
+ .format("parquet")
+ .bucketBy(256, "user_id")
+ .sortBy("user_id")
+ .mode(SaveMode.Overwrite)
+ .saveAsTable("bucketed_users")
 
 eventsDF.write
-  .format("parquet")
-  .bucketBy(256, "user_id") // MUST have the exact same number of buckets
-  .sortBy("user_id")
-  .mode(SaveMode.Overwrite)
-  .saveAsTable("bucketed_events")
+ .format("parquet")
+ .bucketBy(256, "user_id") // MUST have the exact same number of buckets
+ .sortBy("user_id")
+ .mode(SaveMode.Overwrite)
+ .saveAsTable("bucketed_events")
 
 // 2. Query the bucketed tables.
 val bUsers = spark.table("bucketed_users")
@@ -222,13 +222,13 @@ from pyspark.sql.functions import sum, col
 
 # Initialize Spark with AQE enabled and aggressive partition coalescing configured.
 spark = SparkSession.builder \
-    .appName("AQE_Partitioning") \
-    .config("spark.sql.adaptive.enabled", "true") \
-    .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
-    .config("spark.sql.shuffle.partitions", "2000") \
-    .config("spark.sql.adaptive.advisoryPartitionSizeInBytes", "134217728") \
-    .config("spark.sql.adaptive.coalescePartitions.minPartitionNum", "10") \
-    .getOrCreate()
+ .appName("AQE_Partitioning") \
+ .config("spark.sql.adaptive.enabled", "true") \
+ .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
+ .config("spark.sql.shuffle.partitions", "2000") \
+ .config("spark.sql.adaptive.advisoryPartitionSizeInBytes", "134217728") \
+ .config("spark.sql.adaptive.coalescePartitions.minPartitionNum", "10") \
+ .getOrCreate()
 
 # Read raw data. Assume it creates 500 partitions based on HDFS block sizing.
 df = spark.read.parquet("s3a://raw-zone/clickstream/")
@@ -266,9 +266,9 @@ To achieve true mastery of Data Partitioning:
 
 ## 📚 Summary
 
-Data partitioning is not merely an operational detail in Apache Spark; it is the absolute foundation of its distributed computing model. A deep understanding of how the Catalyst optimizer tracks partitioning across logical plans, and how the Tungsten engine physically executes shuffles based on those partitions, separates average developers from elite data engineers. The mechanics of partition layout directly govern network I/O, JVM heap utilization, and task parallelism. [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)
+Data partitioning is not merely an operational detail in Apache Spark; it is the absolute foundation of its distributed computing model. A deep understanding of how the Catalyst optimizer tracks partitioning across logical plans, and how the Tungsten engine physically executes shuffles based on those partitions, separates average developers from elite data engineers. The mechanics of partition layout directly govern network I/O, JVM heap utilization, and task parallelism. 
 
-Mastering partitioning requires recognizing that Spark is fundamentally a network-bound system operating under strict memory constraints. By utilizing techniques like key salting to defeat data skew, leveraging bucketing to eliminate Sort-Merge Join shuffles, and properly ordering `coalesce` and `repartition` transformations to protect DAG parallelism, engineers can tame the volatility of distributed data processing. [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463)
+Mastering partitioning requires recognizing that Spark is fundamentally a network-bound system operating under strict memory constraints. By utilizing techniques like key salting to defeat data skew, leveraging bucketing to eliminate Sort-Merge Join shuffles, and properly ordering `coalesce` and `repartition` transformations to protect DAG parallelism, engineers can tame the volatility of distributed data processing. 
 
 Ultimately, modern Spark relies on Adaptive Query Execution to handle dynamic partition sizing, but AQE cannot fix fundamentally flawed logical plans. The engineer must still architect the data layout—both in memory and on disk—to ensure that the physical execution limits cross-node traffic and maximizes the throughput of Tungsten's vectorized processing engine. True Spark mastery is achieved when the engineer controls the partitions, rather than the partitions controlling the cluster.
-</🔥 Master Class: Data Partitioning> [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)
+</🔥 Master Class: Data Partitioning> 

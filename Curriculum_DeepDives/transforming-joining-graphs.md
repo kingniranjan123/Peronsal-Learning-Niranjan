@@ -23,18 +23,18 @@ motifs = g.find("(a)-[e1]->(b); (b)-[e2]->(c); (c)-[e3]->(a)")
 
 # Filter specific edge relationships to ensure the semantic meaning of the motif
 filtered_motifs = motifs.filter(
-    (col("e1.relationship") == "follows") &
-    (col("e2.relationship") == "likes") &
-    (col("e3.relationship") == "authored_by")
+ (col("e1.relationship") == "follows") &
+ (col("e2.relationship") == "likes") &
+ (col("e3.relationship") == "authored_by")
 )
 
 # Transform the complex nested structure into a flattened, feature-rich DataFrame
 transformed_graph_features = filtered_motifs.select(
-    col("a.id").alias("user_a"),
-    col("b.id").alias("user_b"),
-    col("c.id").alias("post_c"),
-    (col("a.reputation") + col("b.reputation")).alias("combined_reputation_score"),
-    when(col("a.age") > col("b.age"), "A_Older").otherwise("B_Older").alias("age_dynamic")
+ col("a.id").alias("user_a"),
+ col("b.id").alias("user_b"),
+ col("c.id").alias("post_c"),
+ (col("a.reputation") + col("b.reputation")).alias("combined_reputation_score"),
+ when(col("a.age") > col("b.age"), "A_Older").otherwise("B_Older").alias("age_dynamic")
 )
 
 transformed_graph_features.explain(True)
@@ -75,8 +75,8 @@ optimized_sub_g = GraphFrame(connected_vertices, sub_g.edges)
 # Step 5: Mutate properties - apply a complex decay function to edge weights
 # Using expr for Catalyst-optimized SQL expressions rather than Python UDFs
 mutated_edges = optimized_sub_g.edges.withColumn(
-    "decayed_weight",
-    expr("weight * exp(-0.1 * datediff(current_date(), interaction_date))")
+ "decayed_weight",
+ expr("weight * exp(-0.1 * datediff(current_date(), interaction_date))")
 )
 
 final_g = GraphFrame(optimized_sub_g.vertices, mutated_edges)
@@ -107,9 +107,9 @@ geo_lookup_df = spark.read.parquet("s3a://data-lake/dimensions/geo_data/")
 # Enforce a Broadcast Hash Join to avoid shuffling the graph vertices
 # The hint ensures Catalyst does not default to a Sort Merge Join
 enriched_vertices = vertices_df.join(
-    broadcast(geo_lookup_df),
-    vertices_df["region_code"] == geo_lookup_df["code"],
-    "left_outer"
+ broadcast(geo_lookup_df),
+ vertices_df["region_code"] == geo_lookup_df["code"],
+ "left_outer"
 )
 
 # Reconstruct the graph with enriched vertices
@@ -118,10 +118,10 @@ enriched_graph = GraphFrame(enriched_vertices, g.edges)
 # Run a localized aggregation using the new enriched attributes
 # E.g., counting outbound edges per country
 outbound_by_country = enriched_graph.edges \
-    .join(enriched_graph.vertices, enriched_graph.edges["src"] == enriched_graph.vertices["id"]) \
-    .groupBy("country_name") \
-    .count() \
-    .orderBy(col("count").desc())
+ .join(enriched_graph.vertices, enriched_graph.edges["src"] == enriched_graph.vertices["id"]) \
+ .groupBy("country_name") \
+ .count() \
+ .orderBy(col("count").desc())
 
 outbound_by_country.show()
 ```
@@ -144,8 +144,8 @@ acyclic_paths = path_motif.filter(col("a.id") != col("c.id"))
 # Calculate a transitive trust score based on edge weights
 # Trust decays multiplicatively across hops
 trust_propagation = acyclic_paths.withColumn(
-    "transitive_trust",
-    col("ab.trust_weight") * col("bc.trust_weight")
+ "transitive_trust",
+ col("ab.trust_weight") * col("bc.trust_weight")
 )
 
 # Aggregate the total trust User C receives from all User As
@@ -155,11 +155,11 @@ spark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")
 spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", "true")
 
 aggregated_trust = trust_propagation.groupBy("c.id") \
-    .agg(
-        F.sum("transitive_trust").alias("total_inbound_trust"),
-        F.count("a.id").alias("unique_trust_sources"),
-        F.collect_set("b.id").alias("intermediary_brokers")
-    )
+ .agg(
+ F.sum("transitive_trust").alias("total_inbound_trust"),
+ F.count("a.id").alias("unique_trust_sources"),
+ F.collect_set("b.id").alias("intermediary_brokers")
+ )
 
 aggregated_trust.explain()
 ```

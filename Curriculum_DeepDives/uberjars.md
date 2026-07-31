@@ -6,11 +6,11 @@ An uberjar (also called a "fat JAR" or "assembly JAR") is a single, self-contain
 
 The uberjar pattern emerged from the reality that Spark's distributed execution model requires bytecode to be physically shipped from the driver to executors. When you pass `--jars` or set `spark.jars`, Spark uploads those files to HDFS or the Kubernetes staging area and redistributes them via the `BlockManager`. A single fat JAR simplifies this to one atomic operation. The trade-off is significant: combining dozens of dependency JARs into one archive introduces class relocation conflicts, Metaspace inflation, and classloading races that can silently corrupt runtime behavior in ways that are extraordinarily difficult to diagnose without deep JVM knowledge.
 
-Production Spark engineering demands you understand not just *how* to build an uberjar, but *what happens inside the JVM* when that JAR is loaded — across every executor, simultaneously, under GC pressure.
+Production Spark engineering demands you understand not just *how* to build an uberjar, but *what happens inside the JVM* when that JAR is loaded — across every executor, simultaneously, under GC pressure. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 455](spark_book.pdf#page=455)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
 
 ### How It Works Under the Hood
 
@@ -20,30 +20,30 @@ On the executor side, the TaskScheduler instructs executors to fetch the JAR via
 
 The Catalyst optimizer's code generation phase — Whole-Stage CodeGen — dynamically compiles generated query plans into JVM bytecode at runtime using Janino. These generated classes are loaded into the executor's classloader alongside your uberjar's classes. If your uberjar has relocated or shadowed a version of a library that Janino or the Catalyst runtime expects (e.g., `com.google.common` from Guava), a `NoSuchMethodError` or `ClassCastException` emerges at plan execution time, not at job submission — making the failure appear non-deterministic. Kryo serialization compounds this: Kryo resolves class names to `Class` objects via `Class.forName()`, which uses the current thread's context classloader. If the uberjar's classloader hierarchy is misconfigured, Kryo silently falls back to Java serialization, inflating shuffle payload sizes by 3–5× and crashing on non-`Serializable` types.
 
-```
+```text
 spark-submit (Driver JVM)
 ┌────────────────────────────────────────────────────────────┐
-│  Bootstrap ClassLoader                                     │
-│    └── System ClassLoader (spark-assembly.jar, Scala rt)  │
-│          └── MutableURLClassLoader                        │
-│                └── [myapp-assembly.jar → Metaspace]       │
-│                      30,000 Klass structs ~350MB          │
+│ Bootstrap ClassLoader │
+│ └── System ClassLoader (spark-assembly.jar, Scala rt) │
+│ └── MutableURLClassLoader │
+│ └── [myapp-assembly.jar → Metaspace] │
+│ 30,000 Klass structs ~350MB │
 └─────────────────────────────┬──────────────────────────────┘
-                              │  JAR upload via HTTP / HDFS
-              ┌───────────────▼───────────────┐
-              │   BlockManager (Driver)        │
-              │   spark.files.useFetchCache=T  │
-              └───────────────┬───────────────┘
-                              │  fetch (per executor)
-   Executor JVM #1            │           Executor JVM #N
-   ┌──────────────────┐       │     ┌──────────────────┐
-   │ ExecutorClassLdr │◀──────┴────▶│ ExecutorClassLdr │
-   │ [Metaspace: 350M]│             │ [Metaspace: 350M]│
-   │ Tungsten off-heap│             │ Tungsten off-heap│
-   │ (managed memory) │             │ (managed memory) │
-   └──────────────────┘             └──────────────────┘
-        Whole-Stage CodeGen               Whole-Stage CodeGen
-        (Janino → new Klass structs)      (Janino → new Klass structs)
+ │ JAR upload via HTTP / HDFS
+ ┌───────────────▼───────────────┐
+ │ BlockManager (Driver) │
+ │ spark.files.useFetchCache=T │
+ └───────────────┬───────────────┘
+ │ fetch (per executor)
+ Executor JVM #1 │ Executor JVM #N
+ ┌──────────────────┐ │ ┌──────────────────┐
+ │ ExecutorClassLdr │◀──────┴────▶│ ExecutorClassLdr │
+ │ [Metaspace: 350M]│ │ [Metaspace: 350M]│
+ │ Tungsten off-heap│ │ Tungsten off-heap│
+ │ (managed memory) │ │ (managed memory) │
+ └──────────────────┘ └──────────────────┘
+ Whole-Stage CodeGen Whole-Stage CodeGen
+ (Janino → new Klass structs) (Janino → new Klass structs) [Ref: 462](spark_book.pdf#page=462)
 ```
 
 ### Key Internal Components
@@ -54,25 +54,25 @@ spark-submit (Driver JVM)
 
 - **sbt-assembly / Maven Shade Plugin:** Build-time tools that merge all dependency JARs into a single archive. Both support *relocation* (rewriting bytecode to move packages to new namespaces, e.g., `com.google.common` → `shaded.com.google.common`) to isolate your dependency versions from Spark's own dependencies that co-exist on the classpath.
 
-- **Metaspace (JVM Native Memory):** The off-heap region storing class metadata (`Klass`, `Method`, `ConstantPool` structures). Unlike the PermGen of JDK 7, Metaspace grows dynamically. Each unique loaded class consumes memory here permanently until its classloader is GC'd. Fat JARs with many classes that are never actually instantiated still incur Metaspace cost upon first reference during classpath scanning by frameworks like Spring or Jackson's `ObjectMapper`.
+- **Metaspace (JVM Native Memory):** The off-heap region storing class metadata (`Klass`, `Method`, `ConstantPool` structures). Unlike the PermGen of JDK 7, Metaspace grows dynamically. Each unique loaded class consumes memory here permanently until its classloader is GC'd. Fat JARs with many classes that are never actually instantiated still incur Metaspace cost upon first reference during classpath scanning by frameworks like Spring or Jackson's `ObjectMapper`. [Ref: 469](spark_book.pdf#page=469)
 
----
+--- [Ref: 452](spark_book.pdf#page=452)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
 
 ### Classpath Conflict: The "Jar Hell" Failure Mode
 
 When two JARs inside your uberjar contain the same fully-qualified class name — for example, `org.apache.commons.lang3.StringUtils` from `commons-lang3:3.9` (your dependency) and `commons-lang3:3.4` (Spark's internal dependency) — the classloader loads whichever version appears first in the JAR's internal entry order. This is non-deterministic across build runs if `mergeStrategy` is not set explicitly in sbt-assembly. The loaded class may have a different binary API than the caller expects, producing a `NoSuchMethodError` at runtime that references a method that exists in the wrong version.
 
-The insidious failure mode is that unit tests pass (running against your build classpath with your version first) while the cluster job fails (Spark's version wins at runtime). The fix requires either shading the conflicting dependency — rewriting all bytecode references with a tool like `jarjar` — or explicitly excluding your version and relying on Spark's bundled copy with `provided` scope. Shading is safer for libraries like Guava, Protobuf, and Jackson, which Spark ships internally and which undergo frequent breaking API changes between minor versions.
+The insidious failure mode is that unit tests pass (running against your build classpath with your version first) while the cluster job fails (Spark's version wins at runtime). The fix requires either shading the conflicting dependency — rewriting all bytecode references with a tool like `jarjar` — or explicitly excluding your version and relying on Spark's bundled copy with `provided` scope. Shading is safer for libraries like Guava, Protobuf, and Jackson, which Spark ships internally and which undergo frequent breaking API changes between minor versions. [Ref: 459](spark_book.pdf#page=459)
 
 ### Metaspace Pressure and Container Eviction in Kubernetes
 
 A 70MB uberjar containing Jackson, Guava, Protobuf, Kryo, Avro, and Hive metastore client can load 45,000+ classes, consuming 500–700MB of Metaspace. On Kubernetes, an executor pod configured with `executor.memory=4g` and no explicit native memory overhead will have its container memory limit set to approximately 4.4GB by Spark's default overhead formula (`spark.executor.memoryOverhead = max(executor.memory × 0.10, 384MB)`). With 700MB of Metaspace, 300MB of JVM internal structures, and 4GB of heap, the process's actual RSS easily exceeds 5GB, triggering `OOMKilled` with exit code 137. The pod restarts, the task retries, and the Spark UI shows mysterious "executor lost" events rather than an explicit OOM.
 
-The correct fix is to set `spark.executor.memoryOverheadFactor` to account for Metaspace (typically 0.20–0.30 for large uberjars) and to explicitly bound Metaspace with `-XX:MaxMetaspaceSize=512m`. Setting `MaxMetaspaceSize` without adequate overhead causes `OutOfMemoryError: Metaspace`, but at least produces a diagnosable JVM error rather than a silent container kill.
+The correct fix is to set `spark.executor.memoryOverheadFactor` to account for Metaspace (typically 0.20–0.30 for large uberjars) and to explicitly bound Metaspace with `-XX:MaxMetaspaceSize=512m`. Setting `MaxMetaspaceSize` without adequate overhead causes `OutOfMemoryError: Metaspace`, but at least produces a diagnosable JVM error rather than a silent container kill. [Ref: 463](spark_book.pdf#page=463)
 
----
+--- [Ref: 470](spark_book.pdf#page=470)
 
 ## 📊 Performance Characteristics
 
@@ -83,11 +83,11 @@ The correct fix is to set `spark.executor.memoryOverheadFactor` to account for M
 | Class loading into Metaspace | O(n_classes) | No | Lazy per first-reference; framework scanners (Spring, Jackson) eagerly load all |
 | Kryo class registration lookup | O(1) amortized | No | Degrades to O(n) scan if unregistered; fallback to Java serialization kills shuffle perf |
 | Shade relocation bytecode rewrite | O(n_class_files) | No | Build-time only; zero runtime cost once JAR is assembled |
-| Duplicate class merge at assembly | O(n_entries) | No | Incorrect `MergeStrategy` silently drops classes; validate with `jarjar inspect` |
+| Duplicate class merge at assembly | O(n_entries) | No | Incorrect `MergeStrategy` silently drops classes; validate with `jarjar inspect` | [Ref: 453](spark_book.pdf#page=453)
 
----
+--- [Ref: 457](spark_book.pdf#page=457)
 
-## 💻 Code Examples
+## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
 
 ### Example 1: Correct sbt-assembly Configuration with Shading and Merge Strategies
 
@@ -98,81 +98,81 @@ The correct fix is to set `spark.executor.memoryOverheadFactor` to account for M
 // Every non-trivial directive is annotated with its runtime consequence.
 
 ThisBuild / scalaVersion := "2.12.17"
-ThisBuild / version      := "1.0.0"
+ThisBuild / version := "1.0.0"
 
 lazy val root = (project in file("."))
-  .settings(
-    name := "my-spark-job",
+ .settings(
+ name := "my-spark-job",
 
-    libraryDependencies ++= Seq(
-      // Mark spark-core as "provided" — it MUST NOT be bundled into the uberjar.
-      // The executor classpath already contains Spark's own JARs. Bundling them
-      // causes class duplication and can load two SparkContext implementations,
-      // producing "Cannot run multiple SparkContexts" errors.
-      "org.apache.spark" %% "spark-core" % "3.3.2" % "provided",
-      "org.apache.spark" %% "spark-sql"  % "3.3.2" % "provided",
+ libraryDependencies ++= Seq(
+ // Mark spark-core as "provided" — it MUST NOT be bundled into the uberjar.
+ // The executor classpath already contains Spark's own JARs. Bundling them
+ // causes class duplication and can load two SparkContext implementations,
+ // producing "Cannot run multiple SparkContexts" errors.
+ "org.apache.spark" %% "spark-core" % "3.3.2" % "provided",
+ "org.apache.spark" %% "spark-sql" % "3.3.2" % "provided",
 
-      // Your application dependencies — these WILL be bundled.
-      "com.google.guava"         % "guava"         % "31.1-jre",  // conflicts with Spark's guava-14
-      "com.google.protobuf"      % "protobuf-java" % "3.21.12",   // conflicts with Spark's protobuf-2.5
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.2"
-    ),
+ // Your application dependencies — these WILL be bundled.
+ "com.google.guava" % "guava" % "31.1-jre", // conflicts with Spark's guava-14
+ "com.google.protobuf" % "protobuf-java" % "3.21.12", // conflicts with Spark's protobuf-2.5
+ "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.2"
+ ),
 
-    // assemblyShadeRules: rewrite bytecode to relocate conflicting packages.
-    // After shading, all references to com.google.common.* inside YOUR code
-    // and YOUR dependencies are rewritten to shaded.com.google.common.*
-    // Spark's classpath still uses the original com.google.common.* namespace,
-    // so the two versions coexist in the same JVM without collision.
-    assemblyShadeRules in assembly := Seq(
-      ShadeRule.rename("com.google.common.**" -> "shaded.com.google.common.@1")
-        .inAll,  // applies to all JARs in the assembly, not just direct deps
-      ShadeRule.rename("com.google.protobuf.**" -> "shaded.com.google.protobuf.@1")
-        .inAll,
-      // Do NOT shade Scala standard library or Spark API classes —
-      // shading scala.collection.* would break interoperability with Spark's own code.
-      ShadeRule.keep("org.apache.spark.**").inAll
-    ),
+ // assemblyShadeRules: rewrite bytecode to relocate conflicting packages.
+ // After shading, all references to com.google.common.* inside YOUR code
+ // and YOUR dependencies are rewritten to shaded.com.google.common.*
+ // Spark's classpath still uses the original com.google.common.* namespace,
+ // so the two versions coexist in the same JVM without collision.
+ assemblyShadeRules in assembly := Seq(
+ ShadeRule.rename("com.google.common.**" -> "shaded.com.google.common.@1")
+ .inAll, // applies to all JARs in the assembly, not just direct deps
+ ShadeRule.rename("com.google.protobuf.**" -> "shaded.com.google.protobuf.@1")
+ .inAll,
+ // Do NOT shade Scala standard library or Spark API classes —
+ // shading scala.collection.* would break interoperability with Spark's own code.
+ ShadeRule.keep("org.apache.spark.**").inAll
+ ),
 
-    // assemblyMergeStrategy: define what to do when two JARs contribute
-    // the same file path. The default MergeStrategy.deduplicate throws an
-    // error if the files differ — safer than silently picking one, but
-    // requires explicit handling of every conflict category.
-    assemblyMergeStrategy in assembly := {
+ // assemblyMergeStrategy: define what to do when two JARs contribute
+ // the same file path. The default MergeStrategy.deduplicate throws an
+ // error if the files differ — safer than silently picking one, but
+ // requires explicit handling of every conflict category.
+ assemblyMergeStrategy in assembly := {
 
-      // META-INF/MANIFEST.MF: each JAR has one; keep only the assembly's manifest.
-      case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+ // META-INF/MANIFEST.MF: each JAR has one; keep only the assembly's manifest.
+ case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
 
-      // Service provider files (META-INF/services/*): MUST be concatenated,
-      // not discarded. Discarding these breaks Java SPI discovery —
-      // e.g., Jackson's ObjectMapper will fail to find its modules.
-      case PathList("META-INF", "services", _*) => MergeStrategy.concat
+ // Service provider files (META-INF/services/*): MUST be concatenated,
+ // not discarded. Discarding these breaks Java SPI discovery —
+ // e.g., Jackson's ObjectMapper will fail to find its modules.
+ case PathList("META-INF", "services", _*) => MergeStrategy.concat
 
-      // License and notice files: discard duplicates to reduce JAR size.
-      case PathList("META-INF", xs @ _*) if xs.exists(_.endsWith(".SF"))  =>
-        MergeStrategy.discard  // discard signature files — they invalidate JAR signing
-      case PathList("META-INF", xs @ _*) if xs.exists(_.endsWith(".DSA")) =>
-        MergeStrategy.discard
-      case PathList("META-INF", xs @ _*) if xs.exists(_.endsWith(".RSA")) =>
-        MergeStrategy.discard
+ // License and notice files: discard duplicates to reduce JAR size.
+ case PathList("META-INF", xs @ _*) if xs.exists(_.endsWith(".SF")) =>
+ MergeStrategy.discard // discard signature files — they invalidate JAR signing
+ case PathList("META-INF", xs @ _*) if xs.exists(_.endsWith(".DSA")) =>
+ MergeStrategy.discard
+ case PathList("META-INF", xs @ _*) if xs.exists(_.endsWith(".RSA")) =>
+ MergeStrategy.discard
 
-      // reference.conf: Akka/Typesafe config files MUST be concatenated,
-      // not discarded. Spark's internal Akka uses reference.conf for defaults;
-      // your app may also have one. Discarding either silently removes config keys
-      // that cause NullPointerExceptions in ActorSystem initialization.
-      case "reference.conf" => MergeStrategy.concat
+ // reference.conf: Akka/Typesafe config files MUST be concatenated,
+ // not discarded. Spark's internal Akka uses reference.conf for defaults;
+ // your app may also have one. Discarding either silently removes config keys
+ // that cause NullPointerExceptions in ActorSystem initialization.
+ case "reference.conf" => MergeStrategy.concat
 
-      // For all other duplicate paths, prefer the first occurrence.
-      // Log a warning in CI to catch unexpected merges.
-      case x =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
-        oldStrategy(x)
-    },
+ // For all other duplicate paths, prefer the first occurrence.
+ // Log a warning in CI to catch unexpected merges.
+ case x =>
+ val oldStrategy = (assemblyMergeStrategy in assembly).value
+ oldStrategy(x)
+ },
 
-    // Exclude the scala-library from the uberjar — it is provided by Spark.
-    // Including it doubles startup time and triggers "incompatible Scala binary" warnings.
-    assemblyOption in assembly :=
-      (assemblyOption in assembly).value.copy(includeScala = false)
-  )
+ // Exclude the scala-library from the uberjar — it is provided by Spark.
+ // Including it doubles startup time and triggers "incompatible Scala binary" warnings.
+ assemblyOption in assembly :=
+ (assemblyOption in assembly).value.copy(includeScala = false)
+ ) [Ref: 464](spark_book.pdf#page=464)
 ```
 
 > **Mastery Note:** The `ShadeRule.rename(...).inAll` directive is critical — without `.inAll`, only classes in the *directly matched dependency* are relocated, but transitive dependencies that call into Guava's API are not rewritten, leaving dangling references to the original `com.google.common` namespace that collide with Spark's Guava. The `META-INF/services` concat strategy is the most commonly forgotten: discarding SPI descriptors silently breaks Jackson's `ObjectMapper` module discovery, producing `InvalidDefinitionException` that manifests only when serializing certain types, not during `SparkSession` initialization. Always validate your assembly with `jar tf myapp-assembly.jar | grep -c "\.class"` — if the class count drops significantly between builds, a `MergeStrategy.discard` is silently removing class files.
@@ -189,81 +189,81 @@ import java.net.URLClassLoader
 
 object ClasspathDiagnostics {
 
-  def main(args: Array[String]): Unit = {
+ def main(args: Array[String]): Unit = {
 
-    val spark = SparkSession.builder()
-      .appName("ClasspathDiagnostics")
-      .getOrCreate()
+ val spark = SparkSession.builder()
+ .appName("ClasspathDiagnostics")
+ .getOrCreate()
 
-    // --- Driver-side classloader introspection ---
+ // --- Driver-side classloader introspection ---
 
-    // Get the context classloader — on the driver this is Spark's
-    // MutableURLClassLoader, which wraps the system classloader.
-    val cl = Thread.currentThread().getContextClassLoader
+ // Get the context classloader — on the driver this is Spark's
+ // MutableURLClassLoader, which wraps the system classloader.
+ val cl = Thread.currentThread().getContextClassLoader
 
-    // Walk up the classloader hierarchy to understand delegation order.
-    // Parent-first delegation means Spark's JARs are searched BEFORE your
-    // uberjar's classes, which is the root cause of version conflict failures.
-    def printClassloaderChain(loader: ClassLoader, depth: Int = 0): Unit = {
-      if (loader != null) {
-        val prefix = "  " * depth + "├── "
-        val urls = loader match {
-          case ucl: URLClassLoader =>
-            ucl.getURLs.map(_.toString).mkString(", ")
-          case other => other.getClass.getName
-        }
-        println(s"$prefix${loader.getClass.getName}: $urls")
-        printClassloaderChain(loader.getParent, depth + 1)
-      }
-    }
+ // Walk up the classloader hierarchy to understand delegation order.
+ // Parent-first delegation means Spark's JARs are searched BEFORE your
+ // uberjar's classes, which is the root cause of version conflict failures.
+ def printClassloaderChain(loader: ClassLoader, depth: Int = 0): Unit = {
+ if (loader != null) {
+ val prefix = " " * depth + "├── "
+ val urls = loader match {
+ case ucl: URLClassLoader =>
+ ucl.getURLs.map(_.toString).mkString(", ")
+ case other => other.getClass.getName
+ }
+ println(s"$prefix${loader.getClass.getName}: $urls")
+ printClassloaderChain(loader.getParent, depth + 1)
+ }
+ }
 
-    println("=== Classloader Hierarchy (Driver) ===")
-    printClassloaderChain(cl)
+ println("=== Classloader Hierarchy (Driver) ===")
+ printClassloaderChain(cl)
 
-    // --- Detect which version of a class is actually loaded ---
-    // This resolves the class and prints the JAR it was loaded from.
-    // If it shows spark-assembly.jar instead of myapp-assembly.jar,
-    // Spark's version is winning and your code may call wrong method signatures.
-    def detectClassSource(className: String): Unit = {
-      try {
-        val clazz = Class.forName(className, false, cl)
-        val source = clazz.getProtectionDomain.getCodeSource
-        val location = if (source != null) source.getLocation.toString else "bootstrap/JDK"
-        println(s"[OK]  $className  →  $location")
-      } catch {
-        case _: ClassNotFoundException =>
-          println(s"[MISSING]  $className  →  NOT FOUND on classpath")
-      }
-    }
+ // --- Detect which version of a class is actually loaded ---
+ // This resolves the class and prints the JAR it was loaded from.
+ // If it shows spark-assembly.jar instead of myapp-assembly.jar,
+ // Spark's version is winning and your code may call wrong method signatures.
+ def detectClassSource(className: String): Unit = {
+ try {
+ val clazz = Class.forName(className, false, cl)
+ val source = clazz.getProtectionDomain.getCodeSource
+ val location = if (source != null) source.getLocation.toString else "bootstrap/JDK"
+ println(s"[OK] $className → $location")
+ } catch {
+ case _: ClassNotFoundException =>
+ println(s"[MISSING] $className → NOT FOUND on classpath")
+ }
+ }
 
-    println("\n=== Critical Class Source Resolution ===")
-    // Check which Guava is loaded — Spark bundles guava-14, you may need guava-31.
-    detectClassSource("com.google.common.collect.ImmutableMap")
-    // Check Protobuf version — Spark 3.x bundles protobuf-3.21 internally but
-    // older distributions ship 2.5; a version mismatch here corrupts Hive metastore RPCs.
-    detectClassSource("com.google.protobuf.GeneratedMessageV3")
-    // Check Jackson databind version — Spark bundles 2.13.x; mixing with 2.14.x
-    // causes JsonMappingException on schema inference for complex nested types.
-    detectClassSource("com.fasterxml.jackson.databind.ObjectMapper")
+ println("\n=== Critical Class Source Resolution ===")
+ // Check which Guava is loaded — Spark bundles guava-14, you may need guava-31.
+ detectClassSource("com.google.common.collect.ImmutableMap")
+ // Check Protobuf version — Spark 3.x bundles protobuf-3.21 internally but
+ // older distributions ship 2.5; a version mismatch here corrupts Hive metastore RPCs.
+ detectClassSource("com.google.protobuf.GeneratedMessageV3")
+ // Check Jackson databind version — Spark bundles 2.13.x; mixing with 2.14.x
+ // causes JsonMappingException on schema inference for complex nested types.
+ detectClassSource("com.fasterxml.jackson.databind.ObjectMapper")
 
-    // --- Executor-side Metaspace reporting ---
-    // Spark's executor metrics include native memory stats; log them for sizing.
-    val sc = spark.sparkContext
-    sc.parallelize(Seq(1), numSlices = 1).foreachPartition { _ =>
-      // Inside executor JVM: report Metaspace usage via JMX
-      import java.lang.management.ManagementFactory
-      ManagementFactory.getMemoryPoolMXBeans.forEach { pool =>
-        if (pool.getName.contains("Metaspace")) {
-          val used   = pool.getUsage.getUsed   / (1024 * 1024)
-          val committed = pool.getUsage.getCommitted / (1024 * 1024)
-          // This prints inside the executor log — look for it in YARN/K8s logs
-          println(s"[EXECUTOR METASPACE] used=${used}MB  committed=${committed}MB")
-        }
-      }
-    }
+ // --- Executor-side Metaspace reporting ---
+ // Spark's executor metrics include native memory stats; log them for sizing.
+ val sc = spark.sparkContext
+ sc.parallelize(Seq(1), numSlices = 1).foreachPartition { _ =>
+ // Inside executor JVM: report Metaspace usage via JMX
+ import java.lang.management.ManagementFactory
+ ManagementFactory.getMemoryPoolMXBeans.forEach { pool =>
+ if (pool.getName.contains("Metaspace")) {
+ val used = pool.getUsage.getUsed / (1024 * 1024)
+ val committed = pool.getUsage.getCommitted / (1024 * 1024)
+ // This prints inside the executor log — look for it in YARN/K8s logs
+ println(s"[EXECUTOR METASPACE] used=${used}MB committed=${committed}MB")
+ }
+ }
+ }
 
-    spark.stop()
-  }
+ spark.stop()
+ }
 }
 ```
 
@@ -284,88 +284,88 @@ from pyspark.sql import SparkSession
 from pyspark import SparkConf
 
 def build_spark_session() -> SparkSession:
-    conf = SparkConf()
+ conf = SparkConf()
 
-    # Use Kryo serialization instead of Java serialization for shuffle data.
-    # Kryo is 3-10x faster and produces 50-80% smaller shuffle blocks,
-    # directly reducing GC pressure on the executor heap during shuffles.
-    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+ # Use Kryo serialization instead of Java serialization for shuffle data.
+ # Kryo is 3-10x faster and produces 50-80% smaller shuffle blocks,
+ # directly reducing GC pressure on the executor heap during shuffles.
+ conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 
-    # Register all application-specific classes upfront.
-    # Unregistered classes trigger Kryo's fallback serialization path,
-    # which uses class name strings (expensive) and may fail across classloader
-    # boundaries when the uberjar's ExecutorClassLoader differs from the
-    # context classloader Kryo uses for Class.forName() resolution.
-    conf.set(
-        "spark.kryo.classesToRegister",
-        ",".join([
-            "com.example.model.SensorReading",
-            "com.example.model.AggregatedMetric",
-            "com.example.model.DeviceMetadata",
-            # Always register array types explicitly — Kryo does not auto-register
-            # primitive array wrappers when your uberjar contains a shaded Kryo.
-            "[Lcom.example.model.SensorReading;",
-        ])
-    )
+ # Register all application-specific classes upfront.
+ # Unregistered classes trigger Kryo's fallback serialization path,
+ # which uses class name strings (expensive) and may fail across classloader
+ # boundaries when the uberjar's ExecutorClassLoader differs from the
+ # context classloader Kryo uses for Class.forName() resolution.
+ conf.set(
+ "spark.kryo.classesToRegister",
+ ",".join([
+ "com.example.model.SensorReading",
+ "com.example.model.AggregatedMetric",
+ "com.example.model.DeviceMetadata",
+ # Always register array types explicitly — Kryo does not auto-register
+ # primitive array wrappers when your uberjar contains a shaded Kryo.
+ "[Lcom.example.model.SensorReading;",
+ ])
+ )
 
-    # CRITICAL: set to True to FAIL FAST if a class is unregistered,
-    # rather than silently falling back to Java serialization.
-    # In production, this surfaces missing registrations during integration tests
-    # rather than manifesting as unexplained shuffle slowdowns on the cluster.
-    conf.set("spark.kryo.registrationRequired", "true")
+ # CRITICAL: set to True to FAIL FAST if a class is unregistered,
+ # rather than silently falling back to Java serialization.
+ # In production, this surfaces missing registrations during integration tests
+ # rather than manifesting as unexplained shuffle slowdowns on the cluster.
+ conf.set("spark.kryo.registrationRequired", "true")
 
-    # When using a shaded uberjar that relocates Kryo itself (e.g., shaded.com.esotericsoftware.kryo),
-    # you must tell Spark which KryoRegistrator class to use from the shaded namespace.
-    # If this is not set and Kryo is shaded, the executor loads TWO Kryo instances —
-    # Spark's built-in and your shaded one — which cannot serialize into each other's buffers.
-    conf.set(
-        "spark.kryo.registrator",
-        "com.example.serialization.AppKryoRegistrator"  # see registrator below
-    )
+ # When using a shaded uberjar that relocates Kryo itself (e.g., shaded.com.esotericsoftware.kryo),
+ # you must tell Spark which KryoRegistrator class to use from the shaded namespace.
+ # If this is not set and Kryo is shaded, the executor loads TWO Kryo instances —
+ # Spark's built-in and your shaded one — which cannot serialize into each other's buffers.
+ conf.set(
+ "spark.kryo.registrator",
+ "com.example.serialization.AppKryoRegistrator" # see registrator below
+ )
 
-    # Increase the Kryo buffer size to accommodate large domain objects.
-    # Default is 64KB; if a serialized object exceeds this, Kryo throws
-    # "Buffer overflow" which is misdiagnosed as a data problem, not a config problem.
-    conf.set("spark.kryoserializer.buffer.max", "256m")
+ # Increase the Kryo buffer size to accommodate large domain objects.
+ # Default is 64KB; if a serialized object exceeds this, Kryo throws
+ # "Buffer overflow" which is misdiagnosed as a data problem, not a config problem.
+ conf.set("spark.kryoserializer.buffer.max", "256m")
 
-    # Executor memory overhead: accounts for Metaspace (loaded from uberjar)
-    # + Kryo off-heap buffers + JVM internal structures.
-    # For a 60MB uberjar on K8s, 0.25 overhead factor prevents OOMKilled.
-    conf.set("spark.executor.memoryOverheadFactor", "0.25")
+ # Executor memory overhead: accounts for Metaspace (loaded from uberjar)
+ # + Kryo off-heap buffers + JVM internal structures.
+ # For a 60MB uberjar on K8s, 0.25 overhead factor prevents OOMKilled.
+ conf.set("spark.executor.memoryOverheadFactor", "0.25")
 
-    return (
-        SparkSession.builder()
-        .appName("UberjarKryoDemo")
-        .config(conf=conf)
-        .getOrCreate()
-    )
+ return (
+ SparkSession.builder()
+ .appName("UberjarKryoDemo")
+ .config(conf=conf)
+ .getOrCreate()
+ )
 
 
 def validate_kryo_serialization(spark: SparkSession) -> None:
-    """
-    Sends a known object through the Spark serialization pipeline (driver → executor → driver)
-    to verify Kryo can resolve classes via the uberjar's ExecutorClassLoader.
-    If registrationRequired=True and this succeeds, Kryo is correctly configured.
-    If it raises SerializationException, a class registration is missing.
-    """
-    sc = spark.sparkContext
+ """
+ Sends a known object through the Spark serialization pipeline (driver → executor → driver)
+ to verify Kryo can resolve classes via the uberjar's ExecutorClassLoader.
+ If registrationRequired=True and this succeeds, Kryo is correctly configured.
+ If it raises SerializationException, a class registration is missing.
+ """
+ sc = spark.sparkContext
 
-    # Create a simple RDD of tuples and force a shuffle (reduceByKey) to exercise Kryo.
-    # The shuffle write path serializes the data with Kryo on the executor;
-    # the shuffle read path deserializes it. Both sides must see the same class definitions.
-    test_data = [("sensor_a", 1.0), ("sensor_b", 2.5), ("sensor_a", 3.1)]
-    rdd = sc.parallelize(test_data, numSlices=3)
+ # Create a simple RDD of tuples and force a shuffle (reduceByKey) to exercise Kryo.
+ # The shuffle write path serializes the data with Kryo on the executor;
+ # the shuffle read path deserializes it. Both sides must see the same class definitions.
+ test_data = [("sensor_a", 1.0), ("sensor_b", 2.5), ("sensor_a", 3.1)]
+ rdd = sc.parallelize(test_data, numSlices=3)
 
-    # reduceByKey forces a full shuffle: map-side combine → sort → write → fetch → reduce.
-    # This exercises the entire Kryo serialization round-trip across executor boundaries.
-    result = rdd.reduceByKey(lambda a, b: a + b).collect()
-    print(f"Kryo serialization validated. Results: {result}")
+ # reduceByKey forces a full shuffle: map-side combine → sort → write → fetch → reduce.
+ # This exercises the entire Kryo serialization round-trip across executor boundaries.
+ result = rdd.reduceByKey(lambda a, b: a + b).collect()
+ print(f"Kryo serialization validated. Results: {result}")
 
 
 if __name__ == "__main__":
-    spark = build_spark_session()
-    validate_kryo_serialization(spark)
-    spark.stop()
+ spark = build_spark_session()
+ validate_kryo_serialization(spark)
+ spark.stop()
 ```
 
 > **Mastery Note:** Setting `spark.kryo.registrationRequired=true` is the single most impactful configuration change for uberjar deployments because it converts a silent performance degradation into a loud, immediate failure. Without it, Kryo silently falls back to Java serialization for unregistered classes — a fallback that is up to 10× slower, produces shuffle blocks 3–5× larger, and can cause `java.io.NotSerializableException` only when a non-serializable field is actually traversed, which may only happen on certain data distributions. The classloader context problem for Kryo is subtle: `Class.forName(name)` inside Kryo's default deserializer uses `Thread.currentThread().getContextClassLoader()`, which on executors is the system classloader — *not* the `ExecutorClassLoader` that loaded your uberjar. If your domain class `com.example.model.SensorReading` is in the uberjar, this call throws `ClassNotFoundException`. The fix is always to implement a custom `KryoRegistrator` that calls `kryo.register(classOf[SensorReading])` using the class literal, which is resolved at compile time against the correct classloader context.
@@ -384,44 +384,44 @@ if __name__ == "__main__":
 apiVersion: v1
 kind: Pod
 metadata:
-  name: spark-executor-template
+ name: spark-executor-template
 spec:
-  containers:
-    - name: spark-kubernetes-executor
-      # Resource requests and limits must account for:
-      # - Heap (spark.executor.memory)
-      # - Metaspace (class definitions from uberjar — NOT part of heap)
-      # - Tungsten off-heap (spark.memory.offHeap.size)
-      # - JVM internal structures, code cache, JIT-compiled methods (~100-200MB)
-      # - Kryo serialization buffers (spark.kryoserializer.buffer.max)
-      resources:
-        requests:
-          memory: "6Gi"  # 4GB heap + ~2GB native (Metaspace + overhead)
-          cpu: "2"
-        limits:
-          memory: "6Gi"  # Hard limit: exceeding this triggers OOMKilled (exit 137)
-          cpu: "4"
-      env:
-        - name: SPARK_EXECUTOR_JAVA_OPTS
-          value: >-
-            -XX:+UseG1GC
-            -XX:G1HeapRegionSize=16m
-            -XX:+UseStringDeduplication
+ containers:
+ - name: spark-kubernetes-executor
+ # Resource requests and limits must account for:
+ # - Heap (spark.executor.memory)
+ # - Metaspace (class definitions from uberjar — NOT part of heap)
+ # - Tungsten off-heap (spark.memory.offHeap.size)
+ # - JVM internal structures, code cache, JIT-compiled methods (~100-200MB)
+ # - Kryo serialization buffers (spark.kryoserializer.buffer.max)
+ resources:
+ requests:
+ memory: "6Gi" # 4GB heap + ~2GB native (Metaspace + overhead)
+ cpu: "2"
+ limits:
+ memory: "6Gi" # Hard limit: exceeding this triggers OOMKilled (exit 137)
+ cpu: "4"
+ env:
+ - name: SPARK_EXECUTOR_JAVA_OPTS
+ value: >-
+ -XX:+UseG1GC
+ -XX:G1HeapRegionSize=16m
+ -XX:+UseStringDeduplication
 
-            -XX:MaxMetaspaceSize=600m
-            -XX:MetaspaceSize=256m
-            -XX:+CMSClassUnloadingEnabled
+ -XX:MaxMetaspaceSize=600m
+ -XX:MetaspaceSize=256m
+ -XX:+CMSClassUnloadingEnabled
 
-            -XX:ReservedCodeCacheSize=256m
+ -XX:ReservedCodeCacheSize=256m
 
-            -XX:+PrintGCDetails
-            -XX:+PrintGCDateStamps
-            -Xloggc:/var/log/spark/gc-executor.log
+ -XX:+PrintGCDetails
+ -XX:+PrintGCDateStamps
+ -Xloggc:/var/log/spark/gc-executor.log
 
-            -Dcom.sun.management.jmxremote
-            -Dcom.sun.management.jmxremote.port=9010
-            -Dcom.sun.management.jmxremote.authenticate=false
-            -Dcom.sun.management.jmxremote.ssl=false
+ -Dcom.sun.management.jmxremote
+ -Dcom.sun.management.jmxremote.port=9010
+ -Dcom.sun.management.jmxremote.authenticate=false
+ -Dcom.sun.management.jmxremote.ssl=false
 ```
 
 ```scala
@@ -430,52 +430,52 @@ spec:
 
 object UberjarK8sSubmit {
 
-  // Build a SparkSession with Kubernetes-optimized settings for a large uberjar.
-  def configuredSession(): SparkSession = {
-    SparkSession.builder()
-      .appName("LargeUberjarK8sJob")
-      .master("k8s://https://k8s-api-server:6443")
-      .config("spark.kubernetes.container.image", "myregistry/spark:3.3.2")
+ // Build a SparkSession with Kubernetes-optimized settings for a large uberjar.
+ def configuredSession(): SparkSession = {
+ SparkSession.builder()
+ .appName("LargeUberjarK8sJob")
+ .master("k8s://https://k8s-api-server:6443")
+ .config("spark.kubernetes.container.image", "myregistry/spark:3.3.2")
 
-      // Point to the pod template above — this merges our JVM flags into every executor pod.
-      .config("spark.kubernetes.executor.podTemplateFile", "/conf/executor-pod-template.yaml")
+ // Point to the pod template above — this merges our JVM flags into every executor pod.
+ .config("spark.kubernetes.executor.podTemplateFile", "/conf/executor-pod-template.yaml")
 
-      // 4GB heap per executor. Combined with the 600MB MaxMetaspaceSize, 256MB CodeCache,
-      // and ~200MB JVM overhead, total RSS per executor is ~5.1GB — within the 6GB limit.
-      .config("spark.executor.memory", "4g")
+ // 4GB heap per executor. Combined with the 600MB MaxMetaspaceSize, 256MB CodeCache,
+ // and ~200MB JVM overhead, total RSS per executor is ~5.1GB — within the 6GB limit.
+ .config("spark.executor.memory", "4g")
 
-      // memoryOverhead is added on TOP of executor.memory by the K8s scheduler.
-      // Setting it explicitly overrides the default formula (10% of executor memory)
-      // which would produce only 400MB — insufficient for a large uberjar's Metaspace.
-      // 1536MB = 600MB Metaspace + 256MB CodeCache + 200MB JVM + 480MB buffer.
-      .config("spark.executor.memoryOverhead", "1536m")
+ // memoryOverhead is added on TOP of executor.memory by the K8s scheduler.
+ // Setting it explicitly overrides the default formula (10% of executor memory)
+ // which would produce only 400MB — insufficient for a large uberjar's Metaspace.
+ // 1536MB = 600MB Metaspace + 256MB CodeCache + 200MB JVM + 480MB buffer.
+ .config("spark.executor.memoryOverhead", "1536m")
 
-      // Tungsten off-heap: disabled here since total memory is already at limit.
-      // Enable only if executor memory > 8GB and shuffle data dominates the workload.
-      .config("spark.memory.offHeap.enabled", "false")
+ // Tungsten off-heap: disabled here since total memory is already at limit.
+ // Enable only if executor memory > 8GB and shuffle data dominates the workload.
+ .config("spark.memory.offHeap.enabled", "false")
 
-      // Dynamic allocation: when enabled, new executor pods are launched on-demand.
-      // Each new pod must fetch the uberjar fresh from the staging area.
-      // With fetchCache=true, pods on the same K8s node share the downloaded JAR,
-      // reducing repeated downloads from HDFS and cutting executor startup from
-      // ~30 seconds to ~3 seconds on subsequent allocations on the same node.
-      .config("spark.dynamicAllocation.enabled", "true")
-      .config("spark.dynamicAllocation.minExecutors", "2")
-      .config("spark.dynamicAllocation.maxExecutors", "50")
-      .config("spark.files.useFetchCache", "true")
+ // Dynamic allocation: when enabled, new executor pods are launched on-demand.
+ // Each new pod must fetch the uberjar fresh from the staging area.
+ // With fetchCache=true, pods on the same K8s node share the downloaded JAR,
+ // reducing repeated downloads from HDFS and cutting executor startup from
+ // ~30 seconds to ~3 seconds on subsequent allocations on the same node.
+ .config("spark.dynamicAllocation.enabled", "true")
+ .config("spark.dynamicAllocation.minExecutors", "2")
+ .config("spark.dynamicAllocation.maxExecutors", "50")
+ .config("spark.files.useFetchCache", "true")
 
-      // Shuffle service for dynamic allocation on K8s — required since executors
-      // can be decommissioned before shuffle data is consumed.
-      .config("spark.shuffle.service.enabled", "false") // use external shuffle service or RSSs
-      .config("spark.kubernetes.shuffle.namespace", "spark-shuffle")
+ // Shuffle service for dynamic allocation on K8s — required since executors
+ // can be decommissioned before shuffle data is consumed.
+ .config("spark.shuffle.service.enabled", "false") // use external shuffle service or RSSs
+ .config("spark.kubernetes.shuffle.namespace", "spark-shuffle")
 
-      // Force class unloading when executor idles — reclaims Metaspace
-      // for classes loaded during job phases that have completed.
-      .config("spark.executor.extraJavaOptions",
-        "-XX:+ClassUnloading -XX:+ClassUnloadingWithConcurrentMark")
+ // Force class unloading when executor idles — reclaims Metaspace
+ // for classes loaded during job phases that have completed.
+ .config("spark.executor.extraJavaOptions",
+ "-XX:+ClassUnloading -XX:+ClassUnloadingWithConcurrentMark")
 
-      .getOrCreate()
-  }
+ .getOrCreate()
+ }
 }
 ```
 
@@ -501,9 +501,9 @@ To achieve true mastery of Uberjars in Apache Spark:
 
 ## 📚 Summary
 
-Uberjars are not merely a packaging convenience — they are the primary mechanism by which Apache Spark achieves classpath determinism across a distributed cluster of heterogeneous JVMs. The fat JAR is uploaded once, distributed via the `BlockManager`'s file server to every executor's `ExecutorClassLoader`, and loaded into each JVM's Metaspace as a collection of `Klass` structures that persist for the lifetime of the executor process. Getting this distribution correct requires understanding the full chain from build tool (sbt-assembly or Maven Shade) through class relocation (shade rules), JAR manifest merging (merge strategies), executor classloading (parent delegation order), and Kubernetes resource sizing (memory overhead vs. MaxMetaspaceSize). [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)
+Uberjars are not merely a packaging convenience — they are the primary mechanism by which Apache Spark achieves classpath determinism across a distributed cluster of heterogeneous JVMs. The fat JAR is uploaded once, distributed via the `BlockManager`'s file server to every executor's `ExecutorClassLoader`, and loaded into each JVM's Metaspace as a collection of `Klass` structures that persist for the lifetime of the executor process. Getting this distribution correct requires understanding the full chain from build tool (sbt-assembly or Maven Shade) through class relocation (shade rules), JAR manifest merging (merge strategies), executor classloading (parent delegation order), and Kubernetes resource sizing (memory overhead vs. MaxMetaspaceSize). 
 
-The failure modes of a poorly assembled uberjar are among the most difficult to diagnose in production Spark: `NoSuchMethodError` appearing only on certain data distributions, `OOMKilled` pods with no JVM heap dumps, Kryo silently falling back to Java serialization and producing 5× larger shuffle blocks, and Spring or Jackson failing to discover SPI extensions because `META-INF/services` files were discarded at assembly time. Each of these failures has a specific, preventable root cause traceable to a single build configuration directive or JVM flag. [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)
+The failure modes of a poorly assembled uberjar are among the most difficult to diagnose in production Spark: `NoSuchMethodError` appearing only on certain data distributions, `OOMKilled` pods with no JVM heap dumps, Kryo silently falling back to Java serialization and producing 5× larger shuffle blocks, and Spring or Jackson failing to discover SPI extensions because `META-INF/services` files were discarded at assembly time. Each of these failures has a specific, preventable root cause traceable to a single build configuration directive or JVM flag. 
 
-Mastery of uberjars means treating JAR assembly as a first-class engineering concern with the same rigor applied to query optimization or shuffle tuning. This means: explicit shade rules for every dependency that conflicts with Spark's internal classpath, explicit merge strategies for every known file category, `registrationRequired=true` for Kryo, Metaspace-aware memory overhead sizing on Kubernetes, and automated validation of the assembled JAR's class count and SPI service files in CI pipelines — before the job reaches the cluster and fails in ways that cost hours to diagnose. [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)
+Mastery of uberjars means treating JAR assembly as a first-class engineering concern with the same rigor applied to query optimization or shuffle tuning. This means: explicit shade rules for every dependency that conflicts with Spark's internal classpath, explicit merge strategies for every known file category, `registrationRequired=true` for Kryo, Metaspace-aware memory overhead sizing on Kubernetes, and automated validation of the assembled JAR's class count and SPI service files in CI pipelines — before the job reaches the cluster and fails in ways that cost hours to diagnose. 
 

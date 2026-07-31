@@ -16,8 +16,8 @@ spark = SparkSession.builder.appName("WindowFunctions").getOrCreate()
 
 # Sample data with missing timestamps representing network sensor readings
 data = [("sensor_1", "2023-10-01 10:00:00", 15.5),
-        ("sensor_1", "2023-10-01 10:02:00", 16.2),
-        ("sensor_1", "2023-10-01 10:05:00", 14.8)]
+ ("sensor_1", "2023-10-01 10:02:00", 16.2),
+ ("sensor_1", "2023-10-01 10:05:00", 14.8)]
 df = spark.createDataFrame(data, ["device_id", "timestamp", "reading"])
 df = df.withColumn("timestamp", col("timestamp").cast("timestamp"))
 
@@ -26,11 +26,11 @@ window_spec = Window.partitionBy("device_id").orderBy("timestamp")
 
 # Calculate time difference and identify gaps larger than 120 seconds
 df_with_gaps = df.withColumn(
-    "time_diff_sec", 
-    unix_timestamp("timestamp") - unix_timestamp(lag("timestamp", 1).over(window_spec))
+ "time_diff_sec", 
+ unix_timestamp("timestamp") - unix_timestamp(lag("timestamp", 1).over(window_spec))
 ).withColumn(
-    "is_new_session", 
-    when(col("time_diff_sec") > 120, 1).otherwise(0)
+ "is_new_session", 
+ when(col("time_diff_sec") > 120, 1).otherwise(0)
 )
 
 # Create a session ID using cumulative sum over the window
@@ -64,23 +64,23 @@ SALT_BUCKETS = 50
 
 # Add a random salt to the skewed key in the large DataFrame
 salted_transactions = large_transactions.withColumn(
-    "salted_customer_id", 
-    concat_ws("_", col("customer_id"), (rand() * SALT_BUCKETS).cast("int"))
+ "salted_customer_id", 
+ concat_ws("_", col("customer_id"), (rand() * SALT_BUCKETS).cast("int"))
 )
 
 # Replicate the dimension table for each salt bucket
 exploded_customers = dim_customers.crossJoin(
-    spark.range(0, SALT_BUCKETS).withColumnRenamed("id", "salt")
+ spark.range(0, SALT_BUCKETS).withColumnRenamed("id", "salt")
 ).withColumn(
-    "salted_customer_id", 
-    concat_ws("_", col("customer_id"), col("salt"))
+ "salted_customer_id", 
+ concat_ws("_", col("customer_id"), col("salt"))
 )
 
 # Perform the join on the salted keys
 joined_df = salted_transactions.join(
-    exploded_customers, 
-    on="salted_customer_id", 
-    how="inner"
+ exploded_customers, 
+ on="salted_customer_id", 
+ how="inner"
 ).drop("salted_customer_id", "salt")
 
 joined_df.explain()
@@ -98,24 +98,24 @@ from pyspark.sql.types import DoubleType
 # Define a Pandas UDF for vectorized operations
 @pandas_udf(DoubleType())
 def vectorized_haversine_distance(lat1: pd.Series, lon1: pd.Series, lat2: pd.Series, lon2: pd.Series) -> pd.Series:
-    import numpy as np
-    
-    # Convert latitude and longitude from degrees to radians
-    lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
-    
-    # Haversine formula
-    dlat = lat2 - lat1 
-    dlon = lon2 - lon1 
-    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
-    c = 2 * np.arcsin(np.sqrt(a)) 
-    r = 6371 # Radius of earth in kilometers
-    return c * r
+ import numpy as np
+ 
+ # Convert latitude and longitude from degrees to radians
+ lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
+ 
+ # Haversine formula
+ dlat = lat2 - lat1 
+ dlon = lon2 - lon1 
+ a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+ c = 2 * np.arcsin(np.sqrt(a)) 
+ r = 6371 # Radius of earth in kilometers
+ return c * r
 
 # Apply the Pandas UDF to the DataFrame
 df_locations = spark.table("gps_pings")
 df_distances = df_locations.withColumn(
-    "distance_km",
-    vectorized_haversine_distance(col("start_lat"), col("start_lon"), col("end_lat"), col("end_lon"))
+ "distance_km",
+ vectorized_haversine_distance(col("start_lat"), col("start_lon"), col("end_lat"), col("end_lon"))
 )
 ```
 
@@ -139,17 +139,17 @@ raw_df = spark.read.json("s3a://data-lake/orders/")
 # Use Spark 2.4+ High-Order Functions to manipulate arrays natively
 # Calculate total line-item cost (price * qty) and filter out cheap items
 processed_df = raw_df.withColumn(
-    "premium_order_totals",
-    expr("""
-        aggregate(
-            filter(orders, item -> item.price * item.qty > 100.0), 
-            0.0, 
-            (acc, item) -> acc + (item.price * item.qty)
-        )
-    """)
+ "premium_order_totals",
+ expr("""
+ aggregate(
+ filter(orders, item -> item.price * item.qty > 100.0), 
+ 0.0, 
+ (acc, item) -> acc + (item.price * item.qty)
+ )
+ """)
 ).withColumn(
-    "product_names",
-    transform(col("orders"), lambda item: item["product"])
+ "product_names",
+ transform(col("orders"), lambda item: item["product"])
 )
 
 processed_df.printSchema()

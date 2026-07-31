@@ -11,10 +11,10 @@ import java.util.concurrent.{Executors, TimeUnit}
 import scala.concurrent.{ExecutionContext, Future}
 
 val spark = SparkSession.builder()
-  .appName("FAIR_Scheduler_Masterclass")
-  .config("spark.scheduler.mode", "FAIR")
-  .config("spark.scheduler.allocation.file", "/path/to/fairscheduler.xml")
-  .getOrCreate()
+ .appName("FAIR_Scheduler_Masterclass")
+ .config("spark.scheduler.mode", "FAIR")
+ .config("spark.scheduler.allocation.file", "/path/to/fairscheduler.xml")
+ .getOrCreate()
 
 // Custom thread pool to launch concurrent Spark jobs
 val threadPool = Executors.newFixedThreadPool(4)
@@ -22,14 +22,14 @@ implicit val ec = ExecutionContext.fromExecutor(threadPool)
 
 // Job 1: Heavy Batch Job assigned to "batch_pool"
 val job1 = Future {
-  spark.sparkContext.setLocalProperty("spark.scheduler.pool", "batch_pool")
-  spark.range(1, 1000000000).repartition(1000).sort("id").count()
+ spark.sparkContext.setLocalProperty("spark.scheduler.pool", "batch_pool")
+ spark.range(1, 1000000000).repartition(1000).sort("id").count()
 }
 
 // Job 2: Lightweight Interactive Query assigned to "interactive_pool"
 val job2 = Future {
-  spark.sparkContext.setLocalProperty("spark.scheduler.pool", "interactive_pool")
-  spark.range(1, 10000).filter(col("id") % 2 === 0).collect()
+ spark.sparkContext.setLocalProperty("spark.scheduler.pool", "interactive_pool")
+ spark.range(1, 10000).filter(col("id") % 2 === 0).collect()
 }
 
 // Wait for completion (in production, handle futures appropriately)
@@ -52,17 +52,17 @@ Furthermore, distributed systems are inherently prone to "stragglers"—nodes th
 from pyspark.sql import SparkSession
 
 spark = SparkSession.builder \
-    .appName("Resource_Scaling_Masterclass") \
-    .config("spark.dynamicAllocation.enabled", "true") \
-    .config("spark.shuffle.service.enabled", "true") \
-    .config("spark.dynamicAllocation.minExecutors", "2") \
-    .config("spark.dynamicAllocation.maxExecutors", "50") \
-    .config("spark.dynamicAllocation.schedulerBacklogTimeout", "1s") \
-    .config("spark.dynamicAllocation.executorIdleTimeout", "60s") \
-    .config("spark.speculation", "true") \
-    .config("spark.speculation.multiplier", "1.5") \
-    .config("spark.speculation.quantile", "0.75") \
-    .getOrCreate()
+ .appName("Resource_Scaling_Masterclass") \
+ .config("spark.dynamicAllocation.enabled", "true") \
+ .config("spark.shuffle.service.enabled", "true") \
+ .config("spark.dynamicAllocation.minExecutors", "2") \
+ .config("spark.dynamicAllocation.maxExecutors", "50") \
+ .config("spark.dynamicAllocation.schedulerBacklogTimeout", "1s") \
+ .config("spark.dynamicAllocation.executorIdleTimeout", "60s") \
+ .config("spark.speculation", "true") \
+ .config("spark.speculation.multiplier", "1.5") \
+ .config("spark.speculation.quantile", "0.75") \
+ .getOrCreate()
 
 # A skewed workload that will trigger both DRA and Speculation
 df = spark.range(1, 100000000).withColumn("skew_key", (col("id") % 10))
@@ -78,11 +78,11 @@ import org.apache.spark.resource.{ResourceProfileBuilder, TaskResourceRequests}
 import org.apache.spark.sql.SparkSession
 
 val spark = SparkSession.builder()
-  .appName("GPU_Scheduling_Masterclass")
-  // Cluster-level configurations for discovering GPUs
-  .config("spark.executor.resource.gpu.amount", "2")
-  .config("spark.task.resource.gpu.amount", "0.5") // Allow 2 tasks per GPU
-  .getOrCreate()
+ .appName("GPU_Scheduling_Masterclass")
+ // Cluster-level configurations for discovering GPUs
+ .config("spark.executor.resource.gpu.amount", "2")
+ .config("spark.task.resource.gpu.amount", "0.5") // Allow 2 tasks per GPU
+ .getOrCreate()
 
 // Define a custom ResourceProfile for a specific, compute-heavy stage
 val treqs = new TaskResourceRequests().cpus(2).resource("gpu", 1.0)
@@ -93,8 +93,8 @@ val dataRDD = spark.sparkContext.parallelize(1 to 10000, 100)
 
 // Apply the ResourceProfile specifically to this operation
 val processedRDD = dataRDD.withResources(rprof).map { record =>
-  // ... execute GPU-accelerated code (e.g., via JNI or Python subprocess) ...
-  record * 2
+ // ... execute GPU-accelerated code (e.g., via JNI or Python subprocess) ...
+ record * 2
 }
 
 processedRDD.count()
@@ -109,11 +109,11 @@ from pyspark.sql import SparkSession
 import time
 
 spark = SparkSession.builder \
-    .appName("Locality_Tuning_Masterclass") \
-    .config("spark.locality.wait", "3s") \
-    .config("spark.locality.wait.node", "5s") \
-    .config("spark.locality.wait.rack", "1s") \
-    .getOrCreate()
+ .appName("Locality_Tuning_Masterclass") \
+ .config("spark.locality.wait", "3s") \
+ .config("spark.locality.wait.node", "5s") \
+ .config("spark.locality.wait.rack", "1s") \
+ .getOrCreate()
 
 # Simulating a read from HDFS where data locality is critical
 df = spark.read.text("hdfs://namenode:8020/large_dataset/*.txt")

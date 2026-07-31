@@ -5,11 +5,11 @@ The Apache Spark Shell is far more than a simple pedagogical tool or sandbox for
 
 Historically, processing massive datasets required writing MapReduce jobs in Java, packaging them into fat JARs, deploying them to a cluster, and waiting hours for logs. The Spark Shell circumvents this entirely by seamlessly embedding the Spark driver within an interactive Scala (or Python/R) REPL. When you launch the shell, it automatically instantiates the `SparkSession` (and legacy `SparkContext`), binds to a cluster manager (such as YARN, Kubernetes, or Mesos), and immediately prepares the distributed execution engine. 
 
-By providing a live view into the JVM, the Catalyst optimizer, and the Tungsten execution engine, the Spark Shell becomes an indispensable diagnostic tool for production troubleshooting, ad-hoc data analysis, and iterative algorithm development. It forces the developer to understand the delicate boundary between local driver memory and distributed executor compute, serving as the ultimate proving ground for distributed systems engineering.
+By providing a live view into the JVM, the Catalyst optimizer, and the Tungsten execution engine, the Spark Shell becomes an indispensable diagnostic tool for production troubleshooting, ad-hoc data analysis, and iterative algorithm development. It forces the developer to understand the delicate boundary between local driver memory and distributed executor compute, serving as the ultimate proving ground for distributed systems engineering. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 457](spark_book.pdf#page=457)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 462](spark_book.pdf#page=462)
 
 ### How It Works Under the Hood
 
@@ -20,45 +20,45 @@ However, compiling code is only half the battle. Because Spark operates in a dis
 Once cleaned, the bytecode and captured variables are serialized—typically using Java serialization for closures and Kryo serialization for data—and broadcasted over the network via a BitTorrent-like protocol to the Executors. The TaskScheduler and DAGScheduler coordinate this orchestration. On the executor side, the bytecode is deserialized, loaded into the JVM metaspace by a custom classloader (the REPL Class Server), and executed by the Tungsten execution engine. Tungsten further optimizes this via Whole-Stage Code Generation (WSCG), collapsing the physical plan into a single, highly optimized Java function that operates directly on binary data in off-heap memory, entirely bypassing the garbage collector for intermediate records.
 
 ```text
-Driver JVM (REPL Process)                                 Worker Executor JVM 1
-┌───────────────────────────────────────┐                 ┌──────────────────────────────────────┐
-│  ┌─────────────────────────────────┐  │                 │  ┌────────────────────────────────┐  │
-│  │ Interactive REPL (ILoop)        │  │                 │  │ Custom REPL ClassLoader        │  │
-│  │ 1. Dynamic Bytecode Compilation │  │   Serialized    │  └────────────────────────────────┘  │
-│  └─────────────────────────────────┘  │   Closures      │  ┌────────────────────────────────┐  │
-│  ┌─────────────────────────────────┐  │   & Tasks       │  │ Executor Thread Pool           │  │
-│  │ SparkContext / SparkSession     │  │────────────────▶│  │ ┌────────┐ ┌────────┐        │  │
-│  │ 2. Catalyst Optimization        │  │   (Netty RPC)   │  │ │ Task 1 │ │ Task 2 │        │  │
-│  │ 3. Closure Cleaner              │  │                 │  │ └────────┘ └────────┘        │  │
-│  └─────────────────────────────────┘  │                 │  └────────────────────────────────┘  │
-│  ┌─────────────────────────────────┐  │                 │  ┌────────────────────────────────┐  │
-│  │ DAGScheduler & TaskScheduler    │  │                 │  │ Tungsten Execution Engine      │  │
-│  └─────────────────────────────────┘  │                 │  │ (Whole-Stage Codegen)          │  │
-└───────────────────────────────────────┘                 │  └────────────────────────────────┘  │
-                                                          └──────────────────────────────────────┘
+Driver JVM (REPL Process) Worker Executor JVM 1
+┌───────────────────────────────────────┐ ┌──────────────────────────────────────┐
+│ ┌─────────────────────────────────┐ │ │ ┌────────────────────────────────┐ │
+│ │ Interactive REPL (ILoop) │ │ │ │ Custom REPL ClassLoader │ │
+│ │ 1. Dynamic Bytecode Compilation │ │ Serialized │ └────────────────────────────────┘ │
+│ └─────────────────────────────────┘ │ Closures │ ┌────────────────────────────────┐ │
+│ ┌─────────────────────────────────┐ │ & Tasks │ │ Executor Thread Pool │ │
+│ │ SparkContext / SparkSession │ │────────────────▶│ │ ┌────────┐ ┌────────┐ │ │
+│ │ 2. Catalyst Optimization │ │ (Netty RPC) │ │ │ Task 1 │ │ Task 2 │ │ │
+│ │ 3. Closure Cleaner │ │ │ │ └────────┘ └────────┘ │ │
+│ └─────────────────────────────────┘ │ │ └────────────────────────────────┘ │
+│ ┌─────────────────────────────────┐ │ │ ┌────────────────────────────────┐ │
+│ │ DAGScheduler & TaskScheduler │ │ │ │ Tungsten Execution Engine │ │
+│ └─────────────────────────────────┘ │ │ │ (Whole-Stage Codegen) │ │
+└───────────────────────────────────────┘ │ └────────────────────────────────┘ │
+ └──────────────────────────────────────┘ [Ref: 469](spark_book.pdf#page=469)
 ```
 
 ### Key Internal Components
 - **SparkILoop / REPL Compiler:** The customized Scala interpreter wrapper that captures interactive inputs, compiles them into synthetic classes dynamically, and maintains the state of your session.
 - **Closure Cleaner:** A sophisticated bytecode analysis utility that recursively inspects user-defined functions to prune unneeded outer-scope references, ensuring only essential state is serialized over the network.
 - **REPL Class Server (HTTP/RPC):** A distribution mechanism that serves dynamically generated bytecode from the Driver REPL to Executor nodes, ensuring workers can resolve and load the synthetic classes you just typed.
-- **Tungsten Code Generator:** The internal engine that takes Catalyst’s physical plan (generated from your REPL commands) and writes optimal, low-level Java code to process data in CPU registers and L1/L2 caches.
+- **Tungsten Code Generator:** The internal engine that takes Catalyst’s physical plan (generated from your REPL commands) and writes optimal, low-level Java code to process data in CPU registers and L1/L2 caches. [Ref: 452](spark_book.pdf#page=452)
 
----
+--- [Ref: 458](spark_book.pdf#page=458)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
 
 ### Driver OOM and The `collect()` Catastrophe
 One of the most frequent and devastating failures in Spark Shell usage is the accidental triggering of Driver Out-Of-Memory (OOM) errors via the `.collect()` or `.toPandas()` actions. Because the shell feels like a local environment, engineers often treat DataFrames like standard collections. When you invoke `.collect()`, the DAGScheduler fires tasks across the cluster, which process potentially terabytes of data. The Executors then attempt to serialize their partition results and funnel all of that data over the network directly into the Driver JVM’s heap memory. 
 
-If the resulting dataset exceeds the memory allocated to the Spark Shell (often a default of just 1GB), the JVM enters a catastrophic garbage collection spiral, ending in a fatal `java.lang.OutOfMemoryError: Java heap space`. This completely crashes the interactive session, destroying all unsaved REPL state. To mitigate this, senior engineers rigorously restrict data retrieval using `.take(N)`, `.show()`, or limit filters before collection, and explicitly monitor the Driver’s heap usage via the Spark UI.
+If the resulting dataset exceeds the memory allocated to the Spark Shell (often a default of just 1GB), the JVM enters a catastrophic garbage collection spiral, ending in a fatal `java.lang.OutOfMemoryError: Java heap space`. This completely crashes the interactive session, destroying all unsaved REPL state. To mitigate this, senior engineers rigorously restrict data retrieval using `.take(N)`, `.show()`, or limit filters before collection, and explicitly monitor the Driver’s heap usage via the Spark UI. [Ref: 455](spark_book.pdf#page=455)
 
 ### REPL State Serialization Nightmares
 When coding in the Spark Shell, every variable you declare is secretly wrapped in a synthetic outer object representing that specific line of REPL execution. If you define a large object or a non-serializable connection client in the shell, and subsequently reference it inside an RDD `map()` or DataFrame User-Defined Function (UDF), the Closure Cleaner attempts to serialize the *entire* REPL line object to send to the Executors.
 
-This leads to the dreaded `org.apache.spark.SparkException: Task not serializable`. The failure scenario is exceptionally non-obvious because the code looks perfectly valid locally. The anti-pattern is referencing globally scoped REPL variables inside distributed closures. The solution requires explicit variable scoping: moving initialization inside the closure (so each task instantiates it locally) or wrapping the outer variables in `lazy val` or explicitly serializable wrapper classes before passing them into the transformation.
+This leads to the dreaded `org.apache.spark.SparkException: Task not serializable`. The failure scenario is exceptionally non-obvious because the code looks perfectly valid locally. The anti-pattern is referencing globally scoped REPL variables inside distributed closures. The solution requires explicit variable scoping: moving initialization inside the closure (so each task instantiates it locally) or wrapping the outer variables in `lazy val` or explicitly serializable wrapper classes before passing them into the transformation. [Ref: 459](spark_book.pdf#page=459)
 
----
+--- [Ref: 464](spark_book.pdf#page=464)
 
 ## 📊 Performance Characteristics
 
@@ -83,7 +83,7 @@ import org.apache.spark.sql.functions._
 // ANTI-PATTERN: Defining a non-serializable object at the REPL root level.
 // The REPL wraps this in an invisible object (e.g., $line14.$read$$iw$$iw).
 class DatabaseConnection {
-  def getThreshold(): Int = 42
+ def getThreshold(): Int = 42
 }
 val dbConn = new DatabaseConnection()
 
@@ -97,7 +97,7 @@ val localThreshold = dbConn.getThreshold()
 
 // The Closure Cleaner now only captures the primitive Int 'localThreshold'.
 val successDF = spark.range(100)
-  .filter(row => row.getLong(0) > localThreshold)
+ .filter(row => row.getLong(0) > localThreshold)
 
 successDF.explain(true)
 ```
@@ -113,10 +113,10 @@ successDF.explain(true)
 ```scala
 // Define a computationally heavy, chained transformation
 val df = spark.range(1, 10000000)
-  .withColumn("squared", $"id" * $"id")
-  .withColumn("is_even", $"id" % 2 === 0)
-  .filter($"is_even" === true)
-  .select("squared")
+ .withColumn("squared", $"id" * $"id")
+ .withColumn("is_even", $"id" % 2 === 0)
+ .filter($"is_even" === true)
+ .select("squared")
 
 // Instead of running the action, we ask Catalyst to reveal its final physical plan
 // and the actual Java source code Tungsten generated for execution.
@@ -177,9 +177,9 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 val futureJob = Future {
-  spark.read.parquet("/data/massive_telemetry/")
-    .groupBy("device_id").count()
-    .write.mode("overwrite").parquet("/data/output/")
+ spark.read.parquet("/data/massive_telemetry/")
+ .groupBy("device_id").count()
+ .write.mode("overwrite").parquet("/data/output/")
 }
 
 // In the meantime, launch a quick query in a different pool to avoid head-of-line blocking
@@ -207,9 +207,9 @@ To achieve true mastery of the Spark Shell:
 
 ## 📚 Summary
 
-The Apache Spark Shell is the nervous system of interactive distributed computing. It bridges the gap between human intuition and massive-scale cluster execution by embedding a sophisticated dynamic compiler within a distributed driver application. By leveraging Catalyst for query optimization and Tungsten for bare-metal execution speed, the shell ensures that ad-hoc exploration operates with the exact same performance characteristics as production-grade scheduled pipelines. [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)
+The Apache Spark Shell is the nervous system of interactive distributed computing. It bridges the gap between human intuition and massive-scale cluster execution by embedding a sophisticated dynamic compiler within a distributed driver application. By leveraging Catalyst for query optimization and Tungsten for bare-metal execution speed, the shell ensures that ad-hoc exploration operates with the exact same performance characteristics as production-grade scheduled pipelines. 
 
-To master the Spark Shell is to master the boundary between local memory and distributed compute. Engineers who understand this environment know that every line typed into the prompt undergoes a rigorous lifecycle: parsing into an AST, cleaning via the Closure Cleaner, physical planning by Catalyst, bytecode generation by Tungsten, and network serialization via Kryo. Ignoring this lifecycle inevitably leads to JVM heap exhaustion, serialization crashes, and unoptimized execution graphs that bring clusters to their knees. [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463)
+To master the Spark Shell is to master the boundary between local memory and distributed compute. Engineers who understand this environment know that every line typed into the prompt undergoes a rigorous lifecycle: parsing into an AST, cleaning via the Closure Cleaner, physical planning by Catalyst, bytecode generation by Tungsten, and network serialization via Kryo. Ignoring this lifecycle inevitably leads to JVM heap exhaustion, serialization crashes, and unoptimized execution graphs that bring clusters to their knees. 
 
 Ultimately, the Spark Shell is not merely a scratchpad; it is a real-time diagnostic command center. Whether inspecting the Catalyst physical plan with `explain()`, programmatically managing the Hive metastore via the Catalog API, or dynamically manipulating task scheduling pools, true mastery of the REPL unlocks unprecedented agility in big data engineering. It remains one of the most powerful interactive data tools ever built, provided the engineer respects the architectural complexity lurking just beneath the command prompt.
-</🔥 Master Class: Spark Shell> [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)
+</🔥 Master Class: Spark Shell> 

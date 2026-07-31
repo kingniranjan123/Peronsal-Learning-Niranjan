@@ -2,11 +2,11 @@
 ## Overview
 Filtering and aggregating constitute the fundamental bedrock of data transformation in Apache Spark, acting as the primary mechanisms for reducing massive, intractable datasets down to analytically significant insights. In distributed data processing paradigms, filtering (invoked via `.where()` or `.filter()`) selectively prunes data volume as early as possible in the execution plan. Aggregating (executed via `.groupBy()`, `.agg()`, or complex window functions) computes summarizing statistical metrics across highly partitioned data. Together, they solve the most persistent and defining problem of big data computing: turning terabytes of raw, row-level records into manageable, high-value business metrics without overwhelming single-node memory structures or saturating network bandwidth.
 
-At a macroscopic level, these operations appear deceptively simple to end-users, often directly mapped to standard SQL `WHERE` and `GROUP BY` clauses. However, beneath this declarative surface at the physical execution layer, they invoke the most complex and mission-critical optimizations within the Spark SQL engine. Inefficient filtering invariably leads to severe I/O bottlenecks and extreme JVM memory pressure. Naive aggregations immediately trigger catastrophic data skew, out-of-memory (OOM) exceptions, and severe network bottlenecks during the shuffle phase. Mastering these concepts requires a deep appreciation of how the Catalyst optimizer parses logical intents and how Tungsten manages in-memory data structures to perform aggregations using off-heap memory, minimizing Garbage Collection (GC) overhead and maximizing CPU throughput.
+At a macroscopic level, these operations appear deceptively simple to end-users, often directly mapped to standard SQL `WHERE` and `GROUP BY` clauses. However, beneath this declarative surface at the physical execution layer, they invoke the most complex and mission-critical optimizations within the Spark SQL engine. Inefficient filtering invariably leads to severe I/O bottlenecks and extreme JVM memory pressure. Naive aggregations immediately trigger catastrophic data skew, out-of-memory (OOM) exceptions, and severe network bottlenecks during the shuffle phase. Mastering these concepts requires a deep appreciation of how the Catalyst optimizer parses logical intents and how Tungsten manages in-memory data structures to perform aggregations using off-heap memory, minimizing Garbage Collection (GC) overhead and maximizing CPU throughput. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 455](spark_book.pdf#page=455)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
 
 ### How It Works Under the Hood
 When a data engineer submits a filtering or aggregating query, the Catalyst optimizer systematically transforms the abstract syntax tree into an optimized physical plan. During the Logical Optimization phase, Catalyst aggressively applies rule-based transformations like *Predicate Pushdown*. It pushes filter conditions down the logical plan as close to the data source as physically possible, often embedding the filter directly into the file format reader (such as Parquet or ORC). This allows the Spark execution engine to skip reading entire row groups, stripes, or blocks based on file-level metadata and column statistics (like min/max values), completely avoiding the instantiation of unnecessary data in the JVM heap. This predicate pushdown dramatically reduces disk I/O, network transfer, and CPU decoding cycles by up to 99% in highly selective queries.
@@ -16,48 +16,48 @@ For aggregations, the physical planning phase evaluates the `spark.sql.shuffle.p
 Tungsten's execution engine supercharges these physical operations through Whole-Stage Code Generation. This revolutionary feature fuses multiple physical operators (for example: Scan, Filter, and Partial Aggregate) into a single, cohesive Java function that is compiled into highly optimized bytecode at runtime. This completely eliminates virtual function calls and leverages CPU registers for intermediate states rather than creating garbage objects. Furthermore, Tungsten manages aggregation state buffers entirely in off-heap memory using a customized, CPU-cache-aligned binary format. This mechanism evades the Java Virtual Machine's garbage collector entirely, allowing Spark to aggregate billions of individual rows with near C-level performance speeds, remaining bounded strictly by L2/L3 cache access limits and memory bandwidth rather than GC pause times.
 
 ```text
-Driver JVM                                      Worker Executor JVM (Tungsten Engine)
-┌──────────────────────────┐                    ┌──────────────────────────────────────────────────┐
-│  Catalyst Optimizer      │                    │  Task (Mapper Phase)                             │
-│ ┌──────────────────────┐ │                    │ ┌──────────────────────────────────────────────┐ │
-│ │ Logical Plan         │ │ Predicate Pushdown │ │ Vectorized Parquet Reader                    │ │
-│ │  ├─ Filter(x > 10)   │─┼────────────────────┼─▶  (Reads only matching Row Groups)            │ │
-│ │  └─ Aggregate(sum)   │ │                    │ ├──────────────────────────────────────────────┤ │
-│ │                      │ │ Whole-Stage        │ │ Off-Heap Hash Map (Tungsten)                 │ │
-│ │ Physical Plan        │ │ CodeGen            │ │  (Partial Aggregation - Local Sum)           │ │
-│ │  └─ HashAggregate    │─┼────────────────────┼─▶  [Key1: 100, Key2: 450]                      │ │
-│ └──────────────────────┘ │                    │ └──────────────────────┬───────────────────────┘ │
-└──────────────────────────┘                    └────────────────────────┼─────────────────────────┘
-                                                                         │
-                                                                         ▼
-                                                           Shuffle Write (Kryo Serialization)
-                                                                         │
-                                                ┌────────────────────────▼─────────────────────────┐
-                                                │  Task (Reducer Phase)                            │
-                                                │ ┌──────────────────────────────────────────────┐ │
-                                                │ │ Final HashAggregate                          │ │
-                                                │ │  (Merge Partial Sums across Partitions)      │ │
-                                                │ └──────────────────────────────────────────────┘ │
-                                                └──────────────────────────────────────────────────┘
+Driver JVM Worker Executor JVM (Tungsten Engine)
+┌──────────────────────────┐ ┌──────────────────────────────────────────────────┐
+│ Catalyst Optimizer │ │ Task (Mapper Phase) │
+│ ┌──────────────────────┐ │ │ ┌──────────────────────────────────────────────┐ │
+│ │ Logical Plan │ │ Predicate Pushdown │ │ Vectorized Parquet Reader │ │
+│ │ ├─ Filter(x > 10) │─┼────────────────────┼─▶ (Reads only matching Row Groups) │ │
+│ │ └─ Aggregate(sum) │ │ │ ├──────────────────────────────────────────────┤ │
+│ │ │ │ Whole-Stage │ │ Off-Heap Hash Map (Tungsten) │ │
+│ │ Physical Plan │ │ CodeGen │ │ (Partial Aggregation - Local Sum) │ │
+│ │ └─ HashAggregate │─┼────────────────────┼─▶ [Key1: 100, Key2: 450] │ │
+│ └──────────────────────┘ │ │ └──────────────────────┬───────────────────────┘ │
+└──────────────────────────┘ └────────────────────────┼─────────────────────────┘
+ │
+ ▼
+ Shuffle Write (Kryo Serialization)
+ │
+ ┌────────────────────────▼─────────────────────────┐
+ │ Task (Reducer Phase) │
+ │ ┌──────────────────────────────────────────────┐ │
+ │ │ Final HashAggregate │ │
+ │ │ (Merge Partial Sums across Partitions) │ │
+ │ └──────────────────────────────────────────────┘ │
+ └──────────────────────────────────────────────────┘ [Ref: 463](spark_book.pdf#page=463)
 ```
 
 ### Key Internal Components
 - **Catalyst Predicate Pushdown Engine:** A critical logical optimization rule that analyzes filter expressions and propagates them down the query plan tree. By pushing filters directly into the data source's vectorized reader, Spark bypasses deserializing records into JVM objects, drastically cutting CPU and memory overhead by utilizing file-level metadata to skip non-matching blocks.
 - **Tungsten Aggregation Hash Map:** An off-heap data structure used exclusively during `HashAggregateExec` to continuously store and update aggregation buffers (like running sums or counters). Because it operates directly on raw binary bytes instead of heavy Java objects, it is immune to GC pauses, utilizing CPU caches efficiently, and gracefully spilling to disk if filled to capacity.
 - **Shuffle Exchange (Hash Partitioning):** The physical network transfer phase triggered by `.groupBy()`, moving data across the cluster so all records sharing a specific grouping key land on a single executor. It heavily serializes intermediate aggregation buffers (typically utilizing Kryo) and relies on the BlockManager to coordinate the multi-node pull of data from mappers to reducers.
-- **Whole-Stage Code Generation (Janino):** An advanced Tungsten execution feature that collapses the execution of Filter and Partial Aggregate operators into a tightly scoped, single `for` loop. It dynamically generates Java source code at runtime via the Janino compiler, eliminating iterator overhead and intermediate object allocation between the filtering step and the aggregation step.
+- **Whole-Stage Code Generation (Janino):** An advanced Tungsten execution feature that collapses the execution of Filter and Partial Aggregate operators into a tightly scoped, single `for` loop. It dynamically generates Java source code at runtime via the Janino compiler, eliminating iterator overhead and intermediate object allocation between the filtering step and the aggregation step. [Ref: 452](spark_book.pdf#page=452)
 
----
+--- [Ref: 456](spark_book.pdf#page=456)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 459](spark_book.pdf#page=459)
 
 ### The Perils of Data Skew in Grouping
-One of the most devastating and pervasive failure modes in distributed aggregations is data skew. When performing a `.groupBy()` operation, Catalyst assigns partitions strictly based on the hash of the grouping key. If a particular key (for example, `status = 'ACTIVE'` or a completely `null` column value) represents 90% of the dataset, a single task on one executor will be forced to process the vast majority of the data. This scenario completely nullifies the advantages of distributed computing, resulting in "straggler tasks" that run for hours while other executors sit entirely idle. Eventually, this single executor's memory limits will be overwhelmed, leading to a massive disk spill and likely a fatal `java.lang.OutOfMemoryError: Java heap space` or network timeout. Mitigating this specific failure requires expert-level interventions like key salting.
+One of the most devastating and pervasive failure modes in distributed aggregations is data skew. When performing a `.groupBy()` operation, Catalyst assigns partitions strictly based on the hash of the grouping key. If a particular key (for example, `status = 'ACTIVE'` or a completely `null` column value) represents 90% of the dataset, a single task on one executor will be forced to process the vast majority of the data. This scenario completely nullifies the advantages of distributed computing, resulting in "straggler tasks" that run for hours while other executors sit entirely idle. Eventually, this single executor's memory limits will be overwhelmed, leading to a massive disk spill and likely a fatal `java.lang.OutOfMemoryError: Java heap space` or network timeout. Mitigating this specific failure requires expert-level interventions like key salting. [Ref: 464](spark_book.pdf#page=464)
 
 ### Hash Aggregate vs. Sort Aggregate Fallback
-While `HashAggregateExec` is incredibly fast due to its optimized off-heap hash map, it possesses strict architectural limitations. It strictly requires the aggregation functions to have mutable buffer types that can be efficiently serialized as fixed-length byte arrays (like `sum`, `count`, or `min`). When users attempt to perform complex aggregations with non-mutable, variable-length, or extremely large object types (such as collecting unique sets of strings via `collect_set`), Catalyst is forced to fall back to `SortAggregateExec`. This physical operator mandate requires the input data to be completely sorted by the grouping key before aggregation, injecting a highly expensive `SortExec` node into the physical plan. This fallback degrades performance exponentially because distributed sorting is massively CPU and memory intensive, heavily straining the JVM heap and radically increasing the latency.
+While `HashAggregateExec` is incredibly fast due to its optimized off-heap hash map, it possesses strict architectural limitations. It strictly requires the aggregation functions to have mutable buffer types that can be efficiently serialized as fixed-length byte arrays (like `sum`, `count`, or `min`). When users attempt to perform complex aggregations with non-mutable, variable-length, or extremely large object types (such as collecting unique sets of strings via `collect_set`), Catalyst is forced to fall back to `SortAggregateExec`. This physical operator mandate requires the input data to be completely sorted by the grouping key before aggregation, injecting a highly expensive `SortExec` node into the physical plan. This fallback degrades performance exponentially because distributed sorting is massively CPU and memory intensive, heavily straining the JVM heap and radically increasing the latency. [Ref: 453](spark_book.pdf#page=453)
 
----
+--- [Ref: 457](spark_book.pdf#page=457)
 
 ## 📊 Performance Characteristics
 
@@ -66,9 +66,9 @@ While `HashAggregateExec` is incredibly fast due to its optimized off-heap hash 
 | `filter()` / `where()` | O(N) | No | Predicate pushdown cuts CPU cycles by up to 99% via skipping Parquet Row Groups. |
 | `groupBy().agg(sum)` | O(N) | Yes | Employs efficient Partial Hash Aggregation in Tungsten off-heap memory. |
 | `groupBy().agg(collect_set)` | O(N log N) | Yes | Forces fallback to SortAggregateExec; incurs immense GC pressure and memory strain. |
-| Window Aggregation | O(N log N) | Yes | Sorts data intra-partition; easily triggers OOM if specific window partitions are skewed. |
+| Window Aggregation | O(N log N) | Yes | Sorts data intra-partition; easily triggers OOM if specific window partitions are skewed. | [Ref: 461](spark_book.pdf#page=461)
 
----
+--- [Ref: 469](spark_book.pdf#page=469)
 
 ## 💻 Code Examples
 
@@ -91,9 +91,9 @@ val df = spark.read.parquet("hdfs:///production/telemetry_data/")
 // Spark leverages the Parquet file footers (Row Group min/max/count statistics) to skip 
 // reading entire chunks of the file if 'event_timestamp' falls outside the specified range.
 val filteredDf = df
-  .filter(col("event_timestamp") >= "2023-01-01" && col("event_timestamp") < "2023-02-01")
-  .filter(col("event_type") === "CRASH")
-  .select("device_id", "memory_dump")
+ .filter(col("event_timestamp") >= "2023-01-01" && col("event_timestamp") < "2023-02-01")
+ .filter(col("event_type") === "CRASH")
+ .select("device_id", "memory_dump")
 
 // Examining the physical plan reveals 'PushedFilters: [IsNotNull(event_timestamp)...]'
 // This proves that data reduction occurred at the storage layer, not in the JVM compute layer.
@@ -110,13 +110,13 @@ filteredDf.explain(true)
 // By default, Spark performs a partial aggregation on the mapper side before the shuffle.
 // This significantly reduces the volume of byte data transmitted over the network infrastructure.
 val aggregatedDf = filteredDf
-  .groupBy("device_id")
-  // We use sum and count. These functions maintain small, fixed-size mutable states 
-  // located directly in Tungsten's off-heap memory, skipping Java object creation.
-  .agg(
-    sum("crash_duration").alias("total_downtime"),
-    count("*").alias("crash_count")
-  )
+ .groupBy("device_id")
+ // We use sum and count. These functions maintain small, fixed-size mutable states 
+ // located directly in Tungsten's off-heap memory, skipping Java object creation.
+ .agg(
+ sum("crash_duration").alias("total_downtime"),
+ count("*").alias("crash_count")
+ )
 
 // The physical plan will definitively display two distinct HashAggregate phases:
 // 1. HashAggregate(keys=[device_id], functions=[partial_sum(crash_duration), partial_count(1)])
@@ -138,21 +138,21 @@ aggregatedDf.write.format("noop").save()
 val saltConfig = 50 // The number of artificial partitions to distribute the severely skewed key
 
 val saltedDf = df
-  // Step 1: Append a uniform random salt to the grouping key to fracture the massive partition.
-  .withColumn("salt", rand() * saltConfig)
-  .withColumn("salted_device_id", concat(col("device_id"), lit("_"), cast(col("salt") as "int")))
+ // Step 1: Append a uniform random salt to the grouping key to fracture the massive partition.
+ .withColumn("salt", rand() * saltConfig)
+ .withColumn("salted_device_id", concat(col("device_id"), lit("_"), cast(col("salt") as "int")))
 
 // Step 2: Perform the first Partial GroupBy on the highly distributed, salted key.
 // This evenly distributes the compute load across 50 distinct task reducers.
 val partialAgg = saltedDf
-  .groupBy("salted_device_id", "device_id")
-  .agg(sum("metrics").alias("partial_sum"))
+ .groupBy("salted_device_id", "device_id")
+ .agg(sum("metrics").alias("partial_sum"))
 
 // Step 3: Perform the Final GroupBy on the original, un-salted key to unify the results.
 // The incoming data volume is now massively reduced and easily fits in memory.
 val finalAgg = partialAgg
-  .groupBy("device_id")
-  .agg(sum("partial_sum").alias("total_metrics"))
+ .groupBy("device_id")
+ .agg(sum("partial_sum").alias("total_metrics"))
 
 finalAgg.explain()
 ```
@@ -172,11 +172,11 @@ import org.apache.spark.sql.expressions.Window
 val windowSpec = Window.partitionBy("device_id").orderBy(col("event_timestamp").desc)
 
 val latestEventPerDevice = df
-  // Row_number evaluates the sort condition strictly within the bounds of each partition.
-  .withColumn("rank", row_number().over(windowSpec))
-  // We filter immediately on rank = 1, extracting the latest event without accumulating arrays.
-  .filter(col("rank") === 1)
-  .drop("rank")
+ // Row_number evaluates the sort condition strictly within the bounds of each partition.
+ .withColumn("rank", row_number().over(windowSpec))
+ // We filter immediately on rank = 1, extracting the latest event without accumulating arrays.
+ .filter(col("rank") === 1)
+ .drop("rank")
 
 // This targeted approach completely circumvents the instantiation of gigantic JVM arrays.
 // It bypasses SortAggregateExec serialization bottlenecks during the expensive shuffle phase.
@@ -199,9 +199,9 @@ To achieve true mastery of Filtering And Aggregating:
 
 ## 📚 Summary
 
-Filtering and aggregating in Apache Spark are profoundly more complex and architectural than their declarative SQL syntax suggests. They function as the absolute core engines of data reduction, transforming massive, intractable raw datasets into actionable, high-density insights. True Spark engineering mastery begins the moment a developer stops viewing these fundamental operations as simple data transformations and instead visualizes them as physical interactions between localized memory, network bandwidth, and disk I/O constraints. [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463)
+Filtering and aggregating in Apache Spark are profoundly more complex and architectural than their declarative SQL syntax suggests. They function as the absolute core engines of data reduction, transforming massive, intractable raw datasets into actionable, high-density insights. True Spark engineering mastery begins the moment a developer stops viewing these fundamental operations as simple data transformations and instead visualizes them as physical interactions between localized memory, network bandwidth, and disk I/O constraints. 
 
-The Catalyst optimizer and Tungsten execution engine have elegantly abstracted away the hardest elements of distributed computing, enabling near C-level performance speeds through off-heap memory management and Whole-Stage Code Generation. However, these systems are not omnipotent. As demonstrated throughout this deep dive, poor query construction can effortlessly bypass these critical optimizations, forcing Spark into highly expensive sort-based aggregations or triggering catastrophic out-of-memory errors as a direct result of data skew. [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)
+The Catalyst optimizer and Tungsten execution engine have elegantly abstracted away the hardest elements of distributed computing, enabling near C-level performance speeds through off-heap memory management and Whole-Stage Code Generation. However, these systems are not omnipotent. As demonstrated throughout this deep dive, poor query construction can effortlessly bypass these critical optimizations, forcing Spark into highly expensive sort-based aggregations or triggering catastrophic out-of-memory errors as a direct result of data skew. 
 
 By strategically leveraging predicate pushdown at the storage layer, intimately understanding the network mechanics of two-phase hashing, and proactively salting skewed keys, data engineers can craft production pipelines that are both highly performant and incredibly resilient. Mastering filtering and aggregating is not simply about writing functional syntax; it is fundamentally about writing sympathetic code that aligns perfectly with Spark’s internal architectural realities.
-</🔥 Master Class: Filtering And Aggregating> [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)
+</🔥 Master Class: Filtering And Aggregating> 

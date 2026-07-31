@@ -18,17 +18,17 @@ from pyspark.sql import SparkSession
 # Architecting a robust SparkSession with fine-tuned Driver/Executor memory settings
 # and advanced Tungsten/Catalyst configurations for a high-throughput workload.
 spark = SparkSession.builder \
-    .appName("MasterClass-SparkComponents") \
-    .config("spark.driver.memory", "8g") \
-    .config("spark.driver.maxResultSize", "4g") \
-    .config("spark.executor.memory", "16g") \
-    .config("spark.executor.cores", "4") \
-    .config("spark.memory.fraction", "0.8") \
-    .config("spark.memory.storageFraction", "0.3") \
-    .config("spark.sql.shuffle.partitions", "200") \
-    .config("spark.sql.adaptive.enabled", "true") \
-    .config("spark.executor.extraJavaOptions", "-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35") \
-    .getOrCreate()
+ .appName("MasterClass-SparkComponents") \
+ .config("spark.driver.memory", "8g") \
+ .config("spark.driver.maxResultSize", "4g") \
+ .config("spark.executor.memory", "16g") \
+ .config("spark.executor.cores", "4") \
+ .config("spark.memory.fraction", "0.8") \
+ .config("spark.memory.storageFraction", "0.3") \
+ .config("spark.sql.shuffle.partitions", "200") \
+ .config("spark.sql.adaptive.enabled", "true") \
+ .config("spark.executor.extraJavaOptions", "-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35") \
+ .getOrCreate()
 ```
 
 In this advanced configuration, we are explicitly sizing the Driver and Executors while tuning the JVM Garbage Collector. `spark.driver.maxResultSize` is crucial; it limits the total size of serialized results sent to the driver, preventing Driver OOMs when using `collect()`. We configure the Executors with 16GB of memory and 4 cores, striking a balance between parallelism and HDFS throughput limitations. Furthermore, we manipulate the unified memory fraction (`spark.memory.fraction` and `spark.memory.storageFraction`). By reducing the storage fraction, we allocate more JVM heap to execution memory, preventing painful disk spills during heavy shuffles and aggregations. Finally, passing `-XX:+UseG1GC` to the executor's JVM optimizes garbage collection pauses, which is a common bottleneck in long-running streaming or heavy ETL jobs.
@@ -75,9 +75,9 @@ tax_rates_dict = {"NY": 0.08875, "CA": 0.0725, "TX": 0.0625, "FL": 0.06}
 broadcast_tax_rates = spark.sparkContext.broadcast(tax_rates_dict)
 
 def calculate_tax(state, amount):
-    # Accessing the local copy of the broadcasted variable on the Executor
-    rate = broadcast_tax_rates.value.get(state, 0.0)
-    return amount * rate
+ # Accessing the local copy of the broadcasted variable on the Executor
+ rate = broadcast_tax_rates.value.get(state, 0.0)
+ return amount * rate
 
 from pyspark.sql.functions import udf
 from pyspark.sql.types import DoubleType
@@ -101,20 +101,20 @@ raw_rdd = spark.sparkContext.textFile("hdfs://cluster/data/massive_logs.txt")
 
 # Custom partitioner to hash by a specific key prefix to ensure even distribution
 def custom_hash(key):
-    return hash(key.split("_")[0]) % 500
+ return hash(key.split("_")[0]) % 500
 
 # Repartitioning using the custom partitioner to alleviate Executor memory pressure
 # and avoid OOM errors on specific executor nodes due to data skew
 paired_rdd = raw_rdd.map(lambda line: (line.split(",")[0], line)) \
-                    .partitionBy(500, custom_hash) \
-                    .persist(storageLevel=pyspark.StorageLevel.MEMORY_AND_DISK_SER)
+ .partitionBy(500, custom_hash) \
+ .persist(storageLevel=pyspark.StorageLevel.MEMORY_AND_DISK_SER)
 
 # Triggering an action to materialize the cache
 count = paired_rdd.count()
 
 # Checking the storage status of our RDD components across Executors
 for name, status in paired_rdd.context.getRDDStorageInfo():
-    print(f"RDD Name: {name}, Storage: {status.storageLevel}, Memory Used: {status.memSize}")
+ print(f"RDD Name: {name}, Storage: {status.storageLevel}, Memory Used: {status.memSize}")
 ```
 
 While DataFrames hide much of Spark's internal complexity, mastering raw RDD partitioning is essential for edge cases where Catalyst struggles, particularly with massive data skews. In this example, we bypass the default hash partitioner and implement a custom partitioning logic to evenly distribute data across 500 partitions. This directly impacts the Executor memory profile; if one partition is significantly larger than the others, a single Executor will OOM while others sit idle. Furthermore, we use `MEMORY_AND_DISK_SER` as our StorageLevel. This leverages Java serialization (or preferably Kryo if configured) to store the RDD as serialized byte arrays in the Executor JVM, drastically reducing the memory footprint compared to deserialized Java objects, providing a safety net that spills to disk if the heap limit is breached.

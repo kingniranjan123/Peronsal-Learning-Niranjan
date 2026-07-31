@@ -6,11 +6,11 @@ Apache Mesos is a distributed systems kernel that abstracts CPU, memory, disk, a
 
 Spark on Mesos is one of the most powerful deployment modalities available. Instead of Spark's standalone scheduler or YARN managing resources, Mesos acts as the global arbiter. The Spark driver registers as a Mesos framework, receives resource **offers** from the Mesos master, and launches executor tasks directly on Mesos agents. This architecture allows Spark to coexist on the same machines as Kafka, Cassandra, TensorFlow jobs, and Marathon-managed microservices — all sharing the same physical hardware with strict isolation guarantees and fairness policies enforced at the kernel level.
 
-The central design insight is **separation of concerns**: Mesos handles *where* and *how much* to allocate; individual frameworks decide *what* to run on those resources. This two-level delegation is what makes the system horizontally scalable — the Mesos master never needs to understand Spark's internal scheduling semantics, and Spark never needs to negotiate with Kafka for machine time.
+The central design insight is **separation of concerns**: Mesos handles *where* and *how much* to allocate; individual frameworks decide *what* to run on those resources. This two-level delegation is what makes the system horizontally scalable — the Mesos master never needs to understand Spark's internal scheduling semantics, and Spark never needs to negotiate with Kafka for machine time. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 457](spark_book.pdf#page=457)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 461](spark_book.pdf#page=461)
 
 ### How It Works Under the Hood
 
@@ -22,37 +22,37 @@ Mesos agents enforce isolation using **cgroups** at the Linux kernel level — e
 
 Frameworks register with the Mesos master by connecting and sending a `SUBSCRIBE` call containing a `FrameworkInfo` protobuf. This protobuf carries the framework's **role** (e.g., `spark`, `marathon`), **failover timeout** (how long the master preserves the framework's resources after a scheduler disconnect), and **capabilities** (e.g., `PARTITION_AWARE`, `MULTI_ROLE`, `GPU_RESOURCES`). The master's **replicated log** — a Paxos-based distributed log built on LevelDB — persists registered framework state, agent registrations, and resource reservations so that a master failover (via ZooKeeper leader election among standby masters) does not lose cluster state.
 
-```
+```text
 ZooKeeper Ensemble (Leader Election)
-        │
-        ▼
+ │
+ ▼
 ┌───────────────────────────────────────────────────┐
-│                 Mesos Master (Active)             │
-│  ┌──────────────┐   ┌────────────────────────┐   │
-│  │  Allocator   │   │   Replicated Log       │   │
-│  │  (DRF)       │   │   (Paxos / LevelDB)    │   │
-│  └──────┬───────┘   └────────────────────────┘   │
-│         │  Resource Offers (HTTP/2 or Protobuf)   │
+│ Mesos Master (Active) │
+│ ┌──────────────┐ ┌────────────────────────┐ │
+│ │ Allocator │ │ Replicated Log │ │
+│ │ (DRF) │ │ (Paxos / LevelDB) │ │
+│ └──────┬───────┘ └────────────────────────┘ │
+│ │ Resource Offers (HTTP/2 or Protobuf) │
 └─────────┼─────────────────────────────────────────┘
-          │
-    ┌─────┴──────────────────────────┐
-    │                                │
-    ▼                                ▼
-┌──────────────────────┐   ┌──────────────────────┐
-│  Spark Framework     │   │  Marathon Framework   │
-│  Scheduler (Driver)  │   │  Scheduler            │
-│  - Accept offers     │   │  - Launch app tasks   │
-│  - Launch executors  │   │  - Health checking    │
-└──────────┬───────────┘   └──────────┬───────────┘
-           │ LaunchTasks               │ LaunchTasks
-    ┌──────┴───────────────────────────┴──────┐
-    │           Mesos Agents (Workers)         │
-    │  ┌───────────────┐  ┌───────────────┐   │
-    │  │  Agent Node 1  │  │  Agent Node 2 │   │
-    │  │  cgroup: Task1 │  │  cgroup: Task3│   │
-    │  │  cgroup: Task2 │  │  cgroup: Task4│   │
-    │  └───────────────┘  └───────────────┘   │
-    └──────────────────────────────────────────┘
+ │
+ ┌─────┴──────────────────────────┐
+ │ │
+ ▼ ▼
+┌──────────────────────┐ ┌──────────────────────┐
+│ Spark Framework │ │ Marathon Framework │
+│ Scheduler (Driver) │ │ Scheduler │
+│ - Accept offers │ │ - Launch app tasks │
+│ - Launch executors │ │ - Health checking │
+└──────────┬───────────┘ └──────────┬───────────┘
+ │ LaunchTasks │ LaunchTasks
+ ┌──────┴───────────────────────────┴──────┐
+ │ Mesos Agents (Workers) │
+ │ ┌───────────────┐ ┌───────────────┐ │
+ │ │ Agent Node 1 │ │ Agent Node 2 │ │
+ │ │ cgroup: Task1 │ │ cgroup: Task3│ │
+ │ │ cgroup: Task2 │ │ cgroup: Task4│ │
+ │ └───────────────┘ └───────────────┘ │
+ └──────────────────────────────────────────┘ [Ref: 469](spark_book.pdf#page=469)
 ```
 
 ### Key Internal Components
@@ -63,23 +63,23 @@ ZooKeeper Ensemble (Leader Election)
 
 - **Framework Scheduler:** The component that lives inside the application driver (e.g., Spark's `MesosCoarseGrainedSchedulerBackend` or `MesosFineGrainedSchedulerBackend`). It implements the Mesos scheduler HTTP API, managing offer acceptance, task status callbacks, and reschedule logic. Spark's coarse-grained mode acquires executors once and holds them for the application lifetime; fine-grained mode releases resources after every task.
 
-- **ZooKeeper (Leader Election & Discovery):** Mesos masters form a quorum (typically 3 or 5 nodes). ZooKeeper holds a single ephemeral znode containing the active master's endpoint. Frameworks and agents watch this znode — on master failover, they reconnect to the new leader within the `--zk_session_timeout` window (default: 10s). The replicated log reconstructs cluster state from disk, not from ZooKeeper, so ZooKeeper carries no resource state.
+- **ZooKeeper (Leader Election & Discovery):** Mesos masters form a quorum (typically 3 or 5 nodes). ZooKeeper holds a single ephemeral znode containing the active master's endpoint. Frameworks and agents watch this znode — on master failover, they reconnect to the new leader within the `--zk_session_timeout` window (default: 10s). The replicated log reconstructs cluster state from disk, not from ZooKeeper, so ZooKeeper carries no resource state. [Ref: 452](spark_book.pdf#page=452)
 
----
+--- [Ref: 458](spark_book.pdf#page=458)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 463](spark_book.pdf#page=463)
 
 ### The Offer Declined / Resource Hoarding Deadlock
 
 A subtle failure mode emerges when Spark is launched in coarse-grained mode with `spark.cores.max` set higher than the cluster can satisfy. The Spark scheduler accepts every offer that arrives, accumulating partial executor slots. Meanwhile, Marathon or another framework is also waiting for offers. Because Spark has accepted (and is holding) large chunks of resources without running tasks yet (executors are still launching), Marathon starves. The Mesos master's DRF sees Spark's dominant share growing and stops offering to it, yet Spark hasn't reached its target executor count.
 
-The fix is two-fold: set `spark.mesos.rejectOfferDuration` (e.g., `120s`) so that Spark refuses offers it cannot use rather than holding them, and configure `spark.executor.cores` and `spark.executor.memory` to match the agent's cgroup granularity. Additionally, using **reservations** (static or dynamic) guarantees Spark always has a minimum resource floor while respecting fairness for other frameworks. Without reservations, Spark in a shared cluster will oscillate between resource starvation and resource monopolization depending on load timing.
+The fix is two-fold: set `spark.mesos.rejectOfferDuration` (e.g., `120s`) so that Spark refuses offers it cannot use rather than holding them, and configure `spark.executor.cores` and `spark.executor.memory` to match the agent's cgroup granularity. Additionally, using **reservations** (static or dynamic) guarantees Spark always has a minimum resource floor while respecting fairness for other frameworks. Without reservations, Spark in a shared cluster will oscillate between resource starvation and resource monopolization depending on load timing. [Ref: 470](spark_book.pdf#page=470)
 
 ### DRF Weight Misconfiguration and Fairness Collapse
 
-Mesos roles support **weights** — a role with `weight=2.0` receives offers at twice the rate of a role with `weight=1.0` during DRF sorting. A common misconfiguration is assigning very high weights to a production Spark role (`weight=10`) while leaving the Marathon role at the default (`weight=1`). During a burst of Spark job submissions, DRF will allocate 90% of cluster resources to Spark before Marathon even receives its first offer cycle, causing Marathon-managed services (REST APIs, databases) to miss their SLAs. The correct pattern is to use **quota** (`mesos-master --quota`) to guarantee Marathon a minimum resource floor regardless of weights, and to use weights only for *surplus* resource distribution above that floor. Monitor the Mesos UI's `/weights` and `/quota` endpoints — mismatches between configured quota and actual allocation always indicate a scheduling misconfiguration, not a framework bug.
+Mesos roles support **weights** — a role with `weight=2.0` receives offers at twice the rate of a role with `weight=1.0` during DRF sorting. A common misconfiguration is assigning very high weights to a production Spark role (`weight=10`) while leaving the Marathon role at the default (`weight=1`). During a burst of Spark job submissions, DRF will allocate 90% of cluster resources to Spark before Marathon even receives its first offer cycle, causing Marathon-managed services (REST APIs, databases) to miss their SLAs. The correct pattern is to use **quota** (`mesos-master --quota`) to guarantee Marathon a minimum resource floor regardless of weights, and to use weights only for *surplus* resource distribution above that floor. Monitor the Mesos UI's `/weights` and `/quota` endpoints — mismatches between configured quota and actual allocation always indicate a scheduling misconfiguration, not a framework bug. [Ref: 455](spark_book.pdf#page=455)
 
----
+--- [Ref: 459](spark_book.pdf#page=459)
 
 ## 📊 Performance Characteristics
 
@@ -90,7 +90,7 @@ Mesos roles support **weights** — a role with `weight=2.0` receives offers at 
 | ZooKeeper master failover | O(1) reconnect | No | Agents reconnect within zk_session_timeout (10s default) |
 | Framework re-registration after failover | O(T) state replay | No | T = tasks in replicated log; can be seconds at scale |
 | cgroup enforcement per task | O(1) kernel call | No | `cgroupv2` write; < 1ms; hard memory limit is synchronous OOM |
-| Offer decline propagation | O(A) | No | A = agents; master re-marks refused resources after refuse duration |
+| Offer decline propagation | O(A) | No | A = agents; master re-marks refused resources after refuse duration | [Ref: 464](spark_book.pdf#page=464)
 
 ---
 
@@ -109,42 +109,42 @@ Mesos roles support **weights** — a role with `weight=2.0` receives offers at 
 from pyspark.sql import SparkSession
 
 spark = (
-    SparkSession.builder
-    .appName("MesosCoarseGrainedDemo")
+ SparkSession.builder
+ .appName("MesosCoarseGrainedDemo")
 
-    # --- Mesos Master Connection ---
-    # Use ZooKeeper for master discovery — never hardcode the master IP.
-    # Mesos master failover is transparent when using the zk:// URI.
-    .master("mesos://zk://zk1:2181,zk2:2181,zk3:2181/mesos")
+ # --- Mesos Master Connection ---
+ # Use ZooKeeper for master discovery — never hardcode the master IP.
+ # Mesos master failover is transparent when using the zk:// URI.
+ .master("mesos://zk://zk1:2181,zk2:2181,zk3:2181/mesos")
 
-    # --- Executor Resource Sizing ---
-    # These values become the TaskInfo.resources protobuf fields in the Mesos offer.
-    # CRITICAL: Must be <= the smallest agent's available resources to avoid offer starvation.
-    .config("spark.executor.memory", "4g")    # maps to mesos memory resource
-    .config("spark.executor.cores", "2")       # maps to mesos cpus resource
+ # --- Executor Resource Sizing ---
+ # These values become the TaskInfo.resources protobuf fields in the Mesos offer.
+ # CRITICAL: Must be <= the smallest agent's available resources to avoid offer starvation.
+ .config("spark.executor.memory", "4g") # maps to mesos memory resource
+ .config("spark.executor.cores", "2") # maps to mesos cpus resource
 
-    # --- Coarse-Grained Mode: Hold executors for the application lifetime ---
-    # Setting max cores limits total cluster consumption.
-    # Without this, Spark will consume ALL offered resources (greedy acquisition).
-    .config("spark.cores.max", "20")           # max 10 executors (20 cores / 2 per executor)
+ # --- Coarse-Grained Mode: Hold executors for the application lifetime ---
+ # Setting max cores limits total cluster consumption.
+ # Without this, Spark will consume ALL offered resources (greedy acquisition).
+ .config("spark.cores.max", "20") # max 10 executors (20 cores / 2 per executor)
 
-    # --- Offer Rejection: CRITICAL for shared clusters ---
-    # Refuse offers that don't meet executor requirements for 2 minutes.
-    # Without this, Spark holds unusable offers and starves other frameworks.
-    .config("spark.mesos.rejectOfferDuration", "120s")
+ # --- Offer Rejection: CRITICAL for shared clusters ---
+ # Refuse offers that don't meet executor requirements for 2 minutes.
+ # Without this, Spark holds unusable offers and starves other frameworks.
+ .config("spark.mesos.rejectOfferDuration", "120s")
 
-    # --- Docker containerization via Mesos unified containerizer ---
-    # The agent pulls this image and runs the executor inside it.
-    .config("spark.mesos.executor.docker.image", "apache/spark:3.5.0")
+ # --- Docker containerization via Mesos unified containerizer ---
+ # The agent pulls this image and runs the executor inside it.
+ .config("spark.mesos.executor.docker.image", "apache/spark:3.5.0")
 
-    # --- Role: maps to Mesos role for DRF fairness and quota enforcement ---
-    .config("spark.mesos.role", "spark-production")
+ # --- Role: maps to Mesos role for DRF fairness and quota enforcement ---
+ .config("spark.mesos.role", "spark-production")
 
-    # --- Principal: authenticates the framework with the master ---
-    .config("spark.mesos.principal", "spark")
-    .config("spark.mesos.secret", "/etc/mesos/spark.secret")
+ # --- Principal: authenticates the framework with the master ---
+ .config("spark.mesos.principal", "spark")
+ .config("spark.mesos.secret", "/etc/mesos/spark.secret")
 
-    .getOrCreate()
+ .getOrCreate()
 )
 
 # Verify executor allocation via Mesos REST API (check after this point in Mesos UI)
@@ -177,38 +177,38 @@ FRAMEWORK_NAME = "OfferInspectorFramework"
 # Step 1: Subscribe to the master — this is what Spark does when the driver starts.
 # The master assigns a framework_id and begins sending offers.
 subscribe_payload = {
-    "type": "SUBSCRIBE",
-    "subscribe": {
-        "framework_info": {
-            "user": "root",
-            "name": FRAMEWORK_NAME,
-            # Role must match a configured Mesos role for quota/weight to apply.
-            "roles": ["spark-dev"],
-            # Failover timeout: master preserves framework state for 60s after disconnect.
-            # Spark sets this to a large value (e.g., 1 week) so executor state survives
-            # brief driver restarts without losing running tasks.
-            "failover_timeout": 60.0,
-            "capabilities": [
-                {"type": "MULTI_ROLE"},         # Accept offers from multiple roles
-                {"type": "PARTITION_AWARE"},    # Distinguish agent unreachable vs gone
-            ]
-        }
-    }
+ "type": "SUBSCRIBE",
+ "subscribe": {
+ "framework_info": {
+ "user": "root",
+ "name": FRAMEWORK_NAME,
+ # Role must match a configured Mesos role for quota/weight to apply.
+ "roles": ["spark-dev"],
+ # Failover timeout: master preserves framework state for 60s after disconnect.
+ # Spark sets this to a large value (e.g., 1 week) so executor state survives
+ # brief driver restarts without losing running tasks.
+ "failover_timeout": 60.0,
+ "capabilities": [
+ {"type": "MULTI_ROLE"}, # Accept offers from multiple roles
+ {"type": "PARTITION_AWARE"}, # Distinguish agent unreachable vs gone
+ ]
+ }
+ }
 }
 
 headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "Mesos-Stream-Id": ""  # Will be populated from response header
+ "Content-Type": "application/json",
+ "Accept": "application/json",
+ "Mesos-Stream-Id": "" # Will be populated from response header
 }
 
 # The v1 API uses a persistent streaming HTTP response (Server-Sent Events style).
 # Each event is a RecordIO-encoded JSON message.
 response = requests.post(
-    f"{MESOS_MASTER}/api/v1/scheduler",
-    data=json.dumps(subscribe_payload),
-    headers=headers,
-    stream=True  # Keep connection open to receive offer stream
+ f"{MESOS_MASTER}/api/v1/scheduler",
+ data=json.dumps(subscribe_payload),
+ headers=headers,
+ stream=True # Keep connection open to receive offer stream
 )
 
 print(f"Subscribed. Stream-Id: {response.headers.get('Mesos-Stream-Id')}")
@@ -216,47 +216,47 @@ print(f"Subscribed. Stream-Id: {response.headers.get('Mesos-Stream-Id')}")
 # Step 2: Process the streaming event response.
 # Each offer contains agent_id, hostname, and a list of resources.
 for line in response.iter_lines():
-    if not line:
-        continue
-    # RecordIO format: first line is message length, second is JSON body.
-    try:
-        event = json.loads(line)
-    except json.JSONDecodeError:
-        continue  # length prefix line, skip
+ if not line:
+ continue
+ # RecordIO format: first line is message length, second is JSON body.
+ try:
+ event = json.loads(line)
+ except json.JSONDecodeError:
+ continue # length prefix line, skip
 
-    event_type = event.get("type")
+ event_type = event.get("type")
 
-    if event_type == "OFFERS":
-        for offer in event["offers"]["offers"]:
-            agent_id = offer["agent_id"]["value"]
-            hostname = offer["hostname"]
+ if event_type == "OFFERS":
+ for offer in event["offers"]["offers"]:
+ agent_id = offer["agent_id"]["value"]
+ hostname = offer["hostname"]
 
-            # Parse available resources from the offer protobuf
-            resources = {r["name"]: r["scalar"]["value"]
-                         for r in offer.get("resources", [])
-                         if r.get("type") == "SCALAR"}
+ # Parse available resources from the offer protobuf
+ resources = {r["name"]: r["scalar"]["value"]
+ for r in offer.get("resources", [])
+ if r.get("type") == "SCALAR"}
 
-            cpus = resources.get("cpus", 0)
-            mem_mb = resources.get("mem", 0)
-            disk_mb = resources.get("disk", 0)
+ cpus = resources.get("cpus", 0)
+ mem_mb = resources.get("mem", 0)
+ disk_mb = resources.get("disk", 0)
 
-            print(f"OFFER from {hostname} ({agent_id[:8]}...): "
-                  f"cpus={cpus}, mem={mem_mb}MB, disk={disk_mb}MB")
+ print(f"OFFER from {hostname} ({agent_id[:8]}...): "
+ f"cpus={cpus}, mem={mem_mb}MB, disk={disk_mb}MB")
 
-            # Spark's offer evaluation logic (simplified):
-            # Accept if cpus >= spark.executor.cores AND mem >= spark.executor.memory
-            REQUIRED_CPUS = 2.0
-            REQUIRED_MEM_MB = 4096
+ # Spark's offer evaluation logic (simplified):
+ # Accept if cpus >= spark.executor.cores AND mem >= spark.executor.memory
+ REQUIRED_CPUS = 2.0
+ REQUIRED_MEM_MB = 4096
 
-            if cpus >= REQUIRED_CPUS and mem_mb >= REQUIRED_MEM_MB:
-                print(f"  -> ACCEPT: Can launch an executor on {hostname}")
-            else:
-                print(f"  -> DECLINE: Insufficient resources (need {REQUIRED_CPUS} cpus, "
-                      f"{REQUIRED_MEM_MB}MB; got {cpus} cpus, {mem_mb}MB)")
+ if cpus >= REQUIRED_CPUS and mem_mb >= REQUIRED_MEM_MB:
+ print(f" -> ACCEPT: Can launch an executor on {hostname}")
+ else:
+ print(f" -> DECLINE: Insufficient resources (need {REQUIRED_CPUS} cpus, "
+ f"{REQUIRED_MEM_MB}MB; got {cpus} cpus, {mem_mb}MB)")
 
-    elif event_type == "SUBSCRIBED":
-        framework_id = event["subscribed"]["framework_id"]["value"]
-        print(f"Framework registered with ID: {framework_id}")
+ elif event_type == "SUBSCRIBED":
+ framework_id = event["subscribed"]["framework_id"]["value"]
+ print(f"Framework registered with ID: {framework_id}")
 ```
 
 > **Mastery Note:** The `PARTITION_AWARE` capability is essential for production Spark deployments on Mesos. Without it, the master sends `TASK_LOST` for all tasks on an unreachable agent immediately, causing Spark to immediately reschedule those tasks and potentially run duplicate work. With `PARTITION_AWARE`, the master sends `TASK_UNREACHABLE` first, allowing Spark to wait for a configurable period before declaring the agent truly gone. This distinction is the difference between a network partition causing duplicate computation and it being handled gracefully. The `failover_timeout` value in `FrameworkInfo` is the master's guarantee window — set it too low (< 60s) and a Spark driver GC pause that exceeds it will cause the master to kill all the framework's executors.
@@ -281,23 +281,23 @@ MASTER="http://mesos-master-active:5050"
 # Marathon uses weight=2 — it gets 2x more surplus than spark-dev.
 
 curl -s -X PUT "${MASTER}/roles" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "roles": [
-      {
-        "name": "spark-production",
-        "weight": 4.0
-      },
-      {
-        "name": "spark-dev",
-        "weight": 1.0
-      },
-      {
-        "name": "marathon",
-        "weight": 2.0
-      }
-    ]
-  }'
+ -H "Content-Type: application/json" \
+ -d '{
+ "roles": [
+ {
+ "name": "spark-production",
+ "weight": 4.0
+ },
+ {
+ "name": "spark-dev",
+ "weight": 1.0
+ },
+ {
+ "name": "marathon",
+ "weight": 2.0
+ }
+ ]
+ }'
 
 echo "Roles and weights configured."
 
@@ -310,35 +310,35 @@ echo "Roles and weights configured."
 
 # Guarantee Marathon at least 16 CPUs and 32GB RAM at all times.
 curl -s -X PUT "${MASTER}/quota" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "role": "marathon",
-    "guarantee": [
-      {"name": "cpus", "type": "SCALAR", "scalar": {"value": 16.0}},
-      {"name": "mem",  "type": "SCALAR", "scalar": {"value": 32768.0}}
-    ],
-    "limit": [
-      {"name": "cpus", "type": "SCALAR", "scalar": {"value": 64.0}},
-      {"name": "mem",  "type": "SCALAR", "scalar": {"value": 131072.0}}
-    ]
-  }'
+ -H "Content-Type: application/json" \
+ -d '{
+ "role": "marathon",
+ "guarantee": [
+ {"name": "cpus", "type": "SCALAR", "scalar": {"value": 16.0}},
+ {"name": "mem", "type": "SCALAR", "scalar": {"value": 32768.0}}
+ ],
+ "limit": [
+ {"name": "cpus", "type": "SCALAR", "scalar": {"value": 64.0}},
+ {"name": "mem", "type": "SCALAR", "scalar": {"value": 131072.0}}
+ ]
+ }'
 
 echo "Marathon quota set: guarantee 16 cpus / 32GB, limit 64 cpus / 128GB."
 
 # Guarantee spark-production a minimum floor for critical jobs.
 curl -s -X PUT "${MASTER}/quota" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "role": "spark-production",
-    "guarantee": [
-      {"name": "cpus", "type": "SCALAR", "scalar": {"value": 32.0}},
-      {"name": "mem",  "type": "SCALAR", "scalar": {"value": 65536.0}}
-    ],
-    "limit": [
-      {"name": "cpus", "type": "SCALAR", "scalar": {"value": 200.0}},
-      {"name": "mem",  "type": "SCALAR", "scalar": {"value": 409600.0}}
-    ]
-  }'
+ -H "Content-Type: application/json" \
+ -d '{
+ "role": "spark-production",
+ "guarantee": [
+ {"name": "cpus", "type": "SCALAR", "scalar": {"value": 32.0}},
+ {"name": "mem", "type": "SCALAR", "scalar": {"value": 65536.0}}
+ ],
+ "limit": [
+ {"name": "cpus", "type": "SCALAR", "scalar": {"value": 200.0}},
+ {"name": "mem", "type": "SCALAR", "scalar": {"value": 409600.0}}
+ ]
+ }'
 
 echo "spark-production quota set: guarantee 32 cpus / 64GB, limit 200 cpus / 400GB."
 
@@ -366,94 +366,94 @@ curl -s "${MASTER}/quota" | python3 -m json.tool
 // Marathon submits this as a TaskInfo to Mesos agents via accepted offers.
 // Mesos agents enforce resource limits via cgroups; Marathon handles restart policy.
 {
-  "id": "/spark/history-server",
-  "description": "Spark History Server — reads completed application event logs from S3",
+ "id": "/spark/history-server",
+ "description": "Spark History Server — reads completed application event logs from S3",
 
-  // ─── Resource requirements (become the Mesos offer resource request) ──────
-  // These values are matched against incoming resource offers by Marathon's scheduler.
-  // Marathon uses the same DRF offer-accept cycle as Spark — it's just another framework.
-  "cpus": 2.0,
-  "mem": 4096,
-  "disk": 1024,
-  "instances": 1,          // Marathon ensures exactly 1 instance is running at all times
+ // ─── Resource requirements (become the Mesos offer resource request) ──────
+ // These values are matched against incoming resource offers by Marathon's scheduler.
+ // Marathon uses the same DRF offer-accept cycle as Spark — it's just another framework.
+ "cpus": 2.0,
+ "mem": 4096,
+ "disk": 1024,
+ "instances": 1, // Marathon ensures exactly 1 instance is running at all times
 
-  // ─── Role: maps to 'marathon' Mesos role for quota and weight enforcement ──
-  "role": "marathon",
+ // ─── Role: maps to 'marathon' Mesos role for quota and weight enforcement ──
+ "role": "marathon",
 
-  // ─── Container: Mesos unified containerizer with Docker image ─────────────
-  "container": {
-    "type": "MESOS",       // Use Mesos containerizer (not Docker daemon) — avoids Docker socket
-    "docker": {
-      "image": "apache/spark:3.5.0",
-      "forcePullImage": false
-    },
-    "volumes": [
-      {
-        // Mount the event log directory. In production, use a shared filesystem
-        // (e.g., HDFS fuse mount) or S3-backed path. The history server scans this path.
-        "hostPath": "/mnt/spark-eventlogs",
-        "containerPath": "/opt/spark/work-dir/eventlogs",
-        "mode": "RO"      // Read-only: history server never writes event logs
-      }
-    ]
-  },
+ // ─── Container: Mesos unified containerizer with Docker image ─────────────
+ "container": {
+ "type": "MESOS", // Use Mesos containerizer (not Docker daemon) — avoids Docker socket
+ "docker": {
+ "image": "apache/spark:3.5.0",
+ "forcePullImage": false
+ },
+ "volumes": [
+ {
+ // Mount the event log directory. In production, use a shared filesystem
+ // (e.g., HDFS fuse mount) or S3-backed path. The history server scans this path.
+ "hostPath": "/mnt/spark-eventlogs",
+ "containerPath": "/opt/spark/work-dir/eventlogs",
+ "mode": "RO" // Read-only: history server never writes event logs
+ }
+ ]
+ },
 
-  // ─── Command: start the history server process ────────────────────────────
-  "cmd": "/opt/spark/sbin/start-history-server.sh",
-  "env": {
-    "SPARK_HISTORY_OPTS": "-Dspark.history.fs.logDirectory=s3a://my-bucket/spark-logs -Dspark.history.ui.port=18080",
-    "SPARK_DAEMON_MEMORY": "3g"   // Leave 1GB for JVM metaspace + off-heap overhead
-  },
+ // ─── Command: start the history server process ────────────────────────────
+ "cmd": "/opt/spark/sbin/start-history-server.sh",
+ "env": {
+ "SPARK_HISTORY_OPTS": "-Dspark.history.fs.logDirectory=s3a://my-bucket/spark-logs -Dspark.history.ui.port=18080",
+ "SPARK_DAEMON_MEMORY": "3g" // Leave 1GB for JVM metaspace + off-heap overhead
+ },
 
-  // ─── Health checks: Marathon polls this endpoint to detect failures ────────
-  // If 3 consecutive checks fail, Marathon calls the Mesos master to kill the task
-  // and re-schedules it on a healthy agent. This is NOT Spark internals — this is
-  // Marathon+Mesos task lifecycle management.
-  "healthChecks": [
-    {
-      "protocol": "HTTP",
-      "path": "/",                 // History server UI root returns 200 when healthy
-      "portIndex": 0,
-      "gracePeriodSeconds": 120,   // Don't check for 2min after start (JVM warmup)
-      "intervalSeconds": 30,
-      "timeoutSeconds": 10,
-      "maxConsecutiveFailures": 3
-    }
-  ],
+ // ─── Health checks: Marathon polls this endpoint to detect failures ────────
+ // If 3 consecutive checks fail, Marathon calls the Mesos master to kill the task
+ // and re-schedules it on a healthy agent. This is NOT Spark internals — this is
+ // Marathon+Mesos task lifecycle management.
+ "healthChecks": [
+ {
+ "protocol": "HTTP",
+ "path": "/", // History server UI root returns 200 when healthy
+ "portIndex": 0,
+ "gracePeriodSeconds": 120, // Don't check for 2min after start (JVM warmup)
+ "intervalSeconds": 30,
+ "timeoutSeconds": 10,
+ "maxConsecutiveFailures": 3
+ }
+ ],
 
-  // ─── Port mapping: Marathon asks Mesos for a dynamic port from the agent's port range
-  "networks": [{"mode": "host"}],
-  "portDefinitions": [
-    {
-      "port": 18080,
-      "protocol": "tcp",
-      "name": "ui",
-      "labels": {"VIP_0": "/spark-history:18080"}  // Minuteman/DC/OS service discovery
-    }
-  ],
+ // ─── Port mapping: Marathon asks Mesos for a dynamic port from the agent's port range
+ "networks": [{"mode": "host"}],
+ "portDefinitions": [
+ {
+ "port": 18080,
+ "protocol": "tcp",
+ "name": "ui",
+ "labels": {"VIP_0": "/spark-history:18080"} // Minuteman/DC/OS service discovery
+ }
+ ],
 
-  // ─── Constraints: anti-affinity to avoid single point of failure ──────────
-  // Place this task on an agent that doesn't already have another instance.
-  "constraints": [["hostname", "UNIQUE"]],
+ // ─── Constraints: anti-affinity to avoid single point of failure ──────────
+ // Place this task on an agent that doesn't already have another instance.
+ "constraints": [["hostname", "UNIQUE"]],
 
-  // ─── Upgrade strategy: Marathon's rolling update behavior ─────────────────
-  "upgradeStrategy": {
-    "minimumHealthCapacity": 0.0,  // Kill old instance before starting new one (1 instance only)
-    "maximumOverCapacity": 0.0
-  }
+ // ─── Upgrade strategy: Marathon's rolling update behavior ─────────────────
+ "upgradeStrategy": {
+ "minimumHealthCapacity": 0.0, // Kill old instance before starting new one (1 instance only)
+ "maximumOverCapacity": 0.0
+ }
 }
 ```
 
 ```bash
 # Deploy the Marathon application via the Marathon REST API
 curl -s -X POST \
-  "http://marathon-master:8080/v2/apps" \
-  -H "Content-Type: application/json" \
-  -d @marathon_spark_history_server.json | python3 -m json.tool
+ "http://marathon-master:8080/v2/apps" \
+ -H "Content-Type: application/json" \
+ -d @marathon_spark_history_server.json | python3 -m json.tool
 
 # Check deployment status — Marathon returns the app's task state
 curl -s "http://marathon-master:8080/v2/apps/spark/history-server" \
-  | python3 -m json.tool | grep -E '"tasksRunning"|"tasksHealthy"|"tasksUnhealthy"'
+ | python3 -m json.tool | grep -E '"tasksRunning"|"tasksHealthy"|"tasksUnhealthy"'
 ```
 
 > **Mastery Note:** Marathon's health check failure cascade is a critical integration point between three systems: Marathon, Mesos, and the application. When `maxConsecutiveFailures` is breached, Marathon does **not** kill the task itself — it sends a `KillTask` request to the Mesos master, which forwards it to the agent. The agent sends `SIGTERM` to the container process and waits `--executor_shutdown_grace_period` (default: 5s) before sending `SIGKILL`. The Mesos agent then reports `TASK_KILLED` back to Marathon, which records the failure, applies the `backoffSeconds` delay, and re-issues a new launch task via a fresh offer cycle. If the Spark History Server's S3A connector is mis-configured (wrong endpoint, bad credentials), it will fail on startup, consume its grace period, fail all health checks, and loop in a kill-restart cycle — observable in both the Marathon UI as "Unhealthy" and in the Mesos UI as rapidly cycling `TASK_KILLED` / `TASK_RUNNING` transitions. The `gracePeriodSeconds: 120` setting is specifically sized for JVM startup + S3A metadata initialization, which typically takes 30-90 seconds on a cold start.
@@ -476,9 +476,9 @@ To achieve true mastery of Mesos Architecture:
 
 ## 📚 Summary
 
-Mesos's two-level scheduling architecture achieves something that monolithic schedulers cannot: it allows fundamentally different computation paradigms — Spark batch analytics, Marathon microservices, TensorFlow training jobs — to share physical hardware at high efficiency without the scheduler itself needing to understand any of them. The DRF algorithm is the mathematical foundation that makes this work fairly; dominant share normalization across resource dimensions prevents any single framework from monopolizing a scarce resource type, and the weight and quota systems allow operators to encode business priorities directly into the resource allocation layer. [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)
+Mesos's two-level scheduling architecture achieves something that monolithic schedulers cannot: it allows fundamentally different computation paradigms — Spark batch analytics, Marathon microservices, TensorFlow training jobs — to share physical hardware at high efficiency without the scheduler itself needing to understand any of them. The DRF algorithm is the mathematical foundation that makes this work fairly; dominant share normalization across resource dimensions prevents any single framework from monopolizing a scarce resource type, and the weight and quota systems allow operators to encode business priorities directly into the resource allocation layer. 
 
-The Mesos master's design as a thin offer broker — maintaining only cluster state and allocation policy, never application semantics — is what gives it its linear scalability. The Catalyst optimizer and Tungsten execution engine inside Spark's driver operate completely independently of Mesos's allocation cycle; Mesos simply provides the physical slots and enforces the cgroup boundaries, while Spark decides what tasks fill those slots and how data moves between them. [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)
+The Mesos master's design as a thin offer broker — maintaining only cluster state and allocation policy, never application semantics — is what gives it its linear scalability. The Catalyst optimizer and Tungsten execution engine inside Spark's driver operate completely independently of Mesos's allocation cycle; Mesos simply provides the physical slots and enforces the cgroup boundaries, while Spark decides what tasks fill those slots and how data moves between them. 
 
-For production Spark deployments on Mesos, the critical engineering decisions are: sizing executor resources to match offer granularity (avoiding partial offer acceptance), configuring roles and quota to protect co-located services from Spark's greedy offer consumption, and selecting the right containerizer (Mesos unified containerizer over Docker daemon for reduced agent overhead). Mastery of Mesos architecture means understanding the full event chain from ZooKeeper leader election through DRF allocation cycles to cgroup enforcement — every link in that chain is a potential failure point and a performance lever. [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)
+For production Spark deployments on Mesos, the critical engineering decisions are: sizing executor resources to match offer granularity (avoiding partial offer acceptance), configuring roles and quota to protect co-located services from Spark's greedy offer consumption, and selecting the right containerizer (Mesos unified containerizer over Docker daemon for reduced agent overhead). Mastery of Mesos architecture means understanding the full event chain from ZooKeeper leader election through DRF allocation cycles to cgroup enforcement — every link in that chain is a potential failure point and a performance lever. 
 

@@ -6,11 +6,11 @@ The Spark Dataset API is the synthesis of two decades of distributed computing e
 
 The problem Datasets solve is fundamental: RDDs gave Spark type safety but surrendered query optimization. DataFrames gave Spark optimization but surrendered compile-time type safety, treating all data as `Row` objects that could silently fail at runtime when a column name was misspelled or a type was wrong. The Dataset API is a typed view over the DataFrame's internal representation — `DataFrame` is literally defined as `Dataset[Row]` in the Spark source. You get the Catalyst optimizer, the Tungsten binary format, predicate pushdown, and whole-stage code generation, while the compiler enforces your schema at build time.
 
-The practical consequence is enormous: a Dataset pipeline that fails due to a type mismatch fails at compile time on a developer's workstation, not at 3am in a production cluster after processing 80% of a 10TB job.
+The practical consequence is enormous: a Dataset pipeline that fails due to a type mismatch fails at compile time on a developer's workstation, not at 3am in a production cluster after processing 80% of a 10TB job. [Ref: 451](spark_book.pdf#page=451)
 
----
+--- [Ref: 455](spark_book.pdf#page=455)
 
-## 🏗️ Architectural Deep Dive
+## 🏗️ Architectural Deep Dive [Ref: 458](spark_book.pdf#page=458)
 
 ### How It Works Under the Hood
 
@@ -22,38 +22,38 @@ The Tungsten execution engine's Whole-Stage Code Generation (WSCG) fuses multipl
 
 The `ExpressionEncoder` uses `ScalaReflection` (backed by Scala 2.x runtime reflection via `scala.reflect.api.Universe`) to build a tree of `CreateNamedStruct`, `GetStructField`, and `Invoke` expressions that map between `InternalRow` binary format and your JVM class. This reflection happens once at `Dataset` construction time and is cached, but it means that complex or nested types with custom `apply` factories, generic types with type erasure, or classes with private fields can fail with cryptic `AnalysisException: No encoder found` errors at runtime.
 
-```
-  Spark Driver JVM
-  ┌───────────────────────────────────────────────────────────────┐
-  │  Dataset[T]                                                   │
-  │  ┌─────────────────┐     ┌──────────────────────────────┐    │
-  │  │  QueryExecution  │────▶│  Catalyst Optimizer          │    │
-  │  │  (Logical Plan)  │     │  ┌──────────────────────┐   │    │
-  │  └─────────────────┘     │  │ Analysis              │   │    │
-  │                          │  │ Logical Optimization  │   │    │
-  │  ExpressionEncoder[T]    │  │ Physical Planning     │   │    │
-  │  ┌─────────────────┐     │  │ Whole-Stage CodeGen   │   │    │
-  │  │ Serializer Expr  │     │  └──────────────────────┘   │    │
-  │  │ Deserializer Expr│     └──────────────────────────────┘    │
-  │  └────────┬────────┘                                          │
-  └───────────┼───────────────────────────────────────────────────┘
-              │ generates
-              ▼
-  Executor JVM  (per partition)
-  ┌───────────────────────────────────────────────────────────────┐
-  │  Tungsten Off-Heap UnsafeRow (binary columnar)                │
-  │  ┌──────────┬──────────┬──────────┬──────────────────────┐   │
-  │  │ null bits│ field[0] │ field[1] │ field[2] (var-len)   │   │
-  │  └──────────┴──────────┴──────────┴──────────────────────┘   │
-  │       │                                                        │
-  │       │  .as[T]  ←── DeserializeToObject (JVM heap alloc)    │
-  │       │  .filter(sql expr) ←── no object materialization      │
-  │       ▼                                                        │
-  │  Task Thread Pool                                              │
-  │  ┌───────────────────┐  ┌───────────────────┐                │
-  │  │ Task (Partition 0) │  │ Task (Partition 1) │               │
-  │  └───────────────────┘  └───────────────────┘                │
-  └───────────────────────────────────────────────────────────────┘
+```text
+ Spark Driver JVM
+ ┌───────────────────────────────────────────────────────────────┐
+ │ Dataset[T] │
+ │ ┌─────────────────┐ ┌──────────────────────────────┐ │
+ │ │ QueryExecution │────▶│ Catalyst Optimizer │ │
+ │ │ (Logical Plan) │ │ ┌──────────────────────┐ │ │
+ │ └─────────────────┘ │ │ Analysis │ │ │
+ │ │ │ Logical Optimization │ │ │
+ │ ExpressionEncoder[T] │ │ Physical Planning │ │ │
+ │ ┌─────────────────┐ │ │ Whole-Stage CodeGen │ │ │
+ │ │ Serializer Expr │ │ └──────────────────────┘ │ │
+ │ │ Deserializer Expr│ └──────────────────────────────┘ │
+ │ └────────┬────────┘ │
+ └───────────┼───────────────────────────────────────────────────┘
+ │ generates
+ ▼
+ Executor JVM (per partition)
+ ┌───────────────────────────────────────────────────────────────┐
+ │ Tungsten Off-Heap UnsafeRow (binary columnar) │
+ │ ┌──────────┬──────────┬──────────┬──────────────────────┐ │
+ │ │ null bits│ field[0] │ field[1] │ field[2] (var-len) │ │
+ │ └──────────┴──────────┴──────────┴──────────────────────┘ │
+ │ │ │
+ │ │ .as[T] ←── DeserializeToObject (JVM heap alloc) │
+ │ │ .filter(sql expr) ←── no object materialization │
+ │ ▼ │
+ │ Task Thread Pool │
+ │ ┌───────────────────┐ ┌───────────────────┐ │
+ │ │ Task (Partition 0) │ │ Task (Partition 1) │ │
+ │ └───────────────────┘ └───────────────────┘ │
+ └───────────────────────────────────────────────────────────────┘ [Ref: 462](spark_book.pdf#page=462)
 ```
 
 ### Key Internal Components
@@ -64,25 +64,25 @@ The `ExpressionEncoder` uses `ScalaReflection` (backed by Scala 2.x runtime refl
 
 - **`DeserializeToObject` / `SerializeFromObject`:** Physical plan nodes inserted automatically by the Catalyst planner whenever typed lambda transformations (`map`, `flatMap`, `filter` with Scala functions) force object materialization. Each `DeserializeToObject` allocates a new JVM heap object per row. At 10M rows/second throughput, this generates severe GC pressure and can trigger stop-the-world G1GC pauses of 200–800ms.
 
-- **`TypedFilter` / `TypedColumn`:** Logical plan nodes that represent type-safe relational operations. When a `TypedColumn` expression (e.g., `ds("salary").as[Int]`) is used instead of a raw lambda, the Catalyst optimizer retains the expression tree and can apply column pruning, predicate pushdown to Parquet row-group statistics, and partition pruning before any data is read from disk.
+- **`TypedFilter` / `TypedColumn`:** Logical plan nodes that represent type-safe relational operations. When a `TypedColumn` expression (e.g., `ds("salary").as[Int]`) is used instead of a raw lambda, the Catalyst optimizer retains the expression tree and can apply column pruning, predicate pushdown to Parquet row-group statistics, and partition pruning before any data is read from disk. [Ref: 469](spark_book.pdf#page=469)
 
----
+--- [Ref: 452](spark_book.pdf#page=452)
 
-## ⚠️ Critical Concepts & Common Pitfalls
+## ⚠️ Critical Concepts & Common Pitfalls [Ref: 456](spark_book.pdf#page=456)
 
 ### The Object Materialization Tax
 
 The most dangerous misconception about Datasets is that `.map()` and `.filter()` with Scala lambdas are as fast as equivalent SQL expressions. They are not. Any opaque lambda forces Catalyst to insert a `DeserializeToObject` stage that allocates one full JVM object per input row before the lambda executes, and a `SerializeFromObject` stage that converts it back to `UnsafeRow` after. At 50 million rows per task, this means 50 million short-lived heap allocations per task — a throughput killer that increases GC time by 3–8× compared to equivalent column expressions.
 
-The fix is to use column expressions wherever possible, reserving typed lambdas only for transformations that genuinely cannot be expressed as column operations. Use `.filter($"age" > 25)` over `.filter(_.age > 25)`, and use `.select(col("name"), col("salary") * 1.1)` over `.map(r => r.copy(salary = r.salary * 1.1))`. When lambdas are unavoidable, switch to Kryo serialization with `spark.serializer = org.apache.spark.serializer.KryoSerializer`, which can reduce serialization overhead by 40–70% compared to Java serialization for complex nested objects.
+The fix is to use column expressions wherever possible, reserving typed lambdas only for transformations that genuinely cannot be expressed as column operations. Use `.filter($"age" > 25)` over `.filter(_.age > 25)`, and use `.select(col("name"), col("salary") * 1.1)` over `.map(r => r.copy(salary = r.salary * 1.1))`. When lambdas are unavoidable, switch to Kryo serialization with `spark.serializer = org.apache.spark.serializer.KryoSerializer`, which can reduce serialization overhead by 40–70% compared to Java serialization for complex nested objects. [Ref: 459](spark_book.pdf#page=459)
 
 ### Kryo vs Java Serialization in the Dataset Context
 
 Java serialization is Spark's default for object-related operations and it is a performance liability: it is verbose, produces large byte payloads, and is 10–20× slower than Kryo for complex object graphs. Kryo (version 5.x as bundled in Spark 3.x) uses a compact binary format and skips reflection on registered classes. For Dataset operations that force object materialization — `.map()`, `.groupByKey().mapGroups()`, `collect()` — Java serialization is used for task closure serialization unless Kryo is explicitly configured.
 
-The caveat with Kryo in Dataset context is critical: Encoders are independent of the `spark.serializer` setting. `ExpressionEncoder` always uses Catalyst expression-based serialization for the row-level `InternalRow` operations; Kryo applies to the *task closure* (lambda functions shipped from driver to executor) and to RDD shuffle serialization. Registering your case classes with Kryo (`kryo.register(classOf[MyRecord])`) prevents Kryo's fallback to Java serialization for those classes in closures, which avoids the `NotSerializableException` that appears when a non-`Serializable` class is captured in a lambda shipped to an executor.
+The caveat with Kryo in Dataset context is critical: Encoders are independent of the `spark.serializer` setting. `ExpressionEncoder` always uses Catalyst expression-based serialization for the row-level `InternalRow` operations; Kryo applies to the *task closure* (lambda functions shipped from driver to executor) and to RDD shuffle serialization. Registering your case classes with Kryo (`kryo.register(classOf[MyRecord])`) prevents Kryo's fallback to Java serialization for those classes in closures, which avoids the `NotSerializableException` that appears when a non-`Serializable` class is captured in a lambda shipped to an executor. [Ref: 463](spark_book.pdf#page=463)
 
----
+--- [Ref: 470](spark_book.pdf#page=470)
 
 ## 📊 Performance Characteristics
 
@@ -95,11 +95,11 @@ The caveat with Kryo in Dataset context is critical: Encoders are independent of
 | `map` / `flatMap` | O(n) / O(n·k) | No | Forces serialize/deserialize pipeline; use `select` + `as[T]` instead where possible |
 | `as[T]` (schema cast only) | O(1) | No | No data movement; reuses underlying `InternalRow`; just swaps the Encoder |
 | `sort` / `orderBy` | O(n log n) | Yes | Tungsten sort on `UnsafeRow`; off-heap; avoids GC during sort phase |
-| `dropDuplicates` | O(n) | Yes | Shuffle-based hash aggregation on `UnsafeRow`; efficient Tungsten path |
+| `dropDuplicates` | O(n) | Yes | Shuffle-based hash aggregation on `UnsafeRow`; efficient Tungsten path | [Ref: 453](spark_book.pdf#page=453)
 
----
+--- [Ref: 457](spark_book.pdf#page=457)
 
-## 💻 Code Examples
+## 💻 Code Examples [Ref: 461](spark_book.pdf#page=461)
 
 ### Example 1: Typed Schema Binding & the Encoder Inspection Trick
 
@@ -119,21 +119,21 @@ import spark.implicits._
 // ExpressionEncoder is derived implicitly from the Encoders.product macro
 // This compilation step happens ONCE and is cached on the driver.
 val encoder: ExpressionEncoder[Employee] =
-  ExpressionEncoder[Employee]
+ ExpressionEncoder[Employee]
 
 // Inspect the serializer expression tree — this is what Catalyst generates
 // to convert a JVM Employee object → InternalRow (UnsafeRow binary format)
 println("=== SERIALIZER (JVM object → InternalRow) ===")
-encoder.serializer.foreach(expr => println(s"  ${expr.getClass.getSimpleName}: ${expr}"))
+encoder.serializer.foreach(expr => println(s" ${expr.getClass.getSimpleName}: ${expr}"))
 
 // Inspect the deserializer — InternalRow → JVM Employee object
 // Notice it generates GetStructField calls, NOT reflection calls at row-read time
 println("=== DESERIALIZER (InternalRow → JVM object) ===")
-println(s"  ${encoder.deserializer.getClass.getSimpleName}: ${encoder.deserializer}")
+println(s" ${encoder.deserializer.getClass.getSimpleName}: ${encoder.deserializer}")
 
 // Create a Dataset — NO data movement yet, just a logical plan
 val rawDF = spark.read.option("header", "true").option("inferSchema", "true")
-  .csv("data/employees.csv")
+ .csv("data/employees.csv")
 
 // .as[Employee] does NOT copy data — it swaps the Encoder on the same InternalRow
 // The schema is validated at this point; mismatches throw AnalysisException immediately
@@ -152,7 +152,7 @@ println("\n--- Bad plan (has DeserializeToObject) ---")
 highEarners_bad.explain(true)
 
 println("\n--- Good plan (pure columnar) ---")
-highEarners_good.explain(true)
+highEarners_good.explain(true) [Ref: 464](spark_book.pdf#page=464)
 ```
 
 > **Mastery Note:** Running `.explain(true)` on both Datasets reveals the pivotal difference: `highEarners_bad`'s physical plan contains `DeserializeToObject → Filter → SerializeFromObject`, meaning every row is promoted to a JVM heap object before the predicate evaluates. `highEarners_good` shows a simple `Filter` on `UnsafeRow` — no heap allocation, no GC, and if the source were Parquet, Catalyst would push the predicate into the Parquet `FilterPredicate` API, skipping entire row groups. At 1 billion rows, the columnar version can be 20–50× faster due to combined I/O reduction and zero GC overhead. The `as[T]` call itself is O(1) — it only registers the Encoder; it does not scan or copy data.
@@ -179,13 +179,13 @@ val salesDS: Dataset[SalesRecord] = spark.read.parquet("data/sales/").as[SalesRe
 // This approach is necessary when the aggregation logic cannot be expressed as
 // Spark built-in functions (e.g., custom stateful ML scoring per group).
 val typedResult: Dataset[RegionSummary] = salesDS
-  .groupByKey(_.region)                       // KeyValueGroupedDataset[String, SalesRecord]
-  .mapGroups { (region, records) =>           // Iterator[SalesRecord] — all objects in heap!
-    val allRecords = records.toList           // forces full group materialization
-    val totalSales = allRecords.map(_.amount).sum
-    val topMonth   = allRecords.groupBy(_.month).maxBy(_._2.size)._1
-    RegionSummary(region, totalSales, topMonth)
-  }
+ .groupByKey(_.region) // KeyValueGroupedDataset[String, SalesRecord]
+ .mapGroups { (region, records) => // Iterator[SalesRecord] — all objects in heap!
+ val allRecords = records.toList // forces full group materialization
+ val totalSales = allRecords.map(_.amount).sum
+ val topMonth = allRecords.groupBy(_.month).maxBy(_._2.size)._1
+ RegionSummary(region, totalSales, topMonth)
+ }
 
 // ─── APPROACH B: Aggregation DSL (stays in Tungsten binary format) ────────────
 // The Catalyst optimizer generates a hash-aggregate physical plan over UnsafeRows.
@@ -193,24 +193,24 @@ val typedResult: Dataset[RegionSummary] = salesDS
 // which spills to disk if the group state exceeds executor memory — no OOM.
 // Use this when your aggregation maps to existing Spark functions.
 val dslResult: Dataset[RegionSummary] = salesDS
-  .groupBy($"region")
-  .agg(
-    sum($"amount").as("totalSales"),          // HashAggregate on UnsafeRow — no objects
-    mode($"month").as("topMonth")             // Spark 3.4+ built-in mode function
-  )
-  .as[RegionSummary]                          // safe because column names match exactly
+ .groupBy($"region")
+ .agg(
+ sum($"amount").as("totalSales"), // HashAggregate on UnsafeRow — no objects
+ mode($"month").as("topMonth") // Spark 3.4+ built-in mode function
+ )
+ .as[RegionSummary] // safe because column names match exactly
 
 // ─── APPROACH C: flatMapGroups for complex stateful logic ────────────────────
 // Prefer over mapGroups when output cardinality can differ from group count
 val anomaliesDS: Dataset[(String, Double)] = salesDS
-  .groupByKey(_.region)
-  .flatMapGroups { (region, records) =>
-    val amounts = records.map(_.amount).toSeq
-    val mean    = amounts.sum / amounts.size
-    val stdDev  = math.sqrt(amounts.map(a => math.pow(a - mean, 2)).sum / amounts.size)
-    // Emit only outlier amounts (> 3 standard deviations from mean)
-    amounts.filter(a => math.abs(a - mean) > 3 * stdDev).map(a => (region, a))
-  }
+ .groupByKey(_.region)
+ .flatMapGroups { (region, records) =>
+ val amounts = records.map(_.amount).toSeq
+ val mean = amounts.sum / amounts.size
+ val stdDev = math.sqrt(amounts.map(a => math.pow(a - mean, 2)).sum / amounts.size)
+ // Emit only outlier amounts (> 3 standard deviations from mean)
+ amounts.filter(a => math.abs(a - mean) > 3 * stdDev).map(a => (region, a))
+ }
 ```
 
 > **Mastery Note:** The critical production risk of `mapGroups` is unbounded group size. If a single region key maps to hundreds of millions of rows, `records.toList` allocates all of them on the executor heap simultaneously, triggering `java.lang.OutOfMemoryError: Java heap space` with no spill safety. The aggregation DSL, by contrast, uses Tungsten's `UnsafeExternalSorter` which spills to disk when off-heap memory is exhausted — controlled by `spark.sql.shuffle.partitions` and `spark.memory.fraction`. For large-group stateful aggregation, prefer Structured Streaming's `mapGroupsWithState` or split the logic into a join of pre-aggregated summary DataFrames. `mapGroups` is the right tool only when the aggregation function is genuinely not expressible as column operations.
@@ -230,16 +230,16 @@ import java.time.LocalDate
 // Pure Scala classes with private fields or auxiliary constructors will FAIL.
 // Use Encoders.bean() for Java POJOs with standard getter/setter pairs.
 class JavaSaleRecord extends java.io.Serializable {
-  private var saleId: Long      = 0L
-  private var customerId: String = ""
-  private var amount: Double    = 0.0
+ private var saleId: Long = 0L
+ private var customerId: String = ""
+ private var amount: Double = 0.0
 
-  def getSaleId: Long          = saleId
-  def setSaleId(v: Long): Unit = { saleId = v }
-  def getCustomerId: String          = customerId
-  def setCustomerId(v: String): Unit = { customerId = v }
-  def getAmount: Double          = amount
-  def setAmount(v: Double): Unit = { amount = v }
+ def getSaleId: Long = saleId
+ def setSaleId(v: Long): Unit = { saleId = v }
+ def getCustomerId: String = customerId
+ def setCustomerId(v: String): Unit = { customerId = v }
+ def getAmount: Double = amount
+ def setAmount(v: Double): Unit = { amount = v }
 }
 
 // Encoders.bean uses Java reflection to discover getter/setter pairs and
@@ -248,7 +248,7 @@ class JavaSaleRecord extends java.io.Serializable {
 implicit val javaEncoder: Encoder[JavaSaleRecord] = Encoders.bean(classOf[JavaSaleRecord])
 
 val javaDS: Dataset[JavaSaleRecord] =
-  spark.read.schema(javaEncoder.schema).json("data/sales.json").as[JavaSaleRecord]
+ spark.read.schema(javaEncoder.schema).json("data/sales.json").as[JavaSaleRecord]
 
 // ─── SCENARIO: Type with no usable Encoder — use Kryo as escape hatch ────────
 // WARNING: Kryo encoder stores objects as opaque binary blobs.
@@ -256,9 +256,9 @@ val javaDS: Dataset[JavaSaleRecord] =
 // NO SQL functions, NO interoperability with DataFrames.
 // Use ONLY for intermediate RDD-style transformations; never as a final sink.
 case class ComplexState(
-  history: scala.collection.mutable.ArrayBuffer[Double],  // mutable — can't use product encoder
-  modelWeights: Array[Float],
-  lastUpdated: LocalDate  // LocalDate has no built-in Catalyst type mapping
+ history: scala.collection.mutable.ArrayBuffer[Double], // mutable — can't use product encoder
+ modelWeights: Array[Float],
+ lastUpdated: LocalDate // LocalDate has no built-in Catalyst type mapping
 )
 
 // Kryo encoder: the entire object is serialized as an opaque byte array
@@ -268,11 +268,11 @@ implicit val kryoEncoder: Encoder[ComplexState] = Encoders.kryo[ComplexState]
 
 // This Dataset behaves like an RDD — no schema-aware optimization
 val stateDS: Dataset[ComplexState] = spark.createDataset(Seq(
-  ComplexState(
-    scala.collection.mutable.ArrayBuffer(1.0, 2.0, 3.0),
-    Array(0.1f, 0.2f, 0.3f),
-    LocalDate.now()
-  )
+ ComplexState(
+ scala.collection.mutable.ArrayBuffer(1.0, 2.0, 3.0),
+ Array(0.1f, 0.2f, 0.3f),
+ LocalDate.now()
+ )
 ))
 
 // stateDS.printSchema() will show: value: binary (NOT the fields of ComplexState)
@@ -298,7 +298,7 @@ case class Order(orderId: Long, customerId: Long, total: Double)
 case class Customer(customerId: Long, name: String, tier: String)
 case class EnrichedOrder(orderId: Long, customerName: String, tier: String, total: Double)
 
-val orders: Dataset[Order]      = spark.read.parquet("data/orders/").as[Order]
+val orders: Dataset[Order] = spark.read.parquet("data/orders/").as[Order]
 val customers: Dataset[Customer] = spark.read.parquet("data/customers/").as[Customer]
 
 // ─── APPROACH A: joinWith — typed, but produces Dataset[(Order, Customer)] ────
@@ -307,15 +307,15 @@ val customers: Dataset[Customer] = spark.read.parquet("data/customers/").as[Cust
 // The output row is a struct of two structs: _1 = Order, _2 = Customer
 // This means DeserializeToObject is applied to BOTH sides of the join output
 val joinedTyped: Dataset[(Order, Customer)] =
-  orders.joinWith(customers,
-    orders("customerId") === customers("customerId"),
-    "inner"
-  )
+ orders.joinWith(customers,
+ orders("customerId") === customers("customerId"),
+ "inner"
+ )
 
 // Accessing fields requires tuple destructuring — awkward and not composable with SQL
 val enriched_bad: Dataset[EnrichedOrder] = joinedTyped.map { case (order, customer) =>
-  // This lambda runs on deserialized JVM objects — no Tungsten optimization
-  EnrichedOrder(order.orderId, customer.name, customer.tier, order.total)
+ // This lambda runs on deserialized JVM objects — no Tungsten optimization
+ EnrichedOrder(order.orderId, customer.name, customer.tier, order.total)
 }
 
 // ─── APPROACH B: DataFrame join + column select + as[T] ─────────────────────
@@ -324,18 +324,18 @@ val enriched_bad: Dataset[EnrichedOrder] = joinedTyped.map { case (order, custom
 // Column selection (project) runs on InternalRow — no heap allocations
 // as[EnrichedOrder] validates schema match; throws AnalysisException if wrong
 val enriched_good: Dataset[EnrichedOrder] = orders
-  .join(
-    customers.hint("BROADCAST"),  // hint: broadcast customers if < autoBroadcastJoinThreshold
-    Seq("customerId"),            // equi-join on shared column name — avoids ambiguous reference
-    "inner"
-  )
-  .select(
-    $"orderId",
-    customers("name").as("customerName"),
-    $"tier",
-    $"total"
-  )
-  .as[EnrichedOrder]  // safe cast — column names match case class fields exactly
+ .join(
+ customers.hint("BROADCAST"), // hint: broadcast customers if < autoBroadcastJoinThreshold
+ Seq("customerId"), // equi-join on shared column name — avoids ambiguous reference
+ "inner"
+ )
+ .select(
+ $"orderId",
+ customers("name").as("customerName"),
+ $"tier",
+ $"total"
+ )
+ .as[EnrichedOrder] // safe cast — column names match case class fields exactly
 
 // ─── BROADCAST THRESHOLD TUNING ─────────────────────────────────────────────
 // Default: spark.sql.autoBroadcastJoinThreshold = 10MB
@@ -351,7 +351,7 @@ enriched_good.explain()
 // on both sides AND the downstream logic is a complex typed transformation
 // that cannot be expressed as column operations (e.g., calling methods on the objects)
 val auditLog: Dataset[String] = joinedTyped.map { case (order, customer) =>
-  s"AUDIT: Order ${order.orderId} placed by ${customer.name} (${customer.tier}) for $$${order.total}"
+ s"AUDIT: Order ${order.orderId} placed by ${customer.name} (${customer.tier}) for $$${order.total}"
 }
 ```
 
@@ -375,9 +375,9 @@ To achieve true mastery of Datasets:
 
 ## 📚 Summary
 
-The Dataset API is not simply a typed wrapper around DataFrames — it is the interface point between two fundamentally different execution philosophies within a single system: Tungsten's schema-aware, off-heap columnar execution engine, and Scala's JVM-based typed functional programming model. When you stay on the Tungsten path — using column expressions, SQL functions, and schema-cast `as[T]` — you get the full benefit of Catalyst optimization, predicate pushdown into Parquet/ORC readers, whole-stage code generation, and off-heap memory management with no GC overhead. When you cross into typed lambda territory via `.map()` or `.groupByKey().mapGroups()`, you surrender those benefits in exchange for compile-time type safety and the ability to call arbitrary JVM methods on your data. [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)
+The Dataset API is not simply a typed wrapper around DataFrames — it is the interface point between two fundamentally different execution philosophies within a single system: Tungsten's schema-aware, off-heap columnar execution engine, and Scala's JVM-based typed functional programming model. When you stay on the Tungsten path — using column expressions, SQL functions, and schema-cast `as[T]` — you get the full benefit of Catalyst optimization, predicate pushdown into Parquet/ORC readers, whole-stage code generation, and off-heap memory management with no GC overhead. When you cross into typed lambda territory via `.map()` or `.groupByKey().mapGroups()`, you surrender those benefits in exchange for compile-time type safety and the ability to call arbitrary JVM methods on your data. 
 
-The `ExpressionEncoder[T]` is the linchpin of the entire system. It compiles a schema-aware binary translation layer using Catalyst expression trees, enabling Spark to treat your case class fields as first-class relational columns without the overhead of runtime reflection on every row. Understanding when the Encoder's serializer/deserializer fires — and when Spark stays entirely in `InternalRow` binary format — is the single most important mental model for writing high-performance Dataset code. The Spark UI's SQL tab makes this visible: any physical plan containing `DeserializeToObject` is a signal that you are paying the object materialization tax. [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)
+The `ExpressionEncoder[T]` is the linchpin of the entire system. It compiles a schema-aware binary translation layer using Catalyst expression trees, enabling Spark to treat your case class fields as first-class relational columns without the overhead of runtime reflection on every row. Understanding when the Encoder's serializer/deserializer fires — and when Spark stays entirely in `InternalRow` binary format — is the single most important mental model for writing high-performance Dataset code. The Spark UI's SQL tab makes this visible: any physical plan containing `DeserializeToObject` is a signal that you are paying the object materialization tax. 
 
-In production, the pragmatic strategy is to use `Dataset[T]` for type-safe API boundaries (reading from sources, writing to sinks, function signatures) and to perform the bulk of transformation and aggregation logic using column expressions and the aggregation DSL, converting to typed objects only at the final stage. This hybrid approach gives you compile-time schema validation, readable code, and Tungsten-level performance — the core promise the Dataset API was designed to deliver. [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)
+In production, the pragmatic strategy is to use `Dataset[T]` for type-safe API boundaries (reading from sources, writing to sinks, function signatures) and to perform the bulk of transformation and aggregation logic using column expressions and the aggregation DSL, converting to typed objects only at the final stage. This hybrid approach gives you compile-time schema validation, readable code, and Tungsten-level performance — the core promise the Dataset API was designed to deliver. 
 

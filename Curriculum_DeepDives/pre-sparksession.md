@@ -7,13 +7,13 @@ When you write Spark code, the SparkSession translates your queries into a Direc
 
 ```mermaid
 graph TD
-    Code[User Code<br/>DataFrame API] -->|Builds| SS(SparkSession)
-    SS -->|Generates| DAG[DAG Scheduler]
-    DAG -->|Creates Stages| TS[Task Scheduler]
-    TS -->|Dispatches Tasks| E1[Executor 1]
-    TS -->|Dispatches Tasks| E2[Executor 2]
-    
-    style SS fill:#dfd,stroke:#333,stroke-width:2px
+ Code[User Code<br/>DataFrame API] -->|Builds| SS(SparkSession)
+ SS -->|Generates| DAG[DAG Scheduler]
+ DAG -->|Creates Stages| TS[Task Scheduler]
+ TS -->|Dispatches Tasks| E1[Executor 1]
+ TS -->|Dispatches Tasks| E2[Executor 2]
+ 
+ style SS fill:#dfd,stroke:#333,stroke-width:2px
 ```
 
 ### Practical Examples

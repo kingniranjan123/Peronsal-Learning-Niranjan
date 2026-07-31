@@ -7,13 +7,13 @@ In modern Big Data, the Master-Worker setup is typically managed by a Cluster Ma
 
 ```mermaid
 flowchart LR
-    M[Master Node<br/>Resource Manager / Driver] -->|Assigns Task A| W1[Worker Node 1]
-    M -->|Assigns Task B| W2[Worker Node 2]
-    M -->|Assigns Task C| W3[Worker Node 3]
-    
-    W1 -.->|Heartbeat / Status| M
-    W2 -.->|Heartbeat / Status| M
-    W3 -.->|Heartbeat / Status| M
+ M[Master Node<br/>Resource Manager / Driver] -->|Assigns Task A| W1[Worker Node 1]
+ M -->|Assigns Task B| W2[Worker Node 2]
+ M -->|Assigns Task C| W3[Worker Node 3]
+ 
+ W1 -.->|Heartbeat / Status| M
+ W2 -.->|Heartbeat / Status| M
+ W3 -.->|Heartbeat / Status| M
 ```
 
 ### Practical Examples

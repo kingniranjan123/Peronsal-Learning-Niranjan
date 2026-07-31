@@ -17,12 +17,12 @@ df = spark.table("transactions")
 
 # Define a complex window: partition by customer, order by date, and look back 30 days
 windowSpec = Window.partitionBy("customer_id") \
-                   .orderBy(col("date").cast("timestamp").cast("long")) \
-                   .rangeBetween(-30 * 86400, 0)
+ .orderBy(col("date").cast("timestamp").cast("long")) \
+ .rangeBetween(-30 * 86400, 0)
 
 # Calculate a 30-day rolling sum and customer rank
 enriched_df = df.withColumn("rolling_30d_spend", sum("amount").over(windowSpec)) \
-                .withColumn("spend_rank", dense_rank().over(Window.partitionBy("customer_id").orderBy(col("amount").desc())))
+ .withColumn("spend_rank", dense_rank().over(Window.partitionBy("customer_id").orderBy(col("amount").desc())))
 
 enriched_df.explain(True)
 ```
@@ -53,7 +53,7 @@ SET spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes = 10MB;
 -- Create a skewed scenario
 CREATE OR REPLACE TEMP VIEW sales AS
 SELECT CASE WHEN rand() < 0.8 THEN 1 ELSE cast(rand() * 100 as int) END as product_id,
-       rand() * 100 as price
+ rand() * 100 as price
 FROM range(10000000);
 
 CREATE OR REPLACE TEMP VIEW products AS
@@ -80,17 +80,17 @@ import org.apache.spark.sql.functions._
 val spark = SparkSession.builder().appName("HigherOrderFunctions").getOrCreate()
 
 val data = Seq(
-  (1, Seq(10, 20, 30, 40)),
-  (2, Seq(5, 15, 25))
+ (1, Seq(10, 20, 30, 40)),
+ (2, Seq(5, 15, 25))
 )
 val df = spark.createDataFrame(data).toDF("id", "metrics")
 
 // Avoid expensive explode() + groupBy() by using inline array transformations
 val processed_df = df.select(
-  col("id"),
-  expr("filter(metrics, x -> x >= 20) as high_metrics"),
-  expr("transform(metrics, x -> x * 1.1) as scaled_metrics"),
-  expr("aggregate(metrics, 0, (acc, x) -> acc + x) as total_metric")
+ col("id"),
+ expr("filter(metrics, x -> x >= 20) as high_metrics"),
+ expr("transform(metrics, x -> x * 1.1) as scaled_metrics"),
+ expr("aggregate(metrics, 0, (acc, x) -> acc + x) as total_metric")
 )
 
 processed_df.show(false)
@@ -109,8 +109,8 @@ from pyspark.sql.types import FloatType
 # Define a Pandas UDF (Vectorized UDF)
 @pandas_udf(FloatType())
 def calculate_discount(price: pd.Series, discount_rate: pd.Series) -> pd.Series:
-    # Operations are performed on entire Pandas series using optimized C backend
-    return price * (1.0 - discount_rate)
+ # Operations are performed on entire Pandas series using optimized C backend
+ return price * (1.0 - discount_rate)
 
 df = spark.createDataFrame([(100.0, 0.1), (200.0, 0.2), (300.0, 0.15)], ["price", "discount"])
 

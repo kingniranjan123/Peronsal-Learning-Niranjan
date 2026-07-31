@@ -10,23 +10,23 @@ Understanding the JVM memory model within these executors is crucial. Spark part
 
 ```bash
 spark-submit \
-  --class com.example.AdvancedSparkApp \
-  --master yarn \
-  --deploy-mode cluster \
-  --conf spark.dynamicAllocation.enabled=true \
-  --conf spark.dynamicAllocation.minExecutors=10 \
-  --conf spark.dynamicAllocation.maxExecutors=100 \
-  --conf spark.dynamicAllocation.initialExecutors=20 \
-  --conf spark.shuffle.service.enabled=true \
-  --conf spark.executor.memory=16g \
-  --conf spark.executor.memoryOverhead=4096 \
-  --conf spark.executor.cores=5 \
-  --conf spark.memory.fraction=0.8 \
-  --conf spark.memory.storageFraction=0.3 \
-  --conf "spark.executor.extraJavaOptions=-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:G1HeapRegionSize=16M" \
-  --conf "spark.driver.extraJavaOptions=-XX:+UseG1GC" \
-  hdfs://cluster/apps/advanced-spark-app.jar \
-  --date "2023-10-27"
+ --class com.example.AdvancedSparkApp \
+ --master yarn \
+ --deploy-mode cluster \
+ --conf spark.dynamicAllocation.enabled=true \
+ --conf spark.dynamicAllocation.minExecutors=10 \
+ --conf spark.dynamicAllocation.maxExecutors=100 \
+ --conf spark.dynamicAllocation.initialExecutors=20 \
+ --conf spark.shuffle.service.enabled=true \
+ --conf spark.executor.memory=16g \
+ --conf spark.executor.memoryOverhead=4096 \
+ --conf spark.executor.cores=5 \
+ --conf spark.memory.fraction=0.8 \
+ --conf spark.memory.storageFraction=0.3 \
+ --conf "spark.executor.extraJavaOptions=-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:G1HeapRegionSize=16M" \
+ --conf "spark.driver.extraJavaOptions=-XX:+UseG1GC" \
+ hdfs://cluster/apps/advanced-spark-app.jar \
+ --date "2023-10-27"
 ```
 
 This submission script represents an enterprise-grade configuration for a heavy-weight Spark application. By enabling dynamic allocation (`spark.dynamicAllocation.enabled`), the application elasticity adjusts its executor count based on the actual workload, scaling up to 100 executors during heavy shuffles and scaling down to 10 when idle. This requires the external shuffle service (`spark.shuffle.service.enabled`) to preserve shuffle files when executors are preempted or decommissioned. 
@@ -48,19 +48,19 @@ from pyspark.sql import SparkSession
 
 # Building a SparkSession optimized for Kubernetes Native Deployment
 spark = SparkSession.builder \
-    .appName("K8sNativeSparkApp") \
-    .config("spark.master", "k8s://https://kubernetes.default.svc.cluster.local:443") \
-    .config("spark.submit.deployMode", "cluster") \
-    .config("spark.kubernetes.container.image", "my-registry/spark:3.4.0") \
-    .config("spark.kubernetes.namespace", "spark-workloads") \
-    .config("spark.kubernetes.authenticate.driver.serviceAccountName", "spark") \
-    .config("spark.kubernetes.driver.podTemplateFile", "/opt/spark/conf/driver-pod-template.yaml") \
-    .config("spark.kubernetes.executor.podTemplateFile", "/opt/spark/conf/executor-pod-template.yaml") \
-    .config("spark.kubernetes.allocation.batch.size", "10") \
-    .config("spark.executor.instances", "20") \
-    .config("spark.network.timeout", "600s") \
-    .config("spark.executor.heartbeatInterval", "60s") \
-    .getOrCreate()
+ .appName("K8sNativeSparkApp") \
+ .config("spark.master", "k8s://https://kubernetes.default.svc.cluster.local:443") \
+ .config("spark.submit.deployMode", "cluster") \
+ .config("spark.kubernetes.container.image", "my-registry/spark:3.4.0") \
+ .config("spark.kubernetes.namespace", "spark-workloads") \
+ .config("spark.kubernetes.authenticate.driver.serviceAccountName", "spark") \
+ .config("spark.kubernetes.driver.podTemplateFile", "/opt/spark/conf/driver-pod-template.yaml") \
+ .config("spark.kubernetes.executor.podTemplateFile", "/opt/spark/conf/executor-pod-template.yaml") \
+ .config("spark.kubernetes.allocation.batch.size", "10") \
+ .config("spark.executor.instances", "20") \
+ .config("spark.network.timeout", "600s") \
+ .config("spark.executor.heartbeatInterval", "60s") \
+ .getOrCreate()
 
 # Business logic execution
 df = spark.read.parquet("s3a://data-lake/raw-zone/transactions/")
@@ -81,39 +81,39 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.SparkConf
 
 object RobustSparkProcessor {
-  def main(args: Array[String]): Unit = {
-    val conf = new SparkConf()
-      .setAppName("RobustProcessor")
-      // Enable speculative execution to mitigate straggler tasks
-      .set("spark.speculation", "true")
-      .set("spark.speculation.multiplier", "1.5")
-      .set("spark.speculation.quantile", "0.75")
-      // Ensure graceful shutdown of streaming or long-running apps
-      .set("spark.streaming.stopGracefullyOnShutdown", "true")
-      
-    val spark = SparkSession.builder.config(conf).getOrCreate()
-    
-    // Register a JVM shutdown hook to clean up resources
-    sys.addShutdownHook {
-      println("Intercepted termination signal. Initiating graceful shutdown...")
-      spark.stop()
-      println("SparkSession stopped successfully.")
-    }
+ def main(args: Array[String]): Unit = {
+ val conf = new SparkConf()
+ .setAppName("RobustProcessor")
+ // Enable speculative execution to mitigate straggler tasks
+ .set("spark.speculation", "true")
+ .set("spark.speculation.multiplier", "1.5")
+ .set("spark.speculation.quantile", "0.75")
+ // Ensure graceful shutdown of streaming or long-running apps
+ .set("spark.streaming.stopGracefullyOnShutdown", "true")
+ 
+ val spark = SparkSession.builder.config(conf).getOrCreate()
+ 
+ // Register a JVM shutdown hook to clean up resources
+ sys.addShutdownHook {
+ println("Intercepted termination signal. Initiating graceful shutdown...")
+ spark.stop()
+ println("SparkSession stopped successfully.")
+ }
 
-    try {
-      val data = spark.read.json("hdfs://cluster/data/events/*.json")
-      // Simulating a complex, heavy computation
-      val result = data.repartition(1000)
-        .groupBy("eventType")
-        .count()
-        
-      result.write.mode("append").parquet("hdfs://cluster/output/event_counts/")
-    } catch {
-      case e: Exception => 
-        println(s"Application failed with exception: ${e.getMessage}")
-        throw e
-    }
-  }
+ try {
+ val data = spark.read.json("hdfs://cluster/data/events/*.json")
+ // Simulating a complex, heavy computation
+ val result = data.repartition(1000)
+ .groupBy("eventType")
+ .count()
+ 
+ result.write.mode("append").parquet("hdfs://cluster/output/event_counts/")
+ } catch {
+ case e: Exception => 
+ println(s"Application failed with exception: ${e.getMessage}")
+ throw e
+ }
+ }
 }
 ```
 
@@ -129,32 +129,32 @@ import org.apache.spark.sql.SparkSession
 import org.apache.log4j.Logger
 
 class TaskMetricsListener extends SparkListener {
-  @transient lazy val logger: Logger = Logger.getLogger(classOf[TaskMetricsListener])
+ @transient lazy val logger: Logger = Logger.getLogger(classOf[TaskMetricsListener])
 
-  override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
-    logger.info(s"Job ${jobStart.jobId} started with ${jobStart.stageIds.length} stages.")
-  }
+ override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
+ logger.info(s"Job ${jobStart.jobId} started with ${jobStart.stageIds.length} stages.")
+ }
 
-  override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
-    val metrics = taskEnd.taskMetrics
-    if (metrics != null) {
-      val jvmGcTime = metrics.jvmGCTime
-      val runTime = metrics.executorRunTime
-      
-      // Log an alert if Garbage Collection takes more than 10% of task execution time
-      if (runTime > 0 && (jvmGcTime.toDouble / runTime.toDouble) > 0.1) {
-        logger.warn(
-          s"HIGH GC OVERHEAD: Task ${taskEnd.taskInfo.taskId} in Stage ${taskEnd.stageId} " +
-          s"spent ${jvmGcTime}ms on GC out of ${runTime}ms total execution time."
-        )
-      }
-      
-      val shuffleWrite = metrics.shuffleWriteMetrics.bytesWritten
-      if (shuffleWrite > 500 * 1024 * 1024) { // 500 MB threshold
-        logger.warn(s"FAT TASK DETECTED: Task ${taskEnd.taskInfo.taskId} wrote ${shuffleWrite} bytes. Data skew likely.")
-      }
-    }
-  }
+ override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
+ val metrics = taskEnd.taskMetrics
+ if (metrics != null) {
+ val jvmGcTime = metrics.jvmGCTime
+ val runTime = metrics.executorRunTime
+ 
+ // Log an alert if Garbage Collection takes more than 10% of task execution time
+ if (runTime > 0 && (jvmGcTime.toDouble / runTime.toDouble) > 0.1) {
+ logger.warn(
+ s"HIGH GC OVERHEAD: Task ${taskEnd.taskInfo.taskId} in Stage ${taskEnd.stageId} " +
+ s"spent ${jvmGcTime}ms on GC out of ${runTime}ms total execution time."
+ )
+ }
+ 
+ val shuffleWrite = metrics.shuffleWriteMetrics.bytesWritten
+ if (shuffleWrite > 500 * 1024 * 1024) { // 500 MB threshold
+ logger.warn(s"FAT TASK DETECTED: Task ${taskEnd.taskInfo.taskId} wrote ${shuffleWrite} bytes. Data skew likely.")
+ }
+ }
+ }
 }
 
 // Usage in application initialization:

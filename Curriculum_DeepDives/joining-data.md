@@ -11,9 +11,9 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import broadcast, col
 
 spark = SparkSession.builder \
-    .appName("Advanced-BHJ") \
-    .config("spark.sql.autoBroadcastJoinThreshold", "10485760") \
-    .getOrCreate()
+ .appName("Advanced-BHJ") \
+ .config("spark.sql.autoBroadcastJoinThreshold", "10485760") \
+ .getOrCreate()
 
 # Large transaction fact table
 transactions_df = spark.read.parquet("s3a://data/transactions/")
@@ -24,9 +24,9 @@ dim_stores_df = spark.read.parquet("s3a://data/dim_stores/")
 # Explicitly forcing a Broadcast Hash Join using the hint function
 # Catalyst intercepts this hint to bypass size-estimation checks
 joined_df = transactions_df.join(
-    broadcast(dim_stores_df),
-    transactions_df.store_id == dim_stores_df.store_id,
-    "inner"
+ broadcast(dim_stores_df),
+ transactions_df.store_id == dim_stores_df.store_id,
+ "inner"
 )
 
 joined_df.explain()
@@ -52,9 +52,9 @@ orders = spark.table("orders_bucketed")
 # Because both tables share the same bucketing scheme and sort order,
 # the Catalyst optimizer completely eliminates the Exchange (Shuffle) and Sort phases.
 optimized_join = customers.join(
-    orders,
-    "customer_id",
-    "inner"
+ orders,
+ "customer_id",
+ "inner"
 )
 
 # Checking the physical plan for the absence of 'Exchange' and 'Sort'
@@ -72,8 +72,8 @@ from pyspark.sql.functions import rand, lit, concat
 # Step 1: Add a random "salt" to the skewed key on the massive dataset
 # We use an integer between 0 and 9 to split the skewed key into 10 distinct partitions
 skewed_facts = transactions_df.withColumn(
-    "salted_key",
-    concat(col("product_id"), lit("_"), (rand() * 10).cast("int"))
+ "salted_key",
+ concat(col("product_id"), lit("_"), (rand() * 10).cast("int"))
 )
 
 # Step 2: Replicate the small dataset for every possible salt value
@@ -82,16 +82,16 @@ salts = spark.range(0, 10).withColumnRenamed("id", "salt_val")
 
 # Cross join to explode the dimension table
 replicated_dim = dim_products_df.crossJoin(salts).withColumn(
-    "salted_key",
-    concat(col("product_id"), lit("_"), col("salt_val"))
+ "salted_key",
+ concat(col("product_id"), lit("_"), col("salt_val"))
 )
 
 # Step 3: Perform the join on the new salted key
 # The skewed product_id is now evenly distributed across 10 tasks
 skew_handled_join = skewed_facts.join(
-    replicated_dim,
-    "salted_key",
-    "inner"
+ replicated_dim,
+ "salted_key",
+ "inner"
 ).drop("salted_key", "salt_val")
 ```
 When Adaptive Query Execution (AQE) is insufficient to handle extreme skew, manual "salting" is the definitive engineering solution. By concatenating a random integer (the salt) to the skewed key, we artificially fragment the heavy key into distinct, uniformly distributed keys. Consequently, the shuffle phase routes these fragments to different executors, parallelizing the workload. To guarantee matches, the dimension table must be multiplied via a cross join so it contains every possible salt permutation for every original key. This trades an increase in dimension data size for a massively parallelized, skew-free execution on the fact table.
@@ -105,11 +105,11 @@ promotions = spark.read.parquet("s3a://data/promotions/")
 # Optimized Range Join strategy
 # Using an explicitly broadcasted smaller dataset and pushing filters down
 optimized_range_join = events.join(
-    broadcast(promotions),
-    (events.product_id == promotions.product_id) & 
-    (events.event_date >= promotions.start_date) & 
-    (events.event_date <= promotions.end_date),
-    "left"
+ broadcast(promotions),
+ (events.product_id == promotions.product_id) & 
+ (events.event_date >= promotions.start_date) & 
+ (events.event_date <= promotions.end_date),
+ "left"
 )
 
 # Further optimization could involve binning the dates into discrete integers
