@@ -17,14 +17,10 @@ flowchart LR
 ```
 
 ### Practical Examples
-1. **Hadoop YARN:** The ResourceManager (Master) allocates RAM and CPU to NodeManagers (Workers) executing MapReduce jobs.
-2. **Spark Standalone:** The Spark Master schedules tasks directly to Spark Workers, bypassing YARN entirely for simpler deployments.
+1. **Hadoop YARN:** The ResourceManager (Master) allocates RAM and CPU to NodeManagers (Workers) executing MapReduce jobs. [Spark in Action (YARN & Cluster Managers) : 9, 16, 23, 24]
+2. **Spark Standalone:** The Spark Master schedules tasks directly to Spark Workers, bypassing YARN entirely for simpler deployments. [Beginning Apache Spark 2 : 14, 15]
 3. **Kubernetes Pods:** A K8s Control Plane (Master) schedules containerized PySpark applications onto individual worker nodes.
 4. **Web Scraping:** A central controller dispatches URLs to hundreds of distributed scrapers (workers), combining the HTML results later.
 
-> [!TIP]
-> **Library References:**
-> *   *Spark in Action* (YARN & Cluster Managers) — Pages 9, 16, 23, 24
-> *   *Beginning Apache Spark 2* — Pages 14, 15
 
 ---

@@ -17,14 +17,10 @@ graph TD
 ```
 
 ### Practical Examples
-1. **Reading CSVs:** `spark.read.csv("hdfs://data.csv")` uses the SparkSession to infer schemas automatically.
-2. **Executing SQL:** `spark.sql("SELECT * FROM users WHERE age > 18")` executes distributed SQL queries across the cluster.
+1. **Reading CSVs:** `spark.read.csv("hdfs://data.csv")` uses the SparkSession to infer schemas automatically. [Beginning Apache Spark 2 : 15, 37, 38]
+2. **Executing SQL:** `spark.sql("SELECT * FROM users WHERE age > 18")` executes distributed SQL queries across the cluster. [Spark in Action : Page 35]
 3. **Configuration:** Setting `spark.conf.set("spark.executor.memory", "4g")` dynamically configures resources via the session.
 4. **Legacy RDDs:** While DataFrames are preferred, `spark.sparkContext.parallelize()` is still used to create lower-level Resilient Distributed Datasets.
 
-> [!TIP]
-> **Library References:**
-> *   *Beginning Apache Spark 2* — Pages 15, 37, 38
-> *   *Spark in Action* — Page 35
 
 ---

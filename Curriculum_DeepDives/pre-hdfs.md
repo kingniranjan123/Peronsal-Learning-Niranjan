@@ -20,14 +20,10 @@ graph TD
 ```
 
 ### Practical Examples
-1. **Log Aggregation:** Millions of small server logs are appended to a continuous file in HDFS for nightly batch processing.
-2. **Data Lake Storage:** Raw CSV and JSON files from web scrapers are dumped into HDFS before being structured into Parquet.
+1. **Log Aggregation:** Millions of small server logs are appended to a continuous file in HDFS for nightly batch processing. [Beginning Apache Spark 2 : 12, 15, 18]
+2. **Data Lake Storage:** Raw CSV and JSON files from web scrapers are dumped into HDFS before being structured into Parquet. [Spark in Action : 2, 23, 32]
 3. **Machine Learning Archives:** Massive datasets (like ImageNet) are stored in HDFS so Spark MLlib can process them in parallel.
 4. **Fault Tolerance:** If a DataNode rack goes down due to a power outage, the NameNode automatically redirects queries to the replicated blocks on surviving nodes.
 
-> [!TIP]
-> **Library References:**
-> *   *Beginning Apache Spark 2* — Pages 12, 15, 18
-> *   *Spark in Action* — Pages 2, 23, 32
 
 ---

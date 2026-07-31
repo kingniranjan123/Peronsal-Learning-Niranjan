@@ -23,12 +23,8 @@ graph LR
 ```
 
 ### Practical Examples
-1. **Parquet for Analytics:** A Data Scientist running `SELECT AVG(salary) FROM employees` on a Parquet file only reads the salary column from disk.
-2. **Avro for Kafka Streams:** A real-time IoT pipeline uses Avro because of its fast row-level write speeds and robust schema evolution (handling new sensor types).
+1. **Parquet for Analytics:** A Data Scientist running `SELECT AVG(salary) FROM employees` on a Parquet file only reads the salary column from disk. [Beginning Apache Spark 2 (Parquet/ORC) : 14, 19, 38]
+2. **Avro for Kafka Streams:** A real-time IoT pipeline uses Avro because of its fast row-level write speeds and robust schema evolution (handling new sensor types). [Spark in Action : 2, 32, 37]
 3. **ORC for Hive:** A Data Warehouse team uses ORC because it offers exceptional compression ratios (often 75% smaller than CSV).
 4. **Predicate Pushdown:** When Spark queries Parquet files with `WHERE age > 30`, the Parquet metadata allows Spark to completely skip reading file chunks where the maximum age is known to be under 30.
 
-> [!TIP]
-> **Library References:**
-> *   *Beginning Apache Spark 2* (Parquet/ORC) — Pages 14, 19, 38
-> *   *Spark in Action* — Pages 2, 32, 37
