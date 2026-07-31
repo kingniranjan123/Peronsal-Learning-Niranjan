@@ -3548,75 +3548,171 @@ function visualShell(topicId, inner, subtitle) {
     </div>`;
 }
 
+function wrapSvgText(text, maxChars = 24, maxLines = 4) {
+  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  words.forEach(word => {
+    const next = line ? `${line} ${word}` : word;
+    if (next.length > maxChars && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  });
+  if (line) lines.push(line);
+  if (lines.length > maxLines) {
+    const kept = lines.slice(0, maxLines);
+    kept[maxLines - 1] = `${kept[maxLines - 1].replace(/\.$/, '')}...`;
+    return kept;
+  }
+  return lines;
+}
+
+function svgTextBlock(text, x, y, maxChars = 24, maxLines = 4, size = 15, weight = 700, color = '#334155') {
+  return wrapSvgText(text, maxChars, maxLines)
+    .map((line, i) => `<text x="${x}" y="${y + i * (size + 4)}" font-size="${size}" font-weight="${weight}" fill="${color}">${escHtml(line)}</text>`)
+    .join('');
+}
+
+function svgNode(x, y, w, h, title, body, stroke = '#2563eb', fill = '#fff', titleColor = '#0f172a') {
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="1.6"/>
+    ${svgTextBlock(title, x + 14, y + 25, Math.max(12, Math.floor((w - 28) / 8)), 2, 14, 900, titleColor)}
+    ${svgTextBlock(body, x + 14, y + 58, Math.max(12, Math.floor((w - 28) / 8)), 4, 14, 700, '#334155')}`;
+}
+
+function svgArrow(x1, y1, x2, y2, color = '#1f2937', dashed = false) {
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2.2" ${dashed ? 'stroke-dasharray="7 7"' : ''} marker-end="url(#arrowHead)"/>`;
+}
+
+function svgDefs() {
+  return `<defs>
+    <marker id="arrowHead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 z" fill="#1f2937"></path>
+    </marker>
+    <filter id="softShadow" x="-10%" y="-20%" width="120%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#1e293b" flood-opacity=".12"/>
+    </filter>
+  </defs>`;
+}
+
 function comparisonVisual(topicId, leftTitle, leftSteps, rightTitle, rightSteps, bottomNote) {
-  const stepList = (steps, color) => steps.map((s, i) => visualCard(`${i+1}. ${s[0]}`, s[1], color, 62)).join('');
-  return visualShell(topicId, `
-    <div style="display:grid;grid-template-columns:1fr 90px 1fr;gap:18px;align-items:center;">
-      <div style="border:2px solid #ef4444;border-radius:12px;background:#fff7ed;padding:14px;">
-        <div style="font-size:20px;font-weight:900;color:#991b1b;text-align:center;margin-bottom:12px;">${escHtml(leftTitle)}</div>
-        <div style="display:grid;gap:10px;">${stepList(leftSteps, '#ef4444')}</div>
-      </div>
-      <div style="text-align:center;">
-        <div style="font-size:30px;font-weight:900;color:#0f172a;">vs</div>
-        <div style="margin-top:10px;border:1px dashed #64748b;border-radius:8px;padding:10px;color:#475569;font-weight:800;">Architecture shift</div>
-      </div>
-      <div style="border:2px solid #16a34a;border-radius:12px;background:#f0fdf4;padding:14px;">
-        <div style="font-size:20px;font-weight:900;color:#14532d;text-align:center;margin-bottom:12px;">${escHtml(rightTitle)}</div>
-        <div style="display:grid;gap:10px;">${stepList(rightSteps, '#16a34a')}</div>
-      </div>
-    </div>
-    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(bottomNote)}</div>`);
+  const left = leftSteps.map((s, i) => svgNode(60, 120 + i * 92, 390, 66, `${i + 1}. ${s[0]}`, s[1], '#ef4444', '#fff', '#991b1b')).join('');
+  const right = rightSteps.map((s, i) => svgNode(730, 120 + i * 92, 390, 66, `${i + 1}. ${s[0]}`, s[1], '#16a34a', '#fff', '#14532d')).join('');
+  const arrows = [0, 1].map(i => `${svgArrow(255, 186 + i * 92, 255, 212 + i * 92)}${svgArrow(925, 186 + i * 92, 925, 212 + i * 92)}`).join('');
+  return visualShell(topicId, `<svg viewBox="0 0 1180 500" width="100%" style="height:auto;display:block;" role="img" aria-label="${escHtml(topicMeta(topicId).title)} comparison architecture">
+    ${svgDefs()}
+    <rect x="24" y="48" width="500" height="334" rx="14" fill="#fff7ed" stroke="#ef4444" stroke-width="2"/>
+    <rect x="656" y="48" width="500" height="334" rx="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+    <text x="274" y="86" text-anchor="middle" font-size="24" font-weight="900" fill="#991b1b">${escHtml(leftTitle)}</text>
+    <text x="906" y="86" text-anchor="middle" font-size="24" font-weight="900" fill="#14532d">${escHtml(rightTitle)}</text>
+    ${left}${right}${arrows}
+    <text x="590" y="230" text-anchor="middle" font-size="32" font-weight="900" fill="#0f172a">VS</text>
+    <rect x="535" y="248" width="110" height="54" rx="10" fill="#f8fafc" stroke="#64748b" stroke-dasharray="5 4"/>
+    <text x="590" y="272" text-anchor="middle" font-size="15" font-weight="900" fill="#475569">architecture</text>
+    <text x="590" y="291" text-anchor="middle" font-size="15" font-weight="900" fill="#475569">shift</text>
+    <rect x="48" y="410" width="1084" height="56" rx="9" fill="#ecfeff" stroke="#38bdf8"/>
+    ${svgTextBlock(bottomNote, 64, 443, 118, 2, 16, 800, '#155e75')}
+  </svg>`);
 }
 
 function layeredVisual(topicId, layers, note) {
-  return visualShell(topicId, `
-    <div style="display:grid;grid-template-columns:1fr;gap:10px;">
-      ${layers.map((l, i) => `<div style="display:grid;grid-template-columns:190px 1fr;gap:12px;align-items:stretch;">
-        <div style="border:1px solid ${l.color};border-radius:8px;background:#fff;padding:12px;font-weight:900;color:#0f172a;">Layer ${i+1}<br>${escHtml(l.name)}</div>
-        <div style="border:1px solid ${l.color};border-radius:8px;background:${l.bg || '#fff'};padding:12px;color:#334155;font-weight:650;line-height:1.5;">${escHtml(l.desc)}</div>
-      </div>`).join('')}
-    </div>
-    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(note)}</div>`);
+  if ((layers[0]?.name || '').toLowerCase().includes('spark core')) {
+    const core = layers[0];
+    const libs = layers.slice(1, 4);
+    const libX = [80, 430, 780];
+    const libNodes = libs.map((l, i) => `${svgNode(libX[i], 86, 320, 90, l.name, l.desc, l.color, l.bg || '#fff')}
+      ${svgArrow(libX[i] + 160, 176, 590, 238)}`).join('');
+    return visualShell(topicId, `<svg viewBox="0 0 1180 520" width="100%" style="height:auto;display:block;" role="img" aria-label="${escHtml(topicMeta(topicId).title)} layered Spark runtime architecture">
+      ${svgDefs()}
+      <text x="590" y="42" text-anchor="middle" font-size="20" font-weight="900" fill="#0f172a">High-level libraries reuse the same Spark Core runtime</text>
+      ${libNodes}
+      <rect x="250" y="238" width="680" height="92" rx="14" fill="${core.bg || '#eff6ff'}" stroke="${core.color}" stroke-width="2.2" filter="url(#softShadow)"/>
+      <text x="590" y="272" text-anchor="middle" font-size="24" font-weight="900" fill="#1e3a8a">${escHtml(core.name)}</text>
+      <text x="590" y="302" text-anchor="middle" font-size="15" font-weight="800" fill="#334155">${escHtml(core.desc)}</text>
+      ${svgArrow(420, 330, 300, 376)}${svgArrow(590, 330, 590, 376)}${svgArrow(760, 330, 880, 376)}
+      ${svgNode(150, 376, 300, 78, 'Driver JVM', 'Builds DAG, schedules stages, tracks metadata', '#2563eb', '#fff')}
+      ${svgNode(440, 376, 300, 78, 'Executor JVMs', 'Run partition tasks and cache reusable blocks', '#16a34a', '#fff')}
+      ${svgNode(730, 376, 300, 78, 'Storage & Shuffle', 'Read/write files, shuffle blocks, checkpoints', '#d97706', '#fff')}
+      <rect x="50" y="472" width="1080" height="36" rx="9" fill="#ecfeff" stroke="#38bdf8"/>
+      ${svgTextBlock(note, 68, 496, 118, 1, 15, 800, '#155e75')}
+    </svg>`);
+  }
+  const x = 390;
+  const rows = layers.map((l, i) => {
+    const y = 80 + i * 86;
+    return `${svgNode(x, y, 400, 68, l.name, l.desc, l.color, l.bg || '#fff')}
+      ${i < layers.length - 1 ? svgArrow(590, y + 68, 590, y + 84) : ''}`;
+  }).join('');
+  return visualShell(topicId, `<svg viewBox="0 0 1180 470" width="100%" style="height:auto;display:block;" role="img" aria-label="${escHtml(topicMeta(topicId).title)} layered architecture">
+    ${svgDefs()}
+    <text x="590" y="38" text-anchor="middle" font-size="20" font-weight="900" fill="#0f172a">Each layer hands capability to the runtime layer below</text>
+    ${rows}
+    <rect x="50" y="398" width="1080" height="48" rx="9" fill="#ecfeff" stroke="#38bdf8"/>
+    ${svgTextBlock(note, 68, 428, 118, 2, 15, 800, '#155e75')}
+  </svg>`);
 }
 
 function hubVisual(topicId, center, spokes, note) {
-  return visualShell(topicId, `
-    <div style="display:grid;grid-template-columns:1fr 260px 1fr;gap:18px;align-items:center;">
-      <div style="display:grid;gap:12px;">${spokes.slice(0,3).map(s => visualCard(s[0], s[1], s[2], 76)).join('')}</div>
-      <div style="border:2px solid #2563eb;border-radius:18px;background:#eff6ff;padding:28px 16px;text-align:center;box-shadow:0 10px 24px #1e3a8a1f;">
-        <div style="font-size:24px;font-weight:900;color:#1e3a8a;">${escHtml(center)}</div>
-        <div style="font-size:13px;color:#475569;margin-top:8px;">central compute/runtime</div>
-      </div>
-      <div style="display:grid;gap:12px;">${spokes.slice(3).map(s => visualCard(s[0], s[1], s[2], 76)).join('')}</div>
-    </div>
-    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(note)}</div>`);
+  const positions = [[70,72],[70,188],[70,304],[840,72],[840,188],[840,304]];
+  const nodes = spokes.slice(0, 6).map((s, i) => {
+    const [x, y] = positions[i];
+    return `${svgNode(x, y, 270, 76, s[0], s[1], s[2] || '#2563eb', '#fff')}
+      ${svgArrow(i < 3 ? x + 270 : x, y + 38, i < 3 ? 480 : 700, 235, '#1f2937', true)}`;
+  }).join('');
+  return visualShell(topicId, `<svg viewBox="0 0 1180 500" width="100%" style="height:auto;display:block;" role="img" aria-label="${escHtml(topicMeta(topicId).title)} integration architecture">
+    ${svgDefs()}
+    ${nodes}
+    <rect x="450" y="158" width="280" height="150" rx="24" fill="#eff6ff" stroke="#2563eb" stroke-width="2.2" filter="url(#softShadow)"/>
+    <text x="590" y="208" text-anchor="middle" font-size="25" font-weight="900" fill="#1e3a8a">${escHtml(center)}</text>
+    <text x="590" y="236" text-anchor="middle" font-size="14" font-weight="800" fill="#475569">driver, executors, memory</text>
+    <text x="590" y="258" text-anchor="middle" font-size="14" font-weight="800" fill="#475569">scheduler, connectors</text>
+    <path d="M505 310 C455 352, 725 352, 675 310" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrowHead)"/>
+    <text x="590" y="355" text-anchor="middle" font-size="14" font-weight="900" fill="#475569">read, compute, write, observe</text>
+    <rect x="50" y="424" width="1080" height="48" rx="9" fill="#ecfeff" stroke="#38bdf8"/>
+    ${svgTextBlock(note, 68, 454, 118, 2, 15, 800, '#155e75')}
+  </svg>`);
 }
 
 function flowVisual(topicId, steps, note) {
-  return visualShell(topicId, `
-    <div style="display:grid;grid-template-columns:repeat(${steps.length},1fr);gap:10px;align-items:stretch;">
-      ${steps.map((s, i) => `<div style="display:grid;grid-template-rows:auto 1fr;gap:8px;">
-        <div style="text-align:center;font-weight:900;color:#475569;">${i === 0 ? '' : '&#8594;'}</div>
-        ${visualCard(s[0], s[1], s[2] || '#2563eb', 104)}
-      </div>`).join('')}
-    </div>
-    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(note)}</div>`);
+  const width = 184;
+  const gap = 44;
+  const startX = 44;
+  const nodes = steps.map((s, i) => {
+    const x = startX + i * (width + gap);
+    return `${svgNode(x, 122, width, 110, s[0], s[1], s[2] || '#2563eb', '#fff')}
+      ${i < steps.length - 1 ? svgArrow(x + width, 177, x + width + gap - 8, 177) : ''}`;
+  }).join('');
+  return visualShell(topicId, `<svg viewBox="0 0 1180 430" width="100%" style="height:auto;display:block;" role="img" aria-label="${escHtml(topicMeta(topicId).title)} process flow">
+    ${svgDefs()}
+    <text x="590" y="52" text-anchor="middle" font-size="20" font-weight="900" fill="#0f172a">What moves, where it is processed, and how output is validated</text>
+    ${nodes}
+    <path d="M1015 246 C850 332, 325 332, 128 246" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-dasharray="8 7" marker-end="url(#arrowHead)"/>
+    <text x="590" y="315" text-anchor="middle" font-size="15" font-weight="900" fill="#475569">feedback from metrics, checkpoints, failures, and tuning</text>
+    <rect x="50" y="350" width="1080" height="48" rx="9" fill="#ecfeff" stroke="#38bdf8"/>
+    ${svgTextBlock(note, 68, 380, 118, 2, 15, 800, '#155e75')}
+  </svg>`);
 }
 
 function cycleVisual(topicId, nodes, center, note) {
-  return visualShell(topicId, `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:center;">
-      ${visualCard(nodes[0][0], nodes[0][1], '#16a34a', 88)}
-      ${visualCard(nodes[1][0], nodes[1][1], '#2563eb', 88)}
-      ${visualCard(nodes[2][0], nodes[2][1], '#d97706', 88)}
-      ${visualCard(nodes[5][0], nodes[5][1], '#ef4444', 88)}
-      <div style="border:2px solid #7c3aed;border-radius:50%;height:190px;display:flex;align-items:center;justify-content:center;text-align:center;background:#f5f3ff;color:#4c1d95;font-size:22px;font-weight:900;padding:18px;">${escHtml(center)}</div>
-      ${visualCard(nodes[3][0], nodes[3][1], '#7c3aed', 88)}
-      <div></div>
-      ${visualCard(nodes[4][0], nodes[4][1], '#0ea5e9', 88)}
-      <div></div>
-    </div>
-    <div style="margin-top:14px;border:1px solid #38bdf8;border-radius:8px;background:#ecfeff;padding:12px;color:#155e75;font-size:14px;line-height:1.55;font-weight:650;">${escHtml(note)}</div>`);
+  const positions = [[470,42],[780,110],[780,286],[470,352],[160,286],[160,110]];
+  const centerNode = `<ellipse cx="590" cy="228" rx="160" ry="76" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2.2"/>
+    ${svgTextBlock(center, 498, 218, 22, 3, 18, 900, '#4c1d95')}`;
+  const nodeMarkup = nodes.slice(0, 6).map((n, i) => {
+    const [x, y] = positions[i];
+    const stroke = ['#16a34a','#2563eb','#d97706','#7c3aed','#0ea5e9','#ef4444'][i] || '#2563eb';
+    const next = positions[(i + 1) % 6];
+    return `${svgNode(x, y, 240, 76, n[0], n[1], stroke, '#fff')}${svgArrow(x + 120, y + 76, next[0] + 120, next[1], '#1f2937')}`;
+  }).join('');
+  return visualShell(topicId, `<svg viewBox="0 0 1180 520" width="100%" style="height:auto;display:block;" role="img" aria-label="${escHtml(topicMeta(topicId).title)} lifecycle diagram">
+    ${svgDefs()}
+    ${nodeMarkup}${centerNode}
+    <path d="M512 232 C420 198, 420 258, 512 232" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrowHead)"/>
+    <path d="M668 232 C760 198, 760 258, 668 232" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrowHead)"/>
+    <rect x="50" y="448" width="1080" height="48" rx="9" fill="#ecfeff" stroke="#38bdf8"/>
+    ${svgTextBlock(note, 68, 478, 118, 2, 15, 800, '#155e75')}
+  </svg>`);
 }
 
 function autoConceptVisualHtml(topicId) {
