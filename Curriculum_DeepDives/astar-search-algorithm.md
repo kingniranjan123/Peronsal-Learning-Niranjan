@@ -1,7 +1,6 @@
 # 🔥 Master Class: A* Search Algorithm in Apache Spark
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 A* (A-Star) is an informed heuristic search algorithm that finds the shortest path between two nodes in a weighted graph by combining the actual cost of reaching a node (`g(n)`) with an admissible heuristic estimate of the remaining cost to the goal (`h(n)`). The combined score `f(n) = g(n) + h(n)` guides a priority queue — the open set — so that the most promising nodes are always expanded first. Unlike Dijkstra's algorithm, which explores outward uniformly, A* focuses its frontier toward the goal, dramatically pruning the search space when a tight, admissible heuristic is available.
 
@@ -368,7 +367,6 @@ def local_astar(query_iter):
  # Yield result tuple for this query — collected by Spark action
  yield (source, goal, g_score.get(goal, float('inf')), found_path)
 
-
 # -- Step 3: Create RDD of (source, goal) query pairs
 queries = [(1001, 9999), (2002, 8888), (3003, 7777)] # In production: millions of pairs
 queries_rdd = sc.parallelize(queries, numSlices=200) # 200 partitions → 200 parallel tasks
@@ -533,3 +531,6 @@ For distributed graphs exceeding driver memory capacity, GraphX Pregel provides 
 
 For workloads requiring thousands to millions of simultaneous shortest-path queries (logistics, ride-sharing, network analysis), the `mapPartitions` multi-source pattern turns A* into an embarrassingly parallel operation, scaling linearly with cluster size. Memory-bounded beam search further extends A* to arbitrarily large graphs on the driver by capping heap usage with off-heap Unsafe allocation, trading provable optimality for guaranteed memory safety. The unifying thread across all patterns is serialization discipline, heuristic correctness, and an explicit accounting of where state lives — driver heap, executor heap, off-heap, or shuffle storage — because in production Spark, the location of your data is the first determinant of your performance. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>

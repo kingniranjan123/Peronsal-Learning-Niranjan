@@ -1,6 +1,6 @@
 # 🔥 Master Class: Deep Learning Concepts
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
+
 Distributed deep learning in Apache Spark bridges the critical gap between massive-scale data processing and computationally intensive neural network training. Historically, data engineers were forced to extract data from Spark clusters, serialize it to network storage, and load it into isolated GPU clusters for deep learning tasks using TensorFlow or PyTorch. This bifurcated architectural divide created massive network I/O bottlenecks, data governance nightmares, and agonizingly slow iteration cycles. Spark addresses this by deeply integrating deep learning workloads directly into its distributed execution engine. 
 
 By leveraging barrier execution mode, Project Hydrogen, and frameworks like HorovodRunner or the Spark Torch Distributor, Spark allows neural networks to train concurrently across executor nodes without intermediate data staging. This paradigm fundamentally shifts the problem from moving data to the compute, to bringing the deep learning compute directly to the data residing in the JVM's Tungsten memory or distributed partitions. Mastering deep learning concepts in Spark requires understanding how to synchronize gradients across Spark executors, how to manage JVM-to-Python memory transfers via Apache Arrow, and how to orchestrate distributed Stochastic Gradient Descent (SGD) without overwhelming the Spark Driver node. 
@@ -176,7 +176,7 @@ trained_weights = hr.run(train_distributed_logic)
 
 > **What this demonstrates:** This code leverages Spark's specialized `binaryFile` format to efficiently ingest raw unstructured data (like images) directly into the Tungsten memory format, ready for neural network consumption.
 
-```scala
+```plaintext
 // Scala Spark API demonstrating efficient binary payload ingestion
 import org.apache.spark.sql.SparkSession
 
@@ -281,3 +281,5 @@ Furthermore, we dissected the indispensable role of Apache Arrow in bypassing th
 
 Ultimately, integrating these two distinct computational paradigms demands rigorous attention to memory management across the JVM heap, off-heap buffers, and Python worker processes. By internalizing these architectural intricacies—from iterator-based Pandas UDFs to the nuances of barrier scheduling—senior engineers can build highly scalable, unified pipelines that perform both exabyte-scale data engineering and state-of-the-art deep learning within a single, cohesive Spark ecosystem.
 </🔥 Master Class: Deep Learning Concepts> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

@@ -1,7 +1,6 @@
 # 🔥 Master Class: YARN Resource Scheduling
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 YARN (Yet Another Resource Negotiator) is the cluster operating system layer that sits beneath Apache Spark in every Hadoop-based deployment. When a Spark application launches, the Driver submits a request to the YARN ResourceManager, which allocates Containers — bounded execution environments with a guaranteed slice of CPU (vcores) and memory — across NodeManagers on worker nodes. The ResourceManager does not simply hand out whatever a job asks for; it runs a scheduling pipeline that enforces multi-tenancy fairness, hierarchical capacity guarantees, and access-controlled node placement, all simultaneously.
 
@@ -360,7 +359,7 @@ spark.stop()
 
 > **What this demonstrates:** How a Spark application can query YARN's REST API at runtime to inspect queue headroom, detect preemption risk, and adaptively tune `spark.dynamicAllocation.maxExecutors` to avoid breaching queue capacity and triggering preemption of its own Containers.
 
-```python
+```plaintext
 # preemption_aware_submission.py
 # Pattern: Query YARN RM REST API before submission to compute safe executor ceiling.
 
@@ -495,3 +494,6 @@ Preemption is the enforcement mechanism for the capacity contract. When an elast
 
 The interaction between these five mechanisms — DRC, labels, hierarchy, preemption, and ESS — means that cluster operators and Spark engineers must share a unified mental model. A queue configuration change in `capacity-scheduler.xml` by a YARN administrator can silently change whether a Spark job's executors are preemptible, which in turn determines whether ESS is load-bearing or merely advisory. Production Spark engineering requires understanding YARN as deeply as Spark's own internals, because the boundary between them is where the most costly and least-debuggable failures originate. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>

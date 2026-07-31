@@ -1,7 +1,6 @@
 # 🔥 Master Class: Spark ML Library
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Apache Spark's ML library (`spark.ml`) is a DataFrame-based machine learning framework built on top of the Spark SQL engine, designed to run distributed training, feature engineering, and model evaluation pipelines across clusters of hundreds of nodes. Unlike its predecessor `spark.mllib`, which operated on low-level RDDs, `spark.ml` treats every transformation and estimation as a first-class DataFrame operation, enabling seamless integration with Catalyst query optimization, Tungsten's binary execution engine, and Spark's unified data plane.
 
@@ -485,3 +484,6 @@ Persistence via `MLWriter`/`MLReader` elevates Spark ML to a production-grade ML
 
 The performance failure modes in production Spark ML are almost always rooted in one of three causes: data leakage through incorrect pipeline construction order, executor OOM during `CrossValidator` parallel fit due to over-aggressive `parallelism` settings, or first-batch latency spikes after `MLReader.load()` due to lazy Parquet deserialization. Mastering the Spark UI's job timeline, executor memory tab, and SQL plan visualization tools is the non-negotiable path to diagnosing and eliminating these issues in real deployments. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>

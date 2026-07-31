@@ -1,7 +1,6 @@
 # 🔥 Master Class: Sparkling Water API
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Sparkling Water is the official H2O.ai bridge library that lets Apache Spark and the H2O machine-learning runtime share the same JVM process and—critically—the same physical memory pages. Without Sparkling Water, a data scientist would be forced to serialize a Spark DataFrame to disk or over the network, deserialize it inside a separate H2O cluster, train a model, serialize the MOJO artifact back, and then reload it inside Spark for scoring. That round-trip costs minutes of wall-clock time and gigabytes of intermediate I/O. Sparkling Water collapses this pipeline: data lives in one place, and both runtimes read it directly.
 
@@ -403,3 +402,6 @@ The `H2OAutoML` estimator's integration into Spark's `Pipeline` API provides MLO
 
 The two most consequential engineering decisions in any Sparkling Water deployment are backend selection (internal vs. external, driven by memory budget) and the filter-before-convert discipline (ensuring Catalyst optimizations run before `asH2OFrame()` is called). Both decisions are invisible at the API level—the code compiles and runs either way—but the performance difference between the anti-pattern and the correct pattern at production scale (hundreds of millions of rows, dozens of executors) is the difference between a 10-minute conversion and a 90-minute conversion, and between a stable cluster and one that OOMKills executors hourly. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>

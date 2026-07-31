@@ -1,7 +1,6 @@
 # 🔥 Master Class: Resilient Distributed Datasets (RDDs)
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
 
 Resilient Distributed Datasets (RDDs) are the foundational distributed data abstraction upon which all of Apache Spark is built. An RDD is an immutable, partitioned collection of records that can be operated on in parallel across a cluster. Every DataFrame, Dataset, and Structured Streaming micro-batch in modern Spark ultimately compiles down to an RDD execution plan — making RDDs not just a legacy API but the bedrock layer of the entire computation model.
 
@@ -92,7 +91,7 @@ Partition count is equally critical. With too few partitions (under-parallelism)
 
 > **What this demonstrates:** How to programmatically inspect the RDD lineage DAG to identify stage boundaries before submitting a job — a critical skill for diagnosing unnecessary shuffles.
 
-```scala
+```plaintext
 import org.apache.spark.{SparkConf, SparkContext}
 
 val conf = new SparkConf()
@@ -366,3 +365,6 @@ The performance gap between naively written and expertly written RDD code is eno
 
 While the DataFrame and Dataset APIs are preferred for structured data because they unlock Catalyst optimization (predicate pushdown, projection pruning) and Tungsten's columnar off-heap execution, RDDs remain indispensable for unstructured data, custom partitioning logic, fine-grained fault tolerance control, and performance-critical iterative graph algorithms. Every production Spark engineer must be fluent in RDD internals because the DataFrame API compiles to RDDs — when the optimizer produces a suboptimal physical plan, dropping to the RDD layer and applying manual optimizations is always available as the escape hatch. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>

@@ -1,6 +1,6 @@
 # 🔥 Master Class: Spark Submit
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+
 Apache Spark's `spark-submit` is far more than a simple execution wrapper; it is the critical orchestration gateway that bridges local user environments with massively distributed cluster managers like YARN, Kubernetes, or Mesos. At its core, it is a sophisticated JVM launcher and configuration parser that resolves classpaths, manages dependencies, and negotiates the initialization of the Spark Driver and its subsequent Executors. The problem it solves is abstraction: data engineers need a unified mechanism to deploy highly tuned, distributed applications across wildly disparate resource managers without writing boilerplate deployment code for each specific backend API.
 
 When a user invokes `spark-submit`, they are initiating a complex multi-phase bootstrap process. This process translates high-level resource requests (e.g., `--executor-memory 4G`) into cluster-specific container allocation protocols. Understanding this mechanism is vital because the vast majority of production failures—such as dependency conflicts, container OOM kills, and class-loading deadlocks—originate not in the Catalyst optimizer or Tungsten engine, but in the exact sequence of JVM configurations constructed during the `spark-submit` phase.
@@ -159,7 +159,7 @@ print(f"Spark UI running at: {spark.sparkContext.uiWebUrl}")
 
 > **What this demonstrates:** Optimizing `spark-submit` configurations for Jupyter Notebooks or interactive shells running in Client Mode, prioritizing driver responsiveness and network stability.
 
-```scala
+```plaintext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
@@ -248,3 +248,5 @@ Architecturally, realizing the distinction between Client and Cluster modes dict
 
 Ultimately, mastering `spark-submit` transitions an engineer from simply "writing Spark code" to successfully "operating Spark in production." By precisely tuning memory overhead to prevent YARN container kills, managing classloader hierarchies to avoid dependency hell, and securely mapping Kubernetes volumes for efficient shuffle spills, you ensure that the Tungsten execution engine has the exact physical foundation it needs to operate at peak performance.
 </🔥 Master Class: Spark Submit> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>

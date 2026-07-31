@@ -1,7 +1,6 @@
 # 🔥 Master Class: K-Means Clustering in Apache Spark
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 K-Means is the most widely deployed unsupervised machine learning algorithm in distributed data systems, and Apache Spark's `MLlib` implementation exposes a battle-hardened, distributed version of Lloyd's algorithm capable of operating on datasets with billions of rows across thousands of partitions. The algorithm's goal is deceptively simple: partition *n* observations into *k* clusters such that each observation belongs to the cluster with the nearest mean (centroid), minimizing the within-cluster sum of squared distances (WCSS), also called inertia. Yet achieving this at petabyte scale requires deep architectural choices that span the Driver's DAG planning, executor-level memory management, and network-efficient centroid aggregation.
 
@@ -417,3 +416,6 @@ The two most common production failure modes are silent empty clusters (detectab
 
 At the intersection of all these components lies a critical engineering insight: K-Means in Spark is not a single algorithm but a choreography of broadcast variables, treeReduce rounds, BLAS-accelerated inner loops, and JVM heap accumulators, coordinated by the DAGScheduler across a pipeline of sequentially dependent Spark Jobs. Understanding this choreography — not just the mathematical algorithm — is what separates a practitioner who can run K-Means from one who can tune, debug, and scale it in production. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>

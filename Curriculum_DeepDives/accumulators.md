@@ -1,7 +1,6 @@
 # 🔥 Master Class: Accumulators
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Accumulators are Spark's sanctioned mechanism for aggregating values from executor JVMs back to the driver JVM — a one-way, write-only channel from the distributed execution plane to the coordination plane. They exist because Spark's closure serialization model makes it impossible for executors to safely mutate shared driver-side state: closures are serialized, shipped to workers, and executed in isolated JVM processes. Any driver-side variable captured in a closure is copied, not referenced, so mutations to that copy are invisible to the driver. Accumulators break this barrier in a controlled, fault-tolerant way by attaching update aggregation to Spark's task lifecycle.
 
@@ -374,3 +373,6 @@ The two non-negotiable rules for production accumulator use are: only read accum
 
 Custom `AccumulatorV2` implementations unlock rich aggregation beyond simple numeric summation — sets, histograms, maps, HyperLogLog sketches, bloom filters — but each requires careful implementation of `isZero`, `copy`, `merge`, and `reset` to satisfy Spark's internal lifecycle assumptions. The multi-metric map accumulator pattern demonstrates the production best practice: consolidate related metrics into a single accumulator, disable speculative execution when correctness matters, batch all `add()` calls per partition, and emit the final `value` to an external monitoring system after the action completes. Accumulators used this way become a lightweight, zero-shuffle telemetry bus that integrates naturally with Spark's existing task execution infrastructure. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>

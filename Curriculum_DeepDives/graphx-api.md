@@ -1,7 +1,6 @@
 # 🔥 Master Class: GraphX API
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
 
 GraphX is Apache Spark's built-in library for graph-parallel computation, exposing a property graph model on top of the Spark core RDD abstraction. A property graph is a directed multigraph where each vertex and each edge carries an arbitrary user-defined attribute — the vertex property (`VD`) and edge property (`ED`) — typed as Scala generics. Unlike standalone graph engines such as GraphLab or Giraph, GraphX unifies graph computation and relational data processing in a single system: the same data that feeds a machine-learning pipeline can be treated as a graph without serialization or data movement.
 
@@ -368,3 +367,6 @@ The Pregel API provides a clean BSP abstraction over `aggregateMessages`, modell
 
 GraphX's position below Catalyst and Tungsten means it receives none of the automatic optimizations that DataFrame-based workloads enjoy — no predicate pushdown, no whole-stage codegen, no off-heap columnar storage. For production graph workloads, this demands explicit performance engineering: choosing the right partition strategy at construction time, applying `subgraph` filters early in the operator pipeline, using `TripletFields` hints to minimize routing table broadcast, and caching the graph with eager materialization before entering any iterative algorithm. Engineers who internalize these mechanics can build graph algorithms at billion-edge scale on commodity Spark clusters with predictable, controlled resource consumption. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>

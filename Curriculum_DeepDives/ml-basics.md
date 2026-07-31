@@ -1,6 +1,5 @@
 # 🔥 Master Class: Ml Basics
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Apache Spark's MLlib (specifically the `spark.ml` DataFrame-based API) represents a paradigm shift in distributed machine learning, moving away from RDD-based monolithic algorithms toward modular, unified pipelines. Historically, scaling machine learning models meant manually orchestrating data parallelization, handling fragile serialization, and writing bespoke parameter synchronization logic. Spark MLlib exists to solve this by providing a standardized API for distributed featurization, model training, and evaluation that integrates natively with Spark SQL's Catalyst optimizer and Tungsten execution engine.
 
@@ -113,7 +112,7 @@ val assembler = new VectorAssembler()
 
 > **What this demonstrates:** How to properly manage the DAG scheduler and JVM memory when running highly iterative ML workflows like ALS or custom gradient descents.
 
-```scala
+```plaintext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.ml.recommendation.ALS
 
@@ -144,7 +143,7 @@ val model = als.fit(trainingData)
 
 > **What this demonstrates:** How MLlib internally calculates distributed gradients and statistics without bottlenecking the Driver's network interface.
 
-```scala
+```plaintext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.ml.linalg.Vector
 
@@ -242,3 +241,6 @@ However, treating Spark ML as a black box is a recipe for disaster. Production-g
 
 Ultimately, mastering Spark MLlib means bridging the gap between data science and distributed systems architecture. When configured correctly—with parallelized cross-validation, proper memory tuning, and native math acceleration—it provides an unmatched capability to train massive, complex models across thousands of commodity nodes efficiently and reliably. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469)</em></div>

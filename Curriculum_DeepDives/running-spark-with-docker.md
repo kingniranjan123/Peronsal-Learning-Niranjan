@@ -1,7 +1,6 @@
 # 🔥 Master Class: Running Spark with Docker
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Apache Spark was designed in an era of bare-metal clusters and static resource managers like YARN and Mesos. Docker fundamentally disrupts that model by abstracting the host OS into isolated, reproducible, portable units of compute. When you containerize Spark, you gain three critical properties that bare-metal deployments cannot provide: **environment reproducibility** (the exact same JVM version, native libraries, and Python environment on every node), **resource isolation** (Linux cgroups enforce hard CPU and memory limits so one runaway executor cannot starve another), and **deployment portability** (the same image runs on a developer's laptop, a CI pipeline, and a production Kubernetes cluster without change).
 
@@ -469,3 +468,6 @@ Image layering strategy determines operational velocity. A monolithic Dockerfile
 
 Kubernetes via Docker Desktop adds a third dimension of complexity: the Kubernetes scheduler, cgroup v2 enforcement, and Spark's dynamic executor allocation must all agree on memory and CPU accounting. `UseContainerSupport` and `MaxRAMPercentage` are the bridge between the Kubernetes resource model and JVM ergonomics. The diagnostic patterns — reading `/sys/fs/cgroup/memory.max` from within executors, checking `/proc/mounts` for OverlayFS on shuffle directories, verifying `SPARK_LOCAL_IP` resolves across the Docker network — are the production debugging toolkit that separates an engineer who deploys Spark in Docker from one who operates it reliably at scale. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

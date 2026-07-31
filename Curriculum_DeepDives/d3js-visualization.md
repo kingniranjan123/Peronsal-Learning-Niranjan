@@ -1,6 +1,6 @@
 # 🔥 Master Class: D3.js Visualization
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
+
 The fusion of Apache Spark and D3.js represents the pinnacle of big data visualization engineering. In the modern enterprise, transforming petabytes of raw, unstructured data into actionable, highly interactive visual insights is a paramount skill. While Apache Spark’s distributed compute engine processes massive datasets with unparalleled speed using highly optimized Directed Acyclic Graphs (DAGs), it inherently lacks any native graphical rendering or presentation capabilities. Conversely, D3.js (Data-Driven Documents) is unequivocally the industry gold standard for creating bespoke, interactive, and beautifully animated browser-based visualizations. However, D3.js operates strictly within the memory constraints and single-threaded execution confines of the client's web browser environment. 
 
 The core architectural problem this integration attempts to solve is the fundamental impedance mismatch between large-scale distributed data processing and lightweight client-side DOM (Document Object Model) manipulation. Attempting to push raw, unaggregated DataFrames directly into a web frontend is a catastrophic anti-pattern that guarantees immediate browser termination and UI thread lockups. Therefore, the data engineer's mandate is to architect a robust, highly tuned data pipeline where the computational heavy lifting—such as aggregations, dimensional rollups, geographic clustering, and hex-binning—is executed exclusively on the Spark cluster. By doing so, only high-signal, exceptionally low-volume JSON payloads are transmitted over the network boundary. This master class explores the exact internal mechanics of bridging Spark's Tungsten engine and Catalyst optimizer with D3's expressive `enter`, `update`, and `exit` lifecycle, enabling the creation of dashboards that reflect billions of rows in real-time without ever overwhelming the frontend architecture. 
@@ -173,7 +173,7 @@ val jsonOutput = finalPayload.toJSON.collect().mkString("[", ",", "]")
 
 > **What this demonstrates:** Connects Spark Structured Streaming aggregations to a D3.js frontend, safely managing temporal state limits in the JVM and pushing dynamic delta updates for real-time live dashboards.
 
-```scala
+```plaintext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.Trigger
@@ -299,3 +299,5 @@ By proactively pushing the heavy computational geometry, hierarchical object nes
 
 Ultimately, passing only this aggressively reduced, pre-formatted data to the web frontend unleashes the absolute full potential of D3.js. It allows the Data-Driven Documents framework to do exactly what it does best: seamlessly executing intelligent data joins (`enter`, `update`, `exit`) and rendering fluid, 60-frames-per-second interactive graphics that visually captivate users. A senior data engineer fundamentally understands that the most beautiful, highly performant web visualization is entirely dependent on the brutal computational efficiency of the underlying Apache Spark pipeline reliably feeding it.
 </🔥 Master Class: D3.js Visualization> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>

@@ -1,6 +1,5 @@
 # 🔥 Master Class: Spark Shell
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 The Apache Spark Shell is far more than a simple pedagogical tool or sandbox for beginners; it is a full-fledged, interactive, distributed execution environment. At its core, the Spark Shell is a specialized Read-Evaluate-Print Loop (REPL) that instantly connects a single-node interactive prompt to a massive-scale distributed cluster. It solves the profound engineering challenge of interactive big data exploration by drastically reducing the feedback loop from code compilation to distributed execution, allowing engineers to iterate on multi-terabyte datasets in real-time.
 
@@ -214,3 +213,5 @@ To master the Spark Shell is to master the boundary between local memory and dis
 
 Ultimately, the Spark Shell is not merely a scratchpad; it is a real-time diagnostic command center. Whether inspecting the Catalyst physical plan with `explain()`, programmatically managing the Hive metastore via the Catalog API, or dynamically manipulating task scheduling pools, true mastery of the REPL unlocks unprecedented agility in big data engineering. It remains one of the most powerful interactive data tools ever built, provided the engineer respects the architectural complexity lurking just beneath the command prompt.
 </🔥 Master Class: Spark Shell> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>

@@ -1,7 +1,6 @@
 # 🔥 Master Class: Linear Regression in Apache Spark
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Linear Regression is the foundational supervised learning algorithm that models a continuous response variable as a weighted linear combination of input features. In a single-machine context, the Ordinary Least Squares (OLS) solution is found analytically by inverting the Gram matrix `(XᵀX)⁻¹Xᵀy`. At scale, this matrix inversion is intractable — a dataset with `p` features produces a `p×p` matrix whose dense inversion costs `O(p³)` FLOPs and requires the entire design matrix to reside in driver memory. Spark's `LinearRegression` estimator solves this by distributing gradient computation across executors, materializing only compact sufficient statistics on the driver, and delegating the final parameter update to a high-performance numerical optimizer.
 
@@ -426,3 +425,6 @@ The most consequential engineering decisions when deploying `LinearRegression` a
 
 Mastery of Spark's `LinearRegression` means knowing not just the API but *when the API lies to you*: when convergence appears achieved but the model is at a saddle point, when R² is high but collinear coefficients are nonsense, when Lasso's sparse output is a sign of correct regularization versus over-penalization. These distinctions, rooted in the numerical linear algebra and distributed systems mechanics described in this chapter, are what separate production-grade ML engineers from practitioners who tune hyperparameters by intuition alone. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>

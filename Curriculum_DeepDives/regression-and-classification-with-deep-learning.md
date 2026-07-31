@@ -1,7 +1,6 @@
 # 🔥 Master Class: Regression and Classification with Deep Learning
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Deep neural networks (DNNs) have historically been associated with unstructured data—images, audio, text—but production Spark environments increasingly deploy DNNs against massive tabular datasets for regression and classification tasks where gradient-boosted trees plateau. The key insight is that when a dataset contains hundreds of millions of rows with high-cardinality categorical features, learned embeddings inside a DNN capture interaction effects that no hand-crafted feature engineering can match. Spark's role in this ecosystem is not to run backpropagation itself—that remains the domain of TensorFlow and PyTorch—but to orchestrate distributed data loading, feature transformation, parallel training, and model lifecycle management at petabyte scale.
 
@@ -208,7 +207,6 @@ PETASTORM_URL = "hdfs:///tmp/petastorm_cache/loan_features"
 BASE_LR = 1e-3 # learning rate for a single-GPU run
 BATCH_SIZE = 512 # per-rank mini-batch size
 
-
 def train_fn():
  # Step 1: Initialize Horovod — this binds the Gloo/NCCL
  # rendezvous handle and assigns this process its rank integer.
@@ -318,7 +316,6 @@ def train_fn():
  artifact_path="loan_default_dnn",
  registered_model_name="LoanDefaultClassifier"
  )
-
 
 # HorovodRunner emits `np` Spark tasks, one per rank.
 # `use_gloo=True` enables the pure-Python Gloo backend, which works
@@ -467,7 +464,6 @@ MODEL_NAME = "LoanDefaultClassifier"
 AUC_THRESH = 0.82 # Minimum AUC required for Production promotion.
 HOLDOUT_URL = "hdfs:///tmp/petastorm_cache/loan_holdout"
 
-
 def evaluate_model_on_holdout(model_uri: str) -> dict:
  """Load a model from the Registry and evaluate on the holdout set.
  Returns a dict of metrics for the promotion decision gate."""
@@ -497,7 +493,6 @@ def evaluate_model_on_holdout(model_uri: str) -> dict:
  "pr_auc": float(pr_metric.result().numpy()),
  "rows_evaluated": total_rows
  }
-
 
 def promote_or_rollback(model_name: str, auc_threshold: float):
  """
@@ -579,7 +574,6 @@ def promote_or_rollback(model_name: str, auc_threshold: float):
  print(f" ❌ Archived v{version.version}: "
  f"AUC={metrics['auc']:.4f} below threshold {auc_threshold}")
 
-
 # Execute the promotion pipeline — can be triggered from a
 # Databricks Job, Airflow DAG, or GitHub Actions CI step.
 promote_or_rollback(MODEL_NAME, AUC_THRESH)
@@ -612,3 +606,6 @@ Linear scaling efficiency in Horovod all-reduce depends on three factors that mu
 
 The MLflow Model Registry is not optional scaffolding—it is the governance contract between data scientists who train models and platform engineers who serve them. The promotion pipeline enforces that no model reaches Production without quantitative validation against a holdout set, with full metric provenance recorded against the exact run ID that produced the artifact. For regulated industries where model decisions carry legal weight, this audit chain—from raw Parquet shard through Horovod all-reduce to Registry version tag—is the complete evidentiary record of how a prediction was produced. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

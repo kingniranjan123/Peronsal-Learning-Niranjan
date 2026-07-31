@@ -1,7 +1,6 @@
 # 🔥 Master Class: Spark Streaming Components
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Apache Spark Streaming is a micro-batch stream processing engine built on top of the core Spark execution model. Rather than processing each event individually like a true event-at-a-time system (e.g., Apache Flink), Spark Streaming discretizes a continuous data stream into a sequence of small, bounded RDDs — called a **Discretized Stream (DStream)** — and processes each micro-batch using the full power of the Spark DAGScheduler and Tungsten execution engine. This architecture trades ultra-low latency (sub-10ms) for extreme fault tolerance, exactly-once semantics via the write-ahead log, and seamless integration with the existing Spark batch ecosystem.
 
@@ -430,3 +429,6 @@ The most consequential architectural insight is the `blockInterval`-to-`partitio
 
 Production Spark Streaming engineering requires holding two mental models simultaneously: the streaming model (DStream graph, batch intervals, receiver lifecycle) and the underlying batch model (RDD lineage, DAGScheduler job submission, BlockManager read path). Failures almost always manifest at the boundary between these two models — a receiver that silently dies, a lineage chain that grows unbounded, a WAL that protects inputs but not outputs. Engineers who master both layers can diagnose, tune, and recover any Spark Streaming application with confidence. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>

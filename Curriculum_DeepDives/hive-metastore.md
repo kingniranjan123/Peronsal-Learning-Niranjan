@@ -1,7 +1,6 @@
 # 🔥 Master Class: Hive Metastore
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 The Hive Metastore (HMS) is the persistent, shared catalog that stores all metadata about databases, tables, partitions, schemas, storage locations, and statistics in a Hadoop-ecosystem data lake. In Apache Spark, the metastore is not a Spark invention — Spark borrows and extends the Hive Metastore architecture, wrapping it behind the `SparkSQL Catalog API` to give SQL engines a unified registry of available data assets. Without a metastore, every Spark session would need to re-describe every dataset from scratch; with one, dozens of concurrent Spark applications share a single source of truth about where data lives, how it is partitioned, and what its schema looks like.
 
@@ -99,7 +98,7 @@ Spark's Cost-Based Optimizer (CBO), enabled via `spark.sql.cbo.enabled=true`, us
 
 > **What this demonstrates:** How to wire Spark to a production MySQL-backed HMS, including connection pool tuning and Kryo serialization, and how to verify the catalog is live before submitting production jobs.
 
-```scala
+```plaintext
 import org.apache.spark.sql.SparkSession
 
 val spark = SparkSession.builder()
@@ -375,3 +374,6 @@ The Derby vs. external metastore decision is not a configuration preference — 
 
 Partition management and statistics collection are ongoing operational disciplines, not one-time setup tasks. Every ETL pipeline that writes new partitions must register them explicitly and run `ANALYZE TABLE` before the next consumer query executes — failing to do so produces stale partition lists that cause missing data, and absent column statistics that force the CBO into heuristic mode, systematically choosing sort-merge joins over broadcast joins and adding unnecessary shuffle stages to every analytical query. Instrumenting these steps into the final task of every Airflow DAG or Dagster job is the hallmark of a production-grade Spark data platform. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>

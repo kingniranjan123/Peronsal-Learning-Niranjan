@@ -1,7 +1,6 @@
 # 🔥 Master Class: Datasets — Typed API, Encoders & the Unified Object Model
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 The Spark Dataset API is the synthesis of two decades of distributed computing evolution. Introduced in Spark 1.6 and made production-stable in Spark 2.0, the Dataset represents Spark's attempt to merge the compile-time safety of strongly typed languages with the query-optimization power of relational algebra. A `Dataset[T]` is a distributed collection of JVM objects of type `T`, where `T` is a case class, a primitive, or any type for which an `Encoder[T]` exists. The critical distinction from RDDs is that Datasets are not opaque — Spark's Catalyst optimizer can inspect the schema of a Dataset, decompose objects into their constituent columns, and apply the full suite of relational optimizations before generating bytecode.
 
@@ -382,3 +381,6 @@ The `ExpressionEncoder[T]` is the linchpin of the entire system. It compiles a s
 
 In production, the pragmatic strategy is to use `Dataset[T]` for type-safe API boundaries (reading from sources, writing to sinks, function signatures) and to perform the bulk of transformation and aggregation logic using column expressions and the aggregation DSL, converting to typed objects only at the final stage. This hybrid approach gives you compile-time schema validation, readable code, and Tungsten-level performance — the core promise the Dataset API was designed to deliver. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

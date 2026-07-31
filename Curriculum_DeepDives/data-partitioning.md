@@ -1,6 +1,5 @@
 # 🔥 Master Class: Data Partitioning
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 At its core, Apache Spark is a distributed computing engine, and data partitioning is the fundamental architectural mechanism that enables this distribution. Partitioning dictates how a large, monolithic dataset is broken down into smaller, manageable, and logically independent chunks (partitions) that can be processed concurrently across the distributed nodes of a cluster. It is the primary determinant of parallelism in Spark; a dataset with only one partition will only utilize a single CPU core, regardless of the cluster's size, whereas a dataset partitioned effectively will keep every core saturated with work.
 
@@ -273,3 +272,5 @@ Mastering partitioning requires recognizing that Spark is fundamentally a networ
 
 Ultimately, modern Spark relies on Adaptive Query Execution to handle dynamic partition sizing, but AQE cannot fix fundamentally flawed logical plans. The engineer must still architect the data layout—both in memory and on disk—to ensure that the physical execution limits cross-node traffic and maximizes the throughput of Tungsten's vectorized processing engine. True Spark mastery is achieved when the engineer controls the partitions, rather than the partitions controlling the cluster.
 </🔥 Master Class: Data Partitioning> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

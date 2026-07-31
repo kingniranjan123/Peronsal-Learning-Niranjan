@@ -1,7 +1,7 @@
 </Agent System Instructions>
 <🔥 Master Class: Standalone Cluster Components> 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>
+
 Apache Spark’s Standalone Cluster mode represents the foundational, built-in resource manager designed to execute distributed data processing without the dependency on external cluster managers like YARN, Mesos, or Kubernetes. It exists to provide a lightweight, highly efficient, and easily deployable framework for managing distributed resources. While YARN and Kubernetes offer multi-tenant isolation and complex resource queuing, the Standalone manager excels in raw throughput and simplicity, making it the architecture of choice for dedicated Spark environments, rapid prototyping, and edge-compute deployments where operational overhead must be minimized.
 
 At its core, the Standalone cluster solves the fundamental problem of distributed resource negotiation and task lifecycle management. When a Spark application requires CPU cores and memory across a distributed network of machines, the Standalone Master orchestrates the allocation of these resources. It operates as the central source of truth for the cluster's topology, dynamically tracking which Worker nodes are alive, how much memory they have available, and which Executor JVMs are currently bound to which applications. 
@@ -87,7 +87,7 @@ Conversely, in `cluster` mode, the Standalone Master natively schedules a "Drive
 
 > **What this demonstrates:** How to properly initialize a SparkSession targeting a Standalone Master while explicitly preventing the default greedy core-monopolization behavior.
 
-```scala
+```plaintext
 import org.apache.spark.sql.SparkSession
 
 // Initialize SparkSession with explicit Standalone resource constraints
@@ -231,3 +231,5 @@ Mastery of this architecture requires a deep understanding of its unforgiving de
 
 Ultimately, knowing how Spark natively allocates memory, schedules JVMs, and recovers from network partitions at the bare-metal level makes you a vastly superior engineer. Whether you are debugging complex Spark UI metrics, optimizing shuffle mechanics, or eventually migrating pipelines to Kubernetes, the internal JVM dynamics and Catalyst scheduling patterns you learn from the Standalone architecture apply universally across all Spark deployments.
 </🔥 Master Class: Standalone Cluster Components> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464)</em></div>

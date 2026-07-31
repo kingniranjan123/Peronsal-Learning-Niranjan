@@ -1,7 +1,6 @@
 # 🔥 Master Class: Uberjars — Fat JARs, Classpath Conflicts, and Distributed Classloading in Apache Spark
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 An uberjar (also called a "fat JAR" or "assembly JAR") is a single, self-contained Java Archive that bundles your application code together with every transitive dependency it requires at runtime. In the context of Apache Spark, uberjars solve a fundamental distribution problem: when Spark submits a job to a cluster — whether YARN, Kubernetes, or standalone — the driver and every executor must have access to identical classpath resources. Without an uberjar, you would need to manually provision each node with every library your job depends on, a process that is error-prone, slow, and incompatible with elastic autoscaling environments where nodes may be provisioned on-demand.
 
@@ -341,7 +340,6 @@ def build_spark_session() -> SparkSession:
  .getOrCreate()
  )
 
-
 def validate_kryo_serialization(spark: SparkSession) -> None:
  """
  Sends a known object through the Spark serialization pipeline (driver → executor → driver)
@@ -361,7 +359,6 @@ def validate_kryo_serialization(spark: SparkSession) -> None:
  # This exercises the entire Kryo serialization round-trip across executor boundaries.
  result = rdd.reduceByKey(lambda a, b: a + b).collect()
  print(f"Kryo serialization validated. Results: {result}")
-
 
 if __name__ == "__main__":
  spark = build_spark_session()
@@ -508,3 +505,6 @@ The failure modes of a poorly assembled uberjar are among the most difficult to 
 
 Mastery of uberjars means treating JAR assembly as a first-class engineering concern with the same rigor applied to query optimization or shuffle tuning. This means: explicit shade rules for every dependency that conflicts with Spark's internal classpath, explicit merge strategies for every known file category, `registrationRequired=true` for Kryo, Metaspace-aware memory overhead sizing on Kubernetes, and automated validation of the assembled JAR's class count and SPI service files in CI pipelines — before the job reaches the cluster and fails in ways that cost hours to diagnose. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

@@ -1,7 +1,6 @@
 # 🔥 Master Class: RDD Lineage and DAG
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Every transformation applied to an RDD in Apache Spark does not execute immediately. Instead, Spark records the transformation as a node in a **Directed Acyclic Graph (DAG)** — a logical blueprint of all the computations required to produce the final result. This lazy evaluation model means that no actual data movement or computation occurs until an **action** (e.g., `collect()`, `count()`, `saveAsTextFile()`) is triggered. At that point, the DAGScheduler converts the logical DAG into a physical execution plan composed of **Stages** and **Tasks**.
 
@@ -99,7 +98,7 @@ The precise error is `java.lang.StackOverflowError` in `DAGScheduler.getShuffleD
 
 > **What this demonstrates:** `toDebugString` is the primary diagnostic tool for understanding the structure of an RDD's lineage. This example shows how to read the indentation levels, identify ShuffleDependencies, and locate stage boundaries without opening the Spark UI.
 
-```python
+```plaintext
 from pyspark import SparkContext, SparkConf
 
 conf = SparkConf().setAppName("DAGInspection").setMaster("local[4]")
@@ -188,7 +187,7 @@ per_user_totals.unpersist()
 
 > **What this demonstrates:** How to use `rdd.checkpoint()` inside an iterative loop to prevent unbounded lineage growth, which otherwise causes `StackOverflowError` in the DAGScheduler during stage planning in long-running algorithms.
 
-```python
+```plaintext
 from pyspark import SparkContext, SparkConf, StorageLevel
 
 conf = SparkConf() \
@@ -337,3 +336,6 @@ The two most impactful interventions available to a Spark engineer are strategic
 
 Finally, the `toDebugString` output and the Spark UI's DAG visualization are the two most underused diagnostic tools in the Spark ecosystem. An engineer who can look at a DAG and immediately identify skipped stages (cache hits), unexpected shuffles (missing co-partitioning), and abnormal partition counts (accidental `coalesce(1)`) will outperform peers who tune by intuition alone. The DAG is Spark's full declarative description of its intent — learning to read it fluently is the highest-leverage skill in production Spark engineering. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>

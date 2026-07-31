@@ -1,6 +1,6 @@
 # 🔥 Master Class: Decision Trees
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463)</em></div>
+
 Decision Trees are the foundational algorithm of modern machine learning, serving as the atomic units for powerful ensemble methods like Random Forests and Gradient-Boosted Trees (GBTs). In a single-node environment, constructing a decision tree is relatively straightforward: you sort the features and recursively partition the data to maximize information gain. However, in Apache Spark, this naive approach collapses. Sorting an entire dataset per node across a distributed cluster of petabytes is computationally impossible due to massive network shuffling and memory constraints. 
 
 Spark MLlib solves this via a revolutionary data-parallel architecture adapted from the PLANET algorithm. Instead of sorting raw data, Spark uses a distributed histogram-based approach. It discretizes continuous features into a fixed number of bins (buckets) before training begins. Then, it builds the tree level by level. At each level, executors compute aggregated statistics (histograms) for every feature, bin, and active node using local data partitions. 
@@ -145,7 +145,7 @@ final_df = vector_indexer.fit(assembled_df).transform(assembled_df)
 
 > **What this demonstrates:** Accessing the internal representation of the trained model to extract specific split conditions and debug the decision logic, bypassing the standard `toDebugString`.
 
-```scala
+```plaintext
 import org.apache.spark.ml.classification.DecisionTreeClassificationModel
 import org.apache.spark.ml.tree._
 
@@ -238,3 +238,5 @@ However, this distributed power introduces unique configuration paradigms that s
 
 Ultimately, mastering Spark's decision trees requires treating the algorithm not as a black box, but as a distributed MapReduce application. Every parameter tweak directly influences network serialization, JVM memory allocation, and Catalyst query planning. With this architectural mental model, you can architect robust, petabyte-scale pipelines, paving the way for advanced ensembles like Random Forests and Gradient-Boosted Trees while avoiding the pitfalls of naive implementations.
 </🔥 Master Class: Decision Trees> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463)</em></div>

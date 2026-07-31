@@ -1,7 +1,6 @@
 # 🔥 Master Class: The Spark Revolution — How Spark Rewrote the Rules of Distributed Computing
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Apache Spark emerged from the AMPLab at UC Berkeley in 2009 as a direct response to a fundamental architectural limitation in Hadoop MapReduce: the inability to keep intermediate computation results in memory across processing stages. MapReduce was a brilliant abstraction for its era — it democratized distributed computing by reducing every problem to two functions — but it paid a brutal cost for fault tolerance: every Map output and every Reduce output was written to HDFS before the next stage could begin. For iterative algorithms — machine learning, graph analytics, interactive SQL — this meant a job with ten stages performed ten full round-trips to disk, each carrying the full weight of HDFS replication, serialization, and network I/O.
 
@@ -421,3 +420,6 @@ The Catalyst optimizer extends this revolution to the declarative query layer. R
 
 Production Spark engineering, however, demands understanding where the abstractions break down: when shuffle data volume overwhelms network bandwidth, when lineage graphs grow deep enough to cause Driver JVM stack overflows, when broadcast tables exceed executor heap capacity, and when Python UDFs silently disable Whole-Stage Code Generation. The engineers who master Spark are those who can look at a Spark UI Stage summary and reconstruct exactly which line of application code created the performance cliff — and that requires understanding the full stack from `LogicalPlan` trees to JVM bytecode generation to HDFS block placement. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

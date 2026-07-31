@@ -1,7 +1,6 @@
 # 🔥 Master Class: Pair RDDs — Key-Value RDDs, Partitioning, and Aggregation Internals
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 A **Pair RDD** is any RDD whose elements are two-element tuples of the form `(key, value)`. This is not a separate class in the Spark codebase — it is a design convention that unlocks a second tier of the Spark API: key-aware transformations such as `reduceByKey`, `groupByKey`, `aggregateByKey`, `combineByKey`, `partitionBy`, and `join`. When Spark sees a 2-tuple, it implicitly wraps the RDD with `PairRDDFunctions` via an implicit conversion in Scala (`rdd.implicit_functions`), giving access to roughly 30 additional operators that have no equivalent on non-keyed RDDs.
 
@@ -381,3 +380,6 @@ The single most impactful decision in any Pair RDD pipeline is operator selectio
 
 Production Spark engineering with Pair RDDs ultimately requires fluency with three diagnostic tools: the Spark UI's **Stage Detail** view (for identifying shuffle write/read imbalance and straggler tasks caused by key skew), the **RDD `toDebugString`** lineage (for confirming that map-side combiners are active and that `partitionBy` has not been inadvertently discarded by a `map` call), and the **Executor Memory** tab (for detecting shuffle spill to disk, signaled by non-zero "Shuffle Spill (Disk)" values, which indicate that executor memory is insufficient for the current aggregation's working set and that either heap size or `spark.memory.fraction` must be increased). 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

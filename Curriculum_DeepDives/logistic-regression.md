@@ -1,7 +1,6 @@
 # 🔥 Master Class: Logistic Regression in Apache Spark
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Logistic Regression is the workhorse of probabilistic classification in production ML systems. Unlike linear regression, which predicts continuous values, logistic regression maps a linear combination of features to a probability in the range (0, 1) using the **sigmoid function** (binary case) or the **softmax function** (multinomial case). Spark MLlib implements logistic regression as a distributed, in-memory optimizer that exploits the cluster's full parallelism, making it suitable for datasets with billions of rows and millions of sparse features — a regime where single-node scikit-learn simply fails.
 
@@ -401,3 +400,6 @@ The most common production failures are all resource-related: driver OOM from la
 
 Mastery of this algorithm means knowing not just how to call `LogisticRegression().fit()`, but how to choose the right regularizer for your feature distribution, size your cluster resources for the coefficient matrix dimensionality, handle class imbalance without exploding dataset size, and evaluate model quality with the right metric for your class distribution. These decisions, made correctly, are the difference between a model that works in a notebook and one that serves reliably in production at petabyte scale. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>

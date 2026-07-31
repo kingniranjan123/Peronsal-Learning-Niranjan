@@ -1,6 +1,6 @@
 # 🔥 Master Class: Mesos Resource Scheduling
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
+
 Apache Mesos is a distributed systems kernel and cluster manager that abstracts CPU, memory, storage, and other compute resources away from machines, enabling fault-tolerant and elastic distributed systems to easily be built and run effectively. In the context of Apache Spark, Mesos serves as a highly robust, massively scalable resource manager that dictates exactly where, when, and how Spark executors are launched across a multi-tenant cluster. Unlike Hadoop YARN, which uses a request-based allocation model, Mesos fundamentally operates on a revolutionary two-level scheduling mechanism based on "resource offers."
 
 When a Spark application is submitted to a Mesos cluster, it acts as a Mesos Framework. The Mesos Master continuously polls its worker nodes (Agents) for available capacity and bundles these into resource offers. The Spark framework scheduler (running in the Driver) evaluates these offers against its current task backlog and decides whether to accept or decline them. This inversion of control allows Mesos to support extremely diverse workloads—Spark, Kafka, Cassandra, Jenkins—on the same physical hardware without static partitioning. The result is unprecedented resource utilization and multi-tenancy. Understanding this intricate dance between the Spark `TaskScheduler`, the `MesosSchedulerBackend`, and the Mesos Master is critical for deploying high-performance, predictable data pipelines in heterogeneous environments, particularly when dealing with massive-scale analytics where milliseconds of scheduling latency accumulate into massive bottlenecks. 
@@ -139,7 +139,7 @@ val conf = new SparkConf()
 
 > **What this demonstrates:** Deploying Spark executors within isolated Docker containers orchestrated by Mesos, allowing for customized environments (like specific Python libraries for PySpark or native C++ dependencies).
 
-```scala
+```plaintext
 val conf = new SparkConf()
  .setAppName("MesosDockerizedML")
  .setMaster("mesos://master.mesos:5050")
@@ -207,3 +207,5 @@ However, this immense power requires deep architectural awareness. The strict en
 
 Ultimately, mastering Spark on Mesos is about bridging the gap between Catalyst's logical/physical execution plans and the raw constraints of the operating system. When configured correctly with external shuffle services, precise cgroup boundaries, and intelligent role-based allocations, a Mesos-backed Spark cluster achieves unparalleled resource utilization, transforming chaotic, multi-framework environments into reliable, high-performance execution engines.
 </🔥 Master Class: Mesos Resource Scheduling> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>

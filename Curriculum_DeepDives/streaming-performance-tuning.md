@@ -1,7 +1,6 @@
 # 🔥 Master Class: Streaming Performance Tuning
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 Apache Spark Structured Streaming is a fault-tolerant, exactly-once stream processing engine built on top of the Spark SQL execution engine. Unlike the deprecated DStream API, Structured Streaming models an unbounded data stream as a continuously appended, unbounded table — every micro-batch or continuous trigger reads new rows, processes them through the Catalyst optimizer's full pipeline, and commits results atomically via a Write-Ahead Log (WAL) and checkpoint mechanism. This architectural decision means streaming queries inherit the full power of Catalyst predicate pushdown, Tungsten binary format, and Whole-Stage CodeGen — but it also means that the same performance failure modes that plague batch jobs (data skew, excessive shuffle, GC pressure) are amplified in streaming because they repeat on every trigger.
 
@@ -494,3 +493,6 @@ At the state store layer, migrating from `HDFSBackedStateStore` to `RocksDBState
 
 At the join and aggregation layer, watermark precision is the master control variable. Every stateful operator's memory footprint is directly proportional to the watermark delay: a 2-hour watermark in a stream-stream join buffers 2 hours of left-side events per partition. Instrumenting `inputRowsPerSecond`, `processedRowsPerSecond`, `triggerExecution` duration, and RocksDB compaction metrics via the `StreamingQueryListener` API transforms streaming performance from reactive firefighting into proactive, data-driven capacity management — which is the defining characteristic of production-grade Spark streaming engineering. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469)</em></div>

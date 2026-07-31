@@ -1,7 +1,6 @@
 # 🔥 Master Class: Amazon EC2 Deployment for Apache Spark
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471)</em></div>
 
 Running Apache Spark on Amazon EC2 is not simply a matter of provisioning virtual machines and copying a JAR file. Every architectural decision — instance family selection, storage topology, cluster management strategy, and network configuration — has a direct, measurable impact on job throughput, fault tolerance, and monthly cloud spend. EC2 gives you the full spectrum from fully managed EMR clusters to raw self-managed deployments, and understanding what happens beneath each abstraction is what separates engineers who tolerate Spark from engineers who master it.
 
@@ -436,7 +435,6 @@ spark = (
 # S3 via S3A satisfies this — checkpointed RDD data survives executor loss.
 spark.sparkContext.setCheckpointDir(f"{CHECKPOINT_BASE}rdd-checkpoints/")
 
-
 def checkpoint_exists(path: str) -> bool:
  """Check if a stage output checkpoint exists on S3 to enable idempotent restarts."""
  s3 = boto3.client("s3")
@@ -446,7 +444,6 @@ def checkpoint_exists(path: str) -> bool:
  return True
  except s3.exceptions.ClientError:
  return False
-
 
 def read_or_checkpoint(
  stage_name: str,
@@ -481,7 +478,6 @@ def read_or_checkpoint(
  )
  return spark.read.parquet(stage_checkpoint)
 
-
 # ── Stage 1: Raw ingestion and type casting ───────────────────────────────────
 # Checkpoint after stage 1 so a Spot interruption during stage 2 or 3
 # does not force re-reading and re-casting 10 TB of raw S3 data.
@@ -502,7 +498,6 @@ stage1_df = read_or_checkpoint(
 )
 logger.info(f"Stage 1 complete. Estimated rows: {stage1_df.count():,}")
 
-
 # ── Stage 2: Heavy aggregation (shuffle-intensive) ────────────────────────────
 # This stage produces large shuffle write; checkpoint its output so Stage 3
 # does not need to re-execute the full groupBy if interrupted mid-shuffle.
@@ -521,7 +516,6 @@ stage2_df = read_or_checkpoint(
  ),
  checkpoint_path=CHECKPOINT_BASE,
 )
-
 
 # ── Stage 3: Final enrichment and output ──────────────────────────────────────
 (
@@ -565,3 +559,6 @@ The Spot Instances and Instance Fleet pairing is the highest-leverage cost optim
 
 Graviton3 instances represent a structural cost-performance improvement for memory bandwidth-bound Spark workloads — the dominant category in production ETL and analytics. The 25% memory bandwidth increase directly accelerates Tungsten's UnsafeRow operations, and the 20% lower On-Demand price compounds to a 40–45% cost-per-query reduction on shuffle-heavy aggregation pipelines. Combined with CAPACITY_OPTIMIZED Spot targeting, the Magic Committer eliminating S3 commit latency, and AQE's runtime partition coalescing, a fully-tuned EC2 Spark deployment delivers production-grade reliability at 20–30% of the cost of naive On-Demand deployments. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471)</em></div>

@@ -1,6 +1,6 @@
 # 🔥 Master Class: Broadcast Variables
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
+
 At its core, an Apache Spark Broadcast Variable is a distributed read-only, shared memory construct designed to eliminate catastrophic network bottlenecks during complex distributed operations like joins. In standard Spark execution, when a task requires an external variable (like a lookup map or a small DataFrame), Spark automatically serializes and ships that variable alongside the task closure to every single task executing on the executor JVMs. If a node hosts twenty tasks, the identical variable is serialized and shipped twenty times, causing extreme network saturation, explosive JVM heap bloat, and aggressive garbage collection (GC) pauses.
 
 Broadcast variables solve this by decoupling the variable shipping from the task closure. Instead of sending the variable with every task, the Driver node serializes the data exactly once per executor (rather than per task). The executor JVM then caches this data globally within its BlockManager, allowing all concurrent task threads on that executor to read the exact same memory instance. This fundamentally shifts the distribution mechanism from task-level redundancy to executor-level singleton caching.
@@ -201,7 +201,7 @@ joined_df.write.parquet("s3a://data/output")
 
 > **What this demonstrates:** Advanced integration pattern using Broadcast variables for deploying custom, non-Spark ML inference directly onto executor nodes.
 
-```python
+```plaintext
 import xgboost as xgb
 import pandas as pd
 from pyspark.sql.functions import pandas_udf, PandasUDFType
@@ -263,3 +263,5 @@ Deeply integrated into the Catalyst Optimizer and the Tungsten execution engine,
 
 However, true mastery requires acute awareness of the inherent dangers, specifically the Driver OOM death spiral. Because Catalyst demands the entirety of the broadcasted data be collected, deserialized, and chunked on the Driver JVM prior to distribution, miscalculating compression ratios or blindly raising the broadcast threshold guarantees cluster failure. By carefully managing lifecycle state via `unpersist()` and understanding the mechanical transition from serialized chunk to JVM object graph, engineers can wield broadcast variables to achieve orders-of-magnitude performance gains in production environments.
 </🔥 Master Class: Broadcast Variables> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469) [Ref: 453](spark_book.pdf#page=453) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>

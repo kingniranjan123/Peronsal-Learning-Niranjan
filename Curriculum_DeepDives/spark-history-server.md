@@ -1,7 +1,6 @@
 # 🔥 Master Class: Spark History Server
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>
 
 The Spark History Server (SHS) is the post-mortem observability layer of the Spark ecosystem. While the Spark UI embedded in the Driver JVM provides a live view of a running application, the History Server reconstructs that same UI from persisted event logs after the application terminates. Every Spark application that has `spark.eventLog.enabled=true` writes a structured stream of JSON-encoded `SparkListenerEvent` objects to a configurable directory — this stream is the event log, and the History Server is its reader.
 
@@ -519,3 +518,6 @@ The two most common production failure modes — KVStore heap exhaustion and S3 
 
 The SHS REST API elevates the History Server from a human-facing UI to a machine-queryable metrics store. Integrating it into CI/CD pipelines enables regression detection — an automated job can compare the shuffle bytes written by the current build against the 7-day median and flag a 2x regression before it reaches production. This is the mental model that separates reactive Spark debugging from proactive Spark performance engineering: the History Server is not a post-mortem tool, it is an always-on performance database. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470)</em></div>

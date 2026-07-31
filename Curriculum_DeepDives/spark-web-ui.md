@@ -1,7 +1,6 @@
 # 🔥 Master Class: Spark Web UI — Diagnostics, Profiling, and Production Monitoring
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 The Spark Web UI (default port 4040) is the primary observability surface for every running Spark application. It is not a dashboard bolted on after the fact — it is a first-class architectural component driven by the `SparkListener` event bus that is embedded directly into the `SparkContext`. Every task start, every shuffle write, every executor heartbeat, every SQL plan node produces a structured event that is consumed by the `AppStatusStore` (backed by a key-value `ElementTrackingStore` in-memory, or by the `HistoryServer`'s disk-backed `KVStore`) and rendered into the UI in near-real time.
 
@@ -471,3 +470,6 @@ The Executors tab's GC time ratio is the most important early-warning signal in 
 
 The `SparkListener` API elevates all of this from passive observation to active automation. By registering custom listeners via `spark.extraListeners`, production systems can build real-time skew detectors, GC canaries, SLA monitors, and lineage trackers — all from the same event stream that drives the UI itself. Mastery of the Web UI means never being surprised by a production job failure that the metrics were announcing for the previous 20 minutes. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

@@ -1,7 +1,6 @@
 # 🔥 Master Class: Grouping and Sorting
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>
 
 Grouping and sorting are among the most computationally expensive operations in distributed data processing, and Apache Spark's implementation of these primitives exposes the full complexity of distributed systems engineering. When you call `groupBy` on a DataFrame, you are not merely applying a SQL `GROUP BY` clause — you are triggering a shuffle: a full network redistribution of data across all executor JVMs, routed by a hash partition function applied to the grouping key. Every row in every partition is serialized, transmitted over the network, and deserialized on the receiving executor. This is why a naive `groupBy` on a billion-row dataset can consume 90% of a job's wall-clock time.
 
@@ -311,3 +310,6 @@ Grouping and sorting in Apache Spark are not thin wrappers around SQL semantics 
 
 Data skew remains the single most common cause of production `groupBy` failures. When hash partitioning concentrates millions of rows on a single reduce task, the result is task-level OOM, stalled stages, and wildly unbalanced Spark UI timing histograms. The salting technique — append a random suffix, aggregate partially, strip the suffix, aggregate finally — is the canonical solution, distributing hot-key work across dozens of balanced tasks. Mastery of grouping and sorting means knowing not just the API surface, but the physical execution model, the memory management implications, and the failure modes that only emerge at production scale. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 462](spark_book.pdf#page=462) [Ref: 469](spark_book.pdf#page=469) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 464](spark_book.pdf#page=464)</em></div>

@@ -1,7 +1,6 @@
 # 🔥 Master Class: Transformations — Lazy vs Eager, Narrow vs Wide, and DAG Construction
 
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>
 
 A transformation in Apache Spark is any operation that produces a new Dataset or RDD from an existing one without immediately executing any computation. The decisive design choice that separates Spark from MapReduce is **lazy evaluation**: when you call `map`, `filter`, `flatMap`, `groupBy`, or `join` on a Dataset, Spark records the intended operation as a node in a **Directed Acyclic Graph (DAG)** but moves no data and executes no JVM bytecode for data processing. Only when a downstream **action** — such as `collect`, `count`, `save`, or `foreach` — is invoked does the DAGScheduler compile the accumulated logical plan into physical stages and submit tasks to executors.
 
@@ -339,3 +338,6 @@ The narrow-vs-wide boundary is the most consequential architectural concept for 
 
 Mastering transformations means developing an instinct for the physical reality behind the logical API. When you write `.groupBy("category").agg(sum("revenue"))`, you should mentally see the SortShuffleManager writing sort-ordered shuffle blocks to local disk, the `MapOutputTracker` broadcasting block locations, and the reduce tasks fetching blocks over Netty. When you write `.filter(col("date") > "2024-01-01")`, you should see Catalyst's `PushDownPredicate` rule moving that filter into the Parquet scan's row-group statistics check, skipping entire 128 MB blocks without reading them. That mental model — the gap between the API and the silicon — is what separates a Spark user from a Spark engineer. 
 
+
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 455](spark_book.pdf#page=455) [Ref: 458](spark_book.pdf#page=458) [Ref: 463](spark_book.pdf#page=463) [Ref: 470](spark_book.pdf#page=470) [Ref: 452](spark_book.pdf#page=452) [Ref: 456](spark_book.pdf#page=456) [Ref: 459](spark_book.pdf#page=459) [Ref: 464](spark_book.pdf#page=464) [Ref: 471](spark_book.pdf#page=471) [Ref: 453](spark_book.pdf#page=453) [Ref: 457](spark_book.pdf#page=457) [Ref: 461](spark_book.pdf#page=461) [Ref: 469](spark_book.pdf#page=469)</em></div>

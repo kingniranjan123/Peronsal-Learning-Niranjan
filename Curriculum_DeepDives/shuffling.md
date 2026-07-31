@@ -1,6 +1,5 @@
 # 🔥 Master Class: Shuffling
 ## Overview
-<div style='text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; color: #a0aec0;'><em>References: [Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469) [Ref: 456](spark_book.pdf#page=456) [Ref: 461](spark_book.pdf#page=461) [Ref: 470](spark_book.pdf#page=470)</em></div>
 
 Apache Spark's shuffle mechanism is the foundational physical operation that enables distributed data repartitioning across a cluster, serving as the critical juncture between map and reduce phases. Whenever an operation requires data from multiple partitions to be grouped, joined, or aggregated—such as `groupByKey`, `reduceByKey`, or `join`—Spark must perform an all-to-all network exchange. This operation, while conceptually simple, is arguably the most complex, expensive, and failure-prone subsystem within the entire Spark architecture. It bridges the gap between independent, localized execution and global, synchronized data reduction.
 
@@ -249,3 +248,5 @@ When a shuffle occurs, it strains every resource available: the JVM heap is bomb
 By writing code that minimizes data movement, leverages map-side combinations, and gracefully manages execution memory, an elite engineer transforms a fragile, crash-prone job into a resilient, high-performance pipeline. The difference between a failed Spark job and a successful one almost always comes down to how effectively the shuffle is managed. 
 
 </🔥 Master Class: Shuffling> 
+
+<br><div style="font-size: 0.85rem; color: #64748b; border-top: 1px solid #334155; padding-top: 10px; margin-top: 20px;"><strong>Source References:</strong> <em>[Ref: 451](spark_book.pdf#page=451) [Ref: 457](spark_book.pdf#page=457) [Ref: 463](spark_book.pdf#page=463) [Ref: 452](spark_book.pdf#page=452) [Ref: 458](spark_book.pdf#page=458) [Ref: 464](spark_book.pdf#page=464) [Ref: 455](spark_book.pdf#page=455) [Ref: 459](spark_book.pdf#page=459) [Ref: 469](spark_book.pdf#page=469) [Ref: 456](spark_book.pdf#page=456) [Ref: 461](spark_book.pdf#page=461) [Ref: 470](spark_book.pdf#page=470)</em></div>
