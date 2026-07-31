@@ -241,27 +241,10 @@ To achieve true mastery of Shuffling:
 
 ## 📚 Summary
 
-The shuffle is the beating heart of distributed data processing in Apache Spark, acting as the unavoidable tollgate for global operations like aggregations and joins. While the Catalyst optimizer works tirelessly to minimize its impact—via predicate pushdown and broadcast joins—shuffling remains a physical inevitability for massive workloads. Understanding its mechanics means peering beneath the DataFrame API and acknowledging the physical realities of the `SortShuffleManager`, the `ExternalSorter`, and the `BlockManager`. 
+The shuffle is the beating heart of distributed data processing in Apache Spark, acting as the unavoidable tollgate for global operations like aggregations and joins. While the Catalyst optimizer works tirelessly to minimize its impact—via predicate pushdown and broadcast joins—shuffling remains a physical inevitability for massive workloads. Understanding its mechanics means peering beneath the DataFrame API and acknowledging the physical realities of the `SortShuffleManager`, the `ExternalSorter`, and the `BlockManager`. [[1]](spark_book.pdf#page=102)
 
-When a shuffle occurs, it strains every resource available: the JVM heap is bombarded with object creation, local disks are hammered with spill files, and the network is saturated with Netty block transfers. Mastering Spark requires predicting these bottlenecks. It demands knowing that a default `spark.sql.shuffle.partitions` of 200 is a ticking time bomb for large datasets, and that an unhandled data skew will silently crush a cluster while masking itself as a hung task.
+When a shuffle occurs, it strains every resource available: the JVM heap is bombarded with object creation, local disks are hammered with spill files, and the network is saturated with Netty block transfers. Mastering Spark requires predicting these bottlenecks. It demands knowing that a default `spark.sql.shuffle.partitions` of 200 is a ticking time bomb for large datasets, and that an unhandled data skew will silently crush a cluster while masking itself as a hung task. [[2]](spark_book.pdf#page=104)
 
-By writing code that minimizes data movement, leverages map-side combinations, and gracefully manages execution memory, an elite engineer transforms a fragile, crash-prone job into a resilient, high-performance pipeline. The difference between a failed Spark job and a successful one almost always comes down to how effectively the shuffle is managed.
+By writing code that minimizes data movement, leverages map-side combinations, and gracefully manages execution memory, an elite engineer transforms a fragile, crash-prone job into a resilient, high-performance pipeline. The difference between a failed Spark job and a successful one almost always comes down to how effectively the shuffle is managed. [[3]](spark_book.pdf#page=103)
 
 </🔥 Master Class: Shuffling>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [F (Page 456)](spark_book.pdf#page=456)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

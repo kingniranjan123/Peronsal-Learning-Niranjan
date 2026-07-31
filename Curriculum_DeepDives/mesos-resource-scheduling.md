@@ -200,27 +200,9 @@ To achieve true mastery of Mesos Resource Scheduling:
 
 ## 📚 Summary
 
-Apache Mesos introduces a paradigm shift in how Spark manages physical execution resources, moving away from static partitioning and request-based allocation towards a highly dynamic, offer-driven architecture. By acting as the cluster's kernel, Mesos abstracts away the underlying hardware, providing Spark with a continuous stream of resource offers governed by the mathematically rigorous Dominant Resource Fairness algorithm. This allows the `MesosCoarseGrainedSchedulerBackend` to dynamically evaluate cluster capacity and map the `TaskScheduler`'s DAG onto physical executors with unprecedented efficiency, enabling true multi-tenancy.
+Apache Mesos introduces a paradigm shift in how Spark manages physical execution resources, moving away from static partitioning and request-based allocation towards a highly dynamic, offer-driven architecture. By acting as the cluster's kernel, Mesos abstracts away the underlying hardware, providing Spark with a continuous stream of resource offers governed by the mathematically rigorous Dominant Resource Fairness algorithm. This allows the `MesosCoarseGrainedSchedulerBackend` to dynamically evaluate cluster capacity and map the `TaskScheduler`'s DAG onto physical executors with unprecedented efficiency, enabling true multi-tenancy. [[1]](spark_book.pdf#page=381)
 
-However, this immense power requires deep architectural awareness. The strict enforcement of resource boundaries via Linux cgroups means that Spark's JVM and Tungsten execution engine must be meticulously tuned to avoid the wrath of the OS OOM killer. The off-heap memory footprints, network serialization strategies, and shuffle I/O mappings become critical points of failure if misunderstood. Because Mesos makes no assumptions about the workloads it manages, the onus is completely on the Spark engineer to configure memory overheads, dynamic allocation bounds, and hardware constraints accurately.
+However, this immense power requires deep architectural awareness. The strict enforcement of resource boundaries via Linux cgroups means that Spark's JVM and Tungsten execution engine must be meticulously tuned to avoid the wrath of the OS OOM killer. The off-heap memory footprints, network serialization strategies, and shuffle I/O mappings become critical points of failure if misunderstood. Because Mesos makes no assumptions about the workloads it manages, the onus is completely on the Spark engineer to configure memory overheads, dynamic allocation bounds, and hardware constraints accurately. [[2]](spark_book.pdf#page=317)
 
-Ultimately, mastering Spark on Mesos is about bridging the gap between Catalyst's logical/physical execution plans and the raw constraints of the operating system. When configured correctly with external shuffle services, precise cgroup boundaries, and intelligent role-based allocations, a Mesos-backed Spark cluster achieves unparalleled resource utilization, transforming chaotic, multi-framework environments into reliable, high-performance execution engines.
-</🔥 Master Class: Mesos Resource Scheduling>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)
+Ultimately, mastering Spark on Mesos is about bridging the gap between Catalyst's logical/physical execution plans and the raw constraints of the operating system. When configured correctly with external shuffle services, precise cgroup boundaries, and intelligent role-based allocations, a Mesos-backed Spark cluster achieves unparalleled resource utilization, transforming chaotic, multi-framework environments into reliable, high-performance execution engines. [[3]](spark_book.pdf#page=318)
+</🔥 Master Class: Mesos Resource Scheduling> [[4]](spark_book.pdf#page=363)

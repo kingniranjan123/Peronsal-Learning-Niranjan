@@ -256,25 +256,9 @@ To achieve true mastery of Broadcast Variables:
 
 ## 📚 Summary
 
-Broadcast variables represent a critical architectural pillar in Apache Spark's distributed memory model, fundamentally shifting the paradigm of dependency distribution. Rather than indiscriminately shipping identical state within thousands of task closures, Spark leverages the highly efficient `TorrentBroadcast` peer-to-peer protocol. This delegates the caching responsibility directly to the BlockManager of each Executor JVM, ensuring that large, immutable datasets or complex machine learning models are materialized exactly once per node, drastically reducing network I/O and garbage collection thrashing.
+Broadcast variables represent a critical architectural pillar in Apache Spark's distributed memory model, fundamentally shifting the paradigm of dependency distribution. Rather than indiscriminately shipping identical state within thousands of task closures, Spark leverages the highly efficient `TorrentBroadcast` peer-to-peer protocol. This delegates the caching responsibility directly to the BlockManager of each Executor JVM, ensuring that large, immutable datasets or complex machine learning models are materialized exactly once per node, drastically reducing network I/O and garbage collection thrashing. [[1]](spark_book.pdf#page=83)
 
-Deeply integrated into the Catalyst Optimizer and the Tungsten execution engine, broadcast mechanisms are the engine behind the Broadcast Hash Join. By materializing a heavily optimized, off-heap `HashedRelation` and distributing it via Torrent protocol, Tungsten can generate highly performant Java bytecode that performs map-side joins at bare-metal memory speeds. This completely bypasses the catastrophic performance penalties of the traditional shuffle-sort phase, enabling interactive analytics on petabyte-scale data lakes.
+Deeply integrated into the Catalyst Optimizer and the Tungsten execution engine, broadcast mechanisms are the engine behind the Broadcast Hash Join. By materializing a heavily optimized, off-heap `HashedRelation` and distributing it via Torrent protocol, Tungsten can generate highly performant Java bytecode that performs map-side joins at bare-metal memory speeds. This completely bypasses the catastrophic performance penalties of the traditional shuffle-sort phase, enabling interactive analytics on petabyte-scale data lakes. [[2]](spark_book.pdf#page=125)
 
-However, true mastery requires acute awareness of the inherent dangers, specifically the Driver OOM death spiral. Because Catalyst demands the entirety of the broadcasted data be collected, deserialized, and chunked on the Driver JVM prior to distribution, miscalculating compression ratios or blindly raising the broadcast threshold guarantees cluster failure. By carefully managing lifecycle state via `unpersist()` and understanding the mechanical transition from serialized chunk to JVM object graph, engineers can wield broadcast variables to achieve orders-of-magnitude performance gains in production environments.
-</🔥 Master Class: Broadcast Variables>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [V (Page 470)](spark_book.pdf#page=470)
-> - [C (Page 452)](spark_book.pdf#page=452)
+However, true mastery requires acute awareness of the inherent dangers, specifically the Driver OOM death spiral. Because Catalyst demands the entirety of the broadcasted data be collected, deserialized, and chunked on the Driver JVM prior to distribution, miscalculating compression ratios or blindly raising the broadcast threshold guarantees cluster failure. By carefully managing lifecycle state via `unpersist()` and understanding the mechanical transition from serialized chunk to JVM object graph, engineers can wield broadcast variables to achieve orders-of-magnitude performance gains in production environments. [[3]](spark_book.pdf#page=127)
+</🔥 Master Class: Broadcast Variables> [[4]](spark_book.pdf#page=324)

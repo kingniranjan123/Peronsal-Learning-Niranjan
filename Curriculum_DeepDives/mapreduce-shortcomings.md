@@ -122,22 +122,3 @@ errors.filter($"user_agent".contains("Chrome")).count()
 ```
 
 MapReduce has no REPL (Read-Eval-Print Loop) capability because of its batch-oriented design. Submitting a MapReduce job involves packaging a JAR, submitting it to the Resource Manager, negotiating containers, launching JVMs, and waiting for the execution to finish—a process that has a baseline latency of 30 to 60 seconds even for a tiny dataset. The Spark Scala snippet above demonstrates interactive data exploration: querying a dataset, inspecting the results immediately, caching a subset in RAM, and querying it again in milliseconds. MapReduce's architecture fundamentally precluded this interactive workflow, ultimately forcing the data engineering community to seek alternatives that decoupled the execution engine from strict disk-bound, two-stage processing constraints.
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

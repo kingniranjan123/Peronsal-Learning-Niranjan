@@ -361,25 +361,9 @@ To achieve true mastery of GraphX API:
 
 ## 📚 Summary
 
-GraphX is Spark's native graph computation library, built on the property graph model and backed by two co-partitioned RDDs: `VertexRDD` and `EdgeRDD`. Its core architectural innovation — the routing table — allows vertex attributes to be replicated to edge partitions once, enabling the triplet view and `aggregateMessages` to execute without a full vertex-edge shuffle on every iteration. This design trades controlled memory overhead (vertex replication bounded by `2 * sqrt(P)` under `EdgePartition2D`) for dramatically lower network I/O across the iterative supersteps that graph algorithms require.
+GraphX is Spark's native graph computation library, built on the property graph model and backed by two co-partitioned RDDs: `VertexRDD` and `EdgeRDD`. Its core architectural innovation — the routing table — allows vertex attributes to be replicated to edge partitions once, enabling the triplet view and `aggregateMessages` to execute without a full vertex-edge shuffle on every iteration. This design trades controlled memory overhead (vertex replication bounded by `2 * sqrt(P)` under `EdgePartition2D`) for dramatically lower network I/O across the iterative supersteps that graph algorithms require. [[1]](spark_book.pdf#page=284)
 
-The Pregel API provides a clean BSP abstraction over `aggregateMessages`, modelling algorithms as vertex programs that exchange typed messages across supersteps, with automatic quiescence detection terminating the loop when no messages are generated. The critical engineering discipline is the conditional `sendMsg` pattern: only emitting messages when vertex state has meaningfully changed, preventing expensive BSP barriers (each of which is a full RDD action with a shuffle stage) from executing unnecessarily. Combined with correct `mergeMsg` commutativity and a bounded `maxIterations`, Pregel implementations converge safely even on pathological graph topologies.
+The Pregel API provides a clean BSP abstraction over `aggregateMessages`, modelling algorithms as vertex programs that exchange typed messages across supersteps, with automatic quiescence detection terminating the loop when no messages are generated. The critical engineering discipline is the conditional `sendMsg` pattern: only emitting messages when vertex state has meaningfully changed, preventing expensive BSP barriers (each of which is a full RDD action with a shuffle stage) from executing unnecessarily. Combined with correct `mergeMsg` commutativity and a bounded `maxIterations`, Pregel implementations converge safely even on pathological graph topologies. [[2]](spark_book.pdf#page=38)
 
-GraphX's position below Catalyst and Tungsten means it receives none of the automatic optimizations that DataFrame-based workloads enjoy — no predicate pushdown, no whole-stage codegen, no off-heap columnar storage. For production graph workloads, this demands explicit performance engineering: choosing the right partition strategy at construction time, applying `subgraph` filters early in the operator pipeline, using `TripletFields` hints to minimize routing table broadcast, and caching the graph with eager materialization before entering any iterative algorithm. Engineers who internalize these mechanics can build graph algorithms at billion-edge scale on commodity Spark clusters with predictable, controlled resource consumption.
+GraphX's position below Catalyst and Tungsten means it receives none of the automatic optimizations that DataFrame-based workloads enjoy — no predicate pushdown, no whole-stage codegen, no off-heap columnar storage. For production graph workloads, this demands explicit performance engineering: choosing the right partition strategy at construction time, applying `subgraph` filters early in the operator pipeline, using `TripletFields` hints to minimize routing table broadcast, and caching the graph with eager materialization before entering any iterative algorithm. Engineers who internalize these mechanics can build graph algorithms at billion-edge scale on commodity Spark clusters with predictable, controlled resource consumption. [[3]](spark_book.pdf#page=94)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [X (Page 470)](spark_book.pdf#page=470)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

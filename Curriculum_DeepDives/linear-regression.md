@@ -419,27 +419,9 @@ To achieve true mastery of Linear Regression in Spark:
 
 ## 📚 Summary
 
-Spark's `LinearRegression` is not a simple least-squares fitter — it is a carefully orchestrated distributed optimization system. The Catalyst analyzer resolves the feature schema; Tungsten's Whole-Stage Codegen fuses gradient computation into a tight, allocation-free JVM loop over UnsafeRow binary data; `treeAggregate` ships gradient vectors up a logarithmic reduction tree rather than flooding the driver; and Breeze's L-BFGS or LAPACK's Cholesky solver closes the loop on the driver with compact, heap-resident state. Each design choice exists because the naïve centralized alternative — shipping all data to the driver for matrix inversion — fails catastrophically beyond a few GB.
+Spark's `LinearRegression` is not a simple least-squares fitter — it is a carefully orchestrated distributed optimization system. The Catalyst analyzer resolves the feature schema; Tungsten's Whole-Stage Codegen fuses gradient computation into a tight, allocation-free JVM loop over UnsafeRow binary data; `treeAggregate` ships gradient vectors up a logarithmic reduction tree rather than flooding the driver; and Breeze's L-BFGS or LAPACK's Cholesky solver closes the loop on the driver with compact, heap-resident state. Each design choice exists because the naïve centralized alternative — shipping all data to the driver for matrix inversion — fails catastrophically beyond a few GB. [[1]](spark_book.pdf#page=221)
 
-The most consequential engineering decisions when deploying `LinearRegression` at production scale are regularization strategy and feature preprocessing. Failing to standardize features is the single most common cause of convergence failure, increasing required L-BFGS iterations by orders of magnitude. Feature collinearity silently corrupts coefficient interpretability and, in the normal equation path, causes hard numerical failures. Proper VIF analysis pre-fit and Ridge regularization post-detection are the correct mitigations. The `LinearRegressionSummary` object — `objectiveHistory`, `totalIterations`, `r2adj`, and coefficient p-values — is your complete diagnostic toolkit.
+The most consequential engineering decisions when deploying `LinearRegression` at production scale are regularization strategy and feature preprocessing. Failing to standardize features is the single most common cause of convergence failure, increasing required L-BFGS iterations by orders of magnitude. Feature collinearity silently corrupts coefficient interpretability and, in the normal equation path, causes hard numerical failures. Proper VIF analysis pre-fit and Ridge regularization post-detection are the correct mitigations. The `LinearRegressionSummary` object — `objectiveHistory`, `totalIterations`, `r2adj`, and coefficient p-values — is your complete diagnostic toolkit. [[2]](spark_book.pdf#page=221)
 
-Mastery of Spark's `LinearRegression` means knowing not just the API but *when the API lies to you*: when convergence appears achieved but the model is at a saddle point, when R² is high but collinear coefficients are nonsense, when Lasso's sparse output is a sign of correct regularization versus over-penalization. These distinctions, rooted in the numerical linear algebra and distributed systems mechanics described in this chapter, are what separate production-grade ML engineers from practitioners who tune hyperparameters by intuition alone.
+Mastery of Spark's `LinearRegression` means knowing not just the API but *when the API lies to you*: when convergence appears achieved but the model is at a saddle point, when R² is high but collinear coefficients are nonsense, when Lasso's sparse output is a sign of correct regularization versus over-penalization. These distinctions, rooted in the numerical linear algebra and distributed systems mechanics described in this chapter, are what separate production-grade ML engineers from practitioners who tune hyperparameters by intuition alone. [[3]](spark_book.pdf#page=222)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

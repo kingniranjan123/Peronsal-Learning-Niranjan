@@ -206,23 +206,9 @@ To achieve true mastery of Actions:
 
 ## 📚 Summary
 
-Actions in Apache Spark are the ignition switches of the distributed engine. They bridge the gap between logical definitions (transformations) and physical execution. By deferring execution until an action is invoked, Spark empowers the Catalyst Optimizer to holistically analyze the data flow, applying predicate pushdowns, optimizing join strategies, and generating highly efficient, cache-aware Tungsten byte code. Without actions enforcing this lazy evaluation paradigm, massive-scale data processing would be constrained by intermediate I/O and memory exhaustion.
+Actions in Apache Spark are the ignition switches of the distributed engine. They bridge the gap between logical definitions (transformations) and physical execution. By deferring execution until an action is invoked, Spark empowers the Catalyst Optimizer to holistically analyze the data flow, applying predicate pushdowns, optimizing join strategies, and generating highly efficient, cache-aware Tungsten byte code. Without actions enforcing this lazy evaluation paradigm, massive-scale data processing would be constrained by intermediate I/O and memory exhaustion. [[1]](spark_book.pdf#page=56)
 
-Understanding the internal mechanics of actions is what separates junior developers from elite data engineers. An action is not merely a method call; it is a command that dictates network serialization behavior, triggers the DAGScheduler to dispatch tasks, and defines the memory boundaries of the Driver JVM. Misusing actions—such as invoking un-cached iterative operations or attempting to serialize petabytes of data back to the driver—results in degraded performance, wasted cloud compute costs, and catastrophic job failures. 
+Understanding the internal mechanics of actions is what separates junior developers from elite data engineers. An action is not merely a method call; it is a command that dictates network serialization behavior, triggers the DAGScheduler to dispatch tasks, and defines the memory boundaries of the Driver JVM. Misusing actions—such as invoking un-cached iterative operations or attempting to serialize petabytes of data back to the driver—results in degraded performance, wasted cloud compute costs, and catastrophic job failures. [[2]](spark_book.pdf#page=57)
 
-Mastering actions requires a deep mental model of data locality. You must constantly evaluate whether your final dataset is remaining distributed across the Executor JVMs (via storage writes) or coalescing into the single Driver JVM. By carefully orchestrating actions alongside caching strategies and concurrency controls, engineers can build robust, highly optimized pipelines capable of processing infinite data streams with minimal resource overhead.
+Mastering actions requires a deep mental model of data locality. You must constantly evaluate whether your final dataset is remaining distributed across the Executor JVMs (via storage writes) or coalescing into the single Driver JVM. By carefully orchestrating actions alongside caching strategies and concurrency controls, engineers can build robust, highly optimized pipelines capable of processing infinite data streams with minimal resource overhead. [[3]](spark_book.pdf#page=58)
 </🔥 Master Class: Actions>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [C (Page 452)](spark_book.pdf#page=452)

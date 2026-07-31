@@ -224,24 +224,9 @@ To achieve true mastery of Mean Normalization in Apache Spark:
 
 ## 📚 Summary
 
-Mean normalization within Apache Spark is fundamentally a masterclass in distributed state management and query optimization. While mathematically trivial, computing and applying a global mean across billions of rows and thousands of dimensions exposes the inner mechanics of the Catalyst optimizer and the Tungsten execution engine. Understanding how Catalyst decomposes the operation into an aggregation phase and a broadcast-join transformation phase is essential for writing performant, scalable machine learning pipelines. 
+Mean normalization within Apache Spark is fundamentally a masterclass in distributed state management and query optimization. While mathematically trivial, computing and applying a global mean across billions of rows and thousands of dimensions exposes the inner mechanics of the Catalyst optimizer and the Tungsten execution engine. Understanding how Catalyst decomposes the operation into an aggregation phase and a broadcast-join transformation phase is essential for writing performant, scalable machine learning pipelines. [[1]](spark_book.pdf#page=230)
 
-The primary danger of mean normalization in Spark lies in memory management, particularly the catastrophic expansion of SparseVectors into DenseVectors. Because Catalyst does not natively protect against densification, the burden falls on the engineer to deeply understand the physical layout of their data structures in off-heap memory. A single misconfigured `StandardScaler` can bring an entire production cluster to a halt through GC thrashing and out-of-memory errors. 
+The primary danger of mean normalization in Spark lies in memory management, particularly the catastrophic expansion of SparseVectors into DenseVectors. Because Catalyst does not natively protect against densification, the burden falls on the engineer to deeply understand the physical layout of their data structures in off-heap memory. A single misconfigured `StandardScaler` can bring an entire production cluster to a halt through GC thrashing and out-of-memory errors. [[2]](spark_book.pdf#page=66)
 
-Ultimately, mastering mean normalization is about bridging the gap between abstract mathematical transformations and raw JVM execution. By leveraging Kryo serialization, monitoring BlockManager overhead, and understanding Tungsten’s code-generation patterns, elite Spark practitioners ensure that even the most massive normalization tasks execute with bare-metal efficiency, preserving cluster resources for the intensive model training phases that follow.
-</🔥 Master Class: Mean Normalization>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [C (Page 452)](spark_book.pdf#page=452)
-> - [Z (Page 471)](spark_book.pdf#page=471)
+Ultimately, mastering mean normalization is about bridging the gap between abstract mathematical transformations and raw JVM execution. By leveraging Kryo serialization, monitoring BlockManager overhead, and understanding Tungsten’s code-generation patterns, elite Spark practitioners ensure that even the most massive normalization tasks execute with bare-metal efficiency, preserving cluster resources for the intensive model training phases that follow. [[3]](spark_book.pdf#page=274)
+</🔥 Master Class: Mean Normalization> [[4]](spark_book.pdf#page=275)

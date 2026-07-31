@@ -224,25 +224,9 @@ To achieve true mastery of Spark Standalone Cluster Architecture:
 
 ## 📚 Summary
 
-The Apache Spark Standalone cluster architecture is an elegant, high-performance distributed resource management system that strips away the operational complexity of generic container orchestrators like Kubernetes. By relying on a master-worker topology connected via low-latency Netty RPC endpoints, it provides the fastest possible environment for launching `CoarseGrainedExecutorBackend` instances and executing Tungsten-optimized physical plans. The Master acts solely as a lightweight resource broker, allowing the Driver and Executors to establish direct, high-throughput communication channels that scale seamlessly to thousands of nodes.
+The Apache Spark Standalone cluster architecture is an elegant, high-performance distributed resource management system that strips away the operational complexity of generic container orchestrators like Kubernetes. By relying on a master-worker topology connected via low-latency Netty RPC endpoints, it provides the fastest possible environment for launching `CoarseGrainedExecutorBackend` instances and executing Tungsten-optimized physical plans. The Master acts solely as a lightweight resource broker, allowing the Driver and Executors to establish direct, high-throughput communication channels that scale seamlessly to thousands of nodes. [[1]](spark_book.pdf#page=335)
 
-Mastery of this architecture requires a deep understanding of its unforgiving defaults. Because the Standalone Master does not impose strict multi-tenant queuing out-of-the-box, engineers must actively protect cluster resources by defining rigid bounds with `spark.cores.max` and carefully sizing JVM heaps and off-heap memory. Furthermore, understanding the nuances of heartbeat timeouts, network topologies, and the critical distinction between client and cluster deploy modes is paramount for ensuring fault tolerance and avoiding devastating Driver OOM scenarios. 
+Mastery of this architecture requires a deep understanding of its unforgiving defaults. Because the Standalone Master does not impose strict multi-tenant queuing out-of-the-box, engineers must actively protect cluster resources by defining rigid bounds with `spark.cores.max` and carefully sizing JVM heaps and off-heap memory. Furthermore, understanding the nuances of heartbeat timeouts, network topologies, and the critical distinction between client and cluster deploy modes is paramount for ensuring fault tolerance and avoiding devastating Driver OOM scenarios. [[2]](spark_book.pdf#page=334)
 
-Ultimately, knowing how Spark natively allocates memory, schedules JVMs, and recovers from network partitions at the bare-metal level makes you a vastly superior engineer. Whether you are debugging complex Spark UI metrics, optimizing shuffle mechanics, or eventually migrating pipelines to Kubernetes, the internal JVM dynamics and Catalyst scheduling patterns you learn from the Standalone architecture apply universally across all Spark deployments.
-</🔥 Master Class: Standalone Cluster Components>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [Y (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)
+Ultimately, knowing how Spark natively allocates memory, schedules JVMs, and recovers from network partitions at the bare-metal level makes you a vastly superior engineer. Whether you are debugging complex Spark UI metrics, optimizing shuffle mechanics, or eventually migrating pipelines to Kubernetes, the internal JVM dynamics and Catalyst scheduling patterns you learn from the Standalone architecture apply universally across all Spark deployments. [[3]](spark_book.pdf#page=336)
+</🔥 Master Class: Standalone Cluster Components> [[4]](spark_book.pdf#page=343)

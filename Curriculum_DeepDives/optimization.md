@@ -106,19 +106,3 @@ optimized_smj.explain()
 ```
 Bucketing is a powerful, proactive optimization technique performed during the data write phase. By organizing data into a fixed number of buckets based on a hash of a specific column, you are essentially pre-shuffling the data. Both dataframes are bucketed into exactly 200 buckets and pre-sorted. When joined on the bucket column, Spark recognizes the data is already co-located and sorted, generating a physical plan that completely eliminates the `Exchange` (shuffle) and `Sort` steps of the Sort-Merge Join, saving monumental amounts of network I/O and CPU processing overhead.
 </Master Class: Optimization>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)
-> - [Z (Page 471)](spark_book.pdf#page=471)

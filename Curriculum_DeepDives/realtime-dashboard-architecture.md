@@ -182,20 +182,3 @@ val query = processedData.writeStream
 While micro-batching provides high throughput, it inherently introduces latency (typically hundreds of milliseconds to seconds) due to the overhead of planning and scheduling tasks on executors for every batch. For mission-critical dashboards (e.g., IoT manufacturing monitoring) requiring sub-millisecond latency, Spark offers Continuous Processing Mode. 
 
 In this paradigm, the Catalyst optimizer generates an execution plan where tasks are launched once and run continuously on the executors, eagerly processing data from Kafka partitions as it arrives. There is no micro-batch scheduling overhead. The Tungsten engine streams the binary rows directly through the projection and filter operations. However, this architecture has strict trade-offs: it currently only supports map-like operations (no aggregations or sorting) and uses a Chandy-Lamport algorithm for asynchronous checkpointing (configured here to 1 second) to provide at-least-once fault tolerance. It is the ultimate tool for raw, real-time data routing to a dashboard.
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [C (Page 452)](spark_book.pdf#page=452)

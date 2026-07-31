@@ -172,19 +172,3 @@ val tvsModel = tvs.fit(massiveDataFrame)
 ```
 For complex estimators like the `MultilayerPerceptronClassifier`, the optimization involves intricate matrix multiplications that can easily bottleneck a K-fold loop. `TrainValidationSplit` acts as a safety valve here. By allocating an 80/20 split (`setTrainRatio(0.8)`), the time complexity is drastically reduced, enabling rapid hyperparameter exploration without overwhelming the JVM memory overhead across executors.
 </Master Class: Cross Validation>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [V (Page 470)](spark_book.pdf#page=470)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [C (Page 452)](spark_book.pdf#page=452)

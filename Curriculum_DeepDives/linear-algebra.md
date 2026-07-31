@@ -341,33 +341,9 @@ To achieve true mastery of Distributed Linear Algebra in Apache Spark:
 
 ## 📚 Summary
 
-Spark's distributed linear algebra stack is a carefully designed split-level system: the expensive, embarrassingly-parallel work (partial Gram matrix accumulation, row projections, block matrix products) runs distributed across executor JVMs as RDD transformations, while the dense, numerically-sensitive computations (eigendecomposition, SVD of small matrices) run locally on the driver via Breeze's LAPACK bindings. The four matrix abstractions — `RowMatrix`, `IndexedRowMatrix`, `CoordinateMatrix`, and `BlockMatrix` — are not interchangeable; each is optimized for a specific combination of sparsity, indexing need, and downstream operation. Choosing the wrong abstraction (e.g., `RowMatrix` for a 0.01%-dense matrix) causes catastrophic memory waste and executor OOM errors that trace to the wrong component in the Spark UI.
+Spark's distributed linear algebra stack is a carefully designed split-level system: the expensive, embarrassingly-parallel work (partial Gram matrix accumulation, row projections, block matrix products) runs distributed across executor JVMs as RDD transformations, while the dense, numerically-sensitive computations (eigendecomposition, SVD of small matrices) run locally on the driver via Breeze's LAPACK bindings. The four matrix abstractions — `RowMatrix`, `IndexedRowMatrix`, `CoordinateMatrix`, and `BlockMatrix` — are not interchangeable; each is optimized for a specific combination of sparsity, indexing need, and downstream operation. Choosing the wrong abstraction (e.g., `RowMatrix` for a 0.01%-dense matrix) causes catastrophic memory waste and executor OOM errors that trace to the wrong component in the Spark UI. [[1]](spark_book.pdf#page=215)
 
-The native BLAS/LAPACK stack via netlib-java and OpenBLAS is the single most impactful performance lever in the entire linear algebra pipeline. A 10–50× gap between native and reference BLAS is not an edge case — it is the baseline difference on every executor that processes local dense matrices. Verifying BLAS implementation type (`NativeSystemBLAS` vs `F2jBLAS`) should be a mandatory step in any Spark cluster health check. Similarly, the `OPENBLAS_NUM_THREADS=1` configuration is non-negotiable in multi-task executors to prevent thread oversubscription.
+The native BLAS/LAPACK stack via netlib-java and OpenBLAS is the single most impactful performance lever in the entire linear algebra pipeline. A 10–50× gap between native and reference BLAS is not an edge case — it is the baseline difference on every executor that processes local dense matrices. Verifying BLAS implementation type (`NativeSystemBLAS` vs `F2jBLAS`) should be a mandatory step in any Spark cluster health check. Similarly, the `OPENBLAS_NUM_THREADS=1` configuration is non-negotiable in multi-task executors to prevent thread oversubscription. [[2]](spark_book.pdf#page=446)
 
-Apache Arrow closes the final gap in the linear algebra workflow: the boundary between JVM and Python. By encoding columnar data in a shared-memory format that both pyarrow and pandas understand natively, Arrow eliminates the serialization bottleneck that historically made PySpark ML workflows 10–20× slower than their Scala equivalents. Combined with scikit-learn's randomized algorithms for data that fits in memory, the Arrow-accelerated pipeline enables a pragmatic hybrid architecture: use Spark for distributed preprocessing and feature engineering, collect via Arrow, and fit models locally — achieving both the scale of distributed computing and the numerical richness of the Python ML ecosystem.
+Apache Arrow closes the final gap in the linear algebra workflow: the boundary between JVM and Python. By encoding columnar data in a shared-memory format that both pyarrow and pandas understand natively, Arrow eliminates the serialization bottleneck that historically made PySpark ML workflows 10–20× slower than their Scala equivalents. Combined with scikit-learn's randomized algorithms for data that fits in memory, the Arrow-accelerated pipeline enables a pragmatic hybrid architecture: use Spark for distributed preprocessing and feature engineering, collect via Arrow, and fit models locally — achieving both the scale of distributed computing and the numerical richness of the Python ML ecosystem. [[3]](spark_book.pdf#page=221)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)
-> - [Z (Page 471)](spark_book.pdf#page=471)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [W (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [V (Page 470)](spark_book.pdf#page=470)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)

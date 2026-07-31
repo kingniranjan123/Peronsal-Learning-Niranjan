@@ -222,23 +222,9 @@ To achieve true mastery of Discretized Streams:
 
 ## 📚 Summary
 
-Apache Spark's Discretized Streams fundamentally revolutionized stream processing by proving that micro-batching is not just a compromise, but a highly robust architectural paradigm. By representing a continuous stream as a sequence of discrete RDDs, DStreams elegantly bypass the vast complexities of continuous operator models. This architecture directly harnesses the immense power, fault tolerance, and scalability of the Spark Core DAG scheduler, allowing developers to reuse the precise memory management and failure recovery mechanisms employed in multi-terabyte batch workloads on streaming data.
+Apache Spark's Discretized Streams fundamentally revolutionized stream processing by proving that micro-batching is not just a compromise, but a highly robust architectural paradigm. By representing a continuous stream as a sequence of discrete RDDs, DStreams elegantly bypass the vast complexities of continuous operator models. This architecture directly harnesses the immense power, fault tolerance, and scalability of the Spark Core DAG scheduler, allowing developers to reuse the precise memory management and failure recovery mechanisms employed in multi-terabyte batch workloads on streaming data. [[1]](spark_book.pdf#page=180)
 
-However, operating DStreams in a high-scale production environment requires a deep, uncompromising understanding of internal mechanics. Because DStreams rely solely on the RDD API, they do not benefit from the advanced optimizations of the Catalyst optimizer or the Tungsten execution engine. Developers must manually manage serialization overhead, carefully tune JVM garbage collection, and explicitly architect their stateful operations—using advanced features like `mapWithState` and precise checkpointing intervals—to prevent infinite lineage graphs and executor memory exhaustion.
+However, operating DStreams in a high-scale production environment requires a deep, uncompromising understanding of internal mechanics. Because DStreams rely solely on the RDD API, they do not benefit from the advanced optimizations of the Catalyst optimizer or the Tungsten execution engine. Developers must manually manage serialization overhead, carefully tune JVM garbage collection, and explicitly architect their stateful operations—using advanced features like `mapWithState` and precise checkpointing intervals—to prevent infinite lineage graphs and executor memory exhaustion. [[2]](spark_book.pdf#page=178)
 
-While Structured Streaming serves as the modern standard for new Spark applications, DStreams remain deeply embedded in countless massive enterprise architectures. Mastering DStreams is not simply an exercise in maintaining legacy code; it is a rigorous exercise in understanding the absolute fundamentals of distributed micro-batch execution, complex state management, and the intricate, time-bound dance between the Driver's `JobGenerator` and the Executor's thread pools. This deep knowledge translates directly into a broader comprehension of how distributed systems achieve genuine resilience at scale.
-</🔥 Master Class: Discretized Streams DStreams>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [C (Page 452)](spark_book.pdf#page=452)
-> - [Z (Page 471)](spark_book.pdf#page=471)
+While Structured Streaming serves as the modern standard for new Spark applications, DStreams remain deeply embedded in countless massive enterprise architectures. Mastering DStreams is not simply an exercise in maintaining legacy code; it is a rigorous exercise in understanding the absolute fundamentals of distributed micro-batch execution, complex state management, and the intricate, time-bound dance between the Driver's `JobGenerator` and the Executor's thread pools. This deep knowledge translates directly into a broader comprehension of how distributed systems achieve genuine resilience at scale. [[3]](spark_book.pdf#page=192)
+</🔥 Master Class: Discretized Streams DStreams> [[4]](spark_book.pdf#page=181)

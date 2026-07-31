@@ -476,24 +476,9 @@ To achieve true mastery of Mesos Architecture:
 
 ## 📚 Summary
 
-Mesos's two-level scheduling architecture achieves something that monolithic schedulers cannot: it allows fundamentally different computation paradigms — Spark batch analytics, Marathon microservices, TensorFlow training jobs — to share physical hardware at high efficiency without the scheduler itself needing to understand any of them. The DRF algorithm is the mathematical foundation that makes this work fairly; dominant share normalization across resource dimensions prevents any single framework from monopolizing a scarce resource type, and the weight and quota systems allow operators to encode business priorities directly into the resource allocation layer.
+Mesos's two-level scheduling architecture achieves something that monolithic schedulers cannot: it allows fundamentally different computation paradigms — Spark batch analytics, Marathon microservices, TensorFlow training jobs — to share physical hardware at high efficiency without the scheduler itself needing to understand any of them. The DRF algorithm is the mathematical foundation that makes this work fairly; dominant share normalization across resource dimensions prevents any single framework from monopolizing a scarce resource type, and the weight and quota systems allow operators to encode business priorities directly into the resource allocation layer. [[1]](spark_book.pdf#page=374)
 
-The Mesos master's design as a thin offer broker — maintaining only cluster state and allocation policy, never application semantics — is what gives it its linear scalability. The Catalyst optimizer and Tungsten execution engine inside Spark's driver operate completely independently of Mesos's allocation cycle; Mesos simply provides the physical slots and enforces the cgroup boundaries, while Spark decides what tasks fill those slots and how data moves between them.
+The Mesos master's design as a thin offer broker — maintaining only cluster state and allocation policy, never application semantics — is what gives it its linear scalability. The Catalyst optimizer and Tungsten execution engine inside Spark's driver operate completely independently of Mesos's allocation cycle; Mesos simply provides the physical slots and enforces the cgroup boundaries, while Spark decides what tasks fill those slots and how data moves between them. [[2]](spark_book.pdf#page=314)
 
-For production Spark deployments on Mesos, the critical engineering decisions are: sizing executor resources to match offer granularity (avoiding partial offer acceptance), configuring roles and quota to protect co-located services from Spark's greedy offer consumption, and selecting the right containerizer (Mesos unified containerizer over Docker daemon for reduced agent overhead). Mastery of Mesos architecture means understanding the full event chain from ZooKeeper leader election through DRF allocation cycles to cgroup enforcement — every link in that chain is a potential failure point and a performance lever.
+For production Spark deployments on Mesos, the critical engineering decisions are: sizing executor resources to match offer granularity (avoiding partial offer acceptance), configuring roles and quota to protect co-located services from Spark's greedy offer consumption, and selecting the right containerizer (Mesos unified containerizer over Docker daemon for reduced agent overhead). Mastery of Mesos architecture means understanding the full event chain from ZooKeeper leader election through DRF allocation cycles to cgroup enforcement — every link in that chain is a potential failure point and a performance lever. [[3]](spark_book.pdf#page=359)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [C (Page 452)](spark_book.pdf#page=452)

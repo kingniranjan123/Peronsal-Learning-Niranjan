@@ -605,29 +605,9 @@ To achieve true mastery of Regression and Classification with Deep Learning in S
 
 ## 📚 Summary
 
-Deploying deep neural networks for regression and classification on Spark at scale is an exercise in distributed systems composition. The Spark DAGScheduler provides the skeleton—task placement, fault tolerance, resource negotiation—while Petastorm, Horovod, and MLflow provide the muscles that perform the actual deep learning work. The critical architectural invariant is that JVM executor heap and TensorFlow/PyTorch native memory never compete: Horovod training runs in forked Python subprocesses that own their own memory space, with gradient tensors living entirely in native or GPU memory that the JVM garbage collector cannot touch.
+Deploying deep neural networks for regression and classification on Spark at scale is an exercise in distributed systems composition. The Spark DAGScheduler provides the skeleton—task placement, fault tolerance, resource negotiation—while Petastorm, Horovod, and MLflow provide the muscles that perform the actual deep learning work. The critical architectural invariant is that JVM executor heap and TensorFlow/PyTorch native memory never compete: Horovod training runs in forked Python subprocesses that own their own memory space, with gradient tensors living entirely in native or GPU memory that the JVM garbage collector cannot touch. [[1]](spark_book.pdf#page=419)
 
-Linear scaling efficiency in Horovod all-reduce depends on three factors that must all be correct simultaneously: learning rate scaling proportional to the number of ranks, warm-up scheduling to stabilize the early training landscape, and balanced Petastorm shard sizes that prevent any rank from becoming a barrier straggler. Failure in any one of these produces symptoms that are superficially similar—poor validation accuracy, slow convergence—but have entirely different root causes visible only in Spark UI task timelines, GPU utilization dashboards, and MLflow training curves combined.
+Linear scaling efficiency in Horovod all-reduce depends on three factors that must all be correct simultaneously: learning rate scaling proportional to the number of ranks, warm-up scheduling to stabilize the early training landscape, and balanced Petastorm shard sizes that prevent any rank from becoming a barrier straggler. Failure in any one of these produces symptoms that are superficially similar—poor validation accuracy, slow convergence—but have entirely different root causes visible only in Spark UI task timelines, GPU utilization dashboards, and MLflow training curves combined. [[2]](spark_book.pdf#page=430)
 
-The MLflow Model Registry is not optional scaffolding—it is the governance contract between data scientists who train models and platform engineers who serve them. The promotion pipeline enforces that no model reaches Production without quantitative validation against a holdout set, with full metric provenance recorded against the exact run ID that produced the artifact. For regulated industries where model decisions carry legal weight, this audit chain—from raw Parquet shard through Horovod all-reduce to Registry version tag—is the complete evidentiary record of how a prediction was produced.
+The MLflow Model Registry is not optional scaffolding—it is the governance contract between data scientists who train models and platform engineers who serve them. The promotion pipeline enforces that no model reaches Production without quantitative validation against a holdout set, with full metric provenance recorded against the exact run ID that produced the artifact. For regulated industries where model decisions carry legal weight, this audit chain—from raw Parquet shard through Horovod all-reduce to Registry version tag—is the complete evidentiary record of how a prediction was produced. [[3]](spark_book.pdf#page=411)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [F (Page 456)](spark_book.pdf#page=456)
-> - [W (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

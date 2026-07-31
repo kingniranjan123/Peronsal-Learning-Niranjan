@@ -158,18 +158,3 @@ spark.stop()
 
 In this Mesos configuration, we leverage the Mesos Universal Containerizer or Docker containerizer. Setting `spark.mesos.coarse` to `true` means Spark acquires a fixed number of resources for the entire duration of the application. The `spark.mesos.executor.docker.image` parameter enables strict environment consistency, circumventing dependency hell across Mesos agent nodes. The use of a Broadcast Hash Join in the code explicitly minimizes data shuffling across the Mesos network fabric, maximizing the Catalyst optimizer's physical planning efficiency. Mesos agents evaluate the task labels for auditing and strict resource containment. Understanding these fine-grained configurations guarantees your data platform is resilient, scalable, and fully optimized.
 </Master Class: Spark Cluster Types>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [Y (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)

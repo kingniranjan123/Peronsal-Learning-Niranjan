@@ -464,31 +464,9 @@ To achieve true mastery of the Spark Web UI:
 
 ## 📚 Summary
 
-The Spark Web UI is an architectural component, not an afterthought. Its data flows from the same `LiveListenerBus` that drives the DAGScheduler and event logging, meaning every metric it displays has a precise causal origin in a JVM subsystem. The SQL tab's DAG is a direct rendering of Catalyst's physical plan, making it the fastest way to verify optimizer decisions like predicate pushdown, broadcast join selection, and Whole-Stage CodeGen fusion. The Stages tab's task metric distributions expose data skew at partition granularity — the kind of skew that makes a 10-minute job take 3 hours without any error message.
+The Spark Web UI is an architectural component, not an afterthought. Its data flows from the same `LiveListenerBus` that drives the DAGScheduler and event logging, meaning every metric it displays has a precise causal origin in a JVM subsystem. The SQL tab's DAG is a direct rendering of Catalyst's physical plan, making it the fastest way to verify optimizer decisions like predicate pushdown, broadcast join selection, and Whole-Stage CodeGen fusion. The Stages tab's task metric distributions expose data skew at partition granularity — the kind of skew that makes a 10-minute job take 3 hours without any error message. [[1]](spark_book.pdf#page=325)
 
-The Executors tab's GC time ratio is the most important early-warning signal in the entire UI. A ratio above 10% demands investigation; above 20%, executor loss is imminent. The Storage tab catches the insidious problem of partial cache eviction, where a logically cached DataFrame silently falls back to full recomputation on the next action. The Environment tab is the ground truth for Spark configuration — essential for debugging the common case where config set in code, in `spark-defaults.conf`, and in cluster-level config create unexpected precedence behavior.
+The Executors tab's GC time ratio is the most important early-warning signal in the entire UI. A ratio above 10% demands investigation; above 20%, executor loss is imminent. The Storage tab catches the insidious problem of partial cache eviction, where a logically cached DataFrame silently falls back to full recomputation on the next action. The Environment tab is the ground truth for Spark configuration — essential for debugging the common case where config set in code, in `spark-defaults.conf`, and in cluster-level config create unexpected precedence behavior. [[2]](spark_book.pdf#page=1)
 
-The `SparkListener` API elevates all of this from passive observation to active automation. By registering custom listeners via `spark.extraListeners`, production systems can build real-time skew detectors, GC canaries, SLA monitors, and lineage trackers — all from the same event stream that drives the UI itself. Mastery of the Web UI means never being surprised by a production job failure that the metrics were announcing for the previous 20 minutes.
+The `SparkListener` API elevates all of this from passive observation to active automation. By registering custom listeners via `spark.extraListeners`, production systems can build real-time skew detectors, GC canaries, SLA monitors, and lineage trackers — all from the same event stream that drives the UI itself. Mastery of the Web UI means never being surprised by a production job failure that the metrics were announcing for the previous 20 minutes. [[3]](spark_book.pdf#page=31)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [F (Page 456)](spark_book.pdf#page=456)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [W (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)

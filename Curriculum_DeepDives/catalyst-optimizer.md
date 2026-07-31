@@ -129,19 +129,3 @@ spark.sql("SELECT * FROM range(10) WHERE 1 = 0").explain(true)
 
 For advanced platform engineering teams, treating Catalyst as a black box is often insufficient. Spark provides a powerful `SparkSessionExtensions` API that allows developers to inject custom rules directly into the Catalyst Optimizer. In this Scala example, we define a custom rule `ProhibitFullTableScan` that implements `Rule[LogicalPlan]`. We use Scala's pattern matching to traverse the AST recursively via the `transform` method. We search specifically for `Filter` nodes containing an `EqualTo(1, 0)` condition. When injected via `.withExtensions`, Catalyst adds our custom logic to its internal Rule-Based Optimization batches. You can use this mechanism to enforce corporate security policies, automatically rewrite inefficient legacy queries, enforce mandatory partition filters, or seamlessly push down custom proprietary database predicates. Extending Catalyst allows you to fundamentally alter Spark’s query understanding, making it an indispensable tool for bespoke platform architectures.
 </Master Class: Catalyst Optimizer>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [Y (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)
-> - [Z (Page 471)](spark_book.pdf#page=471)

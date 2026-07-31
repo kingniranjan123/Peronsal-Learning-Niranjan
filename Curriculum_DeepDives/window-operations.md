@@ -195,26 +195,9 @@ To achieve true mastery of Window Operations:
 
 ## 📚 Summary
 
-Window functions are one of the most powerful declarative constructs in Apache Spark, bridging the critical gap between simple data aggregations and complex procedural logic. By allowing engineers to compute values over a dynamic, sliding frame of rows while retaining the original dataset schema and granularity, they enable advanced analytics such as temporal sessionization, moving averages, and deduplication without resorting to explosive self-joins. This completely eliminates the need for expensive cross-products and dramatically accelerates analytical throughput.
+Window functions are one of the most powerful declarative constructs in Apache Spark, bridging the critical gap between simple data aggregations and complex procedural logic. By allowing engineers to compute values over a dynamic, sliding frame of rows while retaining the original dataset schema and granularity, they enable advanced analytics such as temporal sessionization, moving averages, and deduplication without resorting to explosive self-joins. This completely eliminates the need for expensive cross-products and dramatically accelerates analytical throughput. [[1]](spark_book.pdf#page=190)
 
-However, this declarative power masks significant physical complexity under the hood. True engineering mastery requires understanding the physical execution plan—specifically the mandatory `ShuffleExchangeExec` and `SortExec` that precede the `WindowExec` operator in the Catalyst pipeline. Spark must partition the data across the cluster network and sort it locally in memory before Tungsten can sequentially iterate through the rows, carefully managing off-heap memory buffers to maintain the sliding logical or physical frames.
+However, this declarative power masks significant physical complexity under the hood. True engineering mastery requires understanding the physical execution plan—specifically the mandatory `ShuffleExchangeExec` and `SortExec` that precede the `WindowExec` operator in the Catalyst pipeline. Spark must partition the data across the cluster network and sort it locally in memory before Tungsten can sequentially iterate through the rows, carefully managing off-heap memory buffers to maintain the sliding logical or physical frames. [[2]](spark_book.pdf#page=62)
 
-Misconfigurations, such as omitting a partition key or misunderstanding the default range-based logical frame, can easily bring down an entire production cluster via unmanageable OutOfMemoryErrors or single-executor compute bottlenecks. Elite Spark engineering involves explicitly defining window bounds, leveraging physical row boundaries (`rowsBetween`) wherever mathematically possible, eliminating peer-ties in sorting logic, and carefully monitoring the Spark UI for skewed partitions to ensure distributed execution remains highly parallel and memory-efficient.
-</🔥 Master Class: Window Operations>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [W (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)
+Misconfigurations, such as omitting a partition key or misunderstanding the default range-based logical frame, can easily bring down an entire production cluster via unmanageable OutOfMemoryErrors or single-executor compute bottlenecks. Elite Spark engineering involves explicitly defining window bounds, leveraging physical row boundaries (`rowsBetween`) wherever mathematically possible, eliminating peer-ties in sorting logic, and carefully monitoring the Spark UI for skewed partitions to ensure distributed execution remains highly parallel and memory-efficient. [[3]](spark_book.pdf#page=191)
+</🔥 Master Class: Window Operations> [[4]](spark_book.pdf#page=192)

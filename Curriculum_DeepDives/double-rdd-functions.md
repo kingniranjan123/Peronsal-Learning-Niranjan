@@ -187,27 +187,9 @@ To achieve true mastery of Double RDD Functions:
 
 ## 📚 Summary
 
-The implementation of `DoubleRDDFunctions` in Apache Spark is a masterclass in distributed systems design, seamlessly blending mathematical rigor with cluster efficiency. By wrapping a highly optimized, stateful engine within an implicit, fluent API, Spark shields engineers from the complexities of distributed floating-point mathematics. It transforms what would otherwise be a minefield of OutOfMemory errors and precision loss into a straightforward, single-line method call.
+The implementation of `DoubleRDDFunctions` in Apache Spark is a masterclass in distributed systems design, seamlessly blending mathematical rigor with cluster efficiency. By wrapping a highly optimized, stateful engine within an implicit, fluent API, Spark shields engineers from the complexities of distributed floating-point mathematics. It transforms what would otherwise be a minefield of OutOfMemory errors and precision loss into a straightforward, single-line method call. [[1]](spark_book.pdf#page=64)
 
-The true genius of this architecture lies in the interplay between the `StatCounter` and `treeAggregate`. The `StatCounter` isolates mathematical stability locally on the worker node, employing Welford's algorithm to incrementally digest massive arrays of data without retaining them in memory. Concurrently, `treeAggregate` orchestrates the network topology, ensuring that these intermediate mathematical states are merged hierarchically. This avoids bottlenecking the driver JVM and minimizes expensive cross-network shuffles.
+The true genius of this architecture lies in the interplay between the `StatCounter` and `treeAggregate`. The `StatCounter` isolates mathematical stability locally on the worker node, employing Welford's algorithm to incrementally digest massive arrays of data without retaining them in memory. Concurrently, `treeAggregate` orchestrates the network topology, ensuring that these intermediate mathematical states are merged hierarchically. This avoids bottlenecking the driver JVM and minimizes expensive cross-network shuffles. [[2]](spark_book.pdf#page=65)
 
-For production Spark engineering, mastering these internals is non-negotiable. Whether you are generating statistical summaries for machine learning pipelines or computing distributed histograms for data quality monitoring, understanding how `DoubleRDDFunctions` maps to Catalyst execution plans ensures your pipelines remain resilient. Recognizing the difference between triggering multiple actions and unifying computation via `stats()` is often the distinguishing factor between a job that crashes after hours of execution and one that completes seamlessly in minutes.
-</🔥 Master Class: Double Rdd Functions>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [F (Page 456)](spark_book.pdf#page=456)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [C (Page 452)](spark_book.pdf#page=452)
+For production Spark engineering, mastering these internals is non-negotiable. Whether you are generating statistical summaries for machine learning pipelines or computing distributed histograms for data quality monitoring, understanding how `DoubleRDDFunctions` maps to Catalyst execution plans ensures your pipelines remain resilient. Recognizing the difference between triggering multiple actions and unifying computation via `stats()` is often the distinguishing factor between a job that crashes after hours of execution and one that completes seamlessly in minutes. [[3]](spark_book.pdf#page=96)
+</🔥 Master Class: Double Rdd Functions> [[4]](spark_book.pdf#page=56)

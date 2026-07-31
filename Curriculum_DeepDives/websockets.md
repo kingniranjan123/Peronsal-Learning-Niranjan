@@ -141,18 +141,3 @@ sink_query = watermarked_df.writeStream \
 ```
 Outputting data from Spark to a WebSocket requires extreme care to avoid paralyzing the Driver node. This final example illustrates a scalable WebSocket Sink utilizing `foreachBatch` and `foreachPartition`. Rather than collecting the massive result set to the Driver and bottlenecking a single network interface, we distribute the network egress. Inside `send_partition`, each Spark Executor task establishes its own WebSocket connection to the downstream dashboard or API gateway. This parallelizes the TCP connection overhead and the network I/O. Furthermore, since `foreachPartition` operates on Tungsten's `UnsafeRow` objects, we perform a lightweight JSON serialization immediately before transmission. This architecture scales linearly: adding more Executors automatically increases the number of concurrent WebSocket connections, allowing Spark to push millions of updates per second to real-time client dashboards.
 </Master Class: WebSockets>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [W (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [C (Page 452)](spark_book.pdf#page=452)

@@ -136,18 +136,3 @@ usersWithComponents.take(10).foreach(println)
 
 Although GraphFrames provides a modern, optimized API, falling back to the underlying GraphX (Scala) API is sometimes necessary for maximum control over data locality and partitioning. GraphX uses the RDD abstraction, meaning you do not get Catalyst optimization, but you do gain access to specialized GraphX partitioning strategies. In this example, we invoke `partitionBy(PartitionStrategy.EdgePartition2D)`. This is a critical optimization for Connected Components on very large graphs. EdgePartition2D uses a 2D clustering approach to group edges, which guarantees that the routing table (the metadata tracking which executor holds which vertex) is bounded in size. This drastically reduces the communication overhead during the Pregel message-passing iterations compared to random edge assignment. By precisely controlling the data layout, GraphX can sometimes outperform GraphFrames when dealing with graphs that possess specific structural properties, demonstrating that deep architectural knowledge is essential for mastery.
 </Master Class: Connected Components>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)

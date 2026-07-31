@@ -274,26 +274,9 @@ To achieve true mastery of Deep Learning on Apache Spark, you must:
 
 ## 📚 Summary
 
-Mastering deep learning on Apache Spark fundamentally alters how data engineering and ML teams approach large-scale AI workloads. By bridging the gap between distributed data processing and intensive neural network training, Spark eliminates the need for fragmented architectures, fragile data exports, and dual-cluster maintenance. We explored how Project Hydrogen and Barrier Execution Mode circumvent the standard DAGScheduler, enabling the gang-scheduled execution required for complex MPI and Ring-AllReduce communication protocols. This critical evolution allows deep learning frameworks to train models directly alongside the data, turning traditional ETL clusters into formidable AI engines.
+Mastering deep learning on Apache Spark fundamentally alters how data engineering and ML teams approach large-scale AI workloads. By bridging the gap between distributed data processing and intensive neural network training, Spark eliminates the need for fragmented architectures, fragile data exports, and dual-cluster maintenance. We explored how Project Hydrogen and Barrier Execution Mode circumvent the standard DAGScheduler, enabling the gang-scheduled execution required for complex MPI and Ring-AllReduce communication protocols. This critical evolution allows deep learning frameworks to train models directly alongside the data, turning traditional ETL clusters into formidable AI engines. [[1]](spark_book.pdf#page=411)
 
-Furthermore, we dissected the indispensable role of Apache Arrow in bypassing the JVM-to-Python serialization bottleneck. By enabling Tungsten off-heap memory to feed GPU-accelerated training loops with zero-copy efficiency, Spark removes the CPU-bound serialization tax that historically plagued PySpark. Recognizing the impedance mismatch between Spark's partition-based processing and deep learning's need for randomized epochs is vital to preventing catastrophic network shuffles and preserving Catalyst optimizer efficiency.
+Furthermore, we dissected the indispensable role of Apache Arrow in bypassing the JVM-to-Python serialization bottleneck. By enabling Tungsten off-heap memory to feed GPU-accelerated training loops with zero-copy efficiency, Spark removes the CPU-bound serialization tax that historically plagued PySpark. Recognizing the impedance mismatch between Spark's partition-based processing and deep learning's need for randomized epochs is vital to preventing catastrophic network shuffles and preserving Catalyst optimizer efficiency. [[2]](spark_book.pdf#page=412)
 
-Ultimately, integrating these two distinct computational paradigms demands rigorous attention to memory management across the JVM heap, off-heap buffers, and Python worker processes. By internalizing these architectural intricacies—from iterator-based Pandas UDFs to the nuances of barrier scheduling—senior engineers can build highly scalable, unified pipelines that perform both exabyte-scale data engineering and state-of-the-art deep learning within a single, cohesive Spark ecosystem.
-</🔥 Master Class: Deep Learning Concepts>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)
+Ultimately, integrating these two distinct computational paradigms demands rigorous attention to memory management across the JVM heap, off-heap buffers, and Python worker processes. By internalizing these architectural intricacies—from iterator-based Pandas UDFs to the nuances of barrier scheduling—senior engineers can build highly scalable, unified pipelines that perform both exabyte-scale data engineering and state-of-the-art deep learning within a single, cohesive Spark ecosystem. [[3]](spark_book.pdf#page=419)
+</🔥 Master Class: Deep Learning Concepts> [[4]](spark_book.pdf#page=422)

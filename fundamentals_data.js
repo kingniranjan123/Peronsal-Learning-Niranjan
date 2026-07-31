@@ -1,27 +1,34 @@
 const FUNDAMENTALS_DATA = {
-  "pre-hdfs": `# HDFS (Hadoop Distributed File System): An Architectural Deep Dive
+  "pre-hdfs": `## 1. HDFS (Hadoop Distributed File System)
 
-**HDFS (Hadoop Distributed File System)** is the foundational cornerstone of big data storage, engineered specifically as a highly fault-tolerant, distributed file system designed to run efficiently on commodity hardware. Initially built as the primary storage layer for the Apache Hadoop ecosystem, HDFS is meticulously optimized for high-throughput access to application data. This design paradigm makes it exceptionally well-suited for applications that manage massive, terabyte- or petabyte-scale data sets. HDFS intentionally sacrifices low-latency, real-time data access in favor of massive high-bandwidth throughput. This architectural trade-off aligns perfectly with the batch-processing nature of analytical engines like Apache Spark and MapReduce. 
+The Hadoop Distributed File System (HDFS) is the primary storage system used by Hadoop applications. HDFS creates multiple replicas of data blocks and distributes them on compute nodes throughout a cluster to enable reliable, extremely rapid computations.
 
-In modern data architectures, despite the explosive rise of cloud-native object stores such as AWS S3 or Azure Data Lake Storage, understanding the underlying principles of HDFS remains a fundamentally crucial prerequisite for mastering distributed computing frameworks like Apache Spark. Spark was inherently designed to seamlessly interact with HDFS, processing distributed data in parallel while relentlessly leveraging core HDFS principles like data locality and block-based partitioning to maximize execution speed.
-
-## 1. The Master-Slave Architecture
-
-HDFS operates on a strict, centralized master-slave architecture, separating the concerns of metadata management from actual physical data storage. This rigid decoupling is vital for ensuring horizontal scalability across thousands of machines.
-
-### The NameNode (Master)
-The NameNode is the singular master server that actively manages the file system namespace and rigorously regulates access to files by distributed clients. It maintains the entire directory tree and vital metadata for all files and directories embedded within the cluster. This metadata securely encapsulates permissions, modification timestamps, access times, and the profoundly critical mapping of files to their constituent physical blocks. Importantly, the NameNode executes file system namespace operations such as opening, closing, renaming, and deleting files and directories. Because all metadata is stored in the NameNode's RAM for rapid access, the NameNode's memory footprint strictly dictates the total number of files the cluster can harbor.
-
-### The DataNode (Worker)
-Concurrently, multiple DataNodes function as the relentless workers. Usually, there is exactly one DataNode daemon per physical node in the cluster. These DataNodes manage the physical storage drives attached to the nodes they run on. They are unequivocally responsible for serving read and write requests directly from the file system's clients. They also tirelessly perform block creation, block deletion, and block replication upon explicit instruction from the overarching NameNode.
-
-### The Secondary NameNode
-A remarkably common misconception is that the Secondary NameNode serves as a high-availability failover backup for the primary NameNode. Instead, it is a dedicated helper node that periodically downloads the namespace image (FsImage) and the transaction log (EditLog) from the NameNode. It merges them to prevent the EditLog from becoming overwhelmingly large, a process known as checkpointing, before uploading the newly merged FsImage back to the primary NameNode.
-
-### Architectural Example 1: Core HDFS Topology and Heartbeats
-DataNodes communicate with the NameNode using a mechanism called Heartbeats. Every 3 seconds, each DataNode sends a heartbeat to the NameNode to confirm it is alive. Additionally, DataNodes periodically send Block Reports—detailed lists of all HDFS blocks they currently store. If a NameNode misses heartbeats from a DataNode for 10 minutes, it marks the DataNode as dead and initiates the replication of its lost blocks to other healthy nodes to maintain the configured replication factor.
+### Architecture Overview
+HDFS uses a **NameNode** and **DataNode** architecture. The NameNode acts as the master, maintaining the directory tree and the metadata for all the files and directories in the cluster. DataNodes act as the workers, storing the actual data blocks (typically 128MB in size).
 
 \`\`\`mermaid
+graph TD
+    Client((Client)) -->|1. File Create/Read| NN[NameNode<br/>Metadata & Namespace]
+    NN -.->|2. Block Locations| Client
+    Client ==>|3. Read/Write Data| DN1[DataNode 1<br/>Block A, B]
+    Client ==>|4. Read/Write Data| DN2[DataNode 2<br/>Block A, C]
+    Client ==>|5. Read/Write Data| DN3[DataNode 3<br/>Block B, C]
+    
+    style NN fill:#f9f,stroke:#333,stroke-width:2px
+    style DN1 fill:#bbf,stroke:#333,stroke-width:2px
+    style DN2 fill:#bbf,stroke:#333,stroke-width:2px
+    style DN3 fill:#bbf,stroke:#333,stroke-width:2px
+\`\`\`
+
+### Practical Examples
+1. **Log Aggregation:** Millions of small server logs are appended to a continuous file in HDFS for nightly batch processing. [Beginning Apache Spark 2 : 12, 15, 18]
+2. **Data Lake Storage:** Raw CSV and JSON files from web scrapers are dumped into HDFS before being structured into Parquet. [Spark in Action : 2, 23, 32]
+3. **Machine Learning Archives:** Massive datasets (like ImageNet) are stored in HDFS so Spark MLlib can process them in parallel.
+4. **Fault Tolerance:** If a DataNode rack goes down due to a power outage, the NameNode automatically redirects queries to the replicated blocks on surviving nodes.
+
+
+---
+`\`\`mermaid
 graph TD
     Client[Client Application] -->|1. Reads/Writes Metadata| NN(NameNode)
     NN -->|2. Downloads EditLog & FsImage| SNN(Secondary NameNode)
@@ -320,16 +327,33 @@ df_transformed.write \\
     .parquet("hdfs://namenode:8020/user/data/processed_sales_results")
 \`\`\`
 `,
-  "pre-distributed": `# Deep Dive: The Master-Worker Architecture in Apache Spark
+  "pre-distributed": `## 2. Master-Worker Architecture
 
-The paradigm shift in large-scale data processing over the past decade can largely be attributed to the evolution of distributed computing frameworks. At the core of this revolution lies the Master-Worker architecture, a robust and scalable topology that fundamentally changed how we process terabytes and petabytes of data. Before distributed computing, organizations relied heavily on monolithic mainframes, vertically scaling hardware at exorbitant costs. As data volumes exploded, this approach hit physical and financial ceilings. The Master-Worker design pattern, adopted and perfected by Apache Spark, provides a paradigm where workloads are decoupled, enabling a central coordinator to divide and conquer massive tasks across a horizontally scalable fleet of interconnected machines. This comprehensive deep dive explores the profound technical intricacies of the Driver, Cluster Manager, and Executors, how they communicate, and how they achieve fault tolerance in a highly distributed environment.
+Master-Worker (or Controller-Agent) is the foundational design pattern for almost all distributed computing frameworks. Instead of a single monolithic server attempting to process petabytes of data, a "Master" orchestrates the execution of tasks across hundreds or thousands of "Worker" nodes.
 
-## The Triad of Distributed Execution
+### The Role of Cluster Managers
+In modern Big Data, the Master-Worker setup is typically managed by a Cluster Manager like **YARN** (Yet Another Resource Negotiator) or **Kubernetes**. The Master distributes code and data to the workers, monitors their health via heartbeats, and reassigns failed tasks.
 
-To understand the mechanics of Apache Spark, we must dissect its three primary architectural pillars: the Driver (Master), the Cluster Manager, and the Executors (Workers). Unlike traditional client-server models, this triad operates on a continuous feedback loop of resource negotiation, task serialization, execution, and state reporting.
+\`\`\`mermaid
+flowchart LR
+    M[Master Node<br/>Resource Manager / Driver] -->|Assigns Task A| W1[Worker Node 1]
+    M -->|Assigns Task B| W2[Worker Node 2]
+    M -->|Assigns Task C| W3[Worker Node 3]
+    
+    W1 -.->|Heartbeat / Status| M
+    W2 -.->|Heartbeat / Status| M
+    W3 -.->|Heartbeat / Status| M
+\`\`\`
 
-### 1. The Driver Program (The Mastermind)
-The Driver is the brain of the Spark application. It is where the \`main()\` method of your application runs, and where the \`SparkSession\` or \`SparkContext\` resides. When a user submits a Spark application, the Driver constructs a logical execution plan based on the user's transformations and actions. 
+### Practical Examples
+1. **Hadoop YARN:** The ResourceManager (Master) allocates RAM and CPU to NodeManagers (Workers) executing MapReduce jobs. [Spark in Action (YARN & Cluster Managers) : 9, 16, 23, 24]
+2. **Spark Standalone:** The Spark Master schedules tasks directly to Spark Workers, bypassing YARN entirely for simpler deployments. [Beginning Apache Spark 2 : 14, 15]
+3. **Kubernetes Pods:** A K8s Control Plane (Master) schedules containerized PySpark applications onto individual worker nodes.
+4. **Web Scraping:** A central controller dispatches URLs to hundreds of distributed scrapers (workers), combining the HTML results later.
+
+
+---
+`main()\` method of your application runs, and where the \`SparkSession\` or \`SparkContext\` resides. When a user submits a Spark application, the Driver constructs a logical execution plan based on the user's transformations and actions. 
 
 Internally, the Driver encompasses several critical components:
 - **DAGScheduler**: Translates the logical plan into a Directed Acyclic Graph (DAG) of physical execution stages. It breaks the application down at shuffle boundaries.
@@ -705,9 +729,33 @@ graph TD
 2. **Example 2: Distributed Machine Learning Training.**
    A data scientist trains a massive Random Forest model. The Master node delegates the construction of individual decision trees to different Executor nodes. Executor A trains Tree 1 using a bootstrap sample of the dataset, while Executor B trains Tree 2 on another sample. Once all Executors finish building their respective trees, the Master gathers the models to form the final ensemble Random Forest.
 `,
-  "pre-sparksession": `# SparkSession & SparkContext: Deep Dive into Spark Entry Points
+  "pre-sparksession": `## 3. SparkSession & SparkContext
 
-In the landscape of Big Data processing with Apache Spark, understanding the core entry points—\`SparkSession\` and \`SparkContext\`—is not merely an academic exercise, but a fundamental prerequisite for engineering robust, distributed, and fault-tolerant applications. The entry points dictate how a Spark driver program communicates with a distributed cluster, allocates resources across worker nodes, instantiates job graphs, and ultimately orchestrates the execution of parallelized tasks. This comprehensive deep dive will unpack the historical evolution, architectural underpinnings, lifecycle management, and practical intricacies of both \`SparkContext\` and \`SparkSession\`.
+Historically (before Spark 2.0), developers had to create multiple contexts (e.g., \`SparkContext\`, \`SQLContext\`, \`HiveContext\`) to interact with different Spark features. Today, the **SparkSession** is the unified entry point for all Spark functionality.
+
+### The DAG and Execution Engine
+When you write Spark code, the SparkSession translates your queries into a Directed Acyclic Graph (DAG). The DAG Scheduler breaks this graph into stages, and the Task Scheduler sends those tasks to the executors.
+
+\`\`\`mermaid
+graph TD
+    Code[User Code<br/>DataFrame API] -->|Builds| SS(SparkSession)
+    SS -->|Generates| DAG[DAG Scheduler]
+    DAG -->|Creates Stages| TS[Task Scheduler]
+    TS -->|Dispatches Tasks| E1[Executor 1]
+    TS -->|Dispatches Tasks| E2[Executor 2]
+    
+    style SS fill:#dfd,stroke:#333,stroke-width:2px
+\`\`\`
+
+### Practical Examples
+1. **Reading CSVs:** \`spark.read.csv("hdfs://data.csv")\` uses the SparkSession to infer schemas automatically. [Beginning Apache Spark 2 : 15, 37, 38]
+2. **Executing SQL:** \`spark.sql("SELECT * FROM users WHERE age > 18")\` executes distributed SQL queries across the cluster. [Spark in Action : Page 35]
+3. **Configuration:** Setting \`spark.conf.set("spark.executor.memory", "4g")\` dynamically configures resources via the session.
+4. **Legacy RDDs:** While DataFrames are preferred, \`spark.sparkContext.parallelize()\` is still used to create lower-level Resilient Distributed Datasets.
+
+
+---
+`SparkSession\` and \`SparkContext\`—is not merely an academic exercise, but a fundamental prerequisite for engineering robust, distributed, and fault-tolerant applications. The entry points dictate how a Spark driver program communicates with a distributed cluster, allocates resources across worker nodes, instantiates job graphs, and ultimately orchestrates the execution of parallelized tasks. This comprehensive deep dive will unpack the historical evolution, architectural underpinnings, lifecycle management, and practical intricacies of both \`SparkContext\` and \`SparkSession\`.
 
 ## The Historical Core: SparkContext
 
@@ -1190,17 +1238,37 @@ squared_rdd = rdd.map(lambda x: x * x)
 print("Squared values:", squared_rdd.collect())
 \`\`\`
 `,
-  "pre-functional": `# Functional Programming Paradigms in Apache Spark: A Deep Dive
+  "pre-functional": `## 4. Functional Programming Paradigms
 
-Apache Spark's architecture and processing model are intrinsically bound to the principles of functional programming. At its core, functional programming is a declarative programming paradigm that treats computation as the evaluation of mathematical functions, strictly avoiding changing state or mutating data. By modeling programs as a series of expressions rather than imperative control flows, developers can build highly scalable, predictable, and fault-tolerant distributed systems. In traditional imperative programming, developers manipulate memory and state explicitly, often leading to concurrency issues such as race conditions, deadlocks, and unpredictable mutations when deployed across a massive distributed cluster. Conversely, functional programming champions pure functions and immutable data structures, creating a paradigm where data flows through a pipeline of transformations without any side effects. In the context of Apache Spark, understanding these paradigms is not just a theoretical exercise; it is an absolute prerequisite for mastering the framework. Spark’s foundational abstractions—Resilient Distributed Datasets (RDDs), DataFrames, and Datasets—are deeply rooted in functional concepts. By adopting this mindset, engineers can leverage Spark's lazy evaluation, lineage tracking, and the Catalyst Optimizer to their full potential, ensuring massive parallelization is achieved safely, deterministically, and efficiently.
+Big Data frameworks heavily rely on functional programming concepts. Because data is distributed across multiple physical machines, mutating state (changing variables in-place) leads to race conditions and inconsistent data.
 
-## Immutability and State Management
-
-One of the most foundational tenets of functional programming is immutability. In this paradigm, once a data structure is created, it can never be altered. If a change is required, a completely new data structure must be generated, representing the updated state. This concept is fully embraced by Apache Spark through its core data abstraction: the Resilient Distributed Dataset (RDD). RDDs, as well as higher-level abstractions like DataFrames and Datasets, are strictly immutable collections of objects partitioned across a cluster. When you apply a transformation (such as a map, filter, or join) to an RDD, Spark does not modify the original dataset in place. Instead, it yields a newly constructed RDD that represents the transformed data. 
-
-This strict adherence to immutability solves a multitude of problems in distributed computing. Foremost, it eliminates the possibility of race conditions. Since multiple threads or executor nodes are reading from the same data source but never writing to it concurrently, the need for complex distributed locking mechanisms vanishes. This vastly simplifies the orchestration of parallel tasks and allows executors to operate independently. Furthermore, immutability is the bedrock of Spark's fault tolerance mechanism. Because datasets are never overwritten, Spark can reliably recreate any lost partition of data by simply reapplying the deterministic transformations that produced it from the original, immutable source data.
+### Immutability & Lazy Evaluation
+In Spark, DataFrames and RDDs are **immutable**—they cannot be changed once created. Instead, you apply transformations (like \`map\` or \`filter\`) which return *new* DataFrames. Furthermore, Spark uses **lazy evaluation**: it doesn't actually execute any transformations until an action (like \`count\` or \`collect\`) is called, allowing the engine to optimize the entire execution plan.
 
 \`\`\`mermaid
+sequenceDiagram
+    participant User
+    participant Spark
+    participant Cluster
+    User->>Spark: df = read.parquet("data")
+    Note right of Spark: Lazy Evaluation: No execution yet
+    User->>Spark: df2 = df.filter(age > 18)
+    Note right of Spark: Graph updated, still no execution
+    User->>Spark: df2.count()
+    Note right of Spark: Action triggered!
+    Spark->>Cluster: Optimize & Execute DAG
+    Cluster-->>User: Return 1,450,000
+\`\`\`
+
+### Practical Examples
+1. **Map (Transformation):** Applying a function to every row in a massive dataset simultaneously without side effects. [Beginning Apache Spark 2 (Immutability) : 5, 18, 32]
+2. **Filter (Transformation):** Removing corrupted JSON lines from a dataset. Spark records this intent but waits to execute it. [Spark in Action : 32, 35]
+3. **Reduce (Action):** Aggregating total sales across millions of transactions, forcing Spark to finally execute the DAG.
+4. **Fault Recovery:** Because RDDs are immutable and lineage is tracked, if a node crashes, Spark simply re-computes that specific partition from the original source.
+
+
+---
+`\`\`mermaid
 stateDiagram-v2
     direction LR
     [*] --> RDD_A : sc.textFile()
@@ -1399,30 +1467,37 @@ println(evenNumbersRDD.collect().mkString(", ")) // Output: 2, 4, 6
 
 By leveraging these functional programming paradigms, Apache Spark allows developers to express complex, distributed data processing tasks elegantly and robustly.
 `,
-  "pre-formats": `# Big Data File Formats: A Deep Dive into Row-Based vs. Columnar Storage
+  "pre-formats": `## 5. Big Data File Formats
 
-In the expansive ecosystem of Big Data and distributed processing engines like Apache Spark, selecting the appropriate file format is a foundational architectural decision. This decision dictates not only the storage footprint and compression ratios on distributed file systems (like HDFS, S3, or GCS) but also fundamentally governs the computational efficiency, I/O bandwidth utilization, and query execution times of your distributed applications. Big Data formats are typically bifurcated into two primary paradigms based on their data layout: **Row-based storage** and **Columnar storage**.
+While CSV and JSON are human-readable, they are highly inefficient for distributed computing. Big Data requires formats that support schema evolution, high compression, and specific read patterns.
 
-This deep dive will explore the mechanical underpinnings of these storage layouts, analyze their respective advantages, dissect the internal architectures of industry-standard formats like Apache Avro and Apache Parquet, and articulate precisely why modern analytical engines heavily favor columnar representations.
-
----
-
-## The Paradigm Shift: Row-Oriented vs. Column-Oriented Layouts
-
-To understand the core difference, consider a table of structured data with thousands of rows and hundreds of columns. 
-
-### Row-Based Storage (e.g., JSON, CSV, Apache Avro)
-In a row-based format, data is serialized sequentially by row. All attributes (columns) belonging to a single record are contiguous on disk. This layout is heavily optimized for write-intensive operations and transactional workloads (OLTP). When a new record is generated, it is simply appended to the end of the file. Retrieving an entire record is exceptionally fast because a single disk seek locates the start of the record, and sequential reading fetches all associated fields. 
-
-However, in analytical (OLAP) workloads, queries often aggregate or filter over a small subset of columns across millions of rows. A row-oriented format forces the execution engine to load the entire row from disk into memory, only to discard the irrelevant columns. This results in massive I/O bloat and severe memory pressure.
-
-### Columnar Storage (e.g., Apache Parquet, Apache ORC)
-Columnar formats pivot the data matrix. Instead of storing row 1, then row 2, a columnar format stores all values for column A, followed by all values for column B. 
-This physical transposition provides two monumental benefits for analytics:
-1.  **I/O Minimization (Projection Pushdown):** If a query only requires 3 columns out of 500, the storage engine only reads the contiguous disk blocks containing those 3 columns. The remaining 497 columns are completely ignored at the I/O layer.
-2.  **Vectorized Compression:** Because values within a single column typically share the same data type and often exhibit low cardinality or high similarity, compression algorithms (like Snappy, Zstandard, or dictionary encoding) achieve dramatically higher compression ratios compared to heterogeneous row-level data.
+### Columnar vs. Row-Based Storage
+Formats like **Parquet** and **ORC** store data in columns rather than rows. If you have a table with 100 columns but only query 2 of them, a columnar format allows Spark to physically read only the data for those 2 columns from disk, skipping the rest and saving massive amounts of I/O. **Avro** is row-based and is preferred for write-heavy streaming.
 
 \`\`\`mermaid
+graph LR
+    subgraph Row-Based (CSV/JSON/Avro)
+    R1[Row 1: ID, Name, Age, City]
+    R2[Row 2: ID, Name, Age, City]
+    end
+
+    subgraph Columnar (Parquet/ORC)
+    C1[Column: ID 1, 2, 3...]
+    C2[Column: Name A, B, C...]
+    C3[Column: Age 22, 24, 26...]
+    end
+    
+    style C1 fill:#dfd
+    style C3 fill:#dfd
+\`\`\`
+
+### Practical Examples
+1. **Parquet for Analytics:** A Data Scientist running \`SELECT AVG(salary) FROM employees\` on a Parquet file only reads the salary column from disk. [Beginning Apache Spark 2 (Parquet/ORC) : 14, 19, 38]
+2. **Avro for Kafka Streams:** A real-time IoT pipeline uses Avro because of its fast row-level write speeds and robust schema evolution (handling new sensor types). [Spark in Action : 2, 32, 37]
+3. **ORC for Hive:** A Data Warehouse team uses ORC because it offers exceptional compression ratios (often 75% smaller than CSV).
+4. **Predicate Pushdown:** When Spark queries Parquet files with \`WHERE age > 30\`, the Parquet metadata allows Spark to completely skip reading file chunks where the maximum age is known to be under 30.
+
+`\`\`mermaid
 graph TD
     subgraph Logical Table
         T1[ID | Name | Age | City]

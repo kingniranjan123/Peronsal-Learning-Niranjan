@@ -330,24 +330,9 @@ To achieve true mastery of RDD Lineage and DAG:
 
 ## 📚 Summary
 
-RDD Lineage and the DAG are not implementation details — they are the cognitive model that every Spark engineer must internalize to reason about correctness, fault tolerance, and performance simultaneously. The DAGScheduler's conversion of the logical RDD dependency graph into physical `ShuffleMapStage` and `ResultStage` objects determines everything: which tasks execute in parallel, where data moves across the network, how failures are recovered, and what the Spark UI's timeline will look like at runtime.
+RDD Lineage and the DAG are not implementation details — they are the cognitive model that every Spark engineer must internalize to reason about correctness, fault tolerance, and performance simultaneously. The DAGScheduler's conversion of the logical RDD dependency graph into physical `ShuffleMapStage` and `ResultStage` objects determines everything: which tasks execute in parallel, where data moves across the network, how failures are recovered, and what the Spark UI's timeline will look like at runtime. [[1]](spark_book.pdf#page=56)
 
-The two most impactful interventions available to a Spark engineer are strategic `persist()` placement and disciplined checkpointing. Persist at the output of expensive shuffle stages that feed multiple downstream computations; checkpoint in iterative algorithms every 10-20 iterations to prevent `StackOverflowError` from recursive lineage traversal in the Driver JVM. Both operations interact directly with the BlockManager and the Tungsten memory subsystem, so understanding storage levels — particularly the heap vs. off-heap tradeoffs between `MEMORY_ONLY`, `MEMORY_AND_DISK_SER`, and `OFF_HEAP` — is prerequisite knowledge for sizing executors correctly.
+The two most impactful interventions available to a Spark engineer are strategic `persist()` placement and disciplined checkpointing. Persist at the output of expensive shuffle stages that feed multiple downstream computations; checkpoint in iterative algorithms every 10-20 iterations to prevent `StackOverflowError` from recursive lineage traversal in the Driver JVM. Both operations interact directly with the BlockManager and the Tungsten memory subsystem, so understanding storage levels — particularly the heap vs. off-heap tradeoffs between `MEMORY_ONLY`, `MEMORY_AND_DISK_SER`, and `OFF_HEAP` — is prerequisite knowledge for sizing executors correctly. [[2]](spark_book.pdf#page=62)
 
-Finally, the `toDebugString` output and the Spark UI's DAG visualization are the two most underused diagnostic tools in the Spark ecosystem. An engineer who can look at a DAG and immediately identify skipped stages (cache hits), unexpected shuffles (missing co-partitioning), and abnormal partition counts (accidental `coalesce(1)`) will outperform peers who tune by intuition alone. The DAG is Spark's full declarative description of its intent — learning to read it fluently is the highest-leverage skill in production Spark engineering.
+Finally, the `toDebugString` output and the Spark UI's DAG visualization are the two most underused diagnostic tools in the Spark ecosystem. An engineer who can look at a DAG and immediately identify skipped stages (cache hits), unexpected shuffles (missing co-partitioning), and abnormal partition counts (accidental `coalesce(1)`) will outperform peers who tune by intuition alone. The DAG is Spark's full declarative description of its intent — learning to read it fluently is the highest-leverage skill in production Spark engineering. [[3]](spark_book.pdf#page=122)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

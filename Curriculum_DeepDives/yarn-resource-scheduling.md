@@ -488,28 +488,9 @@ To achieve true mastery of YARN Resource Scheduling:
 
 ## 📚 Summary
 
-YARN Resource Scheduling is the contract layer between Spark's computational demands and the physical cluster's finite resources. The Capacity Scheduler's queue hierarchy defines the multi-tenant resource contract: guaranteed capacity is SLA-level protection, maximum capacity is opportunity. DominantResourceCalculator enforces this contract across all resource dimensions simultaneously — without it, the fairness guarantees apply only to memory, and CPU becomes a hidden shared resource with no enforcement, leading to throughput collapses under mixed-workload conditions. Node labels add a hardware-partitioning dimension that allows GPU, high-memory, or SSD-backed nodes to be reserved for specific workloads without running separate clusters.
+YARN Resource Scheduling is the contract layer between Spark's computational demands and the physical cluster's finite resources. The Capacity Scheduler's queue hierarchy defines the multi-tenant resource contract: guaranteed capacity is SLA-level protection, maximum capacity is opportunity. DominantResourceCalculator enforces this contract across all resource dimensions simultaneously — without it, the fairness guarantees apply only to memory, and CPU becomes a hidden shared resource with no enforcement, leading to throughput collapses under mixed-workload conditions. Node labels add a hardware-partitioning dimension that allows GPU, high-memory, or SSD-backed nodes to be reserved for specific workloads without running separate clusters. [[1]](spark_book.pdf#page=363)
 
-Preemption is the enforcement mechanism for the capacity contract. When an elastic burst from one queue prevents another queue from reaching its guaranteed minimum, the PreemptionManager reclaims Containers — hard kills after a configurable grace period. For Spark, this means executors can disappear at any time when operating in elastic burst territory, and the application must be architected to tolerate it: ESS retains shuffle data, executor decommission migrates blocks before release, and `maxNumFailures` must be sized to absorb preemption events without aborting. The External Shuffle Service is not optional in preemption-enabled clusters — it is the mechanism that makes the entire dynamic executor lifecycle safe.
+Preemption is the enforcement mechanism for the capacity contract. When an elastic burst from one queue prevents another queue from reaching its guaranteed minimum, the PreemptionManager reclaims Containers — hard kills after a configurable grace period. For Spark, this means executors can disappear at any time when operating in elastic burst territory, and the application must be architected to tolerate it: ESS retains shuffle data, executor decommission migrates blocks before release, and `maxNumFailures` must be sized to absorb preemption events without aborting. The External Shuffle Service is not optional in preemption-enabled clusters — it is the mechanism that makes the entire dynamic executor lifecycle safe. [[2]](spark_book.pdf#page=317)
 
-The interaction between these five mechanisms — DRC, labels, hierarchy, preemption, and ESS — means that cluster operators and Spark engineers must share a unified mental model. A queue configuration change in `capacity-scheduler.xml` by a YARN administrator can silently change whether a Spark job's executors are preemptible, which in turn determines whether ESS is load-bearing or merely advisory. Production Spark engineering requires understanding YARN as deeply as Spark's own internals, because the boundary between them is where the most costly and least-debuggable failures originate.
+The interaction between these five mechanisms — DRC, labels, hierarchy, preemption, and ESS — means that cluster operators and Spark engineers must share a unified mental model. A queue configuration change in `capacity-scheduler.xml` by a YARN administrator can silently change whether a Spark job's executors are preemptible, which in turn determines whether ESS is load-bearing or merely advisory. Production Spark engineering requires understanding YARN as deeply as Spark's own internals, because the boundary between them is where the most costly and least-debuggable failures originate. [[3]](spark_book.pdf#page=318)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [Y (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

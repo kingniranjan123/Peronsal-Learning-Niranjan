@@ -215,26 +215,9 @@ To achieve true mastery of Regularization in Spark:
 
 ## 📚 Summary
 
-Regularization in Apache Spark transcends its traditional statistical purpose of merely preventing model overfitting; it is deeply intertwined with the framework's distributed systems architecture, memory management, and network performance characteristics. Because Spark is designed to scale to petabytes of data, naive, monolithic implementations of regularization would instantly drown the cluster's network in dense state updates. Instead, Spark elegantly isolates the heavy lifting—computing local loss gradients via Tungsten's cache-aligned, vectorized `VectorUDT` formats—on the Executor Thread Pool, while offloading the lightweight, global regularization penalty computations to highly specialized solvers residing safely on the Driver JVM.
+Regularization in Apache Spark transcends its traditional statistical purpose of merely preventing model overfitting; it is deeply intertwined with the framework's distributed systems architecture, memory management, and network performance characteristics. Because Spark is designed to scale to petabytes of data, naive, monolithic implementations of regularization would instantly drown the cluster's network in dense state updates. Instead, Spark elegantly isolates the heavy lifting—computing local loss gradients via Tungsten's cache-aligned, vectorized `VectorUDT` formats—on the Executor Thread Pool, while offloading the lightweight, global regularization penalty computations to highly specialized solvers residing safely on the Driver JVM. [[1]](spark_book.pdf#page=240)
 
-The choice of regularization strategy drastically impacts the physical execution plan and the cluster's stability. Applying an L1 penalty via the `elasticNetParam` forces the Driver to utilize the OWL-QN optimizer, which correctly handles the non-differentiable nature of L1 to result in perfectly sparse weight vectors. This sparsity acts as a potent data compression mechanism, shrinking the payload sizes during the iterative Kryo broadcast phase and severely alleviating JVM Garbage Collection pressure across the entire cluster. Conversely, utilizing pure L2 regularization enables the use of specialized normal equation solvers for lower-dimensional datasets, allowing Spark to bypass iterative gradient descent entirely and solve the system exactly in a single, lightning-fast distributed pass via distributed matrix factorization.
+The choice of regularization strategy drastically impacts the physical execution plan and the cluster's stability. Applying an L1 penalty via the `elasticNetParam` forces the Driver to utilize the OWL-QN optimizer, which correctly handles the non-differentiable nature of L1 to result in perfectly sparse weight vectors. This sparsity acts as a potent data compression mechanism, shrinking the payload sizes during the iterative Kryo broadcast phase and severely alleviating JVM Garbage Collection pressure across the entire cluster. Conversely, utilizing pure L2 regularization enables the use of specialized normal equation solvers for lower-dimensional datasets, allowing Spark to bypass iterative gradient descent entirely and solve the system exactly in a single, lightning-fast distributed pass via distributed matrix factorization. [[2]](spark_book.pdf#page=241)
 
-Mastering regularization within Spark MLlib requires the engineer to think far beyond mathematical formulas and actively visualize the cluster's hardware topology. Every parameter tweak—from the `regParam` magnitude to the `standardization` flag and the solver selection—dictates whether the underlying Catalyst engine will optimize for line-search numerical stability, aggressive network I/O reduction, or CPU-bound distributed matrix factorization. By profoundly understanding the complex interplay between the optimization algorithms on the driver and the workers executing the `treeAggregate` phase, you empower yourself to train models that are not only statistically flawless but architecturally optimized for massive, unforgiving scale.
-</🔥 Master Class: Regularization>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)
-> - [Z (Page 471)](spark_book.pdf#page=471)
+Mastering regularization within Spark MLlib requires the engineer to think far beyond mathematical formulas and actively visualize the cluster's hardware topology. Every parameter tweak—from the `regParam` magnitude to the `standardization` flag and the solver selection—dictates whether the underlying Catalyst engine will optimize for line-search numerical stability, aggressive network I/O reduction, or CPU-bound distributed matrix factorization. By profoundly understanding the complex interplay between the optimization algorithms on the driver and the workers executing the `treeAggregate` phase, you empower yourself to train models that are not only statistically flawless but architecturally optimized for massive, unforgiving scale. [[3]](spark_book.pdf#page=242)
+</🔥 Master Class: Regularization> [[4]](spark_book.pdf#page=243)

@@ -526,27 +526,9 @@ To achieve true mastery of A* Search in Apache Spark:
 
 ## 📚 Summary
 
-A* Search in Apache Spark is not a single algorithm but a family of architectural patterns, each suited to a different graph scale and query volume. For small graphs (under 5 million nodes), driver-side A* using a Scala `PriorityQueue` is the most efficient choice — it avoids shuffle overhead entirely and runs in seconds. The critical engineering concerns at this scale are heap sizing (`spark.driver.memory`), GC tuning (G1GC with bounded pause targets), and broadcast variable management to prevent closure-capture serialization of large heuristic maps.
+A* Search in Apache Spark is not a single algorithm but a family of architectural patterns, each suited to a different graph scale and query volume. For small graphs (under 5 million nodes), driver-side A* using a Scala `PriorityQueue` is the most efficient choice — it avoids shuffle overhead entirely and runs in seconds. The critical engineering concerns at this scale are heap sizing (`spark.driver.memory`), GC tuning (G1GC with bounded pause targets), and broadcast variable management to prevent closure-capture serialization of large heuristic maps. [[1]](spark_book.pdf#page=297)
 
-For distributed graphs exceeding driver memory capacity, GraphX Pregel provides a principled adaptation of A* into Spark's parallel execution model. The BSP superstep model sacrifices strict expansion ordering for parallelism, requiring careful heuristic validation (admissibility and consistency) and mandatory Kryo serialization to control per-superstep shuffle volume. The combination of `KryoSerializer`, registered `KryoRegistrator`, and `spark.kryo.unsafe=true` reduces shuffle data volume from ~350 bytes to ~26 bytes per vertex message — a 13x reduction that translates directly to faster supersteps and lower network I/O costs.
+For distributed graphs exceeding driver memory capacity, GraphX Pregel provides a principled adaptation of A* into Spark's parallel execution model. The BSP superstep model sacrifices strict expansion ordering for parallelism, requiring careful heuristic validation (admissibility and consistency) and mandatory Kryo serialization to control per-superstep shuffle volume. The combination of `KryoSerializer`, registered `KryoRegistrator`, and `spark.kryo.unsafe=true` reduces shuffle data volume from ~350 bytes to ~26 bytes per vertex message — a 13x reduction that translates directly to faster supersteps and lower network I/O costs. [[2]](spark_book.pdf#page=212)
 
-For workloads requiring thousands to millions of simultaneous shortest-path queries (logistics, ride-sharing, network analysis), the `mapPartitions` multi-source pattern turns A* into an embarrassingly parallel operation, scaling linearly with cluster size. Memory-bounded beam search further extends A* to arbitrarily large graphs on the driver by capping heap usage with off-heap Unsafe allocation, trading provable optimality for guaranteed memory safety. The unifying thread across all patterns is serialization discipline, heuristic correctness, and an explicit accounting of where state lives — driver heap, executor heap, off-heap, or shuffle storage — because in production Spark, the location of your data is the first determinant of your performance.
+For workloads requiring thousands to millions of simultaneous shortest-path queries (logistics, ride-sharing, network analysis), the `mapPartitions` multi-source pattern turns A* into an embarrassingly parallel operation, scaling linearly with cluster size. Memory-bounded beam search further extends A* to arbitrarily large graphs on the driver by capping heap usage with off-heap Unsafe allocation, trading provable optimality for guaranteed memory safety. The unifying thread across all patterns is serialization discipline, heuristic correctness, and an explicit accounting of where state lives — driver heap, executor heap, off-heap, or shuffle storage — because in production Spark, the location of your data is the first determinant of your performance. [[3]](spark_book.pdf#page=233)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

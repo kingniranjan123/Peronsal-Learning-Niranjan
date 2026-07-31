@@ -241,25 +241,9 @@ To achieve true mastery of Spark Submit:
 
 ## 📚 Summary
 
-The `spark-submit` utility represents the critical threshold where user-defined logic transforms into a physical, distributed application. It is the architect of the environment, responsible for parsing requirements, downloading dependencies, and negotiating with cluster resource managers like YARN or Kubernetes. Without a deep understanding of this bootstrap phase, even the most elegantly written Catalyst SQL queries will falter under the weight of misconfigured JVM memory boundaries or mismatched classpaths.
+The `spark-submit` utility represents the critical threshold where user-defined logic transforms into a physical, distributed application. It is the architect of the environment, responsible for parsing requirements, downloading dependencies, and negotiating with cluster resource managers like YARN or Kubernetes. Without a deep understanding of this bootstrap phase, even the most elegantly written Catalyst SQL queries will falter under the weight of misconfigured JVM memory boundaries or mismatched classpaths. [[1]](spark_book.pdf#page=90)
 
-Architecturally, realizing the distinction between Client and Cluster modes dictates the resilience of your entire pipeline. By utilizing Cluster mode, you embed the Spark Driver as an ApplicationMaster securely within the cluster, decoupling it from the fragility of edge-node network connections. You enable the Driver to dynamically scale Executor JVMs, managing Tungsten's off-heap allocations and Catalyst's physical plans completely insulated from external failures.
+Architecturally, realizing the distinction between Client and Cluster modes dictates the resilience of your entire pipeline. By utilizing Cluster mode, you embed the Spark Driver as an ApplicationMaster securely within the cluster, decoupling it from the fragility of edge-node network connections. You enable the Driver to dynamically scale Executor JVMs, managing Tungsten's off-heap allocations and Catalyst's physical plans completely insulated from external failures. [[2]](spark_book.pdf#page=364)
 
-Ultimately, mastering `spark-submit` transitions an engineer from simply "writing Spark code" to successfully "operating Spark in production." By precisely tuning memory overhead to prevent YARN container kills, managing classloader hierarchies to avoid dependency hell, and securely mapping Kubernetes volumes for efficient shuffle spills, you ensure that the Tungsten execution engine has the exact physical foundation it needs to operate at peak performance.
-</🔥 Master Class: Spark Submit>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)
+Ultimately, mastering `spark-submit` transitions an engineer from simply "writing Spark code" to successfully "operating Spark in production." By precisely tuning memory overhead to prevent YARN container kills, managing classloader hierarchies to avoid dependency hell, and securely mapping Kubernetes volumes for efficient shuffle spills, you ensure that the Tungsten execution engine has the exact physical foundation it needs to operate at peak performance. [[3]](spark_book.pdf#page=382)
+</🔥 Master Class: Spark Submit> [[4]](spark_book.pdf#page=1)

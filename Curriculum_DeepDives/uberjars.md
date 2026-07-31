@@ -501,32 +501,9 @@ To achieve true mastery of Uberjars in Apache Spark:
 
 ## 📚 Summary
 
-Uberjars are not merely a packaging convenience — they are the primary mechanism by which Apache Spark achieves classpath determinism across a distributed cluster of heterogeneous JVMs. The fat JAR is uploaded once, distributed via the `BlockManager`'s file server to every executor's `ExecutorClassLoader`, and loaded into each JVM's Metaspace as a collection of `Klass` structures that persist for the lifetime of the executor process. Getting this distribution correct requires understanding the full chain from build tool (sbt-assembly or Maven Shade) through class relocation (shade rules), JAR manifest merging (merge strategies), executor classloading (parent delegation order), and Kubernetes resource sizing (memory overhead vs. MaxMetaspaceSize).
+Uberjars are not merely a packaging convenience — they are the primary mechanism by which Apache Spark achieves classpath determinism across a distributed cluster of heterogeneous JVMs. The fat JAR is uploaded once, distributed via the `BlockManager`'s file server to every executor's `ExecutorClassLoader`, and loaded into each JVM's Metaspace as a collection of `Klass` structures that persist for the lifetime of the executor process. Getting this distribution correct requires understanding the full chain from build tool (sbt-assembly or Maven Shade) through class relocation (shade rules), JAR manifest merging (merge strategies), executor classloading (parent delegation order), and Kubernetes resource sizing (memory overhead vs. MaxMetaspaceSize). [[1]](spark_book.pdf#page=66)
 
-The failure modes of a poorly assembled uberjar are among the most difficult to diagnose in production Spark: `NoSuchMethodError` appearing only on certain data distributions, `OOMKilled` pods with no JVM heap dumps, Kryo silently falling back to Java serialization and producing 5× larger shuffle blocks, and Spring or Jackson failing to discover SPI extensions because `META-INF/services` files were discarded at assembly time. Each of these failures has a specific, preventable root cause traceable to a single build configuration directive or JVM flag.
+The failure modes of a poorly assembled uberjar are among the most difficult to diagnose in production Spark: `NoSuchMethodError` appearing only on certain data distributions, `OOMKilled` pods with no JVM heap dumps, Kryo silently falling back to Java serialization and producing 5× larger shuffle blocks, and Spring or Jackson failing to discover SPI extensions because `META-INF/services` files were discarded at assembly time. Each of these failures has a specific, preventable root cause traceable to a single build configuration directive or JVM flag. [[2]](spark_book.pdf#page=345)
 
-Mastery of uberjars means treating JAR assembly as a first-class engineering concern with the same rigor applied to query optimization or shuffle tuning. This means: explicit shade rules for every dependency that conflicts with Spark's internal classpath, explicit merge strategies for every known file category, `registrationRequired=true` for Kryo, Metaspace-aware memory overhead sizing on Kubernetes, and automated validation of the assembled JAR's class count and SPI service files in CI pipelines — before the job reaches the cluster and fails in ways that cost hours to diagnose.
+Mastery of uberjars means treating JAR assembly as a first-class engineering concern with the same rigor applied to query optimization or shuffle tuning. This means: explicit shade rules for every dependency that conflicts with Spark's internal classpath, explicit merge strategies for every known file category, `registrationRequired=true` for Kryo, Metaspace-aware memory overhead sizing on Kubernetes, and automated validation of the assembled JAR's class count and SPI service files in CI pipelines — before the job reaches the cluster and fails in ways that cost hours to diagnose. [[3]](spark_book.pdf#page=402)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [F (Page 456)](spark_book.pdf#page=456)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [J (Page 458)](spark_book.pdf#page=458)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)

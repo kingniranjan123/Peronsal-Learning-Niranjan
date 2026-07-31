@@ -202,26 +202,9 @@ To achieve true mastery of Kafka Integration:
 
 ## 📚 Summary
 
-The integration between Apache Spark and Apache Kafka is an engineering marvel that seamlessly bridges continuous log streams with discrete, resilient micro-batch processing. By shifting the responsibility of offset management from Kafka's internal brokers to Spark's driver and HDFS-backed checkpoint system, the architecture guarantees absolute determinism. This is the mechanism that enables exactly-once semantics; if an executor fails, the driver relies on the precise offset bounds stored in the write-ahead log to replay the exact same physical plan, ensuring no record is skipped or double-counted.
+The integration between Apache Spark and Apache Kafka is an engineering marvel that seamlessly bridges continuous log streams with discrete, resilient micro-batch processing. By shifting the responsibility of offset management from Kafka's internal brokers to Spark's driver and HDFS-backed checkpoint system, the architecture guarantees absolute determinism. This is the mechanism that enables exactly-once semantics; if an executor fails, the driver relies on the precise offset bounds stored in the write-ahead log to replay the exact same physical plan, ensuring no record is skipped or double-counted. [[1]](spark_book.pdf#page=194)
 
-Furthermore, the physical execution model bypasses the driver entirely for data transfer. Executors establish direct TCP connections to Kafka partition leaders, heavily leveraging Tungsten's vectorized readers and Kafka's binary protocols to achieve millions of records per second in throughput. The ability to push down consumer configurations directly to the executor pool allows elite engineers to tune fetch sizes, wait times, and idempotence properties, squeezing maximum efficiency out of network I/O.
+Furthermore, the physical execution model bypasses the driver entirely for data transfer. Executors establish direct TCP connections to Kafka partition leaders, heavily leveraging Tungsten's vectorized readers and Kafka's binary protocols to achieve millions of records per second in throughput. The ability to push down consumer configurations directly to the executor pool allows elite engineers to tune fetch sizes, wait times, and idempotence properties, squeezing maximum efficiency out of network I/O. [[2]](spark_book.pdf#page=195)
 
-Ultimately, mastering this integration is not merely about writing a `.format("kafka")` statement. It requires a profound understanding of the JVM heap, Catalyst's physical task assignment, and Kafka's retention mechanics. Engineers who internalize this architecture do not just build pipelines; they build invincible, real-time data ingestion nervous systems capable of surviving cluster outages, network partitions, and massive data spikes without a single lost byte.
-</🔥 Master Class: Kafka Integration>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [F (Page 456)](spark_book.pdf#page=456)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)
+Ultimately, mastering this integration is not merely about writing a `.format("kafka")` statement. It requires a profound understanding of the JVM heap, Catalyst's physical task assignment, and Kafka's retention mechanics. Engineers who internalize this architecture do not just build pipelines; they build invincible, real-time data ingestion nervous systems capable of surviving cluster outages, network partitions, and massive data spikes without a single lost byte. [[3]](spark_book.pdf#page=402)
+</🔥 Master Class: Kafka Integration> [[4]](spark_book.pdf#page=195)

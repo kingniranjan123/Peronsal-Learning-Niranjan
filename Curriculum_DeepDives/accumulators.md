@@ -367,22 +367,9 @@ To achieve true mastery of Accumulators:
 
 ## 📚 Summary
 
-Accumulators solve a fundamental distributed systems problem: how do you aggregate telemetry from thousands of isolated executor JVM processes back to a single driver JVM without introducing distributed coordination, shuffle overhead, or heap-blowing collect operations? The `AccumulatorV2` API answers this by embedding delta aggregation directly into Spark's task lifecycle — deltas travel inside `DirectTaskResult` payloads via Netty RPC, and the driver merges them serially after each task completes. The architectural cost is zero shuffle and zero disk I/O; the correctness cost is that the contract depends entirely on when and where you call `add()`.
+Accumulators solve a fundamental distributed systems problem: how do you aggregate telemetry from thousands of isolated executor JVM processes back to a single driver JVM without introducing distributed coordination, shuffle overhead, or heap-blowing collect operations? The `AccumulatorV2` API answers this by embedding delta aggregation directly into Spark's task lifecycle — deltas travel inside `DirectTaskResult` payloads via Netty RPC, and the driver merges them serially after each task completes. The architectural cost is zero shuffle and zero disk I/O; the correctness cost is that the contract depends entirely on when and where you call `add()`. [[1]](spark_book.pdf#page=125)
 
-The two non-negotiable rules for production accumulator use are: only read accumulator values after an action has returned (not after a transformation), and treat accumulator values as approximate telemetry — not exact counters — in any environment where task retries, speculative execution, or stage recomputation can occur. For exact counting semantics, use Spark's native aggregation operators (`count`, `agg`, `reduce`) which are guaranteed idempotent under the fault-tolerance model. Accumulators are a *telemetry primitive*, not a correctness primitive.
+The two non-negotiable rules for production accumulator use are: only read accumulator values after an action has returned (not after a transformation), and treat accumulator values as approximate telemetry — not exact counters — in any environment where task retries, speculative execution, or stage recomputation can occur. For exact counting semantics, use Spark's native aggregation operators (`count`, `agg`, `reduce`) which are guaranteed idempotent under the fault-tolerance model. Accumulators are a *telemetry primitive*, not a correctness primitive. [[2]](spark_book.pdf#page=125)
 
-Custom `AccumulatorV2` implementations unlock rich aggregation beyond simple numeric summation — sets, histograms, maps, HyperLogLog sketches, bloom filters — but each requires careful implementation of `isZero`, `copy`, `merge`, and `reset` to satisfy Spark's internal lifecycle assumptions. The multi-metric map accumulator pattern demonstrates the production best practice: consolidate related metrics into a single accumulator, disable speculative execution when correctness matters, batch all `add()` calls per partition, and emit the final `value` to an external monitoring system after the action completes. Accumulators used this way become a lightweight, zero-shuffle telemetry bus that integrates naturally with Spark's existing task execution infrastructure.
+Custom `AccumulatorV2` implementations unlock rich aggregation beyond simple numeric summation — sets, histograms, maps, HyperLogLog sketches, bloom filters — but each requires careful implementation of `isZero`, `copy`, `merge`, and `reset` to satisfy Spark's internal lifecycle assumptions. The multi-metric map accumulator pattern demonstrates the production best practice: consolidate related metrics into a single accumulator, disable speculative execution when correctness matters, batch all `add()` calls per partition, and emit the final `value` to an external monitoring system after the action completes. Accumulators used this way become a lightweight, zero-shuffle telemetry bus that integrates naturally with Spark's existing task execution infrastructure. [[3]](spark_book.pdf#page=126)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [C (Page 452)](spark_book.pdf#page=452)

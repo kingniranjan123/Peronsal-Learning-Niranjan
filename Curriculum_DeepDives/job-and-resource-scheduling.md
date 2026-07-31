@@ -126,23 +126,3 @@ print(f"Processed {count} errors in {time.time() - start_time} seconds.")
 
 Data Locality—shipping computation to the data rather than data to the computation—is fundamental to distributed data processing. The TaskScheduler attempts to schedule tasks in a strict hierarchy: `PROCESS_LOCAL` (data is cached in the executor's JVM), `NODE_LOCAL` (data is on the same node), `RACK_LOCAL` (same rack), and `ANY`. If a localized resource is unavailable, Spark waits for a duration defined by `spark.locality.wait` before degrading to a lower locality level. The code above demonstrates granular control over these timeouts. By increasing `spark.locality.wait.node` to 5 seconds, we explicitly tell the scheduler to wait longer for a free CPU core on the specific node holding the data block before deciding to launch the task on a different node and incur the heavy cost of network I/O. Proper tuning here is a balancing act between cluster utilization (avoiding idle CPU cores) and minimizing network congestion.
 </Master Class: Job and Resource Scheduling>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [J (Page 458)](spark_book.pdf#page=458)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

@@ -304,27 +304,9 @@ To achieve true mastery of Grouping and Sorting:
 
 ## 📚 Summary
 
-Grouping and sorting in Apache Spark are not thin wrappers around SQL semantics — they are direct exposures of the distributed systems machinery underneath. `groupBy` triggers a two-stage shuffle pipeline where Catalyst's `HashAggregateExec` performs map-side partial aggregation using Tungsten's off-heap binary hash map, dramatically reducing the shuffle payload from input rows to aggregated groups. The `SortShuffleManager` then coordinates the physical data movement, writing sorted shuffle files that reducers fetch via the `BlockManager`'s Netty transport layer.
+Grouping and sorting in Apache Spark are not thin wrappers around SQL semantics — they are direct exposures of the distributed systems machinery underneath. `groupBy` triggers a two-stage shuffle pipeline where Catalyst's `HashAggregateExec` performs map-side partial aggregation using Tungsten's off-heap binary hash map, dramatically reducing the shuffle payload from input rows to aggregated groups. The `SortShuffleManager` then coordinates the physical data movement, writing sorted shuffle files that reducers fetch via the `BlockManager`'s Netty transport layer. [[1]](spark_book.pdf#page=110)
 
-`orderBy` and `sortWithinPartitions` represent fundamentally different cost profiles. `orderBy` requires a `RangePartitioner` sampling pass and a full range-partition shuffle to produce a globally ordered output, making it appropriate only when total order is a hard requirement. `sortWithinPartitions` achieves local ordering with zero network cost, and combined with a prior `repartition`, it implements the secondary sort pattern — a memory-safe, high-throughput alternative to `collect_list` for ordered-within-group processing.
+`orderBy` and `sortWithinPartitions` represent fundamentally different cost profiles. `orderBy` requires a `RangePartitioner` sampling pass and a full range-partition shuffle to produce a globally ordered output, making it appropriate only when total order is a hard requirement. `sortWithinPartitions` achieves local ordering with zero network cost, and combined with a prior `repartition`, it implements the secondary sort pattern — a memory-safe, high-throughput alternative to `collect_list` for ordered-within-group processing. [[2]](spark_book.pdf#page=153)
 
-Data skew remains the single most common cause of production `groupBy` failures. When hash partitioning concentrates millions of rows on a single reduce task, the result is task-level OOM, stalled stages, and wildly unbalanced Spark UI timing histograms. The salting technique — append a random suffix, aggregate partially, strip the suffix, aggregate finally — is the canonical solution, distributing hot-key work across dozens of balanced tasks. Mastery of grouping and sorting means knowing not just the API surface, but the physical execution model, the memory management implications, and the failure modes that only emerge at production scale.
+Data skew remains the single most common cause of production `groupBy` failures. When hash partitioning concentrates millions of rows on a single reduce task, the result is task-level OOM, stalled stages, and wildly unbalanced Spark UI timing histograms. The salting technique — append a random suffix, aggregate partially, strip the suffix, aggregate finally — is the canonical solution, distributing hot-key work across dozens of balanced tasks. Mastery of grouping and sorting means knowing not just the API surface, but the physical execution model, the memory management implications, and the failure modes that only emerge at production scale. [[3]](spark_book.pdf#page=43)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

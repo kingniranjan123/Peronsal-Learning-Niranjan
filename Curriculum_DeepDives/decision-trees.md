@@ -231,24 +231,9 @@ To achieve true mastery of Decision Trees in Spark:
 
 ## 📚 Summary
 
-Decision trees in Apache Spark represent a masterclass in adapting classical machine learning algorithms to distributed, data-parallel paradigms. By abandoning the traditional data-sorting approach in favor of the PLANET architecture, Spark MLlib shifts the computational burden from network shuffles and disk I/O to memory-bound histogram aggregations. This allows the framework to scale to datasets with billions of rows seamlessly. The synergy between feature discretization, Tungsten’s off-heap memory, and the driver’s tree-reduce aggregation minimizes garbage collection while maximizing CPU vectorization.
+Decision trees in Apache Spark represent a masterclass in adapting classical machine learning algorithms to distributed, data-parallel paradigms. By abandoning the traditional data-sorting approach in favor of the PLANET architecture, Spark MLlib shifts the computational burden from network shuffles and disk I/O to memory-bound histogram aggregations. This allows the framework to scale to datasets with billions of rows seamlessly. The synergy between feature discretization, Tungsten’s off-heap memory, and the driver’s tree-reduce aggregation minimizes garbage collection while maximizing CPU vectorization. [[1]](spark_book.pdf#page=266)
 
-However, this distributed power introduces unique configuration paradigms that separate novices from experts. Understanding the delicate balance between `maxBins`, `maxDepth`, and `maxMemoryInMB` is non-negotiable for production engineering. Misconfiguring these parameters leads to silently degraded performance—where Spark compensates for low memory by launching dozens of redundant data scans—or spectacular driver crashes due to histogram explosion. By caching node IDs and strategically checkpointing the RDD DAG, engineers can push the boundaries of tree depth without destabilizing the cluster.
+However, this distributed power introduces unique configuration paradigms that separate novices from experts. Understanding the delicate balance between `maxBins`, `maxDepth`, and `maxMemoryInMB` is non-negotiable for production engineering. Misconfiguring these parameters leads to silently degraded performance—where Spark compensates for low memory by launching dozens of redundant data scans—or spectacular driver crashes due to histogram explosion. By caching node IDs and strategically checkpointing the RDD DAG, engineers can push the boundaries of tree depth without destabilizing the cluster. [[2]](spark_book.pdf#page=267)
 
-Ultimately, mastering Spark's decision trees requires treating the algorithm not as a black box, but as a distributed MapReduce application. Every parameter tweak directly influences network serialization, JVM memory allocation, and Catalyst query planning. With this architectural mental model, you can architect robust, petabyte-scale pipelines, paving the way for advanced ensembles like Random Forests and Gradient-Boosted Trees while avoiding the pitfalls of naive implementations.
-</🔥 Master Class: Decision Trees>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [C (Page 452)](spark_book.pdf#page=452)
+Ultimately, mastering Spark's decision trees requires treating the algorithm not as a black box, but as a distributed MapReduce application. Every parameter tweak directly influences network serialization, JVM memory allocation, and Catalyst query planning. With this architectural mental model, you can architect robust, petabyte-scale pipelines, paving the way for advanced ensembles like Random Forests and Gradient-Boosted Trees while avoiding the pitfalls of naive implementations. [[3]](spark_book.pdf#page=267)
+</🔥 Master Class: Decision Trees> [[4]](spark_book.pdf#page=268)

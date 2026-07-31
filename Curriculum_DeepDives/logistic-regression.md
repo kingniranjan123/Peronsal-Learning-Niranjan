@@ -394,27 +394,9 @@ To achieve true mastery of Logistic Regression in Apache Spark:
 
 ## 📚 Summary
 
-Logistic Regression in Apache Spark is a distributed, numerically optimized classifier built on top of Catalyst query planning, Tungsten binary memory, and quasi-Newton optimization. Its correctness depends on understanding three layers: the mathematical model (sigmoid for binary, softmax for multinomial), the distributed computation pattern (`treeAggregate` for gradient reduction, L-BFGS/OWLQN on the driver), and the JVM resource model (driver heap for coefficient matrices, off-heap Tungsten for training rows, Torrent broadcast for weight vectors).
+Logistic Regression in Apache Spark is a distributed, numerically optimized classifier built on top of Catalyst query planning, Tungsten binary memory, and quasi-Newton optimization. Its correctness depends on understanding three layers: the mathematical model (sigmoid for binary, softmax for multinomial), the distributed computation pattern (`treeAggregate` for gradient reduction, L-BFGS/OWLQN on the driver), and the JVM resource model (driver heap for coefficient matrices, off-heap Tungsten for training rows, Torrent broadcast for weight vectors). [[1]](spark_book.pdf#page=249)
 
-The most common production failures are all resource-related: driver OOM from large multinomial weight matrices, GC pauses from insufficient standardization (leading to more optimizer iterations), and misleading ROC AUC metrics on imbalanced datasets that mask poor minority-class recall. Each failure is diagnosable from the Spark UI — driver GC tab, task timeline, and shuffle read metrics respectively.
+The most common production failures are all resource-related: driver OOM from large multinomial weight matrices, GC pauses from insufficient standardization (leading to more optimizer iterations), and misleading ROC AUC metrics on imbalanced datasets that mask poor minority-class recall. Each failure is diagnosable from the Spark UI — driver GC tab, task timeline, and shuffle read metrics respectively. [[2]](spark_book.pdf#page=250)
 
-Mastery of this algorithm means knowing not just how to call `LogisticRegression().fit()`, but how to choose the right regularizer for your feature distribution, size your cluster resources for the coefficient matrix dimensionality, handle class imbalance without exploding dataset size, and evaluate model quality with the right metric for your class distribution. These decisions, made correctly, are the difference between a model that works in a notebook and one that serves reliably in production at petabyte scale.
+Mastery of this algorithm means knowing not just how to call `LogisticRegression().fit()`, but how to choose the right regularizer for your feature distribution, size your cluster resources for the coefficient matrix dimensionality, handle class imbalance without exploding dataset size, and evaluate model quality with the right metric for your class distribution. These decisions, made correctly, are the difference between a model that works in a notebook and one that serves reliably in production at petabyte scale. [[3]](spark_book.pdf#page=252)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)

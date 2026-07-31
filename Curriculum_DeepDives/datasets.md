@@ -375,31 +375,9 @@ To achieve true mastery of Datasets:
 
 ## 📚 Summary
 
-The Dataset API is not simply a typed wrapper around DataFrames — it is the interface point between two fundamentally different execution philosophies within a single system: Tungsten's schema-aware, off-heap columnar execution engine, and Scala's JVM-based typed functional programming model. When you stay on the Tungsten path — using column expressions, SQL functions, and schema-cast `as[T]` — you get the full benefit of Catalyst optimization, predicate pushdown into Parquet/ORC readers, whole-stage code generation, and off-heap memory management with no GC overhead. When you cross into typed lambda territory via `.map()` or `.groupByKey().mapGroups()`, you surrender those benefits in exchange for compile-time type safety and the ability to call arbitrary JVM methods on your data.
+The Dataset API is not simply a typed wrapper around DataFrames — it is the interface point between two fundamentally different execution philosophies within a single system: Tungsten's schema-aware, off-heap columnar execution engine, and Scala's JVM-based typed functional programming model. When you stay on the Tungsten path — using column expressions, SQL functions, and schema-cast `as[T]` — you get the full benefit of Catalyst optimization, predicate pushdown into Parquet/ORC readers, whole-stage code generation, and off-heap memory management with no GC overhead. When you cross into typed lambda territory via `.map()` or `.groupByKey().mapGroups()`, you surrender those benefits in exchange for compile-time type safety and the ability to call arbitrary JVM methods on your data. [[1]](spark_book.pdf#page=157)
 
-The `ExpressionEncoder[T]` is the linchpin of the entire system. It compiles a schema-aware binary translation layer using Catalyst expression trees, enabling Spark to treat your case class fields as first-class relational columns without the overhead of runtime reflection on every row. Understanding when the Encoder's serializer/deserializer fires — and when Spark stays entirely in `InternalRow` binary format — is the single most important mental model for writing high-performance Dataset code. The Spark UI's SQL tab makes this visible: any physical plan containing `DeserializeToObject` is a signal that you are paying the object materialization tax.
+The `ExpressionEncoder[T]` is the linchpin of the entire system. It compiles a schema-aware binary translation layer using Catalyst expression trees, enabling Spark to treat your case class fields as first-class relational columns without the overhead of runtime reflection on every row. Understanding when the Encoder's serializer/deserializer fires — and when Spark stays entirely in `InternalRow` binary format — is the single most important mental model for writing high-performance Dataset code. The Spark UI's SQL tab makes this visible: any physical plan containing `DeserializeToObject` is a signal that you are paying the object materialization tax. [[2]](spark_book.pdf#page=158)
 
-In production, the pragmatic strategy is to use `Dataset[T]` for type-safe API boundaries (reading from sources, writing to sinks, function signatures) and to perform the bulk of transformation and aggregation logic using column expressions and the aggregation DSL, converting to typed objects only at the final stage. This hybrid approach gives you compile-time schema validation, readable code, and Tungsten-level performance — the core promise the Dataset API was designed to deliver.
+In production, the pragmatic strategy is to use `Dataset[T]` for type-safe API boundaries (reading from sources, writing to sinks, function signatures) and to perform the bulk of transformation and aggregation logic using column expressions and the aggregation DSL, converting to typed objects only at the final stage. This hybrid approach gives you compile-time schema validation, readable code, and Tungsten-level performance — the core promise the Dataset API was designed to deliver. [[3]](spark_book.pdf#page=159)
 
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [D (Page 453)](spark_book.pdf#page=453)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [F (Page 456)](spark_book.pdf#page=456)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [C (Page 452)](spark_book.pdf#page=452)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [Y (Page 470)](spark_book.pdf#page=470)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [J (Page 458)](spark_book.pdf#page=458)
-> - [H (Page 457)](spark_book.pdf#page=457)
-> - [B (Page 452)](spark_book.pdf#page=452)
-> - [N (Page 461)](spark_book.pdf#page=461)

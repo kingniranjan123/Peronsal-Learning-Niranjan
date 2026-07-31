@@ -230,28 +230,9 @@ To achieve true mastery of Configuring Spark:
 
 ## 📚 Summary
 
-Configuring Apache Spark is fundamentally the structural engineering of distributed computing. It is the continuous, meticulous process of aligning the logical aspirations of a SQL query plan with the harsh, unforgiving physical constraints of memory, CPU threads, disk IOPS, and network bandwidth. Absolute mastery of configuration dictates whether your complex application executes flawlessly in minutes using an optimized Tungsten off-heap binary format or crashes incessantly for hours in an endless, catastrophic loop of garbage collection pauses and OOM container kills. 
+Configuring Apache Spark is fundamentally the structural engineering of distributed computing. It is the continuous, meticulous process of aligning the logical aspirations of a SQL query plan with the harsh, unforgiving physical constraints of memory, CPU threads, disk IOPS, and network bandwidth. Absolute mastery of configuration dictates whether your complex application executes flawlessly in minutes using an optimized Tungsten off-heap binary format or crashes incessantly for hours in an endless, catastrophic loop of garbage collection pauses and OOM container kills. [[1]](spark_book.pdf#page=323)
 
-At its core, understanding configuration means intimately understanding the Spark internal architecture. You must mentally trace the complete lifecycle of a distributed task: how Catalyst plans the initial join based on `autoBroadcastJoinThreshold`, how the Unified Memory Manager partitions the JVM heap based on `spark.memory.fraction`, how the ShuffleManager mathematically sizes its internal file buffers, and exactly how the S3 committer protocol finalizes output data safely. Each property you intentionally set is a direct, low-level command to one of these intricate sub-systems, fundamentally altering the execution DAG and resource allocation matrix across thousands of nodes.
+At its core, understanding configuration means intimately understanding the Spark internal architecture. You must mentally trace the complete lifecycle of a distributed task: how Catalyst plans the initial join based on `autoBroadcastJoinThreshold`, how the Unified Memory Manager partitions the JVM heap based on `spark.memory.fraction`, how the ShuffleManager mathematically sizes its internal file buffers, and exactly how the S3 committer protocol finalizes output data safely. Each property you intentionally set is a direct, low-level command to one of these intricate sub-systems, fundamentally altering the execution DAG and resource allocation matrix across thousands of nodes. [[2]](spark_book.pdf#page=366)
 
-In modern production data environments, default settings are almost invariably, and often dangerously, insufficient. Dealing with petabytes of data across thousands of ephemeral, containerized cloud nodes demands a highly aggressive posture towards memory overhead allocation, serialization protocols (like Kryo), and adaptive query optimization. An elite Spark data engineer does not guess at configurations; they deeply inspect the Spark UI, scientifically profile the true bottleneck—whether it be localized I/O, CPU thrashing, or network starvation—and surgically inject the precise configuration required to resolve the architectural impedance mismatch.
-</🔥 Master Class: Configuring Spark>
-
-## Book References
-> **📖 Spark In Action (2nd Edition) References:**
-> - [K (Page 458)](spark_book.pdf#page=458)
-> - [E (Page 455)](spark_book.pdf#page=455)
-> - [L (Page 458)](spark_book.pdf#page=458)
-> - [S (Page 464)](spark_book.pdf#page=464)
-> - [O (Page 461)](spark_book.pdf#page=461)
-> - [F (Page 456)](spark_book.pdf#page=456)
-> - [M (Page 459)](spark_book.pdf#page=459)
-> - [A (Page 451)](spark_book.pdf#page=451)
-> - [R (Page 463)](spark_book.pdf#page=463)
-> - [P (Page 462)](spark_book.pdf#page=462)
-> - [T (Page 469)](spark_book.pdf#page=469)
-> - [I (Page 457)](spark_book.pdf#page=457)
-> - [U (Page 470)](spark_book.pdf#page=470)
-> - [N (Page 461)](spark_book.pdf#page=461)
-> - [G (Page 456)](spark_book.pdf#page=456)
-> - [C (Page 452)](spark_book.pdf#page=452)
+In modern production data environments, default settings are almost invariably, and often dangerously, insufficient. Dealing with petabytes of data across thousands of ephemeral, containerized cloud nodes demands a highly aggressive posture towards memory overhead allocation, serialization protocols (like Kryo), and adaptive query optimization. An elite Spark data engineer does not guess at configurations; they deeply inspect the Spark UI, scientifically profile the true bottleneck—whether it be localized I/O, CPU thrashing, or network starvation—and surgically inject the precise configuration required to resolve the architectural impedance mismatch. [[3]](spark_book.pdf#page=367)
+</🔥 Master Class: Configuring Spark> [[4]](spark_book.pdf#page=439)
