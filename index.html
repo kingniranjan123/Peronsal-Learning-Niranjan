@@ -509,6 +509,70 @@ pre::-webkit-scrollbar-thumb { background:#2A3F5F; border-radius:3px; }
   text-decoration: underline;
 }
 
+#infra-md-content {
+  line-height:1.75;
+  color:var(--text-2);
+}
+#infra-md-content h1,
+#infra-md-content h2,
+#infra-md-content h3 {
+  color:var(--text-1);
+  line-height:1.25;
+  margin:30px 0 12px;
+}
+#infra-md-content h1 { font-size:1.65rem; }
+#infra-md-content h2 {
+  font-size:1.35rem;
+  padding-top:18px;
+  border-top:1px solid var(--border);
+}
+#infra-md-content h3 { font-size:1.08rem; color:#DBEAFE; }
+#infra-md-content p,
+#infra-md-content li {
+  color:var(--text-2);
+  font-size:.96rem;
+  line-height:1.78;
+  margin-bottom:12px;
+}
+#infra-md-content ul,
+#infra-md-content ol { padding-left:24px; margin:12px 0 20px; }
+#infra-md-content code:not(pre code) {
+  background:#0D111780;
+  color:var(--orange);
+  padding:2px 6px;
+  border-radius:5px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.86em;
+}
+#infra-md-content table {
+  width:100%;
+  border-collapse:collapse;
+  margin:18px 0 24px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+  font-size:.86rem;
+}
+#infra-md-content th {
+  background:var(--bg-deep);
+  color:var(--accent-2);
+  padding:10px 14px;
+  text-align:left;
+  border-bottom:1px solid var(--border-2);
+}
+#infra-md-content td {
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  vertical-align:top;
+}
+#infra-md-content .code-block {
+  margin:16px 0 24px;
+  box-shadow:0 12px 28px #00000030;
+}
+#infra-md-content .educational-visual {
+  margin:18px 0 28px;
+}
+
 /* ─── DEEP LEARNING QUESTIONS ──────────────────────────────── */
 .dlq-section {
   margin-top: 48px;
@@ -3143,6 +3207,41 @@ function copyCode(id, btn) {
   });
 }
 
+function enhanceMarkdownCodeBlocks(container) {
+  if (!container) return;
+  container.querySelectorAll('pre').forEach(pre => {
+    if (pre.closest('.code-block') || pre.closest('.educational-visual')) return;
+    const code = pre.querySelector('code');
+    if (!code) return;
+    const langClass = Array.from(code.classList).find(c => c.startsWith('language-')) || '';
+    const lang = (langClass.replace('language-', '') || 'bash').toLowerCase();
+    if (lang === 'mermaid') return;
+    const labels = {
+      powershell: 'PowerShell',
+      ps1: 'PowerShell',
+      shell: 'Shell',
+      bash: 'Command Prompt',
+      cmd: 'Command Prompt',
+      python: 'Python',
+      scala: 'Scala',
+      sql: 'SQL',
+      yaml: 'YAML',
+      json: 'JSON'
+    };
+    const id = code.id || ('cb_' + Math.random().toString(36).slice(2, 10));
+    code.id = id;
+    const wrap = document.createElement('div');
+    wrap.className = 'code-block markdown-code-block';
+    wrap.innerHTML = `<div class="code-header">
+      <span class="code-lang ${escHtml(lang)}">${escHtml(labels[lang] || lang)}</span>
+      <button class="code-copy" onclick="copyCode('${id}',this)">Copy</button>
+    </div>`;
+    pre.replaceWith(wrap);
+    wrap.appendChild(pre);
+    if (typeof hljs !== 'undefined') hljs.highlightElement(code);
+  });
+}
+
 function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
@@ -4030,9 +4129,7 @@ function showInfra(sectionId) {
         const container = document.getElementById('infra-md-content');
         container.innerHTML = (typeof marked !== 'undefined') ? marked.parse(md) : '<pre>' + escHtml(md) + '</pre>';
         renderMermaidBlocks(container).then(() => {
-          container.querySelectorAll('pre code').forEach(el => {
-            if (typeof hljs !== 'undefined') hljs.highlightElement(el);
-          });
+          enhanceMarkdownCodeBlocks(container);
         });
       })
       .catch(err => {
