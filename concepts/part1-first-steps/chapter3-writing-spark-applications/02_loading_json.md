@@ -194,7 +194,7 @@ Explain step-by-step:
 5. **Parsing:** The Jackson parser inside Spark evaluates each line against the provided schema.
 6. **Memory:** Valid records are encoded into Spark's internal Tungsten binary format.
 
-```text
+```scala
 [Driver: spark.read.json] 
        |
        v
@@ -314,7 +314,7 @@ spark.stop()
 ```
 
 **Expected Output:**
-```text
+```plaintext
 Valid and Flattened Data:
 +--------+--------------------+-----------+-------------+------+
 |event_id|           timestamp|customer_id|customer_tier|amount|

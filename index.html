@@ -306,6 +306,21 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg-de
 .code-block pre { margin:0; padding:0; }
 .code-block pre code { padding:18px 20px !important; font-family:'JetBrains Mono',monospace !important; font-size:.82rem !important; line-height:1.65 !important; display:block; overflow-x:auto; }
 
+/* ASCII Diagram blocks — no syntax colouring, clean monospaced rendering */
+.code-block pre code.language-plaintext,
+.code-block pre code.language-text,
+pre code.language-plaintext,
+pre code.language-text {
+  color: #e2e8f0 !important;
+  background: transparent !important;
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  font-size: .78rem !important;
+  line-height: 1.5 !important;
+  white-space: pre !important;
+  overflow-x: auto !important;
+  display: block;
+}
+
 /* Steps */
 .steps { list-style:none; padding:0; }
 .steps li {
@@ -2716,7 +2731,11 @@ function render(html) {
   ci.innerHTML = `<div class="fade-in">${html}</div>`;
   document.getElementById('content-area').scrollTop = 0;
   if (window.hljs) {
-    ci.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+    ci.querySelectorAll('pre code').forEach(el => {
+      if (!el.classList.contains('language-plaintext') && !el.classList.contains('language-text')) {
+        hljs.highlightElement(el);
+      }
+    });
   }
 }
 
@@ -3083,8 +3102,12 @@ async function fetchDLQ(partId, chapterId, topicId) {
     aHtml += `</div>`;
     container.innerHTML = aHtml;
 
-    // Re-run highlight.js on new code blocks
-    container.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+    // Re-run highlight.js on new code blocks (skip plaintext/diagram blocks)
+    container.querySelectorAll('pre code').forEach(el => {
+      if (!el.classList.contains('language-plaintext') && !el.classList.contains('language-text')) {
+        hljs.highlightElement(el);
+      }
+    });
 
   } catch(e) {
     container.innerHTML = `<div class="dlq-not-available">🔬 Deep Learning Questions for this topic are being generated. Check back soon.</div>`;

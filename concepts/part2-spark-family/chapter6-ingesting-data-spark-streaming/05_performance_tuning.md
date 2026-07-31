@@ -116,9 +116,6 @@ object StreamingTuningApp {
 
 A stable streaming application requires strict adherence to the golden rule—processing time must remain below the batch interval—which is achieved by tuning parallelism, optimizing garbage collection, and enabling dynamic backpressure.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -179,7 +176,7 @@ When a tuned Spark Streaming application runs, the execution follows this path:
 5.  **Parallel Execution (Executors):** Cores process the data. Efficient GC (like G1GC) runs in the background to clean up discarded objects.
 6.  **Metric Reporting:** Executors report processing times back to the Driver, closing the feedback loop for the next batch.
 
-```text
+```plaintext
 [Incoming Data Spikes] 
         |
         v
@@ -330,7 +327,7 @@ query.awaitTermination()
 5. **Trigger:** Every 10 seconds, Spark initiates a micro-batch execution, outputting updated error counts to the console.
 
 **Expected Output (Console):**
-```text
+```plaintext
 -------------------------------------------
 Batch: 1
 -------------------------------------------

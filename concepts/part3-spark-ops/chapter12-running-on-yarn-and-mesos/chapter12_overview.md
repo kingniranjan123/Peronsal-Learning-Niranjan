@@ -316,7 +316,7 @@ Apache Mesos takes a different approach, acting more like a datacenter operating
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 sequenceDiagram
     participant User
     participant SparkSubmit
@@ -460,7 +460,7 @@ When a Spark job is submitted to YARN in cluster mode:
 5. **Execution:** Driver sends tasks to Executors.
 6. **Completion:** Executors unregister, AM finishes, YARN reclaims resources.
 
-```text
+```scala
 [Spark Submit] --> (1) Request AM --> [ResourceManager]
                                           |
                                          (2) Allocate Container

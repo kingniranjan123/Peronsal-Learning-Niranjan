@@ -55,7 +55,7 @@ end
 
 ## Code Example
 
-```python
+```plaintext
 from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import Tokenizer, HashingTF
@@ -118,9 +118,6 @@ prediction.select("id", "text", "probability", "prediction").show(truncate=False
 ## Key Takeaway
 
 Spark ML simplifies distributed machine learning by providing a unified Pipeline API, standardizing data transformations and model training through Transformers and Estimators, and ensuring seamless transitions from development to production.
-
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
 
 ---
 
@@ -185,7 +182,7 @@ The Spark ML Pipeline API is ideal for distributed, large-scale machine learning
 4. **Model Creation:** Once the algorithm converges, the Driver broadcasts the final weights. A `PipelineModel` is instantiated.
 5. **Inference:** When `transform()` is called, Spark simply appends new columns to the DataFrame by running the pre-computed mathematical functions on Executors.
 
-```text
+```plaintext
 [Driver] -> Builds Pipeline DAG -> [Scheduler] -> Breaks into Stages
                                                           |
   +-------------------------------------------------------+
@@ -313,7 +310,7 @@ predictions.select("cust_serv_calls", "label", "prediction", "probability").show
 6. For the `test_data`, the model applies the exact same indexing and scaling parameters learned from the training data, then predicts the churn.
 
 **Expected output:**
-```text
+```plaintext
 Model AUC: 1.0
 +---------------+-----+----------+--------------------+
 |cust_serv_calls|label|prediction|         probability|

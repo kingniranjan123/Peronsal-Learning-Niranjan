@@ -18,7 +18,7 @@ The final stages involve serving this data to the end user. A lightweight WebSoc
 
 ## Flow Diagram
 
-```
+```scala
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -176,7 +176,7 @@ This architecture shines in scenarios requiring sub-second to minute-level situa
 
 When a user clicks a button on a website, here is the execution flow to update the dashboard:
 
-```text
+```plaintext
 [1. Event Gen]      [2. Ingestion]         [3. Stream Processing]             [4. Push Layer]       [5. Visualization]
   Web Server  ----> Apache Kafka   ---->   Spark Streaming (Driver)   ---->  Node.js Server  ---->  Browser (D3.js)
  (Log entry)        (Topic: input)         [Micro-batch Scheduler]           (WebSocket TCP)       (DOM Update)

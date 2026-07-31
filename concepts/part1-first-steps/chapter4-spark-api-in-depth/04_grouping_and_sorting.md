@@ -174,7 +174,7 @@ Sorting (`sortByKey`) uses a `RangePartitioner`. It samples the data to determin
 5. **Shuffle**: Data is partitioned by key hash and written to local disk shuffle files.
 6. **Reduce Stage**: Executors pull the relevant shuffle files across the network, perform final aggregation, and yield the new RDD.
 
-```text
+```scala
 [Executor 1: Part 1] -> (Map-side combine) -> [Shuffle Write]
                                                     \
                                                   (Network Shuffle)
@@ -230,7 +230,7 @@ Sorting (`sortByKey`) uses a `RangePartitioner`. It samples the data to determin
 Uber wants to analyze driver earnings to find the average earnings per ride for each driver. The data comes in as `(DriverID, RideEarnings)`.
 
 **Sample Dataset:**
-```text
+```scala
 ("Driver1", 15.0), ("Driver2", 20.0), ("Driver1", 25.0), ("Driver3", 10.0), ("Driver2", 30.0)
 ```
 

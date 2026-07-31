@@ -163,7 +163,7 @@ Do not try to micromanage Spark's execution model for simple, small-scale batch 
 6. **Executors:** Tasks run in parallel on Executors.
 7. **Shuffle:** If a stage requires a shuffle, Executors write map output to local disks, and the next stage's tasks fetch this data over the network.
 
-```text
+```scala
 User Code -> [ Driver ] -> DAG Scheduler -> Task Scheduler -> Cluster Manager
                                                                      |
                                                                      v
@@ -279,7 +279,7 @@ spark.stop()
 5. The final reduction completes the sums. The `collect()` action pulls results back to the Driver.
 
 **Expected output:**
-```text
+```scala
 --- Final Revenue by Category ---
 Category: Electronics | Total Revenue: $1500
 Category: Books | Total Revenue: $35

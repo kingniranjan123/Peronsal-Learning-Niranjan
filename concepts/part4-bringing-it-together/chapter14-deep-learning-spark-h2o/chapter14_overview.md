@@ -20,7 +20,7 @@ Furthermore, Sparkling Water allows you to use H2O algorithms directly within Sp
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A["Apache Spark
 Distributed Data Processing"] -->|"H2OContext"| B["H2O Sparkling Water
@@ -193,7 +193,7 @@ When you trigger an H2O Deep Learning job within Spark, a highly orchestrated pr
 7.  Nodes periodically synchronize their neural network weights across the cluster via fast peer-to-peer TCP communication (bypassing Spark's shuffle).
 8.  The final Trained Model is assembled on the leader node.
 
-```text
+```plaintext
 +-------------------+       +-------------------+       +-------------------+
 |   Spark Driver    |       |  Spark Executor   |       |  Spark Executor   |
 | (H2OContext Init) | ----> |   + H2O Node 1    | <---> |   + H2O Node 2    |

@@ -24,7 +24,7 @@ This overview sets the stage for the specific deep-dives in the subsequent files
 5.  **Double RDD Functions**: Statistical operations on numeric data.
 
 ## Flow Diagram
-```mermaid
+```plaintext
 graph TD
     A[Chapter 2: Spark Fundamentals] --> B(01_spark_shell.md)
     A --> C(02_rdds.md)
@@ -92,23 +92,6 @@ topWords.foreach(println)
 ## Key Takeaway
 Mastering the Spark Shell, RDDs, Transformations, and Actions is the fundamental prerequisite for writing scalable and resilient big data applications.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -165,7 +148,7 @@ The foundational RDD model and lazy evaluation shine in scenarios where fine-gra
 5. **Execution:** The Task Scheduler sends Tasks to Executors on worker nodes.
 6. **In-Memory Processing:** Executors run the tasks in parallel, keeping intermediate data in RAM.
 
-```text
+```plaintext
 [Driver (User Code)] 
        | (Calls Action)
        v
@@ -287,7 +270,7 @@ spark.stop()
 5. Calling `first()` triggers execution again, but because `counts_rdd` is cached, it skips the log parsing and shuffling, only running the sorting logic.
 
 **Expected Output:**
-```text
+```scala
 Total Unique Missing Endpoints: 1
 Most Frequent Missing Endpoint: ('/products/123', 2)
 ```

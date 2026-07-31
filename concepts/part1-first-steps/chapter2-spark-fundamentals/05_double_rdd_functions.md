@@ -81,19 +81,6 @@ println(s"Counts: ${hist._2.mkString(", ")}")
 ## Key Takeaway
 Double RDD functions unlock powerful, single-pass distributed statistical calculations, provided you properly cast your dataset to an `RDD[Double]`.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -148,7 +135,7 @@ When you call `stats()` on an `RDD[Double]`, the execution unfolds seamlessly:
 5. **Shuffle/Merge**: The local `StatCounter` from each partition is sent back to the Driver (or merged via a tree-reduce). The Driver calls `merge()` on these counters to combine them into one final global `StatCounter`.
 6. **Result**: The final statistics are returned to the user application.
 
-```text
+```plaintext
 [Driver Program]
        | (Calls .stats() action)
        v
@@ -217,7 +204,7 @@ An e-commerce platform like Amazon wants to analyze the distribution of daily pr
 
 **Sample Dataset:**
 A text file (`sales_data.txt`) containing transactions: `TransactionID, OrderTotal`
-```text
+```scala
 TXN001, 150.50
 TXN002, 25.00
 TXN003, 99.99
@@ -275,7 +262,7 @@ sc.stop()
 5. The `histogram(3)` action triggers a second job to evaluate the distribution across 3 evenly spaced buckets based on the min and max values.
 
 **Expected Output:**
-```text
+```scala
 --- Sales Analytics Summary ---
 Total Transactions: 5
 Average Order: $157.60

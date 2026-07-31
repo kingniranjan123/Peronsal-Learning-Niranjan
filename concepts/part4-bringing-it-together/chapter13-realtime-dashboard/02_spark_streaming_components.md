@@ -18,7 +18,7 @@ The final component is the **Output Operation**. Spark Streaming uses `foreachRD
 
 ## Flow Diagram
 
-```
+```scala
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -209,7 +209,7 @@ When a Spark Streaming application starts:
 6. **Tasks** are dispatched to **Executors** to process the data in parallel.
 7. Output actions write the final RDD partitions to the destination (e.g., Redis, Kafka).
 
-```text
+```scala
 [Kafka Topic] ---> (Direct Stream) 
                        |
                        v
@@ -315,7 +315,7 @@ ssc.awaitTermination()
 6. `foreachRDD` triggers the execution. For the filtered suspects, it prints an alert to the console.
 
 **Expected output:**
-```text
+```scala
 🚨 ALERT: Potential DDoS from 192.168.1.50 with 450 requests in 10s!
 🚨 ALERT: Potential DDoS from 10.0.0.99 with 120 requests in 10s!
 ```

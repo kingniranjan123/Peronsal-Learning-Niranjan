@@ -20,7 +20,7 @@ In this chapter, we will explore the core concepts of GraphX, from constructing 
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     subgraph Data Sources
         A[Relational DB] -->|ETL| D(Data Lake)
@@ -222,7 +222,7 @@ When you trigger a GraphX algorithm, a heavily optimized distributed execution u
     *   *Step C:* Vertices receive the aggregated messages, update their properties, and trigger the next superstep.
 4.  **Convergence:** The DAG executes recursively until a superstep produces zero messages.
 
-```text
+```plaintext
 [Executor 1: Vertex A]      [Executor 2: Vertex B]
        |                              ^
        | (Send Message via Edge)      |
@@ -316,7 +316,7 @@ object FraudDetectionRing {
 }
 ```
 **Expected Output:**
-```text
+```scala
 Detected Suspicious Rings:
 Ring 1: Accounts -> Alice, Bob, Charlie
 Ring 4: Accounts -> David, Eve

@@ -152,7 +152,7 @@ When you train a machine learning model in Spark (e.g., Logistic Regression), th
 5. **Shuffle & Aggregate**: The partial gradients from all executors are sent back (reduced) to the driver.
 6. **Update**: The driver updates the model weights and checks for convergence. If not converged, it triggers the next iteration.
 
-```text
+```plaintext
 [Driver Node]
    | (1) Initialize Weights
    v

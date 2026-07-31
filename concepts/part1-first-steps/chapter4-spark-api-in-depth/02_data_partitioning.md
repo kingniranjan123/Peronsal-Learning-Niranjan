@@ -153,7 +153,7 @@ When a Spark action triggers a job that involves partitioning:
    - *Shuffle Write*: Executors write their data out to local disk, bucketed by the target partition.
    - *Shuffle Read*: Executors pull the specific buckets they need over the network to form the new partitions.
 
-```text
+```plaintext
 +-------------------+       +-------------------+       +-------------------+
 |  Executor 1       |       |   Network         |       |  Executor 1       |
 |  Partition A      | ----> |   Shuffle Phase   | ----> |  New Partition 1  |
@@ -264,7 +264,7 @@ final_agg_df.show()
 5. We perform a final grouping on the true `city_id`. Since the first aggregation reduced 100,000 rows to just 10 rows, this final shuffle uses virtually no memory.
 
 **Expected Output**:
-```text
+```plaintext
 +-------+-------------+
 |city_id|total_revenue|
 +-------+-------------+

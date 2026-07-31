@@ -136,9 +136,6 @@ println(s"Feature Importances: ${rfModel.featureImportances}")
 
 Random Forests leverage bagging and random feature selection to combine hundreds of error-prone decision trees into a single, highly accurate, and stable predictive model that resists overfitting.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -200,7 +197,7 @@ Random Forests are not a silver bullet. You should avoid them when:
 5. **Shuffle**: Minimal shuffling occurs; executors calculate split statistics locally, and the Driver aggregates them to choose the best split for each node in each tree.
 6. **Model Generation**: Once the trees reach `maxDepth` or perfectly separate the data, the Driver finalizes the `RandomForestModel` containing the rules for all trees.
 
-```text
+```plaintext
 [Driver] -> Defines RF Estimator -> Calls fit()
    |
 [Workers/Executors]

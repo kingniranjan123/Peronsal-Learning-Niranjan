@@ -15,7 +15,7 @@ To support concurrency, Spark offers **FAIR Scheduling**. When `spark.scheduler.
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A["Multiple Spark Jobs"] --> B{"Scheduler Mode"}
     B -->|"FIFO default"| C["Job 1 gets all resources
@@ -84,8 +84,6 @@ spark.stop()
 ## Key Takeaway
 Dynamic Allocation manages the total size of your cluster automatically, while Fair Scheduling ensures that multiple jobs running inside your application share that space fairly without blocking one another.
 
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -143,7 +141,7 @@ When multiple jobs are submitted to a FAIR-scheduled Spark application with dyna
 5. **Dynamic Request:** If the TaskScheduler realizes there are many pending tasks, it triggers Dynamic Allocation to request more executors from the cluster manager.
 6. **Execution & Scale Down:** Both jobs finish. After a timeout period of inactivity, Dynamic Allocation releases the executors back to the cluster.
 
-```text
+```scala
 [Users A & B] -> Submit Jobs -> [SparkContext/Driver]
                                       |
                               [DAGScheduler] (Creates Stages/Tasks)

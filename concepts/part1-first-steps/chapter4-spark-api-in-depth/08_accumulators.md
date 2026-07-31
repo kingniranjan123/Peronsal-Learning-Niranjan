@@ -20,7 +20,7 @@ When working with distributed systems, you cannot use standard global variables 
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A[Driver Node] -->|Initializes: counter=0| B(Accumulator)
     B -->|Serialized & Broadcast| C(Executor 1)
@@ -168,7 +168,7 @@ Accumulators should **not** be used for core business logic or when you need exa
 5. **Shuffle & Memory:** Accumulator updates bypass the standard shuffle mechanism. They are lightweight metadata messages.
 6. **Driver Merge:** The driver receives the deltas and adds them to its master copy.
 
-```text
+```plaintext
 [Driver (acc=0)] 
        | (Serialize & Broadcast)
        v
@@ -232,7 +232,7 @@ Accumulators should **not** be used for core business logic or when you need exa
 Netflix needs to process a massive batch of daily user viewing logs. While processing the data for analytics, they want to track how many log entries have invalid formatting and how many belong to a deprecated client version, without halting the main ETL pipeline or running separate aggregations.
 
 **Sample Dataset (CSV-like):**
-```text
+```scala
 user101,view,stranger_things,v2.0
 user102,view,the_crown,v1.0
 user103,ERROR_CORRUPT_DATA
@@ -299,7 +299,7 @@ print(f"Total Deprecated Client (v1.0) Hits: {deprecated_client_acc.value}")
 6. The driver merges the deltas and prints the exact counts.
 
 **Expected Output:**
-```text
+```scala
 Total Corrupt Logs Found: 1
 Total Deprecated Client (v1.0) Hits: 2
 ```

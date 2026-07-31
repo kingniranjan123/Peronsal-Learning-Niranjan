@@ -143,9 +143,6 @@ println("Cross-Validation Complete.")
 
 Cross-validation guarantees an unbiased, statistically rigorous evaluation of model performance and, when combined with grid search, automates the discovery of optimal hyperparameter configurations.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -213,7 +210,7 @@ When you call `cv.fit(dataset)`, a complex distributed process kicks off.
 6. **Shuffle**: Algorithms may cause shuffles (e.g., aggregating tree statistics), which are distributed across the cluster.
 7. **Aggregation**: Evaluation metrics are sent back to the Driver, which averages them and picks the best model.
 
-```text
+```plaintext
 [Driver] Generate Param Grid (e.g., 4 combos) & Split Data (K=3)
     |
     +---> [Scheduler] Queue 12 Training Tasks
@@ -276,7 +273,7 @@ When you call `cv.fit(dataset)`, a complex distributed process kicks off.
 **Business Problem:** A Telecom company wants to predict customer churn (whether a customer will cancel their subscription). They need to build a Random Forest model and find the optimal tree depth and number of trees using Cross-Validation.
 
 **Sample Dataset (`churn_data.csv`):**
-```text
+```scala
 customer_id,tenure_months,monthly_charges,total_charges,churn
 1,24,65.5,1570.0,0
 2,1,70.0,70.0,1

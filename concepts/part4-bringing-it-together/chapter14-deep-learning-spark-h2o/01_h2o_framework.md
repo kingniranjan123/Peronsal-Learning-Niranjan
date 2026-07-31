@@ -195,7 +195,7 @@ When a user submits an H2O machine learning task via Python:
 7. **Iteration:** Steps 5 and 6 repeat until the algorithm converges or reaches the max epochs.
 8. **Model Generation:** The final model object is assembled and can be downloaded as a low-latency MOJO for production.
 
-```text
+```plaintext
 [Python Client] --REST API--> [H2O Cluster Leader]
                                  |
            +---------------------+---------------------+

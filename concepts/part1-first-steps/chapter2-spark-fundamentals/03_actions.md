@@ -15,7 +15,7 @@ Actions generally do one of two things:
 It is crucial to understand the implications of returning data to the driver. The driver node has a finite amount of RAM. If you call `collect()` on a 50GB RDD, Spark will attempt to serialize all 50GB, send it over the network, and load it into the driver's memory, causing the driver to crash instantly. Therefore, actions like `take(n)` (which only evaluates enough partitions to get `n` elements) or writing to distributed storage are preferred for large datasets.
 
 ## Flow Diagram
-```mermaid
+```plaintext
 graph TD
     A["RDD Transformations
 Lazy - Not yet computed"] -->|"Action called"| B["DAG Scheduler"]
@@ -83,18 +83,6 @@ evens.saveAsTextFile("/tmp/output/even_numbers")
 ## Key Takeaway
 Actions are the triggers that compile the lazy lineage graph into physical execution, either returning summaries to the driver or writing massive results to storage.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -150,7 +138,7 @@ When an action is called, Spark transitions from building a logical plan to exec
 5. **Execution:** Executors process tasks in parallel across the cluster.
 6. **Result Gathering:** The executors either write results to disk or send their computed partial results back to the driver, which merges them to yield the final output.
 
-```text
+```plaintext
 [Driver] --> action (e.g., count)
    |
    v
@@ -238,7 +226,7 @@ spark.stop()
 4. The `write.parquet()` action is called. Executors write the cached data partitions directly to S3.
 
 **Expected output:**
-```
+```plaintext
 Total completed rides today: 154320
 Preview of completed rides:
 +-------+---------+--------+

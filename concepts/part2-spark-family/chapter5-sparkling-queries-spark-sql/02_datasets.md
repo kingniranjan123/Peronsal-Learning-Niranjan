@@ -155,7 +155,7 @@ When a Dataset job is executed, Spark goes through the following lifecycle:
 5. **Task Scheduler:** Distributes Tasks to Executors.
 6. **Executors:** Process the data in Tungsten binary format. If a lambda function is used (e.g., `.map()`), the data is temporarily deserialized to a JVM object, processed, and serialized back.
 
-```text
+```plaintext
 [Scala Code / Case Class] 
        | (Compile-time Type Check)
        v
@@ -275,7 +275,7 @@ object NetflixDataPipeline {
 4. **Aggregation:** The `.groupBy()` leverages standard Catalyst functions, running directly on Tungsten binary data for blazing speed.
 
 **Expected Output:**
-```text
+```plaintext
 +---------------+----------------+
 |      show_name|total_long_views|
 +---------------+----------------+

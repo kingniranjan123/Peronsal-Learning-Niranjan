@@ -13,7 +13,7 @@ To solve this, the AMPLab researchers conceptualized a new data structure: the R
 By 2010, Spark was open-sourced, and by 2013, it had been donated to the Apache Software Foundation, quickly becoming a Top-Level Project. Benchmarks showed astounding results: Spark could run logistic regression up to 100x faster than Hadoop MapReduce in memory, and even 10x faster when running on disk (thanks to a more efficient execution engine and DAG optimization). This revolution transformed industries. Financial institutions used it for real-time fraud detection; e-commerce giants used it for interactive recommendation engines; and healthcare companies used it for rapid genomic sequencing analysis. Spark proved that big data didn't have to be slow data.
 
 ## Flow Diagram
-```
+```plaintext
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -160,7 +160,7 @@ When a Spark job is submitted, a complex orchestration occurs to achieve its hig
 4. **Executors:** Worker nodes receive Tasks. They execute the code on their assigned data partitions.
 5. **In-Memory Caching:** If `cache()` is called, the Executor stores the partition in its local RAM instead of writing it to disk. 
 
-```text
+```plaintext
 +-------------------+        +--------------------+
 |   User Program    |        |   Cluster Manager  |
 | (SparkContext/    +------->+   (YARN/K8s/etc)   |
@@ -299,7 +299,7 @@ spark.stop()
 6. **Output:** The model generates matrix factorizations and outputs predictions.
 
 **Expected Output:**
-```text
+```plaintext
 Total ratings loaded: 10485760
 Training model... (This is up to 100x faster than MapReduce!)
 Model training completed in 45.21 seconds

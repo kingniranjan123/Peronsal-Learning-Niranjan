@@ -118,9 +118,6 @@ println(s"Area Under ROC = $accuracy")
 
 Logistic regression provides a highly interpretable, fast-training, and mathematically sound baseline for classification tasks by mapping linear combinations of features to probabilities using the sigmoid function.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -184,7 +181,7 @@ When you call `lr.fit(trainingData)` in Spark, the following execution flow happ
 6. **Weight Update:** The driver updates the model's global weights based on the aggregated gradients.
 7. **Iteration:** Steps 4-6 repeat until convergence or `maxIter` is reached.
 
-```text
+```plaintext
 [Driver (Initial Weights)] 
        | (broadcasts weights)
        v

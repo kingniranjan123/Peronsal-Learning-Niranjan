@@ -32,7 +32,7 @@ When a task fails, you first use the Application UI (port 4040) to identify *whi
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     User([Data Engineer])
     
@@ -164,7 +164,7 @@ When you submit a Spark application:
 4. When a user requests a page via HTTP, the UI renders HTML using these live data structures.
 5. If an executor fails, the **Worker** (via port 8081) exposes the physical file system logs through its own HTTP endpoints.
 
-```text
+```plaintext
 [Spark Engine Events] --> (SparkListener Bus) --> [UI Data Store]
                                                        |
 [Web Browser] --HTTP GET--> [Jetty Server (Port 4040)]-+

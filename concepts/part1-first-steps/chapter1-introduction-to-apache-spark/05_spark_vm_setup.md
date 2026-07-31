@@ -154,7 +154,7 @@ When you start a local Spark session, a specific execution flow occurs within yo
 4. **Executor Threading**: Instead of launching separate executor JVMs on different nodes, Spark spawns one executor thread per logical core inside the single local JVM.
 5. **Execution**: The Driver translates your code into a DAG, splits it into stages and tasks, and assigns those tasks to the local threads.
 
-```text
+```plaintext
 [ Developer Machine ]
        |
        v
@@ -268,7 +268,7 @@ spark.stop()
 6. The `spark.stop()` command cleanly shuts down the local JVM.
 
 **Expected Output:**
-```text
+```plaintext
 Expected Output:
 +-------+-------------------+
 |StoreID|Store_Total_Revenue|

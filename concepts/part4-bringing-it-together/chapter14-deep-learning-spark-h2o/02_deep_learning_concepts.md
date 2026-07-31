@@ -20,7 +20,7 @@ Because deep learning models have millions or billions of parameters, they are h
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A["Input Layer
 feature vector"] --> B["Hidden Layer 1
@@ -202,7 +202,7 @@ When training a Distributed Deep Learning model on Spark:
 5. **Weight Update:** The global weights are updated using the aggregated gradients.
 6. **Broadcast:** The new, updated weights are broadcast back to the Executors for the next mini-batch/epoch.
 
-```text
+```plaintext
 [Spark Driver / Parameter Server]
        | (Broadcasts Weights)  ^ (Aggregates Gradients)
        v                       |

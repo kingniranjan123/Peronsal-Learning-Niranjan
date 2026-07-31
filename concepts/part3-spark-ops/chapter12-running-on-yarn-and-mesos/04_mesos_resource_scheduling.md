@@ -445,7 +445,7 @@ Mesos should not be used in environments that are predominantly or exclusively r
 6. **Execution:** The Spark Executor starts inside the container, connects back to the Driver, and begins processing Spark tasks (DAG -> Stages -> Tasks).
 7. **Resource Release:** When the job finishes or dynamic allocation scales down, executors are killed, and resources are returned to the Mesos Master pool.
 
-```text
+```plaintext
 [Mesos Master] <--(1. Status)---- [Mesos Agents (Worker Nodes)]
       |                                  ^
   (2. Offer)                         (5. Launch Task/Docker)

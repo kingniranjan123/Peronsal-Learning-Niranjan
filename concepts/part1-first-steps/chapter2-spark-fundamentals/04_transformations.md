@@ -82,18 +82,6 @@ print(unique_red_fruits.collect())
 ## Key Takeaway
 Transformations define your data pipeline lazily; always strive to maximize Narrow transformations and minimize Wide transformations (shuffles) for optimal performance.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -144,7 +132,7 @@ Transformations are used anytime you need to manipulate, clean, or analyze data 
 4. **Pipelining:** Within a single stage, all Narrow Transformations are "pipelined" together. An executor will read a record, map it, and filter it in a single pass in memory.
 5. **Execution:** Tasks are sent to Executors, where they process partitions of data in parallel.
 
-```text
+```scala
 [Partition 1] --> (map + filter pipelined in memory) --> [Shuffle Write]
                                                              |
                                                        (Network Transfer)
@@ -185,7 +173,7 @@ Transformations are used anytime you need to manipulate, clean, or analyze data 
 A retail company wants to analyze raw user clickstream logs from their website. They need to extract the user IDs of people who clicked on "checkout", remove duplicate clicks by the same user, and output a clean list of unique shoppers.
 
 **Sample Dataset:**
-```text
+```scala
 user101,homepage
 user102,product_page
 user101,checkout

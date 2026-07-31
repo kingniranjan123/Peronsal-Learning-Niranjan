@@ -18,7 +18,7 @@ Ultimately, Spark SQL acts as a universal bridge. It connects various data sourc
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A1[SQL Query string] --> B(Spark SQL Parser)
     A2[DataFrame API code] --> B
@@ -187,7 +187,7 @@ When a user submits a query via DataFrames or SQL:
 5. **Code Generation:** Tungsten generates custom, highly optimized Java bytecode for the chosen plan.
 6. **Execution:** The resulting DAG of RDDs is sent to the DAG Scheduler, broken into Stages and Tasks, and executed on worker nodes.
 
-```text
+```plaintext
 User Code (SQL / DataFrame) 
        │
        ▼
@@ -310,7 +310,7 @@ sql_df.show()
 # rows for users under 18 entirely!
 ```
 **Expected Output:**
-```text
+```plaintext
 +-----------+--------------+
 |device_type|avg_watch_time|
 +-----------+--------------+

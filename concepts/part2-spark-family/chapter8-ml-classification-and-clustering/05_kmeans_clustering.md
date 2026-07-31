@@ -128,9 +128,6 @@ for center in centers:
 
 K-Means is a powerful, distance-based algorithm for discovering hidden groupings in unlabeled data, but it requires careful feature scaling and mathematical evaluation to determine the optimal number of clusters.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -192,7 +189,7 @@ While SQL is fundamentally deterministic, we can conceptualize clustering by com
 5. **Shuffle & Update (Reduce Phase)**: The local sums and counts are sent back to the Driver (or aggregated via treeReduce). The Driver divides the total sum by the total count to find the new global centroids.
 6. **Iteration**: The Driver broadcasts the new centroids back to the Executors, and the loop continues until convergence.
 
-```text
+```plaintext
 [Driver] Initializes & Broadcasts Centroids {C1, C2, C3}
        |
        v

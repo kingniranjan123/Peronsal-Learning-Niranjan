@@ -24,7 +24,7 @@ The History Server can also track "incomplete" applications (jobs that are curre
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A["Spark App running"] -->|"spark.eventLog.enabled=true"| B["Event Logs
 written to HDFS or local"]
@@ -145,7 +145,7 @@ It should be used whenever jobs are scheduled automatically (e.g., via Airflow o
 | **Log Cleaner** | Log Rotation / Retention Policies | Prevents storage exhaustion by deleting old historical data. |
 
 ### Q7: What Happens Behind the Scenes?
-```text
+```plaintext
 [Spark Application]
        |
        v (Internal Event Bus)

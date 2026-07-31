@@ -22,7 +22,7 @@ To ensure success in both cases, hyperparameter tuning is essential. Deep learni
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A["Training Data
 Boston Housing or MNIST"] --> B["Spark DataFrame
@@ -222,7 +222,7 @@ This concept is highly valuable across various industries:
 6. **Weight Synchronization**: H2O periodically averages the weights from all executors.
 7. **Scoring**: The model evaluates its loss on validation data and checks for early stopping.
 
-```text
+```plaintext
 [Spark Driver] --> [H2O Context]
                        |
         +--------------+--------------+

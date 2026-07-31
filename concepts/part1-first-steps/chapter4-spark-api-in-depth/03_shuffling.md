@@ -30,7 +30,7 @@ The executors for the new stage must fetch their specific partitions from the pr
 
 ## Flow Diagram
 
-```
+```plaintext
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -55,7 +55,7 @@ graph TD
 
 ## Code Example
 
-```python
+```plaintext
 from pyspark.sql import SparkSession
 
 spark = SparkSession.builder \
@@ -174,7 +174,7 @@ When a shuffle-inducing action is triggered, the Spark Driver analyzes the DAG a
 7. **Executors (Reduce):** Reach out to the BlockManager of map-executors over the network to fetch their designated data blocks.
 8. **Final Merge:** Data is decompressed, deserialized, merged, and handed to the user's reduce function.
 
-```text
+```plaintext
 [Executor 1 (Map)] --(Hash & Spill)--> [Local Disk: Data + Index] \
                                                                     \  (Network Fetch)
                                                                      +---> [Executor 3 (Reduce)] -> Final Result
@@ -239,7 +239,7 @@ u5,Comedy,90
 ```
 
 **Full PySpark Code:**
-```python
+```plaintext
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import sum, col
 

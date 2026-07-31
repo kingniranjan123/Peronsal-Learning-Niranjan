@@ -131,7 +131,7 @@ When you train a model in Spark MLlib, a complex orchestration of distributed ma
 5. **Tasks (Matrix Ops):** Each executor independently calculates partial gradients (using dot products between data vectors and current model weights).
 6. **Shuffle/Aggregation:** The partial results are sent back to the driver (or aggregated in a tree-reduce fashion) to update the global model weights.
 
-```text
+```scala
 [Driver Node] -- Broadcasts Model Weights --> [Executors]
                                                   |
 [Raw Data Partition] -> [Converted to Vectors] -> [Executors compute Dot Products]

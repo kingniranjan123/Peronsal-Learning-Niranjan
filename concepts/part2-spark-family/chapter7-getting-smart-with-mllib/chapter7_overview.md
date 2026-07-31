@@ -150,7 +150,7 @@ When you execute an MLlib pipeline, the process translates from high-level Pytho
 5. **Iterative Processing:** For algorithms like Logistic Regression, the Driver orchestrates multiple iterations. In each iteration, Executors compute partial gradients on their partitions and send them back to the Driver (or via tree aggregation) to update the global model weights.
 6. **Transformer Evaluation:** Once fit, the Estimator becomes a Transformer. The pipeline moves to the next stage, applying the transformation via lazy evaluation.
 
-```text
+```plaintext
 +-------------------+      +-------------------------------------------------+
 |   Spark Driver    |      |                 Spark Cluster                   |
 |                   |      |                                                 |
@@ -291,7 +291,7 @@ model.write().overwrite().save("s3a://telecom-models/churn_pipeline_model")
 5. **Prediction:** The `.transform()` method applies the exact same index mapping and scaling parameters learned during training to the `test_data`, then outputs predictions.
 
 **Expected Output:**
-```text
+```scala
 Training model...
 Model Area Under ROC: 0.8432
 ```

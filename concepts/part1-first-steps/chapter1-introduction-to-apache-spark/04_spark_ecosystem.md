@@ -22,7 +22,7 @@ When you submit a Spark job to a cluster of 100 machines, something needs to fig
 Spark acts as a universal router for data. It connects to message brokers like Apache Kafka to ingest real-time streaming data. It connects to Apache Hive to read metadata and schemas, allowing Spark SQL to act as a massive distributed data warehouse. It utilizes Apache ZooKeeper for high availability and coordination in streaming scenarios. This pluggable architecture means that as new technologies emerge, Spark simply needs a connector to integrate them into its ecosystem.
 
 ## Flow Diagram
-```mermaid
+```plaintext
 graph TD
     subgraph "Resource Managers (Where Spark Runs)"
         RM1[Apache YARN]
@@ -179,7 +179,7 @@ When Spark interacts with its ecosystem, a complex orchestration occurs:
 5. **Processing:** The Executors process the data in RAM, shuffling data across the network if an aggregation is required.
 6. **Writing:** The output data is written back to S3, and the Metastore is updated with new partition locations.
 
-```text
+```scala
 [Submit Job] --> (Cluster Manager: YARN/K8s) --> [Allocates Resources]
                                                        |
                                                        v

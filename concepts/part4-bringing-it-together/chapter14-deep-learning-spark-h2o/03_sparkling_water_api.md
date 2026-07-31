@@ -24,7 +24,7 @@ Alongside the programmatic API, initializing the `H2OContext` automatically spin
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A["SparkContext sc"] -->|"H2OContext.getOrCreate(sc)"| B["H2OContext h2o"]
     B --> C["H2O Flow UI
@@ -193,7 +193,7 @@ The API provides bidirectional conversion (`asH2OFrame` and `asDataFrame`). Inst
 4. **Model Training**: H2O orchestrates MapReduce-like tasks across its nodes to train the Deep Learning model using the H2OFrame.
 5. **Prediction**: The trained model generates predictions, and `asDataFrame()` wraps them back into Spark partitions for further SQL processing.
 
-```text
+```plaintext
 +-------------------+       +-------------------+       +-------------------+
 |   Spark Driver    |       |  Spark Executor 1 |       |  Spark Executor 2 |
 |                   |       |                   |       |                   |
@@ -314,7 +314,7 @@ spark.stop()
 6. The resulting PipelineModel is used to transform the data, generating predictions using H2O's scoring engine.
 
 **Expected output:**
-```text
+```plaintext
 +-----------+-----+----------+
 |customer_id|churn|prediction|
 +-----------+-----+----------+

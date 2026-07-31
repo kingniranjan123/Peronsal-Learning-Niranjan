@@ -316,7 +316,7 @@ The Fair Scheduler (developed by Facebook) takes a different approach, aiming to
 
 ## Flow Diagram
 
-```
+```scala
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -459,7 +459,7 @@ When a Spark job is submitted to a YARN cluster with a Capacity Scheduler:
 5. **Allocation:** The RM evaluates cluster load. It grants container leases across various NodeManagers based on queue capacity and data locality.
 6. **Dynamic Scaling:** As the Spark DAG executes, if tasks pile up, Spark requests more executors. If tasks finish and executors idle, Spark releases them back to YARN.
 
-```text
+```plaintext
 +----------------+      1. Submit Job     +------------------------+
 | Spark Client   | ---------------------> | YARN ResourceManager   |
 | (--queue mktg) |                        | (Capacity Scheduler)   |

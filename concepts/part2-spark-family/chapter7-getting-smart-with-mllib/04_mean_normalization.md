@@ -154,7 +154,7 @@ The process involves two main phases: Action (aggregation) and Transformation.
 4.  **Transformation (Pass 2):** The driver creates a new DataFrame lineage involving a `withColumn` operation. The calculated scalar values (`mean_val`, `range_val`) are embedded directly into the task closures.
 5.  **Executors (Pass 2):** When a final action (like `.write` or `.show()`) is called, executors process partitions in parallel, applying the `(x - mean) / range` formula row-by-row in memory.
 
-```text
+```plaintext
 [Driver] --> Extract Code
    |
    v
@@ -263,7 +263,7 @@ normalized_df.select("user_id", "movie_id", "rating", "normalized_rating").order
 ```
 
 **Expected Output:**
-```text
+```plaintext
 +-------+--------+------+-------------------+
 |user_id|movie_id|rating|  normalized_rating|
 +-------+--------+------+-------------------+

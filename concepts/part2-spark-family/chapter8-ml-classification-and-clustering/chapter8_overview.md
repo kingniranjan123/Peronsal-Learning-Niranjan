@@ -117,9 +117,6 @@ print("Overview Pipeline structured successfully.")
 
 Spark's machine learning capabilities provide a unified, scalable pipeline approach to transforming raw data into predictive insights through robust classification, clustering, and evaluation techniques.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -181,7 +178,7 @@ When you call `pipeline.fit(trainingData)` in Spark:
    - The Driver coordinates partial model updates (e.g., gathering tree statistics or cluster centroids) and broadcasts them back to Executors for the next pass.
 5. **Model Generation:** Once convergence or max iterations are reached, the Driver finalizes the mathematical model and returns a trained `PipelineModel`.
 
-```text
+```plaintext
 [ Driver Node ] ---> 1. Pipeline defined (Transformers + Estimator)
       |
       v

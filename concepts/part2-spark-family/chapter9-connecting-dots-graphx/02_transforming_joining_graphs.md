@@ -198,7 +198,7 @@ When you call an operation like `aggregateMessages` or `joinVertices`:
 6. **Execution (mergeMsg)**: The receiving executor combines incoming messages using the commutative `mergeMsg` function.
 7. **Join**: `joinVertices` performs a hash join between the new messages and the existing `VertexRDD`.
 
-```text
+```scala
 Driver --> DAG --> Scheduler
              |
        [Edge Partitions] (Executors)

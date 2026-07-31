@@ -18,7 +18,7 @@ Additionally, Tungsten leverages **Vectorized Columnar Reading**. When reading f
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A[Physical Plan from Catalyst] --> B[Tungsten Execution Engine]
     B --> C[Whole-Stage Code Generation]
@@ -50,7 +50,7 @@ graph TD
 
 ## Code Example
 
-```python
+```plaintext
 from pyspark.sql import SparkSession
 
 # Initialize SparkSession
@@ -161,7 +161,7 @@ When a query is executed, Tungsten takes over after the Catalyst Optimizer deter
 5. **Execution on Binary Data:** The Executors run this bytecode directly against Tungsten's compact binary data structures (`UnsafeRow`) stored in off-heap memory. 
 6. **Cache-Aware Operations:** Any sorting or grouping leverages cache-friendly pointer arrays rather than moving actual records.
 
-```text
+```plaintext
 [Catalyst Physical Plan] 
          |
          v

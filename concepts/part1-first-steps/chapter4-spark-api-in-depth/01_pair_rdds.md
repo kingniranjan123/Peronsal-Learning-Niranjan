@@ -24,7 +24,7 @@ When you perform a "By Key" operation on a Pair RDD, Spark uses the Key to deter
 
 ## Flow Diagram
 
-```
+```scala
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -154,7 +154,7 @@ Furthermore, you should avoid Pair RDDs when working with highly structured, tab
 4. **Shuffle Phase**: The combined data is hashed by key and transferred across the network so that all "apple" keys land on the exact same target partition.
 5. **Stage 2 (Reduce-Side)**: The target executors perform the final aggregation on the co-located keys.
 
-```text
+```plaintext
 [Executor 1]                 [Network Shuffle]                 [Executor 3]
 ("apple", 1) --combine--> ("apple", 2) ----|                  |--> ("apple", 5)
 ("apple", 1)                               |--> HASH(key) --->|

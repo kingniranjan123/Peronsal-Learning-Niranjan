@@ -149,7 +149,7 @@ Regularization should be used almost universally when training linear models, bu
 5. **Optimization Step**: The driver updates the global weights, applying the L1/L2 penalty shrinkage. For L1, an optimizer like Orthogonal Matching Pursuit or specialized L-BFGS handles the non-differentiable zero points.
 6. **Iteration**: This process repeats until the weights converge.
 
-```text
+```scala
 [Driver (Initial Weights)]
        | (Broadcasts weights)
        v

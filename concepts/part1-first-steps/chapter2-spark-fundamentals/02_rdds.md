@@ -18,7 +18,7 @@ When you create an RDD (e.g., via `sc.textFile()` or `sc.parallelize()`), Spark 
 The lineage graph is what makes RDDs "Resilient." Instead of relying on HDFS-style data replication (where every block is stored 3 times over the network), an RDD remembers how it was built. If an executor dies, the Spark Driver detects the failure, identifies which partitions were on that executor, and assigns new tasks to other executors to re-run the lineage graph specifically for those missing partitions.
 
 ## Flow Diagram
-```mermaid
+```plaintext
 graph TD
     subgraph Cluster Nodes
         N1[Node 1: Partition 1]
@@ -78,18 +78,6 @@ print(f"Total Errors: {num_errors}")
 ## Key Takeaway
 RDDs are the bedrock of Spark, providing a distributed, immutable, and fault-tolerant collection that recovers from failures by replaying lineage rather than replicating data.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -146,7 +134,7 @@ While modern Spark development favors DataFrames/Datasets for most use cases due
 5. **Shuffle**: If data needs to be grouped across partitions, executors exchange data over the network.
 6. **Memory**: Results are stored in memory (if cached) or written to disk.
 
-```text
+```plaintext
 Driver Program
       | (Creates Lineage)
       v
@@ -209,7 +197,7 @@ DAG Scheduler (Splits into Stages)
 **Business Problem:** Log Analysis for a Tech Company (e.g., Uber). We need to analyze massive unstructured web server logs to find IP addresses that are repeatedly encountering "500 Internal Server Error" responses, potentially indicating a cyber attack or localized outage.
 
 **Sample Dataset (`server_logs.txt`):**
-```text
+```scala
 192.168.1.10 - [10/Oct/2023] "GET /api/v1/users" 200
 10.0.0.5 - [10/Oct/2023] "POST /api/v1/payments" 500
 192.168.1.11 - [10/Oct/2023] "GET /api/v1/status" 200
@@ -262,7 +250,7 @@ sc.stop()
 6. **Stage 3 (Sort & Return)**: The results are sorted across partitions, and the top 10 are sent back to the Driver.
 
 **Expected Output:**
-```text
+```scala
 Top IPs with 500 Errors:
 IP: 10.0.0.5 | Error Count: 2
 ```

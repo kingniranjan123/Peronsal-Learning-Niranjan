@@ -14,7 +14,7 @@ To tune this complex system, engineers use extensive Spark Configurations. These
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A[Spark Application Code] --> B("SparkConf / SparkSession")
     B --> C{Cluster Manager}
@@ -128,7 +128,7 @@ While Spark's robust operational architecture is powerful, it is overkill for sm
 6. **Execution:** Executors run the tasks, reading data into memory, processing it, and potentially writing shuffle files.
 7. **Monitoring:** Throughout execution, Executors send heartbeats and metrics back to the Driver, updating the Spark Web UI in real-time.
 
-```text
+```plaintext
 [Spark Code] --> (Driver Program)
                      |
                      v

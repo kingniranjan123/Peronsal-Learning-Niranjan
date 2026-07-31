@@ -27,7 +27,7 @@ In modern applications, **the Direct Approach is universally preferred and recom
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     classDef kafka fill:#f96,stroke:#333,stroke-width:2px;
     classDef spark fill:#6cf,stroke:#333,stroke-width:2px;
@@ -135,9 +135,6 @@ object DirectKafkaIntegration {
 
 The Kafka Direct Approach provides a zero-data-loss, exactly-once ingestion pipeline by mapping Kafka partitions directly to Spark RDD partitions, eliminating the need for receivers and write-ahead logs.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -187,7 +184,7 @@ This integration is the backbone of modern real-time data pipelines and is heavi
 | **Exactly-Once Semantics** | ACID Properties | Guaranteeing processing without duplication or data loss. |
 
 ### Q7: What Happens Behind the Scenes?
-```text
+```plaintext
 [Kafka Cluster]
   ├── Partition 0 (Offsets 100-200)
   └── Partition 1 (Offsets 150-250)

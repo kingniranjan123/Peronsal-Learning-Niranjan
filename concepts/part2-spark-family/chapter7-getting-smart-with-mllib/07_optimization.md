@@ -23,7 +23,7 @@ Optimizers don't run forever. They stop based on criteria you set:
 *   `tol` (Tolerance): If the change in the cost function between iterations is smaller than this value, the algorithm assumes it has found the minimum and stops (converges).
 
 ## Flow Diagram
-```
+```scala
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -140,7 +140,7 @@ Distributed optimization is the backbone of training large-scale linear models i
 ### Q7: What Happens Behind the Scenes?
 During a single iteration of an optimizer like L-BFGS:
 
-```text
+```plaintext
 +-------------------+
 |   Spark Driver    | (Maintains current weights `w`)
 +-------------------+

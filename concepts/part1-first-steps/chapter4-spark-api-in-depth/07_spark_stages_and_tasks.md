@@ -25,7 +25,7 @@ If 999 tasks finish in 10 seconds, but 1 task takes 5 minutes (due to a faulty n
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A[Action Called e.g. collect] --> B(Job Created)
     B --> C[DAGScheduler]
@@ -62,7 +62,7 @@ Let's assume a dataset with 4 partitions, running a map, a filter, and a reduceB
 
 ## Code Example
 
-```python
+```plaintext
 from pyspark.sql import SparkSession
 import time
 
@@ -164,7 +164,7 @@ While you can't "choose" not to use Stages and Tasks (they are built into Spark'
 4. **Executors**: Receive the Tasks and execute them on individual CPU cores.
 5. **Shuffle**: When a Stage ends, Tasks write intermediate results to local disk. The next Stage's Tasks fetch this data across the network.
 
-```text
+```plaintext
 Driver Program
       │
       ▼
@@ -225,7 +225,7 @@ DAGScheduler ──(Splits Job at Shuffles)──► Stage 1 (Narrow Deps)
 **Dataset Description:** A CSV of viewing records with columns `user_id`, `movie_id`, `genre`, and `watch_minutes`. 
 
 **PySpark Code:**
-```python
+```plaintext
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import sum, col
 
@@ -266,7 +266,7 @@ for row in results:
 4. Stage 1 (Reduce): The TaskScheduler launches 500 Tasks (based on our config). These tasks reach across the network, fetch their assigned genre keys from the 100 executors, compute the final sums, and send results to the driver.
 
 **Expected Output:**
-```text
+```scala
 Genre: Action | Total Minutes: 45030200
 Genre: Comedy | Total Minutes: 38920100
 ...

@@ -83,18 +83,6 @@ counts.collect().foreach(println)
 ## Key Takeaway
 The Spark Shell is your interactive sandbox for Big Data, providing immediate access to the Spark runtime (`sc` and `spark`) without the overhead of building and deploying applications.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -150,7 +138,7 @@ When you launch the Spark Shell and run a job, a series of orchestrations happen
 5. **Execution:** Executors perform the work on partitions of data.
 6. **Result Return:** Executors send the computed results back to the Driver to be printed in the shell.
 
-```text
+```plaintext
 [User Terminal] -> Types commands
        |
 [Driver JVM] -> Builds DAG -> [DAG Scheduler] -> Divides into Stages
@@ -208,7 +196,7 @@ When you launch the Spark Shell and run a job, a series of orchestrations happen
 A data engineer at an e-commerce company needs to quickly analyze server logs to find the most frequent error codes causing checkout failures. They want to test their logic before writing a production script.
 
 **Sample Dataset (`logs.txt`):**
-```text
+```scala
 INFO: User logged in
 ERROR: 500 Internal Server Error at checkout
 WARN: High latency detected
@@ -246,7 +234,7 @@ error_counts.show()
 5. The final formatted table is printed in the terminal.
 
 **Expected Output:**
-```text
+```plaintext
 +----------+-----+
 |error_code|count|
 +----------+-----+

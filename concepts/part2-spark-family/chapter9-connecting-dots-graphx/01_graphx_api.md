@@ -26,7 +26,7 @@ GraphX also provides built-in attributes to compute simple graph metrics instant
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     subgraph Raw Data
         A[Vertex Source: Users.csv] 
@@ -218,7 +218,7 @@ GraphX excels in scenarios where relationships and network topology are as impor
 ### Q7: What Happens Behind the Scenes?
 When you define a Graph in GraphX, it heavily optimizes the underlying RDDs for graph operations.
 
-```text
+```plaintext
 [Driver Program]
        |
        v
@@ -344,7 +344,7 @@ object TelecomFraudGraph {
 }
 ```
 **Expected Output:**
-```text
+```scala
 Suspicious International Call Patterns:
 ALERT: Alice (USA) called Carlos (Mexico) for 120 minutes.
 ALERT: Carlos (Mexico) called Alice (USA) for 90 minutes.

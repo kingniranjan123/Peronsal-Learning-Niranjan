@@ -26,7 +26,7 @@ When an executor receives a task, it checks if it already has the data for that 
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
 subgraph "Without Broadcast (Inefficient)"
         A1["Driver: 10MB Array"] -->|Sends 10MB| T1(Task 1 on Exec A);
@@ -199,7 +199,7 @@ Broadcast variables are not a silver bullet and can crash your application if us
 5. **Peer-to-Peer Transfer:** The executor downloads the chunks from the driver OR other executors that already have them.
 6. **Deserialization:** The chunks are reassembled, deserialized into a Java/Python object, and stored in the executor's memory for all subsequent tasks.
 
-```text
+```plaintext
 [Driver] --> Chunks Data (Block 1, 2, 3)
    |
    +-- (P2P Fetch) --> [Executor A] reads Block 1, fetches Block 2 from Driver

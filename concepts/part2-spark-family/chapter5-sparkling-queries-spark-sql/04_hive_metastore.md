@@ -20,7 +20,7 @@ Additionally, the Metastore enables **Table Partitioning**. Data can be physical
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A[Spark Application] -->|enableHiveSupport| B[SparkSession Catalog]
     B -->|Metadata Request| C[(Hive Metastore DB)]
@@ -173,7 +173,7 @@ Additionally, relying on the Metastore is an anti-pattern when dealing with heav
 6. **Executors & Partitions:** The Task Scheduler assigns tasks to Executors. Each Executor reads a specific Parquet file block (partition) directly from distributed storage (e.g., S3) into RAM.
 7. **Shuffle & Memory:** If the query included a `GROUP BY` or `JOIN`, executors shuffle data across the network. Results are aggregated in memory and sent back to the Driver.
 
-```text
+```plaintext
 [User Query] -> (Spark Driver)
                      | 1. Request Metadata
                      v
@@ -311,7 +311,7 @@ print("Data exists:", os.path.exists(storage_path))
 6. We drop the table to prove that external tables protect underlying files.
 
 *Expected output:*
-```text
+```plaintext
 Query Results using Hive Metastore Catalog:
 +--------+-------------+
 |movie_id|total_minutes|

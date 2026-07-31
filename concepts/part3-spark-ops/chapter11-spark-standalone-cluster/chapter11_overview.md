@@ -24,7 +24,7 @@ Understanding this flow is crucial because it highlights where things can go wro
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
 subgraph "Client Machine"
         Submit[spark-submit script]
@@ -181,7 +181,7 @@ When you submit an application to a Standalone cluster, a precise sequence of ev
 8.  **Shuffle:** If a wide dependency occurs (e.g., `groupByKey`), Executors exchange data across the network (Shuffle).
 9.  **Result Collection:** Executors send the final results back to the Driver, or write them directly to a distributed storage system (like S3 or HDFS).
 
-```text
+```plaintext
 [Spark-Submit] --> (Launches Driver)
                       |
                       v
@@ -301,7 +301,7 @@ spark.stop()
 8.  **Completion:** The Driver terminates, the Master reclaims the resources, and the EC2 instances can be safely shut down.
 
 **Expected Output (in S3 Parquet format):**
-```text
+```plaintext
 +----------+---------+
 |vehicle_id|max_speed|
 +----------+---------+

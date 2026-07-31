@@ -18,7 +18,7 @@ When a new Kafka message arrives, the WebSocket server iterates through its list
 
 ## Flow Diagram
 
-```
+```scala
 # Architecture Diagram
 # (See MD source for diagram code)
 sequenceDiagram
@@ -184,7 +184,7 @@ When data flows from the source to the browser, a complex orchestrated sequence 
 6. **WebSocket Server**: A Node.js backend running a Kafka Consumer reads the output.
 7. **Client Push**: The WebSocket server broadcasts the JSON payload to all connected clients over the persistent TCP socket.
 
-```text
+```plaintext
 +----------+      +-------------+      +---------------+      +-------------------+
 |  Kafka   | ---> | Spark Tasks | ---> | Shuffle/Agg.  | ---> |   Output Sink     |
 | (Source) |      | (Executors) |      | (Memory)      |      | (Kafka/Redis)     |

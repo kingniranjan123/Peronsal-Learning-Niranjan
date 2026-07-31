@@ -189,7 +189,7 @@ When you call `ShortestPaths.run(graph, landmarks)`, Spark orchestrates a distri
 5. **Shuffle (Message Routing)**: Because neighbors might exist on different machines, Spark performs a network **Shuffle** to route messages to the correct destination vertex.
 6. **Merge**: Vertices receive messages, update their state (if the new distance is shorter), and the loop repeats until no messages are sent.
 
-```text
+```plaintext
 [Driver] Sets Landmarks (e.g., Vertex A)
    |
    v
@@ -263,7 +263,7 @@ When you call `ShortestPaths.run(graph, landmarks)`, Spark orchestrates a distri
 
 **Code Execution:**
 
-```scala
+```plaintext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.graphx._
 import org.apache.spark.graphx.lib.ShortestPaths
@@ -338,7 +338,7 @@ object LogisticsRouting {
 6. The algorithm halts when no shorter paths can be found.
 
 **Expected Output**:
-```text
+```plaintext
 --- Logistics Routing Hops ---
 Warehouse: Chicago Hub -> Hops to Chicago: 0 | Hops to New York: 1
 Warehouse: Denver Hub -> Hops to Chicago: 1 | Hops to New York: 2

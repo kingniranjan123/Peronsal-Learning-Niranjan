@@ -157,7 +157,7 @@ Linear Regression makes strong assumptions about the data, and it should not be 
 6.  **Weight Update:** The driver uses the aggregated gradient and the optimizer (e.g., L-BFGS) to update the global model weights.
 7.  **Iteration:** Steps 3-6 repeat until the model converges or hits the maximum number of iterations.
 
-```text
+```plaintext
 [Driver Node] 
    | 1. Broadcasts current weights (θ)
    v
@@ -316,7 +316,7 @@ print(f"Test R-Squared: {r2:.4f}")
 5.  **Transform & Evaluate:** The trained pipeline processes the test data. RMSE and R-squared are calculated to quantify accuracy.
 
 **Expected Output:**
-```text
+```plaintext
 Model Intercept: 491666.6666666667
 Model Coefficients: [111666.42, 45213.11, 67891.22, -23145.88]
 +--------------------+--------+------------------+

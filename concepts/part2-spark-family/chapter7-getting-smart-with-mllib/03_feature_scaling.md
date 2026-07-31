@@ -131,7 +131,7 @@ When `StandardScaler.fit(df)` is called:
 4. **Model Creation:** A `StandardScalerModel` is instantiated on the Driver holding these arrays.
 5. **Transform:** During `StandardScalerModel.transform(df)`, the statistics are broadcasted to the Executors. Executors iterate over partitions, applying the $z = (x - \mu)/\sigma$ formula independently to each vector, yielding the new column.
 
-```text
+```plaintext
 [Driver] -> Define StandardScaler -> Call fit()
    |
    v

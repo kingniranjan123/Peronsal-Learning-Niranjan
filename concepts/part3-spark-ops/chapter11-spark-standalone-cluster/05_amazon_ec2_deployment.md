@@ -153,7 +153,7 @@ When a Spark job is submitted to an EC2/EMR cluster:
 6. **Write:** Results are pushed back to Amazon S3.
 7. **Termination (Optional):** If configured as a transient cluster, AWS automatically terminates all EC2 instances to stop billing.
 
-```text
+```plaintext
 [AWS Cloud Environment]
        |
        v
@@ -270,7 +270,7 @@ if __name__ == "__main__":
 
 **Expected Output:**
 In the terminal/logs:
-```text
+```scala
 Reading data from S3...
 Aggregating sales data...
 Writing results to s3a://cloudmart-data/processed/daily_sales/2023-10-01/...

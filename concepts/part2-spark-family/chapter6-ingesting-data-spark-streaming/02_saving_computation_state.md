@@ -20,7 +20,7 @@ Spark Streaming provides two primary operations for maintaining state over time:
 
 ## Flow Diagram
 
-```
+```scala
 # Architecture Diagram
 # (See MD source for diagram code)
 graph TD
@@ -97,9 +97,6 @@ object StatefulWordCount {
 
 Stateful operations like `mapWithState` and `updateStateByKey` allow Spark Streaming to remember past data and compute long-running aggregations, but they require reliable checkpointing to protect that memory against cluster failures.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -157,7 +154,7 @@ Stateful streaming is essential for any real-time application requiring context 
 5. **Memory Persistence:** The newly generated State RDD is cached in executor memory for the next batch.
 6. **Checkpointing:** At defined intervals, the driver serializes the State RDD graph and executor memory states to HDFS/S3.
 
-```text
+```scala
 [Kafka Topic] ---> [Micro-batch Input RDD]
                            |
                            v

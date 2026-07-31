@@ -177,7 +177,7 @@ When you call `pageRank(tol)` or `staticPageRank(iters)` in GraphX:
 5. **Executors & Shuffle**: Executors calculate outgoing messages. Because a vertex's neighbors might live on different partitions, sending messages triggers a **Shuffle** phase across the network.
 6. **Memory**: New RDDs are created for each iteration. Spark relies heavily on caching to prevent recomputing the entire graph from disk every step.
 
-```text
+```scala
 Driver -> Submits Pregel Job
            |
            v

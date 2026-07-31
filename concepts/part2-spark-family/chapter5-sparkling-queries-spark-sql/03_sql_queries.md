@@ -18,7 +18,7 @@ Spark SQL supports a vast array of complex SQL-92 and newer features. This inclu
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A[DataFrame] -->|createOrReplaceTempView| B[(Session Temp View)]
     A -->|createGlobalTempView| C[(Global Temp View)]
@@ -183,7 +183,7 @@ When a SQL query is passed into `spark.sql()`, Spark parses the string into an A
 ### Q7: What Happens Behind the Scenes?
 When you invoke `spark.sql("SELECT department, AVG(salary) FROM employees WHERE age > 30 GROUP BY department")`, a complex process unfolds:
 
-```text
+```plaintext
 [ SQL String ] 
        | 
        v (SQL Parser)
@@ -312,7 +312,7 @@ top_genres_df.show()
 5. The `.show()` action triggers execution, displaying the top genres in the console.
 
 **Expected Output:**
-```text
+```plaintext
 +------+-----------+----------------+
 | genre|total_plays|total_watch_time|
 +------+-----------+----------------+

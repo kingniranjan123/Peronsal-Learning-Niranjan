@@ -26,7 +26,7 @@ The Standalone Master uses a FIFO (First-In, First-Out) scheduling policy by def
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 sequenceDiagram
     participant User
     participant Submit as spark-submit (Client)
@@ -180,7 +180,7 @@ When you submit an application to a Standalone cluster, a highly orchestrated se
 7. **Execution & Shuffle:** Executors process data in memory. When a wide transformation occurs (e.g., `groupBy`), Executors shuffle data across the network.
 8. **Completion:** Results are saved to storage, the Driver exits, and the Master tears down the Executors.
 
-```text
+```plaintext
 [User CLI] --(spark-submit)--> [Standalone Master]
                                       | (Assigns Driver)
                                       v

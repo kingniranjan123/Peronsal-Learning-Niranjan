@@ -22,7 +22,7 @@ You can view this entire lifecycle by using the DataFrame `.explain()` method. C
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     A[Unresolved Logical Plan] --> B[Analysis Phase]
     B -->|Check Catalog/Metastore| C[Resolved Logical Plan]
@@ -162,7 +162,7 @@ When a developer calls an action on a DataFrame:
 5. **Code Generation:** Tungsten translates the plan into optimized Java bytecode.
 6. **Execution:** The execution plan is translated into a DAG of RDDs, divided into Stages and Tasks, and sent to Executors.
 
-```text
+```plaintext
 User Code (DataFrame/SQL)
       │
       ▼

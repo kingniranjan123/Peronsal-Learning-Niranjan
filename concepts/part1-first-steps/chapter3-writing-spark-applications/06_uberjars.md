@@ -161,7 +161,7 @@ Anytime your Spark job relies on non-standard libraries, an Uberjar is the best 
 ### Q7: What Happens Behind the Scenes?
 When you build and deploy an Uberjar, a multi-step process occurs across the build machine and the cluster:
 
-```text
+```plaintext
 [Build Phase - Local Machine]
 App Code + Dep 1 (JSON) + Dep 2 (JDBC)
        |
@@ -254,7 +254,7 @@ Running `sbt assembly` produces `target/h3-spark-dependency-assembly-1.0.jar`.
 **Step 2: Full Working PySpark Code**
 Now, we use PySpark to register the Java class loaded from our Uberjar.
 
-```python
+```plaintext
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StringType
 from pyspark.sql.functions import col, udf

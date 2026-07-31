@@ -18,7 +18,7 @@ This micro-batch architecture offers several profound advantages. First, it simp
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     %% Define styles
     classDef source fill:#f9f,stroke:#333,stroke-width:2px;
@@ -123,9 +123,6 @@ ssc.awaitTermination()
 
 Spark Streaming achieves scalable, fault-tolerant real-time processing by slicing continuous data into manageable micro-batches, effectively converting streaming problems into a sequence of small, rapid batch jobs.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -198,7 +195,7 @@ When a Spark Streaming application is deployed, a continuous execution flow is e
 6. **State & Shuffle:** If a stateful operation (like `updateStateByKey`) is used, data is shuffled across executors. The executors read previous state from memory/checkpoints and compute the new state.
 7. **Output:** The final RDD action (like `foreachRDD`) triggers writing the results to a database.
 
-```text
+```plaintext
 [Kafka Partitions] 
       │ (Continuous Flow)
       ▼

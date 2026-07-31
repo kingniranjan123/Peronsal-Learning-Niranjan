@@ -316,7 +316,7 @@ In a production environment, this Docker image is typically deployed using Kuber
 
 ## Flow Diagram
 
-```mermaid
+```plaintext
 graph TD
     subgraph Development
         DF[Dockerfile<br/>FROM spark:3.3<br/>COPY app.py /opt/app/]
@@ -474,7 +474,7 @@ When a Spark job is submitted to Kubernetes using a Docker image, the flow is:
 5. **Task Distribution:** The Driver creates the DAG, breaks it into Stages, and assigns Tasks to the Executor containers.
 6. **Processing:** Executors process data (often mounted via persistent volumes or cloud storage).
 
-```text
+```scala
 User 
   | (spark-submit)
   v

@@ -458,7 +458,7 @@ When you run `spark-submit --master yarn`:
 7. Executors register directly with the Spark Driver.
 8. The Driver schedules Tasks directly to Executors, bypassing YARN entirely for task execution.
 
-```text
+```scala
 [Client] ---> 1. Submit ---> [ResourceManager]
                                   |
                                   v 2. Launch AM

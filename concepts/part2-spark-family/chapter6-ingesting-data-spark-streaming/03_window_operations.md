@@ -112,9 +112,6 @@ ssc.awaitTermination()
 
 Window operations empower you to compute metrics over a rolling, sliding timeframe, allowing real-time applications to analyze recent historical trends without the overhead of maintaining indefinite state.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -172,7 +169,7 @@ In traditional SQL, windowing is similar to the `OVER` clause combined with `ROW
 5. **Execution:** If using naive windowing, tasks are generated to process the entire unioned dataset from scratch. If using inverse `reduceByKeyAndWindow`, Spark fetches the state from the previous slide, adds the incoming micro-batches, and subtracts the outgoing micro-batches.
 6. **Checkpointing:** State and RDD lineage are checkpointed to reliable storage to survive driver failures.
 
-```text
+```scala
 Time --------> 
 Batch 1 [2s] \ 
 Batch 2 [2s] -- [Union] --> Window RDD (6s window) --> Action (e.g., print)
@@ -264,7 +261,7 @@ ssc.awaitTermination()
 ```
 
 **Expected Output:**
-```text
+```scala
 --- Top 3 Categories at 2023-10-27 10:00:20 ---
 Electronics: 15 purchases
 Clothing: 8 purchases

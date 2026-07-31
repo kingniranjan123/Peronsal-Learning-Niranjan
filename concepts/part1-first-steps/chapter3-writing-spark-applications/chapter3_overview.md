@@ -161,7 +161,7 @@ When a Spark application is submitted via `spark-submit`:
 7. **Execution & Shuffle:** Executors process their local partitions. If a stage requires grouping data, a **Shuffle** occurs, transferring data across the network between executors.
 8. **Completion:** The final output is written to storage, the `SparkSession` stops, and cluster resources are released.
 
-```text
+```plaintext
 +-------------------+      +-------------------+      +-------------------+
 |   Developer IDE   | ---> |  Build Tool (SBT) | ---> |     Uberjar     |
 +-------------------+      +-------------------+      +-------------------+
@@ -286,7 +286,7 @@ if __name__ == "__main__":
 5. Executors process the JSON, perform a shuffle for the `groupBy`, and write Parquet files in parallel.
 
 **Expected Output (Parquet content read back):**
-```text
+```plaintext
 +--------+-------------+
 |store_id|total_revenue|
 +--------+-------------+

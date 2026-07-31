@@ -127,9 +127,6 @@ print(dt_model.toDebugString)
 
 Decision trees provide a highly interpretable, rule-based approach to machine learning by recursively partitioning data using information gain, though they require careful depth management to prevent overfitting.
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-
 ---
 
 ## 🎓 Deep Learning Questions
@@ -195,7 +192,7 @@ Building a decision tree in Spark is an iterative, distributed process:
 5. **Driver Decision:** The Driver uses the global histograms to calculate Information Gain for all possible splits and chooses the best one.
 6. **Iteration:** The Driver updates the tree structure, assigns data to the new left and right child nodes, and triggers the next iteration until `maxDepth` is reached.
 
-```text
+```plaintext
 Driver                      Executors (Partitions)
   |                              |
   |--- Request Histograms ------>| (Reads Data, creates Bins)

@@ -435,7 +435,7 @@ When a Spark job is submitted to Mesos:
 5. **Execution:** The Master tells the Agents to launch Spark Executors.
 6. **Task Processing:** The Executors run the tasks and report status back.
 
-```text
+```plaintext
 [Spark Driver] <--(Registers)--> [Mesos Master] <--(Reports)--> [Mesos Agents]
        |                              |                               |
        +------(Accepts Offer)---------+----(Launches Executor)--------> [Spark Executor]
@@ -532,7 +532,7 @@ spark.stop()
 6. `spark.stop()` releases all resources back to the Mesos Master.
 
 **Expected output:**
-```text
+```plaintext
 +---------+--------------+--------------+
 |driver_id|total_earnings|total_distance|
 +---------+--------------+--------------+
