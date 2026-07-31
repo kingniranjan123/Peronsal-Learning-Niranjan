@@ -22,7 +22,7 @@ Inside the Executor JVM, memory is managed by the **Unified Memory Manager** (in
 
 The **Tungsten execution engine** operates primarily off-heap in the **DirectMemory** region (managed via `sun.misc.Unsafe`), storing binary-encoded rows in a compact format that avoids Java object overhead — a `String` field that costs 48+ bytes as a Java object costs exactly its character count in Tungsten binary format. Whole-Stage CodeGen collapses the entire operator pipeline into a single compiled JVM method, eliminating virtual dispatch and iterator overhead between operators, reducing the CPU cost of a query pipeline by 2-5x compared to interpreted execution.
 
-```text
+```
 Driver JVM Worker Node 1 (Executor JVM)
 ┌────────────────────────────────┐ ┌──────────────────────────────────────────────┐
 │ SparkContext │ │ CoarseGrainedExecutorBackend │

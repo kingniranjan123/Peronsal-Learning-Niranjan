@@ -17,7 +17,7 @@ Once the features are binned, the execution transitions to iterative MapReduce-s
 
 The aggregation of these local histograms is where Spark's network serialization comes into play. Instead of sending raw data, executors send their aggregated histograms to the driver using `treeAggregate`. This operation uses a multi-level reduction tree, serialized via Kryo, to prevent the driver from being overwhelmed by a flood of incoming statistics. Once the driver receives the global histograms, it calculates the Gini impurity or variance reduction for all possible splits. It selects the optimal split condition for each active node, updates the tree topology, and broadcasts the new tree structure back to the executors to begin processing the next level.
 
-```text
+```
 Driver JVM (Coordinator) Worker Executor JVM (Data Nodes)
 ┌───────────────────────────┐ ┌──────────────────────────────────┐
 │ MLlib Tree Optimizer │ │ Tungsten Execution Engine │

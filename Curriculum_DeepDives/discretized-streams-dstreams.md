@@ -17,7 +17,7 @@ The `JobGenerator` acts as the system's internal clock. At every batch interval,
 
 Because DStreams map directly to standard RDDs, they operate largely outside the Catalyst optimizer and Tungsten execution engine found in Spark SQL. Consequently, serialization overhead and JVM garbage collection on the heap can become significant bottlenecks. To mitigate this, DStreams rely heavily on Kryo serialization for network shuffling and off-heap memory configurations to reduce GC pressure. The RDD lineage guarantees fault tolerance—if a partition is lost, it can be recomputed from the original replicated blocks. However, for stateful operations (`updateStateByKey`), lineage chains grow infinitely, necessitating Checkpointing to HDFS to periodically truncate the dependency graph and prevent catastrophic `StackOverflowError` failures during DAG resolution.
 
-```text
+```
 Driver JVM Worker Executor JVM (Receiver)
 ┌─────────────────────────────────┐ ┌─────────────────────────────┐
 │ StreamingContext │ │ Receiver Task │

@@ -19,7 +19,7 @@ During the execution of an algorithm like Logistic Regression or a Random Forest
 
 Catalyst optimization phases (Analysis, Logical Optimization, Physical Planning, and Code Generation) play a surprisingly vital role in ML execution. While Catalyst doesn't optimize the gradient math itself, it fiercely optimizes the data preparation steps—predicate pushdown, column pruning, and Whole-Stage CodeGen are applied to the feature engineering phases. Tungsten's vectorized readers pull data straight from Parquet into CPU registers for featurization. Furthermore, Spark ML utilizes optimized BLAS (Basic Linear Algebra Subprograms) and LAPACK libraries via `netlib-java` at the executor level, ensuring that matrix multiplications and vector dot products run close to bare-metal speed using hardware-specific SIMD instructions.
 
-```text
+```
 Driver JVM Worker Executor JVMs
 ┌───────────────────────────────────┐ ┌────────────────────────────────────┐
 │ Pipeline (Estimators/Transformers)│ │ Executor 1 (Partition 0-1) │

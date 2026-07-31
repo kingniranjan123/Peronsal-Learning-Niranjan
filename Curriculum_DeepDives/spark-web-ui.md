@@ -22,7 +22,7 @@ Tungsten's Whole-Stage CodeGen collapses multiple physical plan operators into a
 
 The Stages tab metrics come from `TaskMetrics` objects serialized inside `SparkListenerTaskEnd` events. Each `TaskMetrics` record carries: executor deserialize time, JVM GC time (`jvmGCTime`), result serialization time, shuffle read/write bytes and records, input bytes, spill (memory and disk), and peak execution memory. These are aggregated across all tasks in a stage into min/p25/median/p75/max summary statistics — the distribution shape is your skew detector.
 
-```text
+```
 Driver JVM Executor JVM
 ┌──────────────────────────────────┐ ┌─────────────────────────────────┐
 │ SparkContext │ │ Executor │

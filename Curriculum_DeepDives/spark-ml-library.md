@@ -22,7 +22,7 @@ Hyperparameter tuning via `CrossValidator` is architecturally distinct. Given `k
 
 MLflow integration closes the experiment tracking loop. When `mlflow.spark.autolog()` is enabled, the MLflow PySpark flavor intercepts `Pipeline.fit()` calls via Python monkey-patching, logging all `ParamMap` entries as MLflow run parameters, training metrics as run metrics, and the full `PipelineModel` artifact to the configured `mlflow.set_tracking_uri()` artifact store. The model is serialized using `MLWriter` internally and wrapped in an MLflow model format that supports `python_function`, `spark`, and optionally `mleap` flavors for low-latency serving.
 
-```text
+```
 Driver JVM Executor JVMs
 ┌──────────────────────────────────────┐ ┌───────────────────────────────────┐
 │ Pipeline.fit(trainDF) │ │ Task: Stage 0 (StringIndexer) │

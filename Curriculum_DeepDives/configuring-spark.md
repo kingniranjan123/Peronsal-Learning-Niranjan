@@ -15,7 +15,7 @@ Configurations heavily and directly influence the Catalyst Optimizer and the Tun
 
 Finally, network I/O and distributed object serialization are tightly bound to user configuration. By default, Spark may use standard Java serialization for complex data types or closures, which is notoriously bloated, slow, and CPU-intensive. Enforcing Kryo serialization (`spark.serializer`) and specifically configuring its internal buffer sizes (`spark.kryoserializer.buffer.max`) drastically reduces the binary payload size sent across the wire by the ShuffleManager. These configurations determine exactly how effectively Spark's vectorized Parquet readers ingest data from disk directly into Tungsten's binary memory format, bypassing traditional JVM object instantiation entirely and drastically increasing throughput.
 
-```text
+```
 Driver JVM Worker Executor JVM
 ┌─────────────────┐ ┌──────────────────────┐
 │ SparkSession │ │ Executor Thread Pool │

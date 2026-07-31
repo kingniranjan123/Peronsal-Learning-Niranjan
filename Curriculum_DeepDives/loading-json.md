@@ -15,7 +15,7 @@ If schema inference is enabled (which is the default behavior if no schema is pr
 
 Once the global schema is finalized, the actual data loading job begins. The Catalyst physical plan generates a `FileSourceScanExec` node that streams the text data into the Jackson parser once again. This time, as Jackson emits tokens, Spark immediately attempts to cast them into the Catalyst internal data types (like `UTF8String`, `IntegerData`, or `ArrayData`). These parsed values are then directly encoded into Tungsten’s `UnsafeRow` binary format, bypassing standard Java object creation to minimize Garbage Collection (GC) overhead. Tungsten places this binary data into off-heap memory, preparing it for Whole-Stage CodeGen execution in downstream operations.
 
-```text
+```
 Driver JVM Worker Executor JVM
 ┌────────────────────────────────┐ ┌───────────────────────────────────────────────┐
 │ DAGScheduler │ │ Executor Thread Pool │

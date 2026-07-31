@@ -17,7 +17,7 @@ During the Shuffle Write phase, records are inserted into a memory structure—o
 
 On the Shuffle Read side, reduce tasks are scheduled in the subsequent Stage. They query the MapOutputTracker on the Driver to discover the locations of their respective data blocks. The `BlockTransferService` then initiates network fetches—often via Netty—pulling the required partition blocks from the remote Executor's `BlockManager`. If the data volume being fetched exceeds the local memory capacity, the reduce tasks will also spill to disk, utilizing an `ExternalAppendOnlyMap` to perform final aggregations or sorting.
 
-```text
+```
 Driver JVM Worker 1 Executor JVM
 ┌───────────────────────┐ ┌─────────────────────────────────────────────────────┐
 │ │ │ ┌──────────────┐ Shuffle Write Phase │

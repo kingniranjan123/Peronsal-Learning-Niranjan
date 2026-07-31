@@ -22,7 +22,7 @@ At the end of every batch interval, the **JobGenerator** fires a `GenerateJobs` 
 
 Checkpoint metadata (batch timestamps, DStream graph, configuration) is serialized via Java serialization (not Kryo, notably) and written to the configured checkpoint directory at every batch interval. This metadata enables Driver recovery: a crashed Driver can reconstruct the entire DStreamGraph, re-query which batches were incomplete, and reprocess them using blocks retrieved from the WAL, achieving exactly-once guarantees end-to-end.
 
-```text
+```
 Driver JVM
 ┌──────────────────────────────────────────────────────────────────┐
 │ StreamingContext │

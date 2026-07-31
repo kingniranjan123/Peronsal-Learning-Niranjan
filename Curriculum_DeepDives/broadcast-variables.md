@@ -17,7 +17,7 @@ Rather than the Driver directly pushing this data to all executors, Spark employ
 
 On the execution side, Tungsten's Whole-Stage Code Generation seamlessly integrates broadcasted variables. During a Broadcast Hash Join, Tungsten generates optimized Java bytecode that reads directly from the broadcasted hash relation residing in the executor's memory. This memory is typically managed off-heap to circumvent JVM garbage collection overhead. By avoiding the shuffle phase entirely—bypassing local disk spills, network fetches, and sort-merge operations—broadcast variables enable a direct map-side join, operating at the speed of raw memory access.
 
-```text
+```
 Driver JVM Worker Executor JVM (Node 1)
 ┌────────────────────────────────┐ ┌─────────────────────────────────────┐
 │ SparkContext │ Chunk │ BlockManager │

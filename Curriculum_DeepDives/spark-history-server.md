@@ -22,7 +22,7 @@ The KVStore is the critical internal component for scalability. By default it is
 
 Rolling event logs, introduced to address the problem of enormous single-file event logs that can reach tens of GBs for long-running streaming jobs, partition the log stream into fixed-size files. When `spark.eventLog.rolling.enabled=true` and a file exceeds `spark.eventLog.rolling.maxFileSize` (default 128MB), the current file is closed and a new one opened in the same application directory. The History Server replays all rolling files in order, correctly reconstructing a unified application view across the file boundaries.
 
-```text
+```
 Driver JVM (Application Process)
 ┌────────────────────────────────────────────┐
 │ LiveListenerBus │

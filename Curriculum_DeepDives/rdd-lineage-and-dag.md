@@ -20,7 +20,7 @@ When an action is called, the **DAGScheduler** (running on the Driver JVM) trave
 
 Shuffle data is serialized using either Java serialization or **Kryo** (configured via `spark.serializer`), written to the local disk of the map-side executor via the **SortShuffleManager**, and then fetched over the network by reduce-side tasks. The shuffle write files are tracked by the **BlockManager** and the **MapOutputTracker** on the Driver. If a reduce-side task fails to fetch a block because the map-side executor died, Spark re-submits the **entire upstream stage** — not just the failed partition — because the shuffle files are gone. This is precisely why long lineage chains and un-persisted shuffled RDDs are dangerous at scale.
 
-```text
+```
 Driver JVM
 ┌──────────────────────────────────────────────────────────┐
 │ SparkContext │

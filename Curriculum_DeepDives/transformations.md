@@ -22,7 +22,7 @@ Wide transformations — `groupBy`, `join` (sort-merge or shuffle-hash variants)
 
 The **ShuffleWriter** serializes rows using either Kryo (if configured via `spark.serializer=org.apache.spark.serializer.KryoSerializer`) or Java serialization (the default, which is 3–10× slower and produces 2–5× larger payloads). Every wide transformation is therefore a candidate for serialization tuning.
 
-```text
+```
 Driver JVM
 ┌──────────────────────────────────────────────────────────┐
 │ Unresolved Logical Plan │

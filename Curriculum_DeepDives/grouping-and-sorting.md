@@ -20,7 +20,7 @@ The shuffle itself is managed by the **ShuffleManager** (default: `SortShuffleMa
 
 The **Whole-Stage Code Generation** (Tungsten's WSCG) fuses the sort, hash map probing, and aggregation steps into a single tight Java bytecode loop per stage, eliminating virtual method dispatch and per-row object allocation. This is why `explain(mode="codegen")` reveals that a `groupBy` with a simple `sum` compiles down to a single generated class rather than a chain of iterator calls. `spark.sql.codegen.wholeStage=true` (default) is the configuration that enables this.
 
-```text
+```
 Driver JVM Shuffle Service / Executors
 ┌──────────────────────────────┐ ┌────────────────────────────────────────────┐
 │ Catalyst Optimizer │ │ Executor A (Map Side) │

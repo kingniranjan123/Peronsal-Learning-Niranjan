@@ -15,7 +15,7 @@ Once the physical plan is finalized, Catalyst hands it over to the Tungsten exec
 
 The `TaskScheduler` then distributes these tasks to the worker JVMs (Executors). Within each Executor JVM, a Task runs in a dedicated thread pool thread, executing the Tungsten-compiled code against its specific partition of data. If the action requires returning data to the driver (like `collect`), the executors serialize the results using the Kryo serializer (if configured) or the default Java serializer, and transmit them over the network via Netty. If the action writes to storage (like `write.parquet`), the task threads write directly to distributed storage (HDFS/S3), bypassing the driver entirely, which is essential for massive scale.
 
-```text
+```
 Driver JVM Worker Executor JVM (Node 1)
 ┌─────────────────────────────────┐ ┌───────────────────────────────────┐
 │ User Code triggers Action │ │ Executor Thread Pool │

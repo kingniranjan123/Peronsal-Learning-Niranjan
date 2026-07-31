@@ -17,7 +17,7 @@ When a function like `stats()` is invoked, Spark does not simply ship raw data t
 
 Once each partition has computed its local `StatCounter`, Spark must merge these statistics. Rather than a naive `reduce` operation which could overwhelm the Driver JVM's heap (causing an OutOfMemory error on massive clusters), Spark employs a `treeAggregate` strategy. `treeAggregate` performs multi-level partial aggregations on the executors themselves. It combines `StatCounter` objects in a tree-like hierarchy before sending the final, highly compressed payload to the driver. The network serialization of these objects is tightly optimized via Kryo, ensuring that the mathematical state traversing the network is minimal in binary footprint.
 
-```text
+```
 Driver JVM Worker Executor JVM (Partition 0) Worker Executor JVM (Partition 1)
 ┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐
 │ SparkContext │────┐ │ TaskContext │ │ TaskContext │

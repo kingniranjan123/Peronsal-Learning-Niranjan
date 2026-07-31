@@ -15,7 +15,7 @@ Once the data is successfully aggregated across the worker nodes—perhaps conde
 
 Finally, this JSON payload is served to the frontend via a robust REST API or streaming WebSockets. Once it hits the browser context, the D3.js lifecycle seizes control. D3 binds this serialized JSON array to raw SVG or Canvas DOM elements utilizing its famous data join mechanics. Because the sheer data volume has been drastically reduced by the Spark backend, D3.js can smoothly execute complex CSS transitions, recalculate heavy physics simulations (like force-directed networking graphs), or render intricate geometric maps without exceeding the browser's strict memory allocation limitations. The delicate harmony between Spark's massive parallel reduction capabilities and D3's highly selective DOM updates is what makes true big data visualization technically feasible.
 
-```text
+```
 Driver JVM Worker Executor JVM Web Browser (Client)
 ┌─────────────────┐ ┌──────────────────────┐ ┌─────────────────────────┐
 │ SparkContext │──────▶│ Executor Thread Pool│ JSON Payload │ D3.js Visualization │

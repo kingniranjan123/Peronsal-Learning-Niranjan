@@ -22,7 +22,7 @@ Mesos agents enforce isolation using **cgroups** at the Linux kernel level — e
 
 Frameworks register with the Mesos master by connecting and sending a `SUBSCRIBE` call containing a `FrameworkInfo` protobuf. This protobuf carries the framework's **role** (e.g., `spark`, `marathon`), **failover timeout** (how long the master preserves the framework's resources after a scheduler disconnect), and **capabilities** (e.g., `PARTITION_AWARE`, `MULTI_ROLE`, `GPU_RESOURCES`). The master's **replicated log** — a Paxos-based distributed log built on LevelDB — persists registered framework state, agent registrations, and resource reservations so that a master failover (via ZooKeeper leader election among standby masters) does not lose cluster state.
 
-```text
+```
 ZooKeeper Ensemble (Leader Election)
  │
  ▼

@@ -18,7 +18,7 @@ Petastorm's `make_batch_reader` opens Parquet files directly from the distribute
 
 During the backward pass, Horovod intercepts each layer's gradient tensor immediately after it is computed (using framework hooks: `tf.GradientTape` callbacks or PyTorch's `register_hook`) and initiates an all-reduce operation across all ranks using the ring-all-reduce algorithm. Ring-all-reduce transmits `2 * (N-1) / N` times the gradient data per rank, making communication cost nearly constant regardless of cluster size—this is what enables linear scaling efficiency of 85–95% on clusters up to 128 GPUs. The reduced gradient is applied to the local model replica before the next mini-batch forward pass. Catalyst and Tungsten play no role in the training loop itself, but they are critical in the upstream feature engineering pipeline: Catalyst's Logical Optimization phase pushes `cast`, `fillna`, and `bucketize` transformations into a single fused physical plan, and Tungsten's Whole-Stage Codegen generates JIT-compiled bytecode that processes feature vectors at near-native speed before Petastorm serializes them to Parquet.
 
-```text
+```
 Spark Driver JVM
 ┌──────────────────────────────────────────────────────────────┐
 │ SparkContext → DAGScheduler → TaskScheduler │

@@ -22,7 +22,7 @@ The Tungsten execution engine's Whole-Stage Code Generation (WSCG) fuses multipl
 
 The `ExpressionEncoder` uses `ScalaReflection` (backed by Scala 2.x runtime reflection via `scala.reflect.api.Universe`) to build a tree of `CreateNamedStruct`, `GetStructField`, and `Invoke` expressions that map between `InternalRow` binary format and your JVM class. This reflection happens once at `Dataset` construction time and is cached, but it means that complex or nested types with custom `apply` factories, generic types with type erasure, or classes with private fields can fail with cryptic `AnalysisException: No encoder found` errors at runtime.
 
-```text
+```
  Spark Driver JVM
  ┌───────────────────────────────────────────────────────────────┐
  │ Dataset[T] │

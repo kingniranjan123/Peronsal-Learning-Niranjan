@@ -19,7 +19,7 @@ In **Cluster Mode**, the architecture forks dramatically, focusing on resilience
 
 Once this Driver is running within the cluster, it dynamically requests additional YARN containers to spin up Executor JVMs. These JVMs are where Tungsten's memory pools (heap and off-heap) are established, and where Catalyst's physical plans will ultimately execute via Whole-Stage Code Generation. Because the Driver is now a YARN-managed container, it benefits from YARN's native retry mechanisms and is completely immune to edge-node disconnections, making it the definitive standard for production data engineering.
 
-```text
+```
 Edge Node (Client) Cluster Manager (YARN/K8s) Worker Node
 ┌─────────────────────────┐ ┌─────────────────────────┐ ┌───────────────────────┐
 │ spark-submit (bash) │ RPC │ ResourceManager │ │ NodeManager │

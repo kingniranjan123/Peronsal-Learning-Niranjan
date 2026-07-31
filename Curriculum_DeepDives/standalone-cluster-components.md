@@ -20,7 +20,7 @@ Under the hood, memory management within these Executor JVMs is rigidly partitio
 
 Fault tolerance in this system is driven by a rigorous heartbeat protocol. Executors send periodic heartbeats to the Driver, and Workers send heartbeats to the Master. If a Worker stops sending heartbeats (due to a hardware failure or network partition), the Master marks the Worker as "DEAD" and notifies the Driver. The Driver's `DAGScheduler` then invalidates any cached data partitions on that Worker and aggressively reschedules the lost tasks onto surviving Executors, guaranteeing absolute data consistency and processing continuity.
 
-```text
+```
  ┌─────────────────────────────┐
  │ Standalone Master │
  │ (Resource State Ledger) │

@@ -20,7 +20,7 @@ Tungsten's off-heap memory manager operates outside the JVM heap within the exec
 
 Shuffle data is the central bottleneck in EC2 deployments. Spark's `SortShuffleManager` writes shuffle files to the local disk of each executor's EC2 instance. On instance types with NVMe storage (e.g., `m5d`, `c5d`, `r6id`), shuffle write throughput can reach 3+ GB/s, while EBS `gp3` volumes are capped at 1,000 MB/s (16,000 IOPS). The `ExternalShuffleService`, enabled by default in EMR, decouples shuffle file serving from executor JVMs, allowing YARN to reclaim executor containers while shuffle data remains readable — critical for dynamic allocation on Spot clusters. S3A's `fs.s3a.fast.upload` multipart upload pipeline (controlled by `fs.s3a.multipart.size` and `fs.s3a.fast.upload.buffer`) determines the throughput ceiling for writing Parquet/ORC output to S3, and misconfiguration is the single largest source of slow write performance in production.
 
-```text
+```
 EMR Master Node (m5.xlarge) EMR Core / Task Nodes
 ┌───────────────────────────────┐ ┌────────────────────────────────────┐
 │ YARN ResourceManager │◀────────────│ YARN NodeManager │

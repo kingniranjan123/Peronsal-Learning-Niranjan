@@ -17,7 +17,7 @@ If caching deserialized JVM objects (which is the default behavior for raw RDDs)
 
 Checkpointing operates on an entirely distinct architectural paradigm. While caching stores data via the BlockManager and carefully retains the RDD lineage in the DAGScheduler for fault tolerance, checkpointing completely truncates the lineage graph. It forces an immediate execution action that writes the materialized partition data out to a distributed file system (like HDFS, S3, or GCS) as highly compressed sequence files or Parquet chunks. This truncation is absolutely essential for preventing stack overflow exceptions within the DAGScheduler during highly iterative algorithms (such as PageRank or K-Means clustering) and provides absolute, cross-application fault tolerance. The definitive tradeoff is the severe network and disk I/O penalty associated with writing the files across the cluster network.
 
-```text
+```
 Driver JVM Worker Executor JVM
 ┌─────────────────────────┐ ┌──────────────────────────────────────────────┐
 │ DAGScheduler │ │ ┌────────────────┐ ┌───────────────────────┐ │

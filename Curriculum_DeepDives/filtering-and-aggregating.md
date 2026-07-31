@@ -15,7 +15,7 @@ For aggregations, the physical planning phase evaluates the `spark.sql.shuffle.p
 
 Tungsten's execution engine supercharges these physical operations through Whole-Stage Code Generation. This revolutionary feature fuses multiple physical operators (for example: Scan, Filter, and Partial Aggregate) into a single, cohesive Java function that is compiled into highly optimized bytecode at runtime. This completely eliminates virtual function calls and leverages CPU registers for intermediate states rather than creating garbage objects. Furthermore, Tungsten manages aggregation state buffers entirely in off-heap memory using a customized, CPU-cache-aligned binary format. This mechanism evades the Java Virtual Machine's garbage collector entirely, allowing Spark to aggregate billions of individual rows with near C-level performance speeds, remaining bounded strictly by L2/L3 cache access limits and memory bandwidth rather than GC pause times.
 
-```text
+```
 Driver JVM Worker Executor JVM (Tungsten Engine)
 ┌──────────────────────────┐ ┌──────────────────────────────────────────────────┐
 │ Catalyst Optimizer │ │ Task (Mapper Phase) │

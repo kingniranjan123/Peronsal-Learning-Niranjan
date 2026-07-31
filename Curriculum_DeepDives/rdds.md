@@ -22,7 +22,7 @@ The **Tungsten execution engine** underpins physical execution. For RDD-based co
 
 Network serialization at the shuffle boundary converts RDD partition data into byte streams. Kryo serialization (`spark.serializer=org.apache.spark.serializer.KryoSerializer`) is typically 3–10x faster and 3–5x more compact than Java serialization for user-defined types, and is strongly recommended for any RDD pipeline involving custom case classes or domain objects. Failure to register classes with the `KryoRegistrator` causes Kryo to fall back to Java-compatible mode, silently negating its performance benefit.
 
-```text
+```
 Driver JVM Executor JVM (Worker Node)
 ┌──────────────────────────────────┐ ┌────────────────────────────────────────┐
 │ SparkContext │ │ Unified Memory Manager │

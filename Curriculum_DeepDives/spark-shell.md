@@ -19,7 +19,7 @@ However, compiling code is only half the battle. Because Spark operates in a dis
 
 Once cleaned, the bytecode and captured variables are serialized—typically using Java serialization for closures and Kryo serialization for data—and broadcasted over the network via a BitTorrent-like protocol to the Executors. The TaskScheduler and DAGScheduler coordinate this orchestration. On the executor side, the bytecode is deserialized, loaded into the JVM metaspace by a custom classloader (the REPL Class Server), and executed by the Tungsten execution engine. Tungsten further optimizes this via Whole-Stage Code Generation (WSCG), collapsing the physical plan into a single, highly optimized Java function that operates directly on binary data in off-heap memory, entirely bypassing the garbage collector for intermediate records.
 
-```text
+```
 Driver JVM (REPL Process) Worker Executor JVM 1
 ┌───────────────────────────────────────┐ ┌──────────────────────────────────────┐
 │ ┌─────────────────────────────────┐ │ │ ┌────────────────────────────────┐ │

@@ -18,7 +18,7 @@ When the **normal equation solver** is selected (`solver = "normal"`), the drive
 
 **Tungsten** accelerates the executor-side gradient computation via Whole-Stage Codegen: Spark fuses the `VectorAssembler` transformation, the dot product `wᵀxᵢ`, the residual `(wᵀxᵢ - yᵢ)`, and the gradient accumulation `xᵢ · residualᵢ` into a single tight JVM loop with no intermediate object allocation. Feature vectors are stored in **Tungsten's binary off-heap format** (UnsafeRow), eliminating Java object header overhead and GC pressure during the inner loop. The `StandardScaler` applied internally (when `standardization = true`) is fused into this same loop.
 
-```text
+```
 Driver JVM Executor JVM (×N)
 ┌──────────────────────────────┐ ┌──────────────────────────────────┐
 │ LinearRegression.fit() │ │ Partition [0..k] │

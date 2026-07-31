@@ -15,7 +15,7 @@ Beneath the scheduling layer, data transfer between Spark’s JVM-based Tungsten
 
 During distributed training, Spark executors utilize physical GPU resources assigned via Spark's resource scheduling API. The actual neural network gradient synchronization bypasses the Spark Driver and DAGScheduler entirely. Instead, tools like Horovod establish peer-to-peer TCP or RDMA connections directly between the Spark executors. Each executor computes local gradients on its partition of the DataFrame, and the Ring-AllReduce algorithm aggregates these gradients across the cluster in parallel. This eliminates the traditional Parameter Server bottleneck and maintains an optimal O(1) communication footprint relative to the cluster size.
 
-```text
+```
 Driver JVM Worker Executor JVM 1 (GPU 0)
 ┌─────────────────────────┐ ┌───────────────────────────────────┐
 │ SparkContext │────┐ │ TaskContext (Barrier Task) │

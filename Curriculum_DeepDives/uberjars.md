@@ -20,7 +20,7 @@ On the executor side, the TaskScheduler instructs executors to fetch the JAR via
 
 The Catalyst optimizer's code generation phase — Whole-Stage CodeGen — dynamically compiles generated query plans into JVM bytecode at runtime using Janino. These generated classes are loaded into the executor's classloader alongside your uberjar's classes. If your uberjar has relocated or shadowed a version of a library that Janino or the Catalyst runtime expects (e.g., `com.google.common` from Guava), a `NoSuchMethodError` or `ClassCastException` emerges at plan execution time, not at job submission — making the failure appear non-deterministic. Kryo serialization compounds this: Kryo resolves class names to `Class` objects via `Class.forName()`, which uses the current thread's context classloader. If the uberjar's classloader hierarchy is misconfigured, Kryo silently falls back to Java serialization, inflating shuffle payload sizes by 3–5× and crashing on non-`Serializable` types.
 
-```text
+```
 spark-submit (Driver JVM)
 ┌────────────────────────────────────────────────────────────┐
 │ Bootstrap ClassLoader │

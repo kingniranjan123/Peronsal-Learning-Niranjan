@@ -21,7 +21,7 @@ For live applications, the `AppStatusListener` maintains a materialized view of 
 
 For completed applications, the architecture shifts to the Spark History Server. During active execution, the `EventLoggingListener` intercepts the exact same stream of bus events and serializes them using Spark's `JsonProtocol` into a continuous JSON event log file, persisting it to HDFS, S3, or local storage. Later, when a user accesses an old application on the History Server, the `FsHistoryProvider` parses this monolithic JSON log file, rebuilds the `AppStatusListener` state from scratch, and serves the UI identically to the live Driver. This deterministic replay mechanism ensures visual fidelity between live monitoring and post-mortem analysis.
 
-```text
+```
 Driver JVM (Live UI) Worker Executor JVM
 ┌─────────────────────────────────────────────────┐ ┌──────────────────────┐
 │ DAGScheduler / TaskScheduler │ │ Task Execution │

@@ -15,7 +15,7 @@ The distributed execution heavily relies on the `treeAggregate` primitive across
 
 Once the aggregated gradients arrive at the Driver JVM, the actual optimization algorithm takes over. The regularization penalty itself (whether L1 or L2) is computed entirely on the Driver using the global weight vector, completely independent of the distributed data. For L2 (Ridge) regularization, the gradient of the penalty is mathematically smooth and is simply added to the aggregated data gradient. The Driver then uses the Limited-memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) algorithm to update the weights. However, for L1 (Lasso) regularization, the penalty is non-differentiable at exactly zero. Spark handles this by dynamically switching to the Orthant-Wise Limited-memory Quasi-Newton (OWL-QN) optimizer. OWL-QN restricts the search direction to a specific orthant, enforcing true mathematical sparsity. This sparsity is a massive architectural advantage: Spark dynamically compresses the resulting sparse weight vector, drastically reducing the Kryo serialization payload size during the subsequent `Broadcast` step back to the worker JVMs for the next iteration.
 
-```text
+```
 Driver JVM (Optimizer) Worker Executor JVMs (Gradient Computation)
 ┌───────────────────────────────┐ ┌───────────────────────────────────────┐
 │ L-BFGS / OWL-QN Solver │◀──Aggregate──│ Executor Thread Pool │

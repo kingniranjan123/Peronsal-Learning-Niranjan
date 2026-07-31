@@ -22,7 +22,7 @@ Tungsten's off-heap memory management does **not** apply natively to GraphX — 
 
 The **Pregel API** models computation as a series of supersteps. In each superstep: (1) active vertices receive messages from the previous round, (2) the vertex program (`vprog`) updates the vertex attribute based on the incoming merged message, (3) `sendMsg` runs on every `EdgeTriplet` and decides whether to generate a message, (4) `mergeMsg` reduces all messages destined for the same vertex using an associative, commutative merge function. A vertex becomes inactive (halts) when it receives no messages. The BSP barrier between supersteps is implemented as an RDD action (`count`) that forces materialization of the updated vertex RDD before the next iteration begins, ensuring exactly-once message delivery per superstep.
 
-```text
+```
 Graph Construction & Triplet View
 ─────────────────────────────────────────────────────────────────────────
  VertexRDD[VD] EdgeRDD[ED]

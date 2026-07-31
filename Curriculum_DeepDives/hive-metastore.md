@@ -22,7 +22,7 @@ Physical planning then selects the file format reader — for Parquet, this is t
 
 The `BlockManager` on each executor uses the partition location URIs from the metastore to determine data locality — scheduling tasks on nodes that physically host the HDFS blocks. A stale or missing partition entry in the metastore therefore produces not just a logical gap in query results, but also prevents the TaskScheduler from making locality-aware decisions, forcing remote reads across the network at full rack-transfer cost (~1 GB/s vs. ~10 GB/s local disk).
 
-```text
+```
 SparkSession (Driver JVM)
 ┌───────────────────────────────────────────────────────────────┐
 │ SparkContext │
